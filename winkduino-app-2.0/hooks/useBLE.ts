@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 import { BleManager, Device, ScanCallbackType, ScanMode } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
+import base64 from "react-native-base64";
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
 
@@ -83,18 +84,22 @@ function useBLE() {
       await bleManager.stopDeviceScan();
 
       connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
-        console.log(char);
+        const strVal = base64.decode(char?.value!);
+        if (parseInt(strVal) === 1) setHeadlightsBusy(true);
+        else setHeadlightsBusy(false);
         // if (char)
         //   console.log(char.value);
       });
 
       connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
-        if (char)
-          console.log(char.value);
+        const strVal = base64.decode(char?.value!);
+        if (parseInt(strVal) === 1) setLeftState(1);
+        else setLeftState(0);
       });
       connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
-        if (char)
-          console.log(char.value);
+        const strVal = base64.decode(char?.value!);
+        if (parseInt(strVal) === 1) setRightState(1);
+        else setRightState(0);
       });
 
 

@@ -90,6 +90,20 @@ function DefaultCommands(props: DefaultModalProps) {
           }
         </View>
 
+        <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
+          <TouchableOpacity disabled={props.headlightsBusy} style={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton} onPress={() => props.sendDefaultCommand(10)}>
+            <Text style={styles.buttonText}>
+              Left Wave
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity disabled={props.headlightsBusy} style={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton} onPress={() => props.sendDefaultCommand(11)}>
+            <Text style={styles.buttonText}>
+              Right Wave
+            </Text>
+          </TouchableOpacity>
+        </View>
+
 
 
         <TouchableOpacity onPress={() => props.close()} style={styles.button}>
@@ -159,8 +173,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "grey",
-    width: 200,
-    height: 50,
+    // width: 200,
+    // height: 50,
+    padding: 10,
     borderRadius: 5,
   },
   buttonText: {

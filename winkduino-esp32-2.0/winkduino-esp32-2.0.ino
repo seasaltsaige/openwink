@@ -86,9 +86,9 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
         // printf("%s", value);
         // Serial.printf("%s", value.c_str());
         int valueInt = std::stoi(value);
-
-        busyChar->setValue(1);
-        busyChar->notify()
+        Serial.printf("%d", valueInt);
+        busyChar->setValue("1");
+        busyChar->notify();
         switch (valueInt) {
           // Both Up
           case 1:
@@ -136,20 +136,23 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
             break;
 
           // "Wave" left first
-          // case 10:
-          //   leftWave();
-          //   break;
+          case 10:
+            leftWave();
+            break;
 
-          // case 11:
+          case 11:
           //   // "Wave" right first
-          //   rightWave();
-          //   break;
+            rightWave();
+            break;
         }
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
-        leftChar->notify(leftStatus);
-        rightChar->notify(rightStatus);
-        busyChar->setValue(0);
+        leftChar->setValue(std::string(String((int)leftStatus).c_str()));
+        rightChar->setValue(std::string(String((int)rightStatus).c_str()));
+        leftChar->notify();
+        rightChar->notify();
+        busyChar->setValue("0");
+        busyChar->notify();
     }
 };
 
