@@ -1,25 +1,6 @@
-/** NimBLE Extended Advertiser Demo:
- *
- *  Demonstrates the Bluetooth 5.x extended advertising capabilities.
- *
- *  This demo will advertise a long data string on the CODED and 1M Phy's and
- *  starts a server allowing connection over either PHY's. It will advertise for
- *  5 seconds then sleep for 20 seconds, if a client connects it will sleep once
- *  it has disconnected then repeats.
- *
- *  Created: on April 2 2022
- *      Author: H2zero
- *
-*/
-
-#include "NimBLEDevice.h"
+#include <NimBLEDevice.h>
 #include <Arduino.h>
 
-
-#define OUT_PIN_LEFT_DOWN 4
-#define OUT_PIN_LEFT_UP 5
-#define OUT_PIN_RIGHT_DOWN 6
-#define OUT_PIN_RIGHT_UP 7
 
 
 
@@ -33,77 +14,145 @@
 #include "esp_sleep.h"
 #endif
 
+
+#define OUT_PIN_LEFT_DOWN 4
+#define OUT_PIN_LEFT_UP 5
+#define OUT_PIN_RIGHT_DOWN 6
+#define OUT_PIN_RIGHT_UP 7
+
+double leftStatus = 0;
+double rightStatus = 0;
+
+bool buttonInterrupt();
+void syncHeadlights();
+void percentageDrop(double percentage);
+void setAllOff();
+void bothUp();
+void leftUp();
+void rightUp();
+void bothDown();
+void leftDown();
+void rightDown();
+void bothBlink();
+void leftWink();
+void rightWink();
+void leftWave();
+void rightWave();
+
 #define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
+
 #define REQUEST_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51520"
-#define RESPONSE_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51521"
-#define RESET_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51522"
 
-/* Time in milliseconds to advertise */
-static uint32_t advTime = 100000;
+#define BUSY_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51521"
 
-/* Time to sleep between advertisements */
+NimBLECharacteristic* busyChar = nullptr;
+
+// #define RESET_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51522"
+
+#define LEFT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51523"
+#define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
+
+
+#define HEADLIGHT_MOVEMENT_DELAY 750
+
+
+NimBLECharacteristic* leftChar = nullptr;
+NimBLECharacteristic* rightChar = nullptr;
+
+static uint32_t advTime = 100 * 1000;
 static uint32_t sleepSeconds = 1;
 
-/* Primary PHY used for advertising, can be one of BLE_HCI_LE_PHY_1M or BLE_HCI_LE_PHY_CODED */
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
-
-/* Secondary PHY used for advertising and connecting,
- * can be one of BLE_HCI_LE_PHY_1M, BLE_HCI_LE_PHY_2M or BLE_HCI_LE_PHY_CODED
- */
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
-
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
     Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
   };
-
-
-
   void onDisconnect(NimBLEServer* pServer) {
     Serial.printf("Client disconnected - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
-#ifdef ESP_PLATFORM
-    esp_deep_sleep_start();
-#else
-    systemRestart();  // nRF platforms restart then sleep via delay in setup.
-#endif
+    #ifdef ESP_PLATFORM
+      esp_deep_sleep_start();
+    #else
+      systemRestart();
+    #endif
   };
 };
-
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic) {
         std::string value = pCharacteristic->getValue();
-
+        // printf("%s", value);
+        // Serial.printf("%s", value.c_str());
         int valueInt = std::stoi(value);
-        // Handle the received command here
 
+        busyChar->setValue(1);
+        busyChar->notify()
         switch (valueInt) {
+          // Both Up
           case 1:
+            bothUp();
+            break;
 
-            Serial.println(valueInt);
-            digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-            digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+          // Both Down
+          case 2:
+            bothDown();
+            break;
+          // Both Blink
+          case 3:
+            // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
+            bothBlink();
+            break;
 
-            delay(750);
-            
-            digitalWrite(OUT_PIN_LEFT_UP, LOW);
-            digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+          // Left Up
+          case 4:
+            leftUp();
+            break;
 
-            digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-            digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+          // Left Down
+          case 5:
+            leftDown();
+            break;
 
-            delay(750);
+          // Left Blink (Wink)
+          case 6:
+            leftWink();
+            break;
 
-            digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-            digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-          break;
+          // Right Up
+          case 7:
+            rightUp();
+            break;
+
+          // Right Down
+          case 8:
+            rightDown();
+            break;
+
+          // Right Blink (Wink)
+          case 9:
+            rightWink();
+            break;
+
+          // "Wave" left first
+          // case 10:
+          //   leftWave();
+          //   break;
+
+          // case 11:
+          //   // "Wave" right first
+          //   rightWave();
+          //   break;
         }
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        leftChar->notify(leftStatus);
+        rightChar->notify(rightStatus);
+        busyChar->setValue(0);
     }
 };
 
-/* Callback class to handle advertising events */
 class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
   void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
     /* Check the reason advertising stopped, don't sleep if client is connecting */
@@ -119,31 +168,29 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
         printf("Default case");
         break;
     }
-#ifdef ESP_PLATFORM
-    esp_deep_sleep_start();
-#else
-    systemRestart();  // nRF platforms restart then sleep via delay in setup.
-#endif
+    #ifdef ESP_PLATFORM
+      esp_deep_sleep_start();
+    #else
+      systemRestart();  // nRF platforms restart then sleep via delay in setup.
+    #endif
   }
 };
 
 void setup() {
   Serial.begin(115200);
-
   
   pinMode(OUT_PIN_LEFT_DOWN, OUTPUT);
   pinMode(OUT_PIN_LEFT_UP, OUTPUT);
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
 
-#ifndef ESP_PLATFORM
-  delay(sleepSeconds * 1000);  // system ON sleep mode for nRF platforms to simulate the esp deep sleep with timer wakeup
-#endif
+  #ifndef ESP_PLATFORM
+    delay(sleepSeconds * 1000);  // system ON sleep mode for nRF platforms to simulate the esp deep sleep with timer wakeup
+  #endif
 
   NimBLEDevice::init("Winkduino");
   NimBLEDevice::setDeviceName("Winkduino");
 
-  /* Create the server and add the services/characteristics/descriptors */
   NimBLEServer* pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks);
   NimBLEService* pService = pServer->createService(SERVICE_UUID);
@@ -152,51 +199,34 @@ void setup() {
   NimBLECharacteristic* winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   winkChar->setValue(0);
 
-  NimBLECharacteristic* busyChar = pService->createCharacteristic(RESPONSE_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
+  busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
+  leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY);
+  rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY);
 
   winkChar->setCallbacks(new RequestCharacteristicCallbacks);
 
-  /* Start the services */
   pService->start();
 
-  /*
-    * Create an extended advertisement with the instance ID 0 and set the PHY's.
-    * Multiple instances can be added as long as the instance ID is incremented.
-    */
+
   NimBLEExtAdvertisement extAdv(primaryPhy, secondaryPhy);
 
-  /* Set the advertisement as connectable */
   extAdv.setConnectable(true);
+  extAdv.setScannable(false);
 
-  /* As per Bluetooth specification, extended advertising cannot be both scannable and connectable */
-  extAdv.setScannable(false);  // The default is false, set here for demonstration.
-
-  /* Extended advertising allows for 251 bytes (minus header bytes ~20) in a single advertisement or up to 1650 if chained */
   extAdv.setServiceData(NimBLEUUID(SERVICE_UUID), std::string("Winkduino"));
 
   extAdv.setCompleteServices16({ NimBLEUUID(SERVICE_UUID) });
 
-  /* When extended advertising is enabled `NimBLEDevice::getAdvertising` returns a pointer to `NimBLEExtAdvertising */
   NimBLEExtAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
 
-  /* Set the callbacks for advertising events */
   pAdvertising->setCallbacks(new advertisingCallbacks);
 
-  /*
-     * NimBLEExtAdvertising::setInstanceData takes the instance ID and
-     * a reference to a `NimBLEExtAdvertisement` object. This sets the data
-     * that will be advertised for this instance ID, returns true if successful.
-     *
-     * Note: It is safe to create the advertisement as a local variable if setInstanceData
-     * is called before exiting the code block as the data will be copied.
-     */
   if (pAdvertising->setInstanceData(0, extAdv)) {
-    /*
-         * `NimBLEExtAdvertising::start` takes the advertisement instance ID to start
-         * and a duration in milliseconds or a max number of advertisements to send (or both).
-         */
     if (pAdvertising->start(0, advTime)) {
       Serial.printf("Started advertising\n");
+
+
+
     } else {
       Serial.printf("Failed to start advertising\n");
     }
@@ -204,10 +234,289 @@ void setup() {
     Serial.printf("Failed to register advertisment data\n");
   }
 
-#ifdef ESP_PLATFORM
-  esp_sleep_enable_timer_wakeup(sleepSeconds * 1000000);
-#endif
+  #ifdef ESP_PLATFORM
+    esp_sleep_enable_timer_wakeup(sleepSeconds * 1000000);
+  #endif
 }
+
+
+
+
+// Both
+void bothUp() {
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  }
+
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+  }
+
+  leftStatus = 1;
+  rightStatus = 1;
+}
+
+void bothDown() {
+  if (leftStatus != 0) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+  }
+
+  if (rightStatus != 0) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+  }
+
+  leftStatus = 0;
+  rightStatus = 0;
+}
+
+void bothBlink() {
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    rightStatus = 0;
+  }
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    rightStatus = 0;
+  }
+}
+
+
+// Left
+void leftUp() {
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  }
+}
+
+void leftDown() {
+  if (leftStatus != 0) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+}
+
+void leftWink() {
+
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  if (leftStatus != 1) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+}
+
+
+// Right
+void rightUp() {
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  }
+}
+
+void rightDown() {
+  if (rightStatus != 0) {
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    rightStatus = 0;
+  }
+}
+
+void rightWink() {
+
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    rightStatus = 0;
+  }
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  if (rightStatus != 1) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    rightStatus = 0;
+  }
+}
+
+void leftWave() {
+  // App forces headlights to be up, in order to send these two commands
+  // Left Down
+  digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+  digitalWrite(OUT_PIN_LEFT_UP, LOW);
+
+  // Wait
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  // Left back up
+  // Right down at same
+  digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  // Wait
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  // Turn left off
+  digitalWrite(OUT_PIN_LEFT_UP, LOW);
+  digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+  // Right back up
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+}
+
+void rightWave() {
+  digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+
+  // Wait
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  // Left back up
+  // Right down at same
+  digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+  digitalWrite(OUT_PIN_LEFT_UP, LOW);
+
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+  // Wait
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  // Turn left off
+  digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+  digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+  // Right back up
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+}
+
+// Sleepy eye working!
+// void percentageDrop(double percentage) {
+//   Serial.println(percentage);
+//   Serial.println("IN DROP");
+
+//   digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+//   digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+//   digitalWrite(OUT_PIN_LEFT_UP, LOW);
+//   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+
+//   Serial.println("DOWN");
+
+//   delay(percentage * HEADLIGHT_MOVEMENT_DELAY);
+
+//   Serial.println("ALL OFF");
+//   setAllOff();
+// }
+
+
+// ------------------------------------------ //
+// HELPER FUNCTIONS //
+void setAllOff() {
+  digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+  digitalWrite(OUT_PIN_LEFT_UP, LOW);
+  digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+  digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+}
+
+// void syncHeadlights() {
+//   // Set status to busy
+//   responseCharacteristic.setValue("1");
+
+//   digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+//   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+//   digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+//   digitalWrite(OUT_PIN_LEFT_UP, LOW);
+
+//   delay(HEADLIGHT_MOVEMENT_DELAY * (1 - leftPercentageFromTop));
+
+//   // Ensure headlights move in unison
+//   // Move to up position
+//   digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+//   digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+//   digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+//   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+
+//   leftPercentageFromTop = 0;
+//   rightPercentageFromTop = 0;
+
+//   leftStatus = 1;
+//   rightStatus = 1;
+
+//   responseCharacteristic.setValue("0");
+// }
+
+
 
 void loop() {
 }

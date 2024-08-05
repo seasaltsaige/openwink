@@ -3,9 +3,20 @@ import { PermissionsAndroid, Platform } from "react-native";
 import { BleManager, Device, ScanCallbackType, ScanMode } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
 
+const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
+
+const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521"
+const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
+const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
+
+
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
+  // const [allDevices, setAllDevice]
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
+  const [headlightsBusy, setHeadlightsBusy] = useState(false);
+  const [leftState, setLeftState] = useState(0)
+  const [rightState, setRightState] = useState(0)
 
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
@@ -71,6 +82,21 @@ function useBLE() {
       await connection.discoverAllServicesAndCharacteristics();
       await bleManager.stopDeviceScan();
 
+      connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
+        console.log(char);
+        // if (char)
+        //   console.log(char.value);
+      });
+
+      connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
+        if (char)
+          console.log(char.value);
+      });
+      connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
+        if (char)
+          console.log(char.value);
+      });
+
 
       connection.onDisconnected((err, device) => {
         if (err) {
@@ -124,6 +150,10 @@ function useBLE() {
     scan,
     disconnect,
     connectedDevice,
+    headlightsBusy,
+    leftState,
+    rightState,
+    bleManager
   }
 }
 
