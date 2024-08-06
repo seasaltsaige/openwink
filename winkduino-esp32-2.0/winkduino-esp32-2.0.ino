@@ -24,8 +24,6 @@ int leftStatus = 0;
 int rightStatus = 0;
 
 bool buttonInterrupt();
-void syncHeadlights();
-void percentageDrop(double percentage);
 void setAllOff();
 void bothUp();
 void leftUp();
@@ -93,63 +91,65 @@ void updateHeadlightChars() {
 class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar) {
     
-    if (leftStatus != 1 && leftStatus != 0) {
-      
-    } 
-
-    if (rightStatus != 1 && rightStatus != 0) {
-
+    if (leftStatus > 1) {
+      double valFromTop = (double)(leftStatus - 10) / 100;
+      digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+      delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
+      digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    } else if (leftStatus == 0) {
+      leftUp();
     }
 
+    leftStatus = 1;
+    setAllOff();
+    updateHeadlightChars();
 
+    if (rightStatus > 1) {
+      double valFromTop = (double)(rightStatus - 10) / 100;
+      digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+      delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
+      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    } else if (rightStatus == 0) {
+      rightUp();
+    }
 
+    rightStatus = 1;
+    setAllOff();
+    updateHeadlightChars();
   }
-}
+};
 
+// must be in same position to work
 class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar) {
     std::string value = pChar->getValue();
     int headlightValue = String(value.c_str()).toInt();
+    double percentage = ((double)headlightValue) / 100;
 
-    double percentageForStatusAsDown = ((double)headlightValue / 100);
-    double percentageForStatusAsUp = (100 - (double)headlightValue) / 100;
+    // Client blocks this endpoint when headlights are already sleepy
+    
 
     if (leftStatus == 1 && rightStatus == 1) {
-      // Use down pins
-      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-      digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-
-      delay(HEADLIGHT_MOVEMENT_DELAY * percentageForStatusAsUp);
-
-      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-      digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-
-    } else if (leftStatus == 0 && rightStatus == 0) {
-
-      digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-      digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-      delay(HEADLIGHT_MOVEMENT_DELAY * percentageForStatusAsDown);
-
-      digitalWrite(OUT_PIN_LEFT_UP, LOW);
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-    } else if (leftStatus == 1 && rightStatus == 0) {
-
-      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-      delay(percentageForStatusAsUp);
-      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-
-      digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-      delay(percentageForStatusAsDown);
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-    } else if (leftStatus == 0 && rightStatus == 1) {
-
-      // Otherwise headlights already are not at extended pos
-    } else {
-
+      bothDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+    } else if (leftStatus == 1) {
+      leftDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+    } else if (rightStatus == 1) {
+      rightDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
     }
+
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+
+    delay(percentage * HEADLIGHT_MOVEMENT_DELAY);
+
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
 
     leftStatus = headlightValue + 10;
     rightStatus = headlightValue + 10;
@@ -238,6 +238,24 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
     switch (reason) {
       case 0:
         printf("Client connecting\n");
+
+        bothDown();
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        bothUp();
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        bothDown();
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        bothUp();
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+
+        leftStatus = 1;
+        rightStatus = 1;
+
+        updateHeadlightChars();
         return;
       case BLE_HS_ETIMEOUT:
         printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
