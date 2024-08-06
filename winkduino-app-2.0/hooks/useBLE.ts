@@ -81,30 +81,6 @@ function useBLE() {
       const connection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(connection);
       await connection.discoverAllServicesAndCharacteristics();
-
-      const leftStartupStatus = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
-      const rightStartupStatus = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);
-
-
-      const leftStrVal = base64.decode(leftStartupStatus?.value!);
-      const leftIntVal = parseInt(leftStrVal);
-      if (leftIntVal > 1) {
-        const realValDecimal = (leftIntVal - 10) / 100;
-        setLeftState(realValDecimal);
-      } else {
-        setLeftState(leftIntVal);
-      }
-
-      const rightStrVal = base64.decode(rightStartupStatus?.value!);
-      const rightIntVal = parseInt(rightStrVal);
-      if (rightIntVal > 1) {
-        const realValDecimal = (rightIntVal - 10) / 100;
-        setLeftState(realValDecimal);
-      } else {
-        setLeftState(rightIntVal);
-      }
-
-
       await bleManager.stopDeviceScan();
 
       connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {

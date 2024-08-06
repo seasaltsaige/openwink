@@ -53,7 +53,7 @@ NimBLECharacteristic* busyChar = nullptr;
 #define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
 
 #define SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51525"
-
+#define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
@@ -90,10 +90,25 @@ void updateHeadlightChars() {
   rightChar->notify();
 }
 
+class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar) {
+    
+    if (leftStatus != 1 && leftStatus != 0) {
+      
+    } 
+
+    if (rightStatus != 1 && rightStatus != 0) {
+
+    }
+
+
+
+  }
+}
+
 class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar) {
     std::string value = pChar->getValue();
-    Serial.println("HELLO WORLD");
     int headlightValue = String(value.c_str()).toInt();
 
     double percentageForStatusAsDown = ((double)headlightValue / 100);
@@ -120,6 +135,14 @@ class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
 
     } else if (leftStatus == 1 && rightStatus == 0) {
+
+      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+      delay(percentageForStatusAsUp);
+      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+
+      digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+      delay(percentageForStatusAsDown);
+      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
 
     } else if (leftStatus == 0 && rightStatus == 1) {
 
@@ -253,6 +276,8 @@ void setup() {
 
   NimBLECharacteristic* winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic* sleepChar = pService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic* syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
+  syncChar->setValue(0);
   sleepChar->setValue(0.0);
   winkChar->setValue(0);
 
@@ -260,6 +285,7 @@ void setup() {
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
+  syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
 

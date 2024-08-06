@@ -8,7 +8,8 @@ import { useEffect, useState } from 'react';
 import { DefaultCommands } from "./Pages/DefaultCommands";
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
-const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525"
+const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
+const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 
 export default function App() {
 
@@ -19,7 +20,6 @@ export default function App() {
   const scanForDevice = async () => {
     const permsEnabled = await requestPermissions();
     if (permsEnabled) {
-      // console.log(permsEnabled);
       scan();
     }
   }
@@ -38,6 +38,12 @@ export default function App() {
       connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode(value.toString())).catch(err => console.log(err));
   }
 
+  const sendSyncSignal = () => {
+    if (headlightsBusy) return;
+    if (connectedDevice)
+      connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
+  }
+
   useEffect(() => {
     scanForDevice();
   }, []);
@@ -50,11 +56,11 @@ export default function App() {
           : (
             <>
               <Text style={styles.text}> Connected to Wink Reciever</Text>
-              <TouchableOpacity style={styles.button}>
+              <TouchableOpacity style={styles.button} key={1}>
                 <Text style={styles.buttonText} onPress={() => setDefaultCommandsOpen(true)}>Go To Commands</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.button}>
+              <TouchableOpacity style={styles.button} key={2}>
                 <Text style={styles.buttonText} onPress={() => disconnect()}>Disconnect</Text>
               </TouchableOpacity>
             </>
@@ -71,6 +77,7 @@ export default function App() {
         visible={defaultCommandsOpen}
         sendDefaultCommand={sendDefaultCommand}
         sendSleepCommand={sendSleepCommand}
+        sendSyncCommand={sendSyncSignal}
         key={1}
       />
     </View >
