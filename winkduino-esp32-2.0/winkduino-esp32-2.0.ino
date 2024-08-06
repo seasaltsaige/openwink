@@ -20,6 +20,8 @@
 #define OUT_PIN_RIGHT_DOWN 6
 #define OUT_PIN_RIGHT_UP 7
 
+#define BUTTON_PULL_UP 8
+
 int leftStatus = 0;
 int rightStatus = 0;
 
@@ -279,6 +281,8 @@ void setup() {
   pinMode(OUT_PIN_LEFT_UP, OUTPUT);
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
+
+  pinMode(BUTTON_PULL_UP, INPUT_PULLUP);
 
   #ifndef ESP_PLATFORM
     delay(sleepSeconds * 1000);  // system ON sleep mode for nRF platforms to simulate the esp deep sleep with timer wakeup
