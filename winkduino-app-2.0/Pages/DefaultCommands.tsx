@@ -1,4 +1,5 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Device } from "react-native-ble-plx";
 
 type DefaultModalProps = {
@@ -7,6 +8,7 @@ type DefaultModalProps = {
   close: () => void;
   headlightsBusy: boolean;
   sendDefaultCommand: (value: number) => void;
+  sendSleepCommand: (value: number) => void;
   leftState: number;
   rightState: number;
 }
@@ -58,11 +60,13 @@ const commands: { name: string, value: number }[][] = [
 
 function DefaultCommands(props: DefaultModalProps) {
 
+  const [sleepyEyeValue, setSleepyEyeValue] = useState("");
+
   return (
     <Modal
       transparent={false}
-      visible={props.visible}
-      animationType="fade"
+      visible={props.visible && props.device !== null}
+      animationType="slide"
       hardwareAccelerated
     >
       <View style={styles.container}>
@@ -104,9 +108,18 @@ function DefaultCommands(props: DefaultModalProps) {
           </TouchableOpacity>
         </View>
 
+        <Text style={{ color: "white", fontSize: 16, textAlign: "center", marginLeft: 5, marginRight: 5, }}>
+          1-100 represents percentages from fully closed. 1 being 1% above, and 100 being 100% fully open.
+        </Text>
+        <TextInput placeholderTextColor={"rgb(200, 200, 200)"} placeholder="Enter a number from 1-100" value={sleepyEyeValue} maxLength={3} keyboardType="number-pad" onChangeText={(text) => parseInt(text) > 100 ? setSleepyEyeValue("100") : setSleepyEyeValue(text)} style={styles.sleepInput} />
+        <TouchableOpacity onPress={() => props.sendSleepCommand(parseInt(sleepyEyeValue))} disabled={props.headlightsBusy} style={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton}>
+          <Text style={styles.buttonText}>
+            Send Sleepy Eye
+          </Text>
+        </TouchableOpacity>
 
 
-        <TouchableOpacity onPress={() => props.close()} style={styles.button}>
+        <TouchableOpacity onPress={() => props.close()} style={{ marginTop: 20, ...styles.button }}>
           <Text style={styles.buttonText}>
             Close
           </Text>
@@ -181,6 +194,14 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 20,
+  },
+  sleepInput: {
+    backgroundColor: "rgb(40, 40, 40)",
+    padding: 10,
+    color: "#ffffff",
+    textAlign: "center",
+    width: 200,
+    borderRadius: 5,
   }
 });
 

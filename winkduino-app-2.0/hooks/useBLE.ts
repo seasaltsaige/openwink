@@ -81,6 +81,30 @@ function useBLE() {
       const connection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(connection);
       await connection.discoverAllServicesAndCharacteristics();
+
+      const leftStartupStatus = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
+      const rightStartupStatus = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);
+
+
+      const leftStrVal = base64.decode(leftStartupStatus?.value!);
+      const leftIntVal = parseInt(leftStrVal);
+      if (leftIntVal > 1) {
+        const realValDecimal = (leftIntVal - 10) / 100;
+        setLeftState(realValDecimal);
+      } else {
+        setLeftState(leftIntVal);
+      }
+
+      const rightStrVal = base64.decode(rightStartupStatus?.value!);
+      const rightIntVal = parseInt(rightStrVal);
+      if (rightIntVal > 1) {
+        const realValDecimal = (rightIntVal - 10) / 100;
+        setLeftState(realValDecimal);
+      } else {
+        setLeftState(rightIntVal);
+      }
+
+
       await bleManager.stopDeviceScan();
 
       connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
@@ -93,14 +117,26 @@ function useBLE() {
 
       connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
         const strVal = base64.decode(char?.value!);
-        if (parseInt(strVal) === 1) setLeftState(1);
-        else setLeftState(0);
+        const intVal = parseInt(strVal);
+        if (intVal > 1) {
+          const realValDecimal = (intVal - 10) / 100;
+          setLeftState(realValDecimal);
+        } else {
+          setLeftState(intVal);
+        }
       });
       connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
         const strVal = base64.decode(char?.value!);
-        if (parseInt(strVal) === 1) setRightState(1);
-        else setRightState(0);
+        const intVal = parseInt(strVal);
+        if (intVal > 1) {
+          const realValDecimal = (intVal - 10) / 100;
+          setRightState(realValDecimal);
+        } else {
+          setRightState(intVal);
+        }
       });
+
+
 
 
       connection.onDisconnected((err, device) => {
@@ -112,8 +148,9 @@ function useBLE() {
         setConnectedDevice(null);
         scan();
       });
-
-      console.log("Connected to device", device.name);
+      // await device.discoverAllServicesAndCharacteristics()
+      console.log(connection.name, connectedDevice?.localName);
+      console.log("Connected to device", connectedDevice?.localName);
       // connection.monitorCharacteristicForService()
     } catch (err) {
       console.log("Failed to connect: ");

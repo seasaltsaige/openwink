@@ -6,8 +6,9 @@ import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
 
 import { DefaultCommands } from "./Pages/DefaultCommands";
-const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
-const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520"
+const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
+const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
+const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525"
 
 export default function App() {
 
@@ -30,6 +31,13 @@ export default function App() {
       connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
   }
 
+  const sendSleepCommand = (value: number) => {
+    console.log(value);
+    if (headlightsBusy) return;
+    if (connectedDevice)
+      connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode(value.toString())).catch(err => console.log(err));
+  }
+
   useEffect(() => {
     scanForDevice();
   }, []);
@@ -41,7 +49,7 @@ export default function App() {
         !connectedDevice ? (<Text style={styles.text}>No Device Connected</Text>)
           : (
             <>
-              <Text style={styles.text}> Connected to {connectedDevice.name}</Text>
+              <Text style={styles.text}> Connected to Wink Reciever</Text>
               <TouchableOpacity style={styles.button}>
                 <Text style={styles.buttonText} onPress={() => setDefaultCommandsOpen(true)}>Go To Commands</Text>
               </TouchableOpacity>
@@ -62,6 +70,7 @@ export default function App() {
         rightState={rightState}
         visible={defaultCommandsOpen}
         sendDefaultCommand={sendDefaultCommand}
+        sendSleepCommand={sendSleepCommand}
         key={1}
       />
     </View >

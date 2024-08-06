@@ -20,8 +20,8 @@
 #define OUT_PIN_RIGHT_DOWN 6
 #define OUT_PIN_RIGHT_UP 7
 
-double leftStatus = 0;
-double rightStatus = 0;
+int leftStatus = 0;
+int rightStatus = 0;
 
 bool buttonInterrupt();
 void syncHeadlights();
@@ -52,6 +52,8 @@ NimBLECharacteristic* busyChar = nullptr;
 #define LEFT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51523"
 #define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
 
+#define SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51525"
+
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
@@ -64,6 +66,7 @@ static uint32_t sleepSeconds = 1;
 
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
+
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks {
@@ -80,12 +83,64 @@ class ServerCallbacks : public NimBLEServerCallbacks {
   };
 };
 
+void updateHeadlightChars() {
+  leftChar->setValue(std::string(String(leftStatus).c_str()));
+  rightChar->setValue(std::string(String(rightStatus).c_str()));
+  leftChar->notify();
+  rightChar->notify();
+}
+
+class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar) {
+    std::string value = pChar->getValue();
+    Serial.println("HELLO WORLD");
+    int headlightValue = String(value.c_str()).toInt();
+
+    double percentageForStatusAsDown = ((double)headlightValue / 100);
+    double percentageForStatusAsUp = (100 - (double)headlightValue) / 100;
+
+    if (leftStatus == 1 && rightStatus == 1) {
+      // Use down pins
+      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+      digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+
+      delay(HEADLIGHT_MOVEMENT_DELAY * percentageForStatusAsUp);
+
+      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+      digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+
+    } else if (leftStatus == 0 && rightStatus == 0) {
+
+      digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+      digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+
+      delay(HEADLIGHT_MOVEMENT_DELAY * percentageForStatusAsDown);
+
+      digitalWrite(OUT_PIN_LEFT_UP, LOW);
+      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+
+    } else if (leftStatus == 1 && rightStatus == 0) {
+
+    } else if (leftStatus == 0 && rightStatus == 1) {
+
+      // Otherwise headlights already are not at extended pos
+    } else {
+
+    }
+
+    leftStatus = headlightValue + 10;
+    rightStatus = headlightValue + 10;
+
+    updateHeadlightChars();
+
+    Serial.printf("%.6f", headlightValue);
+  }
+};
+
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic) {
         std::string value = pCharacteristic->getValue();
-        // printf("%s", value);
-        // Serial.printf("%s", value.c_str());
-        int valueInt = std::stoi(value);
+        int valueInt = String(value.c_str()).toInt();
         Serial.printf("%d", valueInt);
         busyChar->setValue("1");
         busyChar->notify();
@@ -147,10 +202,7 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
         }
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
-        leftChar->setValue(std::string(String((int)leftStatus).c_str()));
-        rightChar->setValue(std::string(String((int)rightStatus).c_str()));
-        leftChar->notify();
-        rightChar->notify();
+        updateHeadlightChars();
         busyChar->setValue("0");
         busyChar->notify();
     }
@@ -200,13 +252,16 @@ void setup() {
 
 
   NimBLECharacteristic* winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic* sleepChar = pService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  sleepChar->setValue(0.0);
   winkChar->setValue(0);
 
   busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
-  leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY);
-  rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY);
+  leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
-  winkChar->setCallbacks(new RequestCharacteristicCallbacks);
+  winkChar->setCallbacks(new RequestCharacteristicCallbacks());
+  sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
 
   pService->start();
 
@@ -227,9 +282,6 @@ void setup() {
   if (pAdvertising->setInstanceData(0, extAdv)) {
     if (pAdvertising->start(0, advTime)) {
       Serial.printf("Started advertising\n");
-
-
-
     } else {
       Serial.printf("Failed to start advertising\n");
     }
@@ -297,6 +349,8 @@ void bothBlink() {
     rightStatus = 0;
   }
 
+
+  updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
   if (leftStatus != 1) {
@@ -318,6 +372,7 @@ void bothBlink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
+  updateHeadlightChars();
 }
 
 
@@ -350,6 +405,7 @@ void leftWink() {
     leftStatus = 0;
   }
 
+  updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
   if (leftStatus != 1) {
@@ -361,6 +417,7 @@ void leftWink() {
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
+  updateHeadlightChars();
 }
 
 
@@ -392,6 +449,7 @@ void rightWink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
+  updateHeadlightChars();
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
@@ -404,6 +462,7 @@ void rightWink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
+  updateHeadlightChars();
 }
 
 void leftWave() {
@@ -412,6 +471,7 @@ void leftWave() {
   digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
   digitalWrite(OUT_PIN_LEFT_UP, LOW);
 
+  updateHeadlightChars();
   // Wait
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
@@ -420,11 +480,14 @@ void leftWave() {
   digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
 
+  updateHeadlightChars();
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
   digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  
+  updateHeadlightChars();
   // Wait
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
@@ -434,6 +497,7 @@ void leftWave() {
   // Right back up
   digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+  
 }
 
 void rightWave() {
