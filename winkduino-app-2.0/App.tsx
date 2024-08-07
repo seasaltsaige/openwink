@@ -6,6 +6,7 @@ import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
 
 import { DefaultCommands } from "./Pages/DefaultCommands";
+import { CreateCustomCommands } from './Pages/CreateCustomCommands';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -16,6 +17,7 @@ export default function App() {
   const { requestPermissions, scan, connectedDevice, disconnect, headlightsBusy, leftState, rightState } = useBLE();
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
+  const [createCustomOpen, setCreateCustomOpen] = useState(false);
 
   const scanForDevice = async () => {
     const permsEnabled = await requestPermissions();
@@ -52,12 +54,16 @@ export default function App() {
     <View style={styles.container}>
 
       {
-        !connectedDevice ? (<Text style={styles.text}>No Device Connected</Text>)
+        !connectedDevice ? (<Text style={styles.text}>Scanning for Wink Reciever...</Text>)
           : (
             <>
-              <Text style={styles.text}> Connected to Wink Reciever</Text>
+              <Text style={styles.text}>Connected to Wink Reciever</Text>
               <TouchableOpacity style={styles.button} key={1}>
                 <Text style={styles.buttonText} onPress={() => setDefaultCommandsOpen(true)}>Go To Commands</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.button} key={1}>
+                <Text style={styles.buttonText} onPress={() => setCreateCustomOpen(true)}>Create a Preset Command</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.button} key={2}>
@@ -80,6 +86,14 @@ export default function App() {
         sendSyncCommand={sendSyncSignal}
         key={1}
       />
+
+      <CreateCustomCommands
+        close={() => setCreateCustomOpen(false)}
+        device={connectedDevice}
+        visible={createCustomOpen}
+        key={2}
+      />
+
     </View >
   );
 }
@@ -109,5 +123,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 20,
+    textAlign: "center"
   }
 });

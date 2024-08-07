@@ -201,8 +201,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "grey",
-    // width: 200,
-    // height: 50,
     padding: 10,
     borderRadius: 5,
   },

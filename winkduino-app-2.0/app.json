@@ -15,7 +15,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.maxisthemoose.winkduino2"
     },
     "android": {
       "adaptiveIcon": {
