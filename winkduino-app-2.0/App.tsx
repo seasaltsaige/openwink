@@ -24,7 +24,7 @@ export default function App() {
   const scanForDevice = async () => {
     const permsEnabled = await requestPermissions();
     if (permsEnabled) {
-      scan();
+      await scan();
     }
   }
 
@@ -32,20 +32,20 @@ export default function App() {
     console.log(value);
     if (headlightsBusy) return;
     if (connectedDevice)
-      connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
+      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
   }
 
   const sendSleepCommand = (value: number) => {
     console.log(value);
     if (headlightsBusy) return;
     if (connectedDevice)
-      connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode(value.toString())).catch(err => console.log(err));
+      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode(value.toString())).catch(err => console.log(err));
   }
 
   const sendSyncSignal = () => {
     if (headlightsBusy) return;
     if (connectedDevice)
-      connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
+      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
   }
 
   useEffect(() => {
@@ -56,7 +56,12 @@ export default function App() {
     <View style={styles.container}>
 
       {
-        !connectedDevice ? (<Text style={styles.text}>Scanning for Wink Reciever...</Text>)
+        !connectedDevice ? (
+          <>
+            <Text style={styles.text}>Scanning for Wink Reciever...</Text>
+            <Text style={{ color: "white", textAlign: "center" }}>If this takes overly long to connect, try restarting the app.</Text>
+          </>
+        )
           : (
             <>
               <Text style={styles.text}>Connected to Wink Reciever</Text>
@@ -68,11 +73,11 @@ export default function App() {
                 <Text style={styles.buttonText} onPress={() => setCreateCustomOpen(true)}>Create a Preset Command</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.button} key={2}>
+              <TouchableOpacity style={styles.button} key={3}>
                 <Text style={styles.buttonText} onPress={() => setCustomPresetOpen(true)}>Execute a Preset</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.button} key={3}>
+              <TouchableOpacity style={styles.button} key={4}>
                 <Text style={styles.buttonText} onPress={() => disconnect()}>Disconnect</Text>
               </TouchableOpacity>
             </>
@@ -107,6 +112,7 @@ export default function App() {
         leftStatus={leftState}
         rightStatus={rightState}
         visible={customPresetOpen}
+        sendDefaultCommand={sendDefaultCommand}
       />
 
     </View >
