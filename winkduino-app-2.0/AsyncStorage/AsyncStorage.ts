@@ -16,14 +16,16 @@ export class CustomCommandStore {
   static async saveCommand(commandName: string, commandSequence: CommandInput[]) {
 
     const existingCommand = await AsyncStorage.getItem(commandName);
+    console.log(existingCommand);
     if (existingCommand !== null) return false;
 
     let commandString = "";
     for (const part of commandSequence) {
       if (part.isDelay)
         commandString += `d${part.delay}-`;
-      else commandString += `${part.transmitValue}`;
+      else commandString += `${part.transmitValue}-`;
     }
+    commandString = commandString.slice(0, commandString.length - 1);
     try {
       await AsyncStorage.setItem(commandName, commandString)
       return true;

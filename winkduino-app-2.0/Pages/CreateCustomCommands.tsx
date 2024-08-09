@@ -20,12 +20,25 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
   const [allCommands, setAllCommands] = useState([] as CommandOutput[]);
 
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const createError = (err: string, ms: number) => {
     setError(err);
-    setTimeout(() => {
-      setError("");
-    }, ms);
+    setTimeout(() => setError(""), ms);
+  }
+
+  const createSuccess = (msg: string, ms: number) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(""), ms);
+  }
+
+  const fetchAllCommands = async () => {
+    try {
+      const allCommands = await CustomCommandStore.getAllCommands();
+      setAllCommands(allCommands);
+    } catch (err) {
+      createError("Something went wrong while getting all commands", 10000);
+    }
   }
 
   const saveCommand = async () => {
@@ -34,26 +47,30 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
     try {
       const returnValue = await CustomCommandStore.saveCommand(commandName, commandSequence);
       if (returnValue === false) return createError(`Preset with name '${commandName}' already exists`, 5000);
-
+      else createSuccess("Successfully saved command", 7500);
+      await fetchAllCommands();
+      setCommandName("");
+      setCommandSequence([]);
     } catch (err) {
 
     }
   }
 
 
-  const deleteCommand = (commandName: string) => {
+  const deleteCommand = async (commandName: string) => {
+    try {
+      const returnVal = await CustomCommandStore.deleteCommand(commandName);
+      if (returnVal) createSuccess("Successfully deleted command", 7500);
+      await fetchAllCommands();
+    } catch (err) {
 
+    }
   }
 
 
   useEffect(() => {
     (async () => {
-      try {
-        const allCommands = await CustomCommandStore.getAllCommands();
-        setAllCommands(allCommands);
-      } catch (err) {
-        createError("Something went wrong while getting all commands", 10000);
-      }
+      await fetchAllCommands();
     })();
   }, []);
 
@@ -66,8 +83,11 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
     >
 
       <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
-        <Text style={{ color: error ? "red" : "lightgreen", fontSize: 30 }}>{error ? `${error}` : "Editing Command"}</Text>
-
+        {
+          success ? <Text style={{ marginTop: 10, textAlign: "center", color: "lightgreen", fontSize: 30 }}>{success}</Text>
+            :
+            <Text style={{ textAlign: "center", color: error ? "red" : "lightgreen", fontSize: 30 }}>{error ? `${error}` : "Editing Command"}</Text>
+        }
         <TextInput
           style={{ ...styles.input, fontSize: 18, width: 300 }}
           value={commandName}
@@ -80,9 +100,9 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
           <Text style={{ ...styles.text, fontSize: 23 }}>
             Command Sequece
           </Text>
-          <Text style={{ color: "white", textAlign: "center" }}>
+          <Text style={{ color: "white", textAlign: "center", padding: 5 }}>
             {commandSequence.map((cmd, i) => (
-              <Text>{cmd.name}{i === commandSequence.length - 1 ? "" : " --> "}</Text>
+              <Text>{cmd.isDelay ? `Delay ${cmd.delay}ms` : cmd.name}{i === commandSequence.length - 1 ? "" : " --> "}</Text>
             ))}
           </Text>
         </View>
@@ -125,7 +145,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
         </View>
 
 
-        <View style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <View style={{ display: "flex", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
           <Text style={{ color: "white", textAlign: "center", fontSize: 30 }}>Add Delay</Text>
           <Text style={{ color: "white", textAlign: "center" }}>Adds delay between command signals. There will already be a small amount of delay between commands by default, due to the headlights movement.</Text>
           <TextInput
@@ -136,20 +156,32 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
             placeholder="Delay in milliseconds"
             placeholderTextColor="rgb(200,200,200)"
           />
+          <TouchableOpacity style={styles.button} onPress={() => setCommandSequence((prev) => [...prev, { isDelay: true, delay: delayMS, name: "", transmitValue: -1 }])}>
+            <Text style={styles.buttonText}>
+              Add Delay
+            </Text>
+          </TouchableOpacity>
         </View>
 
 
-        <View style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <View style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", rowGap: 10 }}>
           <Text style={{ color: "white", textAlign: "center", fontSize: 30 }} >Custom Presets</Text>
           <Text style={{ color: "white", textAlign: "center" }}>Usable from the Presets Menu</Text>
-          <View style={{ width: "100%", margin: 5, display: "flex", alignItems: "center", justifyContent: "space-evenly", flexWrap: "wrap" }}>
+          <View style={{ width: "100%", columnGap: 10, rowGap: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", flexWrap: "wrap" }}>
             {
-              allCommands.map(cmd => (
-                <View>
-                  <Text>{cmd.name}</Text>
-                  <Text>{cmd.command}</Text>
-                </View>
-              ))
+              allCommands.length > 0 ?
+                allCommands.map((cmd, i) => (
+                  <View style={{ borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: i % 2 === 0 ? "rgb(25, 25, 25)" : "rgb(50, 50, 50)", paddingVertical: 10, paddingHorizontal: 5 }}>
+                    <Text style={{ color: "white" }}>{cmd.name}</Text>
+                    <Text style={{ color: "white" }}>{cmd.command}</Text>
+                    <TouchableOpacity style={{ backgroundColor: "#b50030", borderRadius: 4 }}>
+                      <Text style={{ paddingVertical: 1, paddingHorizontal: 5, fontSize: 16, color: "white" }} onPress={() => deleteCommand(cmd.name)}>
+                        Delete Command
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+                : <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>No Commands Found</Text>
             }
           </View>
         </View>
@@ -172,7 +204,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={{ ...styles.button, marginBottom: 10 }}>
           <Text style={styles.buttonText} onPress={() => props.close()}>
             Close
           </Text>
