@@ -369,11 +369,11 @@ void loop()
   // Serial.println("Loop");
   // printf("Loop\n");
   int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
-  // int readLeftUp = digitalRead(LEFT_UP_INPUT);
+  int readLeftUp = digitalRead(LEFT_UP_INPUT);
   int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
-  // int readRightUp = digitalRead(RIGHT_UP_INPUT);
+  int readRightUp = digitalRead(RIGHT_UP_INPUT);
 
-  if ((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) {
+  if (((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) && ((readLeftUp != initialReadLeftUp) && (readRightUp != initialReadRightUp))) {
     if ((readLeftDown == HIGH && readRightDown == HIGH)) {
       bothUp();
     } else if ((readLeftDown == LOW && readRightDown == LOW)) {
@@ -386,8 +386,8 @@ void loop()
 
     initialReadLeftDown = readLeftDown;
     initialReadRightDown = readRightDown;
-    // initialReadLeftUp = readLeftUp;
-    // initialReadRightUp = readRightUp;
+    initialReadLeftUp = readLeftUp;
+    initialReadRightUp = readRightUp;
   } 
 
 }
