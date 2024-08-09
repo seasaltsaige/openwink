@@ -69,12 +69,14 @@ class ServerCallbacks : public NimBLEServerCallbacks
   };
   void onDisconnect(NimBLEServer *pServer)
   {
+    
+    NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+
+    if (pAdvertising->start(0))
+      Serial.printf("Started advertising\n");
+    else
+      Serial.printf("Failed to start advertising\n");
     Serial.printf("Client disconnected - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
-#ifdef ESP_PLATFORM
-    esp_deep_sleep_start();
-#else
-    systemRestart();
-#endif
   };
 };
 
@@ -256,24 +258,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
     {
     case 0:
       printf("Client connecting\n");
-
-      bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothUp();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothUp();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-
-      leftStatus = 1;
-      rightStatus = 1;
-
-      updateHeadlightChars();
       return;
     case BLE_HS_ETIMEOUT:
       printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
@@ -282,11 +266,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
       printf("Default case");
       break;
     }
-#ifdef ESP_PLATFORM
-    esp_deep_sleep_start();
-#else
-    systemRestart(); // nRF platforms restart then sleep via delay in setup.
-#endif
   }
 };
 
@@ -300,10 +279,6 @@ void setup()
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
 
   pinMode(BUTTON_PULL_UP, INPUT_PULLUP);
-
-#ifndef ESP_PLATFORM
-  delay(sleepSeconds * 1000); // system ON sleep mode for nRF platforms to simulate the esp deep sleep with timer wakeup
-#endif
 
   NimBLEDevice::init("Winkduino");
   NimBLEDevice::setDeviceName("Winkduino");
@@ -335,32 +310,39 @@ void setup()
   extAdv.setScannable(false);
 
   extAdv.setServiceData(NimBLEUUID(SERVICE_UUID), std::string("Winkduino"));
-
-  extAdv.setCompleteServices16({NimBLEUUID(SERVICE_UUID)});
+  extAdv.setCompleteServices16({ NimBLEUUID(SERVICE_UUID) });
 
   NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
 
   pAdvertising->setCallbacks(new advertisingCallbacks);
 
+        bothDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+      bothUp();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+      bothDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+      bothUp();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      leftStatus = 1;
+      rightStatus = 1;
+
+      updateHeadlightChars();
+
   if (pAdvertising->setInstanceData(0, extAdv))
   {
-    if (pAdvertising->start(0, advTime))
-    {
+    if (pAdvertising->start(0))
       Serial.printf("Started advertising\n");
-    }
     else
-    {
       Serial.printf("Failed to start advertising\n");
-    }
   }
   else
-  {
     Serial.printf("Failed to register advertisment data\n");
-  }
-
-#ifdef ESP_PLATFORM
-  esp_sleep_enable_timer_wakeup(sleepSeconds * 1000000);
-#endif
 }
 
 // Both
