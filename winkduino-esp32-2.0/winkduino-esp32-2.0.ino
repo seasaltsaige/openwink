@@ -14,7 +14,11 @@
 #define OUT_PIN_RIGHT_DOWN 6
 #define OUT_PIN_RIGHT_UP 7
 
-#define BUTTON_PULL_UP 8
+#define LEFT_DOWN_INPUT 15
+#define LEFT_UP_INPUT 16
+
+#define RIGHT_DOWN_INPUT 17
+#define RIGHT_UP_INPUT 18
 
 int leftStatus = 0;
 int rightStatus = 0;
@@ -60,26 +64,6 @@ static uint32_t sleepSeconds = 1;
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
 
-/* Handler class for server events */
-class ServerCallbacks : public NimBLEServerCallbacks
-{
-  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
-  {
-    Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
-  };
-  void onDisconnect(NimBLEServer *pServer)
-  {
-    
-    NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-
-    if (pAdvertising->start(0))
-      Serial.printf("Started advertising\n");
-    else
-      Serial.printf("Failed to start advertising\n");
-    Serial.printf("Client disconnected - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
-  };
-};
-
 void updateHeadlightChars()
 {
   leftChar->setValue(std::string(String(leftStatus).c_str()));
@@ -87,6 +71,32 @@ void updateHeadlightChars()
   leftChar->notify();
   rightChar->notify();
 }
+
+/* Handler class for server events */
+class ServerCallbacks : public NimBLEServerCallbacks
+{
+  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
+  {
+    updateHeadlightChars();
+    printf("%d\n", leftStatus);
+    printf("%d\n", rightStatus);
+    Serial.println(leftStatus);
+    Serial.println(rightStatus);
+    Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
+  };
+  void onDisconnect(NimBLEServer *pServer)
+  {
+    printf("Disconnected from client\n");
+    NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+
+    if (pAdvertising->start(0))
+      printf("Started advertising\n");
+    else
+      printf("Failed to start advertising\n");
+  };
+};
+
+
 
 class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
@@ -269,16 +279,29 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
   }
 };
 
+
+
+
+int initialReadLeftDown = -1;
+int initialReadLeftUp = -1;
+int initialReadRightDown = -1;
+int initialReadRightUp = -1;
+
 void setup()
 {
   Serial.begin(115200);
 
+  // Outputs for headlight movement
   pinMode(OUT_PIN_LEFT_DOWN, OUTPUT);
   pinMode(OUT_PIN_LEFT_UP, OUTPUT);
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
 
-  pinMode(BUTTON_PULL_UP, INPUT_PULLUP);
+  // OEM Wiring inputs to detect initial state of headlights
+  pinMode(LEFT_DOWN_INPUT, INPUT_PULLUP);
+  pinMode(LEFT_UP_INPUT, INPUT_PULLUP);
+  pinMode(RIGHT_DOWN_INPUT, INPUT_PULLUP);
+  pinMode(RIGHT_UP_INPUT, INPUT_PULLUP);
 
   NimBLEDevice::init("Winkduino");
   NimBLEDevice::setDeviceName("Winkduino");
@@ -298,6 +321,19 @@ void setup()
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
+  initialReadLeftDown = digitalRead(LEFT_DOWN_INPUT);
+  initialReadLeftUp = digitalRead(LEFT_UP_INPUT);
+  initialReadRightDown = digitalRead(RIGHT_DOWN_INPUT);
+  initialReadRightUp = digitalRead(RIGHT_UP_INPUT);
+
+  if (initialReadLeftDown == LOW) leftStatus = 0;
+  else if (initialReadLeftUp == LOW) leftStatus = 1;
+
+  if (initialReadRightDown == LOW) rightStatus = 0;
+  else if (initialReadRightUp == LOW) rightStatus = 1;
+
+  updateHeadlightChars();
+
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
@@ -316,33 +352,44 @@ void setup()
 
   pAdvertising->setCallbacks(new advertisingCallbacks);
 
-        bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothUp();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-      bothUp();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-
-      leftStatus = 1;
-      rightStatus = 1;
-
-      updateHeadlightChars();
-
   if (pAdvertising->setInstanceData(0, extAdv))
   {
     if (pAdvertising->start(0))
-      Serial.printf("Started advertising\n");
+      printf("Started advertising\n");
     else
-      Serial.printf("Failed to start advertising\n");
+      printf("Failed to start advertising\n");
   }
   else
-    Serial.printf("Failed to register advertisment data\n");
+    printf("Failed to register advertisment data\n");
+}
+
+
+void loop()
+{
+  // Serial.println("Loop");
+  // printf("Loop\n");
+  int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
+  // int readLeftUp = digitalRead(LEFT_UP_INPUT);
+  int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
+  // int readRightUp = digitalRead(RIGHT_UP_INPUT);
+
+  if ((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) {
+    if ((readLeftDown == HIGH && readRightDown == HIGH)) {
+      bothUp();
+    } else if ((readLeftDown == LOW && readRightDown == LOW)) {
+      bothDown();
+    }
+
+
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
+
+    initialReadLeftDown = readLeftDown;
+    initialReadRightDown = readRightDown;
+    // initialReadLeftUp = readLeftUp;
+    // initialReadRightUp = readRightUp;
+  } 
+
 }
 
 // Both
@@ -614,34 +661,10 @@ void rightWave()
   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
 }
 
-// Sleepy eye working!
-// void percentageDrop(double percentage) {
-//   Serial.println(percentage);
-//   Serial.println("IN DROP");
-
-//   digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-//   digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-//   digitalWrite(OUT_PIN_LEFT_UP, LOW);
-//   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-//   Serial.println("DOWN");
-
-//   delay(percentage * HEADLIGHT_MOVEMENT_DELAY);
-
-//   Serial.println("ALL OFF");
-//   setAllOff();
-// }
-
-// ------------------------------------------ //
-// HELPER FUNCTIONS //
 void setAllOff()
 {
   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
   digitalWrite(OUT_PIN_LEFT_UP, LOW);
   digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-}
-
-void loop()
-{
 }
