@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { DefaultCommands } from "./Pages/DefaultCommands";
 import { CreateCustomCommands } from './Pages/CreateCustomCommands';
+import { CustomCommands } from './Pages/CustomCommands';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -18,6 +19,7 @@ export default function App() {
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
   const [createCustomOpen, setCreateCustomOpen] = useState(false);
+  const [customPresetOpen, setCustomPresetOpen] = useState(false);
 
   const scanForDevice = async () => {
     const permsEnabled = await requestPermissions();
@@ -62,11 +64,15 @@ export default function App() {
                 <Text style={styles.buttonText} onPress={() => setDefaultCommandsOpen(true)}>Go To Commands</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.button} key={1}>
+              <TouchableOpacity style={styles.button} key={2}>
                 <Text style={styles.buttonText} onPress={() => setCreateCustomOpen(true)}>Create a Preset Command</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.button} key={2}>
+                <Text style={styles.buttonText} onPress={() => setCustomPresetOpen(true)}>Execute a Preset</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.button} key={3}>
                 <Text style={styles.buttonText} onPress={() => disconnect()}>Disconnect</Text>
               </TouchableOpacity>
             </>
@@ -92,6 +98,15 @@ export default function App() {
         device={connectedDevice}
         visible={createCustomOpen}
         key={2}
+      />
+
+      <CustomCommands
+        close={() => setCustomPresetOpen(false)}
+        device={connectedDevice}
+        headlightBusy={headlightsBusy}
+        leftStatus={leftState}
+        rightStatus={rightState}
+        visible={customPresetOpen}
       />
 
     </View >
