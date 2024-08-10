@@ -67,7 +67,6 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
     }
   }
 
-
   useEffect(() => {
     (async () => {
       await fetchAllCommands();
