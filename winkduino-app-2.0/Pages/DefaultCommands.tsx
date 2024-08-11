@@ -130,6 +130,7 @@ function DefaultCommands(props: DefaultModalProps) {
         <TextInput placeholderTextColor={"rgb(200, 200, 200)"} placeholder="Enter a number from 1-100" value={sleepyEyeValue} maxLength={3} keyboardType="number-pad" onChangeText={(text) => parseInt(text) > 100 ? setSleepyEyeValue("100") : setSleepyEyeValue(text)} style={styles.sleepInput} />
 
         {/* TODO: Use settings page values for sleepy eye */}
+        {/* UPDATE THIS CODE TO USE SETTINGS AND NOT INPUT ABOVE */}
         <OpacityButton
           onPress={() => props.sendSleepCommand(parseInt(sleepyEyeValue))}
           disabled={props.headlightsBusy || needsReset}

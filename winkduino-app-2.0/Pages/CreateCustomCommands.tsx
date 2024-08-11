@@ -195,7 +195,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
         <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
 
           <OpacityButton
-            buttonStyle={{ ...styles.button, backgroundColor: "darkgreen", width: 150 }}
+            buttonStyle={{ ...styles.button, backgroundColor: "#228B22", width: 150 }}
             textStyle={{ ...styles.buttonText, fontSize: 18 }}
             text="Save Command"
             onPress={() => saveCommand()}

@@ -9,6 +9,7 @@ import { CustomCommands } from './Pages/CustomCommands';
 import { DeviceMACStore } from './AsyncStorage/DeviceMACStore';
 import { Settings } from './Pages/Settings';
 import { OpacityButton } from './Components/OpacityButton';
+import { AutoConnectStore } from './AsyncStorage';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -32,6 +33,8 @@ export default function App() {
   const [createCustomOpen, setCreateCustomOpen] = useState(false);
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [autoConnect, setAutoConnect] = useState(true);
 
   const [MAC, setMAC] = useState<string | undefined>();
 
@@ -77,24 +80,47 @@ export default function App() {
     }
   }, [isScanning]);
 
+
+  useEffect(() => {
+    (async () => {
+      const connect = await AutoConnectStore.get();
+      if (connect === undefined) setAutoConnect(true);
+      else setAutoConnect(false);
+
+      const mac = await DeviceMACStore.getStoredMAC();
+      setMAC(mac);
+    })();
+  }, [settingsOpen]);
+
   useEffect(() => {
     if (connectedDevice !== null) return;
-    scanForDevice();
+
     (async () => {
+      const connect = await AutoConnectStore.get();
+      if (connect === undefined) setAutoConnect(true);
+      else setAutoConnect(false);
+
+      if (connect === undefined)
+        scanForDevice();
+
       const mac = await DeviceMACStore.getStoredMAC();
       setMAC(mac);
     })();
   }, []);
 
+
   return (
     <View style={styles.container}>
       <Text style={{ color: "white", textAlign: "center", fontSize: 20 }}>
         {
+
           isScanning ?
             `Scanning for ${MAC ? "wink module..." : `${timeLeftScan} second(s)...`}`
             : isConnecting ?
               "Connecting to wink receiver... Stand by..."
-              : <></>
+              : (autoConnect && connectedDevice) ?
+                "" : (!autoConnect && connectedDevice) ? "" :
+                  "Scanner standing by... Press \"Connect\" to start scanning."
         }
       </Text>
 
@@ -145,14 +171,26 @@ export default function App() {
             onPress={() => setCustomPresetOpen(true)}
           />
         </View>
-
-        <OpacityButton
-          disabled={!connectedDevice}
-          buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), marginTop: 75 }}
-          textStyle={styles.buttonText}
-          onPress={() => disconnect()}
-          text="Disconnect"
-        />
+        {
+          (connectedDevice !== null) ?
+            <OpacityButton
+              disabled={!connectedDevice}
+              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), marginTop: 75 }}
+              textStyle={styles.buttonText}
+              onPress={() => disconnect()}
+              text="Disconnect"
+            />
+            // connectedDevice is null
+            :
+            !autoConnect ?
+              <OpacityButton
+                buttonStyle={{ ...(styles.button), marginTop: 75 }}
+                textStyle={styles.buttonText}
+                onPress={() => scanForDevice()}
+                text="Connect"
+              />
+              : <></>
+        }
       </>
 
 
@@ -186,11 +224,13 @@ export default function App() {
         rightStatus={rightState}
         visible={customPresetOpen}
         sendDefaultCommand={sendDefaultCommand}
+        key={3}
       />
 
       <Settings
         close={() => setSettingsOpen(false)}
         visible={settingsOpen}
+        key={4}
       />
 
     </View >

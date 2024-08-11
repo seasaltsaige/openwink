@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const MAC_ADDR_KEY = "mac-addr";
+
 export interface CommandInput {
   isDelay: boolean;
   delay?: number;
@@ -27,7 +29,7 @@ export class CustomCommandStore {
     }
     commandString = commandString.slice(0, commandString.length - 1);
     try {
-      await AsyncStorage.setItem(commandName, commandString)
+      await AsyncStorage.setItem(`cmd_${commandName}`, commandString)
       return true;
     } catch (err) {
       return err;
@@ -35,8 +37,9 @@ export class CustomCommandStore {
   }
 
   static async getAllCommands() {
-    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== "mac-addr");
+    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye");
     const commands: CommandOutput[] = [];
+    console.log(allKeys);
 
     for (const key of allKeys) {
       try {
@@ -50,15 +53,20 @@ export class CustomCommandStore {
 
   static async deleteCommand(commandName: string) {
     try {
-      await AsyncStorage.removeItem(commandName);
+      await AsyncStorage.removeItem(`cmd_${commandName}`);
       return true;
     } catch (err) {
       return err;
     }
   }
 
-  static async getCommand() {
-
+  static async deleteAllCommands() {
+    try {
+      const allCmdKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye");
+      await AsyncStorage.multiRemove(allCmdKeys);
+    } catch (err) {
+      return err;
+    }
   }
 
 }

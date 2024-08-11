@@ -4,6 +4,7 @@ import { BleManager, Device, ScanCallbackType, ScanMode, Subscription } from "re
 import * as ExpoDevice from "expo-device";
 import base64 from "react-native-base64";
 import { DeviceMACStore } from "../AsyncStorage/DeviceMACStore";
+import { AutoConnectStore } from "../AsyncStorage";
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 
@@ -32,7 +33,7 @@ function useBLE() {
   const [rightSub, setRightSub] = useState<Subscription>();
 
   // Home page states
-  const [isScanning, setIsScanning] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
 
@@ -180,7 +181,11 @@ function useBLE() {
           return console.log("Error disconnecting from device: ", err);
         console.log("Disconnected from device");
         setConnectedDevice(null);
-        scan();
+
+        // CHECK IF AUTOCONNECT IS ENABLED
+        const autoConnect = await AutoConnectStore.get();
+        if (autoConnect === undefined)
+          scan();
       });
 
 
@@ -218,6 +223,7 @@ function useBLE() {
     } else {
       console.log("No Stored MAC Found... checking devices");
       for (const device of allDevices) {
+        if (connectedDevice) break;
         // Logic to discover if device is correct
         try {
           if (!checkedMACs.includes(device.id)) {
