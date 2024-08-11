@@ -1,9 +1,10 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { Device } from "react-native-ble-plx";
-import { CommandOutput, CustomCommandStore } from "../AsyncStorage/AsyncStorage";
+import { CommandOutput, CustomCommandStore } from "../AsyncStorage/CustomCommandStore";
 import { useEffect, useState } from "react";
 import base64 from "react-native-base64";
 import { useBLE } from "../hooks/useBLE";
+import { OpacityButton } from "../Components/OpacityButton";
 
 type CustomCommandProps = {
   visible: boolean;
@@ -36,9 +37,9 @@ export function CustomCommands(props: CustomCommandProps) {
         await sleep(delay);
       } else {
         props.sendDefaultCommand(parseInt(cmd));
-        if (cmd === "3") await sleep(HEADLIGHT_MOVEMENT_DELAY * 2)
-        if (cmd === "6" || cmd === "9")
-          await sleep(HEADLIGHT_MOVEMENT_DELAY * 4)
+        if (cmd === "3" || cmd === "6" || cmd === "9") await sleep(HEADLIGHT_MOVEMENT_DELAY * 2)
+        else if (cmd === "10" || cmd === "11")
+          await sleep(HEADLIGHT_MOVEMENT_DELAY * 4);
         else await sleep(HEADLIGHT_MOVEMENT_DELAY);
       }
     }
@@ -75,9 +76,12 @@ export function CustomCommands(props: CustomCommandProps) {
           <Text style={styles.text}>Right State: {props.rightStatus}</Text>
         </View>
 
-        <TouchableOpacity style={{ backgroundColor: "rgb(30,30,30)", padding: 10, borderRadius: 4 }} onPress={() => fetchAllCommands()}>
-          <Text style={{ color: "white" }}>Refresh Commands</Text>
-        </TouchableOpacity>
+        <OpacityButton
+          onPress={() => fetchAllCommands()}
+          buttonStyle={{ backgroundColor: "rgb(30,30,30)", padding: 10, borderRadius: 4 }}
+          textStyle={{ color: "white" }}
+          text="Refresh Commands"
+        />
 
         <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", flexWrap: "wrap", columnGap: 3, rowGap: 5 }}>
           {
@@ -85,23 +89,27 @@ export function CustomCommands(props: CustomCommandProps) {
               <View style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", rowGap: 3, backgroundColor: i % 2 === 0 ? "rgb(15, 15, 15)" : "rgb(30, 30, 30)" }}>
                 <Text style={styles.text}>{cmd.name}</Text>
                 <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15 }}>{cmd.command}</Text>
-                <TouchableOpacity disabled={props.headlightBusy} style={{ ...(props.headlightBusy ? styles.buttonDisabled : styles.button), width: "auto", height: "auto", padding: 10, }} onPress={() => executeCommand(cmd.command)}>
-                  <Text style={{ fontSize: 16, textAlign: "center", color: "white" }}>Execute Command</Text>
-                </TouchableOpacity>
+
+                <OpacityButton
+                  disabled={props.headlightBusy}
+                  buttonStyle={{ ...(props.headlightBusy ? styles.buttonDisabled : styles.button), width: "auto", height: "auto", padding: 10, }}
+                  textStyle={{ fontSize: 16, textAlign: "center", color: "white" }}
+                  text="Execute Command"
+                  onPress={() => executeCommand(cmd.command)}
+                />
               </View>
             ))
           }
         </View>
 
 
-        <TouchableOpacity style={{ ...styles.button, marginBottom: 10 }}>
-          <Text style={styles.buttonText} onPress={() => props.close()}>
-            Close
-          </Text>
-        </TouchableOpacity>
-
+        <OpacityButton
+          buttonStyle={{ ...styles.button, marginBottom: 10 }}
+          textStyle={styles.buttonText}
+          onPress={() => props.close()}
+          text="Close"
+        />
       </View>
-
     </Modal>
   )
 }

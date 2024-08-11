@@ -1,7 +1,8 @@
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Device } from "react-native-ble-plx";
-import { CommandInput, CommandOutput, CustomCommandStore } from "../AsyncStorage/AsyncStorage";
+import { CommandInput, CommandOutput, CustomCommandStore } from "../AsyncStorage/CustomCommandStore";
 import { useEffect, useState } from "react";
+import { OpacityButton } from "../Components/OpacityButton";
 
 type CreateCustomCommandProps = {
   visible: boolean;
@@ -97,7 +98,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
 
         <View style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Text style={{ ...styles.text, fontSize: 23 }}>
-            Command Sequece
+            Command Sequence
           </Text>
           <Text style={{ color: "white", textAlign: "center", padding: 5 }}>
             {commandSequence.map((cmd, i) => (
@@ -129,13 +130,12 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
               <View style={{ display: "flex", flexDirection: "column", alignItems: "center", rowGap: 8, }}>
                 {
                   part.map(cmd => (
-                    <TouchableOpacity onPress={() => setCommandSequence((prev) => [...prev, { isDelay: false, transmitValue: cmd.i, name: cmd.title }])} style={{ ...styles.button, width: "auto", paddingHorizontal: 15 }}>
-                      <Text style={{ ...styles.buttonText, fontSize: 16 }}>
-                        {
-                          cmd.title
-                        }
-                      </Text>
-                    </TouchableOpacity>
+                    <OpacityButton
+                      text={cmd.title}
+                      textStyle={{ ...styles.buttonText, fontSize: 16 }}
+                      buttonStyle={{ ...styles.button, width: "auto", paddingHorizontal: 15 }}
+                      onPress={() => setCommandSequence((prev) => [...prev, { isDelay: false, transmitValue: cmd.i, name: cmd.title }])}
+                    />
                   ))
                 }
               </View>
@@ -155,11 +155,12 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
             placeholder="Delay in milliseconds"
             placeholderTextColor="rgb(200,200,200)"
           />
-          <TouchableOpacity style={styles.button} onPress={() => setCommandSequence((prev) => [...prev, { isDelay: true, delay: delayMS, name: "", transmitValue: -1 }])}>
-            <Text style={styles.buttonText}>
-              Add Delay
-            </Text>
-          </TouchableOpacity>
+          <OpacityButton
+            buttonStyle={styles.button}
+            textStyle={styles.buttonText}
+            text="Add Delay"
+            onPress={() => setCommandSequence((prev) => [...prev, { isDelay: true, delay: delayMS, name: "", transmitValue: -1 }])}
+          />
         </View>
 
 
@@ -173,11 +174,12 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
                   <View style={{ borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: i % 2 === 0 ? "rgb(25, 25, 25)" : "rgb(50, 50, 50)", paddingVertical: 10, paddingHorizontal: 5 }}>
                     <Text style={{ color: "white" }}>{cmd.name}</Text>
                     <Text style={{ color: "white" }}>{cmd.command}</Text>
-                    <TouchableOpacity style={{ backgroundColor: "#b50030", borderRadius: 4 }}>
-                      <Text style={{ paddingVertical: 1, paddingHorizontal: 5, fontSize: 16, color: "white" }} onPress={() => deleteCommand(cmd.name)}>
-                        Delete Command
-                      </Text>
-                    </TouchableOpacity>
+                    <OpacityButton
+                      buttonStyle={{ backgroundColor: "#b50030", borderRadius: 4 }}
+                      textStyle={{ paddingVertical: 1, paddingHorizontal: 5, fontSize: 16, color: "white" }}
+                      text="Delete Command"
+                      onPress={() => deleteCommand(cmd.name)}
+                    />
                   </View>
                 ))
                 : <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>No Commands Found</Text>
@@ -191,23 +193,27 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
 
 
         <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-          <TouchableOpacity style={{ ...styles.button, backgroundColor: "darkgreen", width: 150 }}>
-            <Text style={{ ...styles.buttonText, fontSize: 18 }} onPress={() => saveCommand()}>
-              Save Command
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity style={{ ...styles.button, backgroundColor: "red", width: 150 }}>
-            <Text style={{ ...styles.buttonText, fontSize: 18, textAlign: "center" }} onPress={() => setCommandSequence((prev) => prev.slice(0, prev.length - 1))}>
-              Remove Last Instruction
-            </Text>
-          </TouchableOpacity>
+          <OpacityButton
+            buttonStyle={{ ...styles.button, backgroundColor: "darkgreen", width: 150 }}
+            textStyle={{ ...styles.buttonText, fontSize: 18 }}
+            text="Save Command"
+            onPress={() => saveCommand()}
+          />
+          <OpacityButton
+            buttonStyle={{ ...styles.button, backgroundColor: "red", width: 150 }}
+            textStyle={{ ...styles.buttonText, fontSize: 18, textAlign: "center" }}
+            text="Remove Last Instruction"
+            onPress={() => setCommandSequence((prev) => prev.slice(0, prev.length - 1))}
+          />
         </View>
-        <TouchableOpacity style={{ ...styles.button, marginBottom: 10 }}>
-          <Text style={styles.buttonText} onPress={() => props.close()}>
-            Close
-          </Text>
-        </TouchableOpacity>
+
+        <OpacityButton
+          buttonStyle={{ ...styles.button, marginBottom: 10 }}
+          textStyle={styles.buttonText}
+          text="Close"
+          onPress={() => props.close()}
+        />
       </ScrollView>
 
     </Modal >

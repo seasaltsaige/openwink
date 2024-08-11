@@ -35,7 +35,7 @@ export class CustomCommandStore {
   }
 
   static async getAllCommands() {
-    const allKeys = await AsyncStorage.getAllKeys();
+    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== "mac-addr");
     const commands: CommandOutput[] = [];
 
     for (const key of allKeys) {

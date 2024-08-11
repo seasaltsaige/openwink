@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 import { BleManager, Device, ScanCallbackType, ScanMode, Subscription } from "react-native-ble-plx";
 import * as ExpoDevice from "expo-device";
 import base64 from "react-native-base64";
+import { DeviceMACStore } from "../AsyncStorage/DeviceMACStore";
 
-const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
+const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 
-const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521"
+const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
@@ -17,15 +18,30 @@ const sleep = (ms: number) => {
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
-  // const [allDevices, setAllDevice]
+  // const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
   const [rightState, setRightState] = useState(0);
 
+  const [MAC, setMAC] = useState<string | undefined>(undefined);
+  const [checkedMACs, setCheckedMACs] = useState<string[]>([]);
+
   const [reqSub, setReqSub] = useState<Subscription>();
   const [leftSub, setLeftSub] = useState<Subscription>();
   const [rightSub, setRightSub] = useState<Subscription>();
+
+  // Home page states
+  const [isScanning, setIsScanning] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+
+  useEffect(() => {
+    (async () => {
+      const mac = await DeviceMACStore.getStoredMAC();
+      setMAC(mac);
+    })();
+  }, []);
 
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
@@ -84,12 +100,33 @@ function useBLE() {
   };
 
 
-  const connectToDevice = async (device: Device) => {
+  const connectToDevice = async (device: Device, discovery = false) => {
     try {
       const connection = await bleManager.connectToDevice(device.id);
-      setConnectedDevice(connection);
       await connection.discoverAllServicesAndCharacteristics();
-      await bleManager.stopDeviceScan();
+      // Logic to discover characteristics and see whats up
+      if (discovery) {
+        console.log("Discovering device: ", connection.id);
+        const services = await connection.services();
+        const serviceUUIDs = services.map(s => s.uuid);
+        console.log(serviceUUIDs);
+        let foundService = false;
+        if (!serviceUUIDs.includes(SERVICE_UUID)) foundService = false;
+        else foundService = true;
+
+        if (!foundService) {
+          setCheckedMACs((prev) => [...prev, connection.id]);
+          console.log("Disconnecting from device: ", connection.id);
+          await connection.cancelConnection();
+          return false;
+        } else {
+          await DeviceMACStore.setMAC(connection.id);
+          setMAC(connection.id);
+        }
+      }
+
+      setConnectedDevice(connection);
+      setIsConnecting(false);
 
       const subReq = connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
         if (err) return console.log(err);
@@ -127,9 +164,6 @@ function useBLE() {
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
       const rightInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);
 
-      console.log(leftInitStatus?.value);
-      console.log(rightInitStatus?.value);
-
       if (leftInitStatus) {
         if (base64.decode(leftInitStatus.value!) === "1") setLeftState(1);
         else setLeftState(0);
@@ -139,17 +173,20 @@ function useBLE() {
         else setRightState(0);
       }
 
-      connection.onDisconnected((err, device) => {
-        if (err) {
-          console.log(err);
-        }
+
+      // Handle disconnect
+      connection.onDisconnected(async (err, device) => {
+        if (err)
+          return console.log("Error disconnecting from device: ", err);
         console.log("Disconnected from device");
         setConnectedDevice(null);
         scan();
       });
+
+
       // await device.discoverAllServicesAndCharacteristics()
       console.log(connection.name, connectedDevice?.localName);
-      console.log("Connected to device", connectedDevice?.localName);
+      console.log("Connected to device", connection.name);
       // connection.monitorCharacteristicForService()
     } catch (err) {
       console.log("Failed to connect: ");
@@ -158,24 +195,78 @@ function useBLE() {
   }
 
 
-  const scan = async () => {
-    console.log("BEGIN SCAN");
-    bleManager.startDeviceScan(null, { allowDuplicates: false, callbackType: ScanCallbackType.AllMatches, legacyScan: false, scanMode: ScanMode.LowLatency }, async (err, device) => {
-      if (err) {
-        console.log(JSON.stringify(err));
-        if (err.message.includes("scanning")) {
-          await sleep(1000);
+  const attemptConnections = async (allDevices: Device[]) => {
+    console.log("Stopping scan...");
+
+    await bleManager.stopDeviceScan();
+    setIsScanning(false);
+
+    console.log("Attempting connections...");
+    setIsConnecting(true);
+
+    const mac = await DeviceMACStore.getStoredMAC();
+    console.log("Stored MAC:", mac);
+
+
+    if (mac !== undefined) {
+      console.log("Stored MAC Found, attempting to connect");
+      const device = allDevices.find((dev) => dev.id === mac);
+      if (device && device.id === mac) {
+        await connectToDevice(device);
+        console.log(device.id);
+      }
+    } else {
+      console.log("No Stored MAC Found... checking devices");
+      for (const device of allDevices) {
+        // Logic to discover if device is correct
+        try {
+          if (!checkedMACs.includes(device.id)) {
+            console.log("Scan method, new device id: ", device.id);
+            await connectToDevice(device, true);
+          }
+        } catch (err) {
+          console.log("Error connecting: ", err);
         }
       }
+    }
+  }
+
+  const scan = async () => {
+    if (connectedDevice !== null) return;
+    console.log("BEGIN SCAN");
+
+    let foundDevice = false;
+
+    const allDevices: Device[] = [];
+    const mac = await DeviceMACStore.getStoredMAC();
+    setTimeout(async () => {
+      if (foundDevice) return;
+      await attemptConnections(allDevices);
+    }, 12 * 1000);
+    setIsScanning(true);
+    bleManager.startDeviceScan(null, { allowDuplicates: false, callbackType: ScanCallbackType.FirstMatch, legacyScan: false, scanMode: ScanMode.LowLatency }, async (err, device) => {
+      if (err) {
+        console.log(err);
+      }
+
       if (device) {
-        // DEVICE MAC ID
-        if (device.id === "3C:84:27:DC:4B:89") {
+        if (device.id === mac) {
+          console.log("Stored device scanned");
+          foundDevice = true;
+          await bleManager.stopDeviceScan();
+          setIsScanning(false);
+          setIsConnecting(true);
           await connectToDevice(device);
-          console.log(device.id);
         }
+
+        console.log("New device discovered:", device.id);
+        allDevices.push(device);
       }
     });
   }
+
+
+
 
   const disconnect = async () => {
     console.log("BEGIN DISCONNECT");
@@ -184,14 +275,7 @@ function useBLE() {
       reqSub?.remove();
       leftSub?.remove();
       rightSub?.remove();
-
-      try {
-        await connectedDevice?.cancelConnection();
-        setConnectedDevice(null);
-        await scan();
-      } catch (err) {
-        console.log("ERROR DISCONNECTING", err);
-      }
+      await connectedDevice?.cancelConnection();
     }
   }
 
@@ -205,7 +289,11 @@ function useBLE() {
     headlightsBusy,
     leftState,
     rightState,
-    bleManager
+    bleManager,
+    MAC,
+    // allDevices,
+    isScanning,
+    isConnecting,
   }
 }
 

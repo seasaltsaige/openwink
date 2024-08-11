@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import { Device } from "react-native-ble-plx";
+import { OpacityButton } from "../Components/OpacityButton";
 
 type DefaultModalProps = {
   device: Device | null;
@@ -91,11 +92,13 @@ function DefaultCommands(props: DefaultModalProps) {
               <View style={styles.commandRow} key={i}>
                 {
                   part.map((cmd, i) => (
-                    <TouchableOpacity disabled={props.headlightsBusy || needsReset} style={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}>
-                      <Text onPress={() => props.sendDefaultCommand(cmd.value)} style={styles.buttonText}>
-                        {cmd.name}
-                      </Text>
-                    </TouchableOpacity>
+                    <OpacityButton
+                      onPress={() => props.sendDefaultCommand(cmd.value)}
+                      disabled={props.headlightsBusy || needsReset}
+                      buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+                      textStyle={styles.buttonText}
+                      text={cmd.name}
+                    />
                   ))
                 }
               </View>
@@ -104,44 +107,53 @@ function DefaultCommands(props: DefaultModalProps) {
         </View>
 
         <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-          <TouchableOpacity disabled={props.headlightsBusy || needsReset} style={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton} onPress={() => props.sendDefaultCommand(10)}>
-            <Text style={styles.buttonText}>
-              Left Wave
-            </Text>
-          </TouchableOpacity>
+          <OpacityButton
+            disabled={props.headlightsBusy || needsReset}
+            buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+            onPress={() => props.sendDefaultCommand(10)}
+            text="Left Wave"
+            textStyle={styles.buttonText}
+          />
 
-          <TouchableOpacity disabled={props.headlightsBusy || needsReset} style={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton} onPress={() => props.sendDefaultCommand(11)}>
-            <Text style={styles.buttonText}>
-              Right Wave
-            </Text>
-          </TouchableOpacity>
+          <OpacityButton
+            disabled={props.headlightsBusy || needsReset}
+            buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+            onPress={() => props.sendDefaultCommand(11)}
+            text="Right Wave"
+            textStyle={styles.buttonText}
+          />
         </View>
 
         <Text style={{ color: "white", fontSize: 16, textAlign: "center", marginLeft: 5, marginRight: 5, }}>
           1-100 represents percentages from fully closed. 1 being 1% above, and 100 being 100% fully open.
         </Text>
         <TextInput placeholderTextColor={"rgb(200, 200, 200)"} placeholder="Enter a number from 1-100" value={sleepyEyeValue} maxLength={3} keyboardType="number-pad" onChangeText={(text) => parseInt(text) > 100 ? setSleepyEyeValue("100") : setSleepyEyeValue(text)} style={styles.sleepInput} />
-        <TouchableOpacity onPress={() => props.sendSleepCommand(parseInt(sleepyEyeValue))} disabled={props.headlightsBusy || needsReset} style={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}>
-          <Text style={styles.buttonText}>
-            Send Sleepy Eye
-          </Text>
-        </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => props.sendSyncCommand()} disabled={props.headlightsBusy} style={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton}>
-          <Text style={styles.buttonText}>
-            Sync Headlights (Reset Sleepy Eye)
-          </Text>
-        </TouchableOpacity>
+        {/* TODO: Use settings page values for sleepy eye */}
+        <OpacityButton
+          onPress={() => props.sendSleepCommand(parseInt(sleepyEyeValue))}
+          disabled={props.headlightsBusy || needsReset}
+          buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+          textStyle={styles.buttonText}
+          text="Send Sleepy Eye"
+        />
 
+        <OpacityButton
+          onPress={() => props.sendSyncCommand()}
+          disabled={props.headlightsBusy}
+          buttonStyle={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton}
+          textStyle={styles.buttonText}
+          text="Sync Headlights (Resets Sleepy Eye)"
+        />
 
-        <TouchableOpacity onPress={() => props.close()} style={{ marginTop: 20, ...styles.button }}>
-          <Text style={styles.buttonText}>
-            Close
-          </Text>
-        </TouchableOpacity>
-
+        <OpacityButton
+          onPress={() => props.close()}
+          buttonStyle={{ marginTop: 20, ...styles.button }}
+          textStyle={styles.buttonText}
+          text="Close"
+        />
       </View>
-    </Modal>
+    </Modal >
   )
 }
 
