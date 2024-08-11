@@ -50,7 +50,8 @@ NimBLECharacteristic *busyChar = nullptr;
 #define LEFT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51523"
 #define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
 
-#define SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51525"
+#define LEFT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51525"
+#define RIGHT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 #define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
@@ -138,7 +139,7 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 };
 
 // must be in same position to work
-class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
   void onWrite(NimBLECharacteristic *pChar)
   {
@@ -148,39 +149,44 @@ class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 
     // Client blocks this endpoint when headlights are already sleepy
 
-    if (leftStatus == 1 && rightStatus == 1)
-    {
-      bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-    }
-    else if (leftStatus == 1)
+    if (leftStatus == 1)
     {
       leftDown();
       delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
     }
-    else if (rightStatus == 1)
+
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    delay(percentage * HEADLIGHT_MOVEMENT_DELAY);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+
+    leftStatus = headlightValue + 10;
+    updateHeadlightChars();
+  }
+};
+
+class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onWrite(NimBLECharacteristic *pChar)
+  {
+    std::string value = pChar->getValue();
+    int headlightValue = String(value.c_str()).toInt();
+    double percentage = ((double)headlightValue) / 100;
+
+    // Client blocks this endpoint when headlights are already sleepy
+    if (rightStatus == 1)
     {
       rightDown();
       delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
     }
 
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
     delay(percentage * HEADLIGHT_MOVEMENT_DELAY);
-
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
 
-    leftStatus = headlightValue + 10;
     rightStatus = headlightValue + 10;
-
     updateHeadlightChars();
-
-    Serial.printf("%.6f", headlightValue);
   }
 };
 
@@ -311,10 +317,10 @@ void setup()
   NimBLEService *pService = pServer->createService(SERVICE_UUID);
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *sleepChar = pService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
   syncChar->setValue(0);
-  sleepChar->setValue(0.0);
   winkChar->setValue(0);
 
   busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
@@ -336,7 +342,8 @@ void setup()
 
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
-  sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
+  leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
+  rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
 
   pService->start();
 
@@ -367,7 +374,7 @@ void setup()
 void loop()
 {
   // Serial.println("Loop");
-  // printf("Loop\n");
+  // printf("Loop printf\n");
   int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
   int readLeftUp = digitalRead(LEFT_UP_INPUT);
   int readRightDown = digitalRead(RIGHT_DOWN_INPUT);

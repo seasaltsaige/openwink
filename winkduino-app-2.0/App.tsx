@@ -12,7 +12,8 @@ import { OpacityButton } from './Components/OpacityButton';
 import { AutoConnectStore } from './AsyncStorage';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
-const SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
+const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
+const RIGHT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 
 export default function App() {
@@ -52,11 +53,12 @@ export default function App() {
       connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
   }
 
-  const sendSleepCommand = (value: number) => {
-    console.log(value);
+  const sendSleepCommand = (left: number, right: number) => {
     if (headlightsBusy) return;
-    if (connectedDevice)
-      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode(value.toString())).catch(err => console.log(err));
+    if (connectedDevice) {
+      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LEFT_SLEEPY_EYE_UUID, base64.encode(left.toString())).catch(err => console.log(err));
+      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, RIGHT_SLEEPY_EYE_UUID, base64.encode(right.toString())).catch(err => console.log(err));
+    }
   }
 
   const sendSyncSignal = () => {
@@ -108,7 +110,7 @@ export default function App() {
     })();
   }, []);
 
-
+  // TODO: Restyle some pages other than settings to look "better"
   return (
     <View style={styles.container}>
       <Text style={{ color: "white", textAlign: "center", fontSize: 20 }}>
@@ -206,6 +208,7 @@ export default function App() {
         sendDefaultCommand={sendDefaultCommand}
         sendSleepCommand={sendSleepCommand}
         sendSyncCommand={sendSyncSignal}
+        openSettings={() => setSettingsOpen(true)}
         key={1}
       />
 
