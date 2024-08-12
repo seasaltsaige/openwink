@@ -40,7 +40,6 @@ export function Settings(props: SettingsProps) {
 
   const fetchAutoConnectSetting = async () => {
     const setting = await AutoConnectStore.get();
-    console.log(setting);
     if (setting === undefined) setAutoConnectSetting(true);
     else setAutoConnectSetting(false);
   }
@@ -239,7 +238,7 @@ export function Settings(props: SettingsProps) {
           </View>
         </View>
 
-
+        {/* TODO: TURN INTO MODAL */}
         <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
           <Text style={styles.text}>Delete all Data</Text>
           <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>

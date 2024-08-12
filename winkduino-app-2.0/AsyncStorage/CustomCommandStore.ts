@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MAC_ADDR_KEY = "mac-addr";
-
+const AUTO_CONNECT_KEY = "auto-reconnect-setting";
 export interface CommandInput {
   isDelay: boolean;
   delay?: number;
@@ -16,9 +16,7 @@ export interface CommandOutput {
 export class CustomCommandStore {
 
   static async saveCommand(commandName: string, commandSequence: CommandInput[]) {
-
     const existingCommand = await AsyncStorage.getItem(commandName);
-    console.log(existingCommand);
     if (existingCommand !== null) return false;
 
     let commandString = "";
@@ -37,14 +35,12 @@ export class CustomCommandStore {
   }
 
   static async getAllCommands() {
-    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye");
+    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye" && v !== AUTO_CONNECT_KEY);
     const commands: CommandOutput[] = [];
-    console.log(allKeys);
-
     for (const key of allKeys) {
       try {
         const cmdVal = await AsyncStorage.getItem(key);
-        commands.push({ command: cmdVal!, name: key });
+        commands.push({ command: cmdVal!, name: key.slice(4, key.length) });
       } catch (e) { };
     }
 
@@ -62,7 +58,7 @@ export class CustomCommandStore {
 
   static async deleteAllCommands() {
     try {
-      const allCmdKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye");
+      const allCmdKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye" && v !== AUTO_CONNECT_KEY);
       await AsyncStorage.multiRemove(allCmdKeys);
     } catch (err) {
       return err;

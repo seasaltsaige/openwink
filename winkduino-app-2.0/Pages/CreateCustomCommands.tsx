@@ -42,6 +42,66 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
     }
   }
 
+  const commands: { name: string, value: number }[] = [
+    {
+      name: "Left Up",
+      value: 4,
+    },
+    {
+      name: "Left Down",
+      value: 5,
+    },
+    {
+      name: "Left Wink",
+      value: 6,
+    },
+    {
+      name: "Both Up",
+      value: 1
+    },
+    {
+      name: "Both Down",
+      value: 2,
+    },
+    {
+      name: "Both Blink",
+      value: 3,
+    },
+    {
+      name: "Right Up",
+      value: 7,
+    },
+    {
+      name: "Right Down",
+      value: 8,
+    },
+    {
+      name: "Right Wink",
+      value: 9,
+    },
+    {
+      name: "Left Wave",
+      value: 10,
+    },
+    {
+      name: "Right Wave",
+      value: 11,
+    }
+
+  ];
+
+  const parseCommandPartHumanReadable = (part: string) => {
+    if (part.includes("d")) {
+      part = part.slice(1);
+      const ms = parseFloat(part);
+      return `Delay ${ms}ms`;
+    } else {
+      const commandVal = parseInt(part);
+      const cmd = commands.find(c => c.value === commandVal);
+      return cmd?.name;
+    }
+  }
+
   const saveCommand = async () => {
     if (commandName === "") return createError("Please enter a preset name", 5000);
     if (commandSequence.length < 1) return createError("Use at least one command", 5000);
@@ -74,6 +134,12 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      await fetchAllCommands();
+    })();
+  }, [props.visible]);
+
   return (
     <Modal
       transparent={false}
@@ -84,9 +150,9 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
 
       <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
         {
-          success ? <Text style={{ marginTop: 10, textAlign: "center", color: "lightgreen", fontSize: 30 }}>{success}</Text>
+          success ? <Text style={{ marginTop: 20, textAlign: "center", color: "lightgreen", fontSize: 30 }}>{success}</Text>
             :
-            <Text style={{ textAlign: "center", color: error ? "red" : "lightgreen", fontSize: 30 }}>{error ? `${error}` : "Editing Command"}</Text>
+            <Text style={{ marginTop: 20, textAlign: "center", color: error ? "red" : "lightgreen", fontSize: 30 }}>{error ? `${error}` : "Editing Command"}</Text>
         }
         <TextInput
           style={{ ...styles.input, fontSize: 18, width: 300 }}
@@ -96,57 +162,62 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
           placeholder="Enter Command Name"
         />
 
-        <View style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", paddingVertical: 5, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
           <Text style={{ ...styles.text, fontSize: 23 }}>
             Command Sequence
           </Text>
           <Text style={{ color: "white", textAlign: "center", padding: 5 }}>
-            {commandSequence.map((cmd, i) => (
-              <Text>{cmd.isDelay ? `Delay ${cmd.delay}ms` : cmd.name}{i === commandSequence.length - 1 ? "" : " --> "}</Text>
-            ))}
+            {
+              commandSequence.length >= 1 ?
+                commandSequence.map((cmd, i) => (
+                  <Text>{cmd.isDelay ? `Delay ${cmd.delay}ms` : cmd.name}{i === commandSequence.length - 1 ? "" : " --> "}</Text>
+                ))
+                : "No commands entered"
+            }
           </Text>
         </View>
 
-        <Text style={styles.text}>Default Command Palette</Text>
-        <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
-          {
-            [
+        <View style={{ width: "90%", display: "flex", flexDirection: "column", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 15, borderRadius: 5 }}>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }}>Default Palette</Text>
+          <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+            {
               [
-                { title: "Left Up", i: 4 },
-                { title: "Left Down", i: 5 },
-                { title: "Left Wink", i: 6 },
-                { title: "Left Wave", i: 10 },
-              ], [
-                { title: "Both Up", i: 1 },
-                { title: "Both Down", i: 2 },
-                { title: "Both Blink", i: 3 },
-              ], [
-                { title: "Right Up", i: 7 },
-                { title: "Right Down", i: 8 },
-                { title: "Right Wink", i: 9 },
-                { title: "Right Wave", i: 11 },
-              ]
-            ].map((part) => (
-              <View style={{ display: "flex", flexDirection: "column", alignItems: "center", rowGap: 8, }}>
-                {
-                  part.map(cmd => (
-                    <OpacityButton
-                      text={cmd.title}
-                      textStyle={{ ...styles.buttonText, fontSize: 16 }}
-                      buttonStyle={{ ...styles.button, width: "auto", paddingHorizontal: 15 }}
-                      onPress={() => setCommandSequence((prev) => [...prev, { isDelay: false, transmitValue: cmd.i, name: cmd.title }])}
-                    />
-                  ))
-                }
-              </View>
-            ))
-          }
+                [
+                  { title: "Left Up", i: 4 },
+                  { title: "Left Down", i: 5 },
+                  { title: "Left Wink", i: 6 },
+                  { title: "Left Wave", i: 10 },
+                ], [
+                  { title: "Both Up", i: 1 },
+                  { title: "Both Down", i: 2 },
+                  { title: "Both Blink", i: 3 },
+                ], [
+                  { title: "Right Up", i: 7 },
+                  { title: "Right Down", i: 8 },
+                  { title: "Right Wink", i: 9 },
+                  { title: "Right Wave", i: 11 },
+                ]
+              ].map((part) => (
+                <View style={{ display: "flex", flexDirection: "column", alignItems: "center", rowGap: 8, }}>
+                  {
+                    part.map(cmd => (
+                      <OpacityButton
+                        text={cmd.title}
+                        textStyle={{ ...styles.buttonText, fontSize: 16 }}
+                        buttonStyle={{ ...styles.button, width: "auto", paddingHorizontal: 15 }}
+                        onPress={() => setCommandSequence((prev) => [...prev, { isDelay: false, transmitValue: cmd.i, name: cmd.title }])}
+                      />
+                    ))
+                  }
+                </View>
+              ))
+            }
+          </View>
         </View>
 
-
-        <View style={{ display: "flex", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
+        <View style={{ display: "flex", alignItems: "center", justifyContent: "center", rowGap: 10, padding: 15, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
           <Text style={{ color: "white", textAlign: "center", fontSize: 30 }}>Add Delay</Text>
-          <Text style={{ color: "white", textAlign: "center" }}>Adds delay between command signals. There will already be a small amount of delay between commands by default, due to the headlights movement.</Text>
+          <Text style={{ color: "white", textAlign: "center", maxWidth: "90%" }}>Adds delay between command signals. There will already be a small amount of delay between commands by default, due to the headlights movement.</Text>
           <TextInput
             value={delayMS === 0 ? "" : delayMS.toString()}
             onChangeText={(text) => text === "" ? setDelayMS(0) : setDelayMS(parseFloat(text))}
@@ -164,19 +235,19 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
         </View>
 
 
-        <View style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", rowGap: 10 }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }} >Custom Presets</Text>
+        <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", borderRadius: 5, padding: 15 }}>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }} >Saved Presets</Text>
           <Text style={{ color: "white", textAlign: "center" }}>Usable from the Presets Menu</Text>
-          <View style={{ width: "100%", columnGap: 10, rowGap: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", flexWrap: "wrap" }}>
+          <ScrollView horizontal contentContainerStyle={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", columnGap: 20 }} style={{ width: "100%", columnGap: 10, rowGap: 10 }}>
             {
               allCommands.length > 0 ?
                 allCommands.map((cmd, i) => (
-                  <View style={{ borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: i % 2 === 0 ? "rgb(25, 25, 25)" : "rgb(50, 50, 50)", paddingVertical: 10, paddingHorizontal: 5 }}>
-                    <Text style={{ color: "white" }}>{cmd.name}</Text>
-                    <Text style={{ color: "white" }}>{cmd.command}</Text>
+                  <View style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, backgroundColor: i % 2 === 0 ? "rgb(40, 40, 40)" : "rgb(20, 20, 20)", padding: 15, paddingHorizontal: 10, rowGap: 5, width: 200, height: 160 }}>
+                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 20 }}>{cmd.name}</Text>
+                    <Text style={{ color: "white", textAlign: "center" }}>{cmd.command.split("-").map(part => parseCommandPartHumanReadable(part)).join(" --> ")}</Text>
                     <OpacityButton
-                      buttonStyle={{ backgroundColor: "#b50030", borderRadius: 4 }}
-                      textStyle={{ paddingVertical: 1, paddingHorizontal: 5, fontSize: 16, color: "white" }}
+                      buttonStyle={{ backgroundColor: "#b50030", borderRadius: 5, padding: 10 }}
+                      textStyle={{ fontSize: 16, color: "white" }}
                       text="Delete Command"
                       onPress={() => deleteCommand(cmd.name)}
                     />
@@ -184,7 +255,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
                 ))
                 : <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>No Commands Found</Text>
             }
-          </View>
+          </ScrollView>
         </View>
 
 
@@ -193,7 +264,6 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
 
 
         <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-
           <OpacityButton
             buttonStyle={{ ...styles.button, backgroundColor: "#228B22", width: 150 }}
             textStyle={{ ...styles.buttonText, fontSize: 18 }}
@@ -201,7 +271,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
             onPress={() => saveCommand()}
           />
           <OpacityButton
-            buttonStyle={{ ...styles.button, backgroundColor: "red", width: 150 }}
+            buttonStyle={{ ...styles.button, backgroundColor: "#de142c", width: 150 }}
             textStyle={{ ...styles.buttonText, fontSize: 18, textAlign: "center" }}
             text="Remove Last Instruction"
             onPress={() => setCommandSequence((prev) => prev.slice(0, prev.length - 1))}
