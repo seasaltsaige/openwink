@@ -3,6 +3,7 @@ import { OpacityButton } from "../Components/OpacityButton";
 import { useEffect, useState } from "react";
 import CheckBox from "react-native-bouncy-checkbox";
 import { AutoConnectStore, CustomCommandStore, DeviceMACStore, SleepyEyeStore } from "../AsyncStorage";
+import { DeleteDataWarning } from "./DeleteDataWarning";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
@@ -20,6 +21,8 @@ export function Settings(props: SettingsProps) {
 
   const [autoConnectSetting, setAutoConnectSetting] = useState(true);
 
+
+  const [deleteDataPopup, setDeleteDataPopup] = useState(false);
 
   // FETCH SETTINGS
   const fetchPairing = async () => {
@@ -99,165 +102,176 @@ export function Settings(props: SettingsProps) {
   }, [props.visible]);
 
   return (
-    <Modal
-      transparent={false}
-      visible={props.visible}
-      animationType="slide"
-      hardwareAccelerated
-    >
-      <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
-        <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30 }}>Device Settings</Text>
-        <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
-          <Text style={{ textAlign: "center", color: "white", fontSize: 23, paddingHorizontal: 5 }}>
+    <>
+      <Modal
+        transparent={false}
+        visible={props.visible}
+        animationType="slide"
+        hardwareAccelerated
+      >
+        <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+          <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30 }}>Device Settings</Text>
+          <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+            <Text style={{ textAlign: "center", color: "white", fontSize: 23, paddingHorizontal: 5 }}>
+              {
+                pairedMAC
+                  ?
+                  <>
+                    <Text>Your paired Receiver ID is{"\n"}</Text>
+                    <Text style={{ fontWeight: "bold", }}>{pairedMAC}{"\n\n"}</Text>
+                    <Text style={{ fontSize: 16 }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
+                  </>
+                  :
+                  <>
+                    <Text>No device paired.{"\n\n"}</Text>
+                    <Text style={{ fontSize: 16 }}>If currently connected, the next time the app starts, you will automatically go through device pairing.</Text>
+                  </>
+              }
+            </Text>
             {
-              pairedMAC
-                ?
-                <>
-                  <Text>Your paired Receiver ID is{"\n"}</Text>
-                  <Text style={{ fontWeight: "bold", }}>{pairedMAC}{"\n\n"}</Text>
-                  <Text style={{ fontSize: 16 }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
-                </>
-                :
-                <>
-                  <Text>No device paired.{"\n\n"}</Text>
-                  <Text style={{ fontSize: 16 }}>If currently connected, the next time the app starts, you will automatically go through device pairing.</Text>
-                </>
+              pairedMAC &&
+              <OpacityButton
+                text="Forget Device"
+                buttonStyle={{ ...styles.button, width: 150, padding: 0, height: 40 }}
+                onPress={() => forgetPair()}
+                textStyle={{ fontSize: 17, color: "white" }}
+              />
             }
-          </Text>
-
-          <OpacityButton
-            text="Forget Device"
-            buttonStyle={{ ...styles.button, width: 150, padding: 0, height: 40 }}
-            onPress={() => forgetPair()}
-            textStyle={{ fontSize: 17, color: "white" }}
-          />
-        </View>
-
-        <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-          <Text style={styles.text}>
-            Auto Connect
-          </Text>
-          <Text style={{ color: "white", textAlign: "center" }}>
-            When the controller app is opened, or when the 'Disconnect' button is pressed, the app will automatically connect/reconnect to the Wink Module.{"\n"}This is enabled by default.
-          </Text>
-
-          <Text style={{ fontSize: 20, color: autoConnectSetting ? "green" : "red", fontWeight: "bold" }}>
-            Status: {autoConnectSetting ? "Enabled" : "Disabled"}
-          </Text>
-
-          <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-            <CheckBox
-              size={25}
-              fillColor="green"
-              unFillColor="#FFFFFF"
-              text="Enable"
-              style={{ width: 110, flexDirection: "row-reverse" }}
-              iconStyle={{ borderColor: "green" }}
-              innerIconStyle={{ borderWidth: -2 }}
-              textStyle={{ textDecorationLine: "none" }}
-              isChecked={autoConnectSetting}
-              onPress={() => saveAutoConnect(true)}
-            />
-
-            <CheckBox
-              size={25}
-              fillColor="red"
-              unFillColor="#FFFFFF"
-              text="Disable"
-              iconStyle={{ borderColor: "red" }}
-              style={{ width: 110 }}
-              innerIconStyle={{ borderWidth: -2 }}
-              isChecked={!autoConnectSetting}
-              textStyle={{ textDecorationLine: "none" }}
-              onPress={() => saveAutoConnect(false)}
-            />
           </View>
-        </View>
 
-        <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
-          <View>
+          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
             <Text style={styles.text}>
-              Sleepy Eye Settings
+              Auto Connect
             </Text>
             <Text style={{ color: "white", textAlign: "center" }}>
-              Enter a number from 0 to 100. This will be used as a percentage from rest. Leaving them blank will default to 50%.
+              When the controller app is opened, or when the 'Disconnect' button is pressed, the app will automatically connect/reconnect to the Wink Module.{"\n"}This is enabled by default.
             </Text>
-          </View>
-          <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-            <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Left Headlight</Text>
-              <Text style={{ color: "white" }}>Set to {leftHeadlight}%</Text>
-              <TextInput
-                style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
-                placeholder="0 to 100%"
-                placeholderTextColor="rgb(200,200,200)"
-                keyboardType="numeric"
-                value={toUpdateLeft?.toString() || ""}
-                onChangeText={(text) => {
-                  if (parseInt(text) > 100) setToUpdateLeft(100);
-                  else if (parseInt(text) < 0) setToUpdateLeft(0);
-                  else if (text === "") setToUpdateLeft(undefined);
-                  else setToUpdateLeft(parseFloat(text))
-                }}
-                maxLength={3}
+
+            <Text style={{ fontSize: 20, color: autoConnectSetting ? "green" : "red", fontWeight: "bold" }}>
+              Status: {autoConnectSetting ? "Enabled" : "Disabled"}
+            </Text>
+
+            <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
+              <CheckBox
+                size={25}
+                fillColor="green"
+                unFillColor="#FFFFFF"
+                text="Enable"
+                style={{ width: 110, flexDirection: "row-reverse" }}
+                iconStyle={{ borderColor: "green" }}
+                innerIconStyle={{ borderWidth: -2 }}
+                textStyle={{ textDecorationLine: "none" }}
+                isChecked={autoConnectSetting}
+                onPress={() => saveAutoConnect(true)}
               />
-            </View>
-            <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Right Headlight</Text>
-              <Text style={{ color: "white" }}>Set to {rightHeadlight}%</Text>
-              <TextInput
-                style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
-                placeholder="0 to 100%"
-                placeholderTextColor="rgb(200,200,200)"
-                keyboardType="numeric"
-                value={toUpdateRight?.toString() || ""}
-                onChangeText={(text) => {
-                  if (parseInt(text) > 100) setToUpdateRight(100);
-                  else if (parseInt(text) < 0) setToUpdateRight(0);
-                  else if (text === "") setToUpdateRight(undefined);
-                  else setToUpdateRight(parseFloat(text))
-                }}
-                maxLength={3}
+
+              <CheckBox
+                size={25}
+                fillColor="red"
+                unFillColor="#FFFFFF"
+                text="Disable"
+                iconStyle={{ borderColor: "red" }}
+                style={{ width: 110 }}
+                innerIconStyle={{ borderWidth: -2 }}
+                isChecked={!autoConnectSetting}
+                textStyle={{ textDecorationLine: "none" }}
+                onPress={() => saveAutoConnect(false)}
               />
             </View>
           </View>
-          <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
-            <OpacityButton
-              text="Save"
-              buttonStyle={{ ...styles.commandButton, backgroundColor: "#228B22", width: 85, height: 40, padding: 0 }}
-              textStyle={styles.buttonText}
-              onPress={() => saveHeadlightData()}
-            />
 
+          <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+            <View>
+              <Text style={styles.text}>
+                Sleepy Eye Settings
+              </Text>
+              <Text style={{ color: "white", textAlign: "center" }}>
+                Enter a number from 0 to 100. This will be used as a percentage from rest. Leaving them blank will default to 50%.
+              </Text>
+            </View>
+            <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
+              <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Left Headlight</Text>
+                <Text style={{ color: "white" }}>Set to {leftHeadlight}%</Text>
+                <TextInput
+                  style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
+                  placeholder="0 to 100%"
+                  placeholderTextColor="rgb(200,200,200)"
+                  keyboardType="numeric"
+                  value={toUpdateLeft?.toString() || ""}
+                  onChangeText={(text) => {
+                    if (parseInt(text) > 100) setToUpdateLeft(100);
+                    else if (parseInt(text) < 0) setToUpdateLeft(0);
+                    else if (text === "") setToUpdateLeft(undefined);
+                    else setToUpdateLeft(parseFloat(text))
+                  }}
+                  maxLength={3}
+                />
+              </View>
+              <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Right Headlight</Text>
+                <Text style={{ color: "white" }}>Set to {rightHeadlight}%</Text>
+                <TextInput
+                  style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
+                  placeholder="0 to 100%"
+                  placeholderTextColor="rgb(200,200,200)"
+                  keyboardType="numeric"
+                  value={toUpdateRight?.toString() || ""}
+                  onChangeText={(text) => {
+                    if (parseInt(text) > 100) setToUpdateRight(100);
+                    else if (parseInt(text) < 0) setToUpdateRight(0);
+                    else if (text === "") setToUpdateRight(undefined);
+                    else setToUpdateRight(parseFloat(text))
+                  }}
+                  maxLength={3}
+                />
+              </View>
+            </View>
+            <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+              <OpacityButton
+                text="Save"
+                buttonStyle={{ ...styles.commandButton, backgroundColor: "#228B22", width: 85, height: 40, padding: 0 }}
+                textStyle={styles.buttonText}
+                onPress={() => saveHeadlightData()}
+              />
+
+              <OpacityButton
+                text="Reset"
+                buttonStyle={{ ...styles.commandButton, backgroundColor: "#990033", width: 85, height: 40, padding: 0 }}
+                textStyle={styles.buttonText}
+                onPress={() => resetHeadlightData()}
+              />
+            </View>
+          </View>
+
+          {/* TODO: TURN INTO MODAL */}
+          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
+            <Text style={styles.text}>Delete all Data</Text>
+            <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
             <OpacityButton
-              text="Reset"
-              buttonStyle={{ ...styles.commandButton, backgroundColor: "#990033", width: 85, height: 40, padding: 0 }}
-              textStyle={styles.buttonText}
-              onPress={() => resetHeadlightData()}
+              text="Delete"
+              buttonStyle={{ ...styles.button, width: 150, backgroundColor: "#de142c" }}
+              textStyle={{ ...styles.buttonText, fontWeight: "bold" }}
+              onPress={() => setDeleteDataPopup(true)}
             />
           </View>
-        </View>
 
-        {/* TODO: TURN INTO MODAL */}
-        <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-          <Text style={styles.text}>Delete all Data</Text>
-          <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
           <OpacityButton
-            text="Delete"
-            buttonStyle={{ ...styles.button, width: 150, backgroundColor: "#de142c" }}
-            textStyle={{ ...styles.buttonText, fontWeight: "bold" }}
-            onPress={() => deleteData()}
+            buttonStyle={{ ...styles.button, marginBottom: 30 }}
+            textStyle={styles.buttonText}
+            onPress={() => props.close()}
+            text="Close"
           />
-        </View>
+        </ScrollView>
+      </Modal >
 
-        <OpacityButton
-          buttonStyle={{ ...styles.button, marginBottom: 30 }}
-          textStyle={styles.buttonText}
-          onPress={() => props.close()}
-          text="Close"
-        />
-      </ScrollView>
-    </Modal >
+      <DeleteDataWarning
+        visible={deleteDataPopup}
+        close={() => setDeleteDataPopup(false)}
+        delete={() => deleteData()}
+        key={9999}
+      />
+    </>
   )
 
 }

@@ -72,15 +72,16 @@ export default function App() {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isScanning) {
+      let i = 12;
       interval = setInterval(() => {
         setTimeLeftScan((prev) => prev - 1);
-        if (timeLeftScan === 0) {
+        if (--i === 0) {
           clearInterval(interval);
           setTimeLeftScan(12);
         }
       }, 1000);
     }
-  }, [isScanning]);
+  }, [isScanning === true]);
 
 
   useEffect(() => {
@@ -186,9 +187,10 @@ export default function App() {
             :
             !autoConnect ?
               <OpacityButton
-                buttonStyle={{ ...(styles.button), marginTop: 75 }}
+                disabled={isConnecting || isScanning}
+                buttonStyle={{ ...((isConnecting || isScanning) ? styles.buttonDisabled : styles.button), marginTop: 75 }}
                 textStyle={styles.buttonText}
-                onPress={() => scanForDevice()}
+                onPress={() => { setTimeLeftScan(12); scanForDevice(); }}
                 text="Connect"
               />
               : <></>

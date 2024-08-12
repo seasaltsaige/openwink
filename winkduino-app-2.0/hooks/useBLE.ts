@@ -19,7 +19,6 @@ const sleep = (ms: number) => {
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
-  // const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
@@ -188,15 +187,14 @@ function useBLE() {
           scan();
       });
 
-
-      // await device.discoverAllServicesAndCharacteristics()
-      console.log(connection.name, connectedDevice?.localName);
-      console.log("Connected to device", connection.name);
-      // connection.monitorCharacteristicForService()
+      console.log("Connected to Wink Receiver");
+      return true;
     } catch (err) {
       console.log("Failed to connect: ");
       console.log(err);
+      return false;
     }
+
   }
 
 
@@ -218,20 +216,22 @@ function useBLE() {
       const device = allDevices.find((dev) => dev.id === mac);
       if (device && device.id === mac) {
         await connectToDevice(device);
-        console.log(device.id);
       }
     } else {
       console.log("No Stored MAC Found... checking devices");
+      let foundConnection = false;
       for (const device of allDevices) {
-        if (connectedDevice) break;
+        if (foundConnection) break;
         // Logic to discover if device is correct
         try {
           if (!checkedMACs.includes(device.id)) {
             console.log("Scan method, new device id: ", device.id);
-            await connectToDevice(device, true);
+            const val = await connectToDevice(device, true);
+            if (val === true) foundConnection = true;;
           }
         } catch (err) {
           console.log("Error connecting: ", err);
+          bleManager.cancelDeviceConnection(device.id).catch(err => console.log("Error cancelling connection:", err));
         }
       }
     }
