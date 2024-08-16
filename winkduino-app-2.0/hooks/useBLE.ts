@@ -25,7 +25,8 @@ function useBLE() {
   const [rightState, setRightState] = useState(0);
 
   const [MAC, setMAC] = useState<string | undefined>(undefined);
-  const [checkedMACs, setCheckedMACs] = useState<string[]>([]);
+
+  const [noDevice, setNoDevice] = useState(false);
 
   const [reqSub, setReqSub] = useState<Subscription>();
   const [leftSub, setLeftSub] = useState<Subscription>();
@@ -100,30 +101,30 @@ function useBLE() {
   };
 
 
-  const connectToDevice = async (device: Device, discovery = false) => {
+  const connectToDevice = async (device: Device) => {
     try {
       const connection = await bleManager.connectToDevice(device.id);
       await connection.discoverAllServicesAndCharacteristics();
       // Logic to discover characteristics and see whats up
-      if (discovery) {
-        console.log("Discovering device: ", connection.id);
-        const services = await connection.services();
-        const serviceUUIDs = services.map(s => s.uuid);
-        console.log(serviceUUIDs);
-        let foundService = false;
-        if (!serviceUUIDs.includes(SERVICE_UUID)) foundService = false;
-        else foundService = true;
+      // if (discovery) {
+      //   console.log("Discovering device: ", connection.id);
+      //   const services = await connection.services();
+      //   const serviceUUIDs = services.map(s => s.uuid);
+      //   console.log(serviceUUIDs);
+      //   let foundService = false;
+      //   if (!serviceUUIDs.includes(SERVICE_UUID)) foundService = false;
+      //   else foundService = true;
 
-        if (!foundService) {
-          setCheckedMACs((prev) => [...prev, connection.id]);
-          console.log("Disconnecting from device: ", connection.id);
-          await connection.cancelConnection();
-          return false;
-        } else {
-          await DeviceMACStore.setMAC(connection.id);
-          setMAC(connection.id);
-        }
-      }
+      //   if (!foundService) {
+      //     setCheckedMACs((prev) => [...prev, connection.id]);
+      //     console.log("Disconnecting from device: ", connection.id);
+      //     await connection.cancelConnection();
+      //     return false;
+      //   } else {
+      await DeviceMACStore.setMAC(connection.id);
+      setMAC(connection.id);
+      //   }
+      // }
 
       setConnectedDevice(connection);
       setIsConnecting(false);
@@ -185,6 +186,7 @@ function useBLE() {
         const autoConnect = await AutoConnectStore.get();
         if (autoConnect === undefined)
           scan();
+
       });
 
       console.log("Connected to Wink Receiver");
@@ -198,44 +200,44 @@ function useBLE() {
   }
 
 
-  const attemptConnections = async (allDevices: Device[]) => {
-    console.log("Stopping scan...");
+  // const attemptConnections = async (allDevices: Device[]) => {
+  //   console.log("Stopping scan...");
 
-    await bleManager.stopDeviceScan();
-    setIsScanning(false);
+  //   await bleManager.stopDeviceScan();
+  //   setIsScanning(false);
 
-    console.log("Attempting connections...");
-    setIsConnecting(true);
+  //   console.log("Attempting connections...");
+  //   setIsConnecting(true);
 
-    const mac = await DeviceMACStore.getStoredMAC();
-    console.log("Stored MAC:", mac);
+  //   const mac = await DeviceMACStore.getStoredMAC();
+  //   console.log("Stored MAC:", mac);
 
 
-    if (mac !== undefined) {
-      console.log("Stored MAC Found, attempting to connect");
-      const device = allDevices.find((dev) => dev.id === mac);
-      if (device && device.id === mac) {
-        await connectToDevice(device);
-      }
-    } else {
-      console.log("No Stored MAC Found... checking devices");
-      let foundConnection = false;
-      for (const device of allDevices) {
-        if (foundConnection) break;
-        // Logic to discover if device is correct
-        try {
-          if (!checkedMACs.includes(device.id)) {
-            console.log("Scan method, new device id: ", device.id);
-            const val = await connectToDevice(device, true);
-            if (val === true) foundConnection = true;;
-          }
-        } catch (err) {
-          console.log("Error connecting: ", err);
-          bleManager.cancelDeviceConnection(device.id).catch(err => console.log("Error cancelling connection:", err));
-        }
-      }
-    }
-  }
+  //   if (mac !== undefined) {
+  //     console.log("Stored MAC Found, attempting to connect");
+  //     const device = allDevices.find((dev) => dev.id === mac);
+  //     if (device && device.id === mac) {
+  //       await connectToDevice(device);
+  //     }
+  //   } else {
+  //     console.log("No Stored MAC Found... checking devices");
+  //     let foundConnection = false;
+  //     for (const device of allDevices) {
+  //       if (foundConnection) break;
+  //       // Logic to discover if device is correct
+  //       try {
+  //         if (!checkedMACs.includes(device.id)) {
+  //           console.log("Scan method, new device id: ", device.id);
+  //           const val = await connectToDevice(device, true);
+  //           if (val === true) foundConnection = true;;
+  //         }
+  //       } catch (err) {
+  //         console.log("Error connecting: ", err);
+  //         bleManager.cancelDeviceConnection(device.id).catch(err => console.log("Error cancelling connection:", err));
+  //       }
+  //     }
+  //   }
+  // }
 
   const scan = async () => {
     if (connectedDevice !== null) return;
@@ -243,18 +245,31 @@ function useBLE() {
 
     let foundDevice = false;
 
-    const allDevices: Device[] = [];
+    // const allDevices: Device[] = [];
     const mac = await DeviceMACStore.getStoredMAC();
     setTimeout(async () => {
-      if (foundDevice) return;
-      await attemptConnections(allDevices);
-    }, 12 * 1000);
+
+      const autoConnect = await AutoConnectStore.get();
+      if (!foundDevice) {
+        setNoDevice(true);
+        setIsConnecting(false);
+        setIsScanning(false);
+        await bleManager.stopDeviceScan();
+        console.log("No Device Found");
+        if (autoConnect === undefined)
+          scan();
+        return;
+      }
+    }, 15 * 1000);
+
+
     setIsScanning(true);
+
+
     bleManager.startDeviceScan(null, { allowDuplicates: false, callbackType: ScanCallbackType.FirstMatch, legacyScan: false, scanMode: ScanMode.LowLatency }, async (err, device) => {
       if (err) {
         console.log(err);
       }
-
       if (device) {
         if (device.id === mac) {
           console.log("Stored device scanned");
@@ -263,10 +278,14 @@ function useBLE() {
           setIsScanning(false);
           setIsConnecting(true);
           await connectToDevice(device);
+        } else if (device.serviceUUIDs && device.serviceUUIDs?.includes(SERVICE_UUID)) {
+          console.log("Found matching UUIDs")
+          foundDevice = true;
+          await bleManager.stopDeviceScan();
+          setIsScanning(false);
+          setIsConnecting(true);
+          await connectToDevice(device);
         }
-
-        console.log("New device discovered:", device.id);
-        allDevices.push(device);
       }
     });
   }
@@ -300,6 +319,7 @@ function useBLE() {
     // allDevices,
     isScanning,
     isConnecting,
+    noDevice
   }
 }
 

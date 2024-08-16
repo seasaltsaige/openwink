@@ -12,7 +12,6 @@ type DefaultModalProps = {
   sendDefaultCommand: (value: number) => void;
   sendSleepCommand: (left: number, right: number) => void;
   sendSyncCommand: () => void;
-  openSettings: () => void;
   leftState: number;
   rightState: number;
 }
@@ -70,22 +69,27 @@ function DefaultCommands(props: DefaultModalProps) {
 
   const [needsReset, setNeedsReset] = useState(false);
 
+  const fetchHeadlightSettings = async () => {
+    const l = await SleepyEyeStore.get("left");
+    const r = await SleepyEyeStore.get("right");
+
+    if (l) setLeft(l);
+    else setLeft(50);
+
+    if (r) setRight(r);
+    else setRight(50);
+  }
+
   useEffect(() => {
     (async () => {
-      const l = await SleepyEyeStore.get("left");
-      const r = await SleepyEyeStore.get("right");
-
-      if (l) setLeft(l);
-      else setLeft(50);
-
-      if (r) setRight(r);
-      else setRight(50);
+      fetchHeadlightSettings();
     })();
   }, [props.visible === true]);
 
   useEffect(() => {
     setNeedsReset((props.leftState !== Math.floor(props.leftState) || props.rightState != Math.floor(props.rightState)));
   }, [props.leftState, props.rightState]);
+
 
   return (
     <Modal
@@ -156,13 +160,7 @@ function DefaultCommands(props: DefaultModalProps) {
           {/* TEXT DESCRIBING */}
           <Text style={styles.text}>Sleepy Eyes</Text>
           <Text style={{ color: "white" }}>
-            You can update Sleepy Eye settings from the{" "}
-            <Text
-              style={{ color: "#0060df", textDecorationLine: "underline", fontWeight: "bold", fontSize: 16 }}
-              onPress={() => props.openSettings()}
-            >
-              settings page
-            </Text>
+            You can update Sleepy Eye settings from the settings page
           </Text>
           <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
             <Text style={{ color: "white" }}>Left setting: {left}%</Text>

@@ -28,6 +28,7 @@ export default function App() {
     rightState,
     isConnecting,
     isScanning,
+    noDevice,
   } = useBLE();
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
@@ -67,77 +68,83 @@ export default function App() {
       connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
   }
 
-  const [timeLeftScan, setTimeLeftScan] = useState(12);
+  // const [timeLeftScan, setTimeLeftScan] = useState(15);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isScanning) {
-      let i = 12;
-      interval = setInterval(() => {
-        setTimeLeftScan((prev) => prev - 1);
-        if (--i === 0) {
-          clearInterval(interval);
-          setTimeLeftScan(12);
-        }
-      }, 1000);
-    }
-  }, [isScanning === true]);
+  // useEffect(() => {
+  //   let interval: NodeJS.Timeout;
+  //   if (isScanning) {
+  //     let i = 15;
+  //     interval = setInterval(() => {
+  //       setTimeLeftScan((prev) => prev - 1);
+  //       if (--i === 0) {
+  //         clearInterval(interval);
+  //         setTimeLeftScan(15);
+  //       }
+  //     }, 1000);
+  //   }
+  // }, [isScanning]);
 
 
   useEffect(() => {
     (async () => {
       const connect = await AutoConnectStore.get();
+      console.log(connect);
       if (connect === undefined) setAutoConnect(true);
       else setAutoConnect(false);
 
       const mac = await DeviceMACStore.getStoredMAC();
       setMAC(mac);
+
+      if (connect === undefined && !isScanning && !isConnecting && !connectedDevice)
+        await scanForDevice();
     })();
   }, [settingsOpen]);
 
-  useEffect(() => {
-    if (connectedDevice !== null) return;
+  // useEffect(() => {
+  //   if (connectedDevice !== null) return;
 
-    (async () => {
-      const connect = await AutoConnectStore.get();
-      if (connect === undefined) setAutoConnect(true);
-      else setAutoConnect(false);
+  //   (async () => {
+  //     const connect = await AutoConnectStore.get();
+  //     if (connect === undefined) setAutoConnect(true);
+  //     else setAutoConnect(false);
 
-      if (connect === undefined)
-        scanForDevice();
+  //     if (connect === undefined)
+  //       scanForDevice();
 
-      const mac = await DeviceMACStore.getStoredMAC();
-      setMAC(mac);
-    })();
-  }, []);
+  //     const mac = await DeviceMACStore.getStoredMAC();
+  //     setMAC(mac);
+  //   })();
+  // }, []);
 
   // TODO: Restyle some pages other than settings to look "better"
   return (
     <View style={styles.container}>
-      <Text style={{ color: "white", textAlign: "center", fontSize: 20 }}>
+      <Text style={{ color: "white", textAlign: "center", fontSize: 20, marginHorizontal: 20 }}>
         {
-
-          isScanning ?
-            `Scanning for ${MAC ? "wink module..." : `${timeLeftScan} second(s)...`}`
-            : isConnecting ?
-              "Connecting to wink receiver... Stand by..."
-              : (autoConnect && connectedDevice) ?
-                "" : (!autoConnect && connectedDevice) ? "" :
-                  "Scanner standing by... Press \"Connect\" to start scanning."
+          !connectedDevice ?
+            !noDevice ?
+              (isScanning ?
+                `Scanning for Wink Module`
+                : isConnecting ?
+                  "Connecting to Wink Module... Stand by..."
+                  : (autoConnect && connectedDevice) ?
+                    "" : (!autoConnect && connectedDevice) ? "" :
+                      "Scanner standing by... Press \"Connect\" to start scanning.")
+              : autoConnect ? "No Wink Module Scanned... Trying again..."
+                : "No Wink Module Scanned... Try scanning again, or restarting the app."
+            : ""
         }
       </Text>
 
       <View style={{ marginBottom: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
         {
           !connectedDevice ?
-            <>
-              {
-                !MAC ?
-                  <Text style={{ color: "white", textAlign: "center" }}>This appears to be your first time scanning. Your first connection to your wink module will take longer than subsequent connections. Moving closer can help.</Text>
-                  :
-                  <Text style={{ color: "white", textAlign: "center" }}>If this takes overly long to connect, try restarting the app.</Text>
-              }
-            </>
+
+            <Text style={{ color: "white", textAlign: "center", marginHorizontal: 20 }}>
+              If this takes overly long to connect, try restarting the app.{"\n"}
+              If you continue to be unable to connect, try pressing the 'Reset Button' on your Wink Module, and restart the app.
+            </Text>
+
             : <Text style={styles.text}>Connected to Wink Receiver</Text>
         }
         <OpacityButton
@@ -187,10 +194,10 @@ export default function App() {
             :
             !autoConnect ?
               <OpacityButton
-                disabled={isConnecting || isScanning}
-                buttonStyle={{ ...((isConnecting || isScanning) ? styles.buttonDisabled : styles.button), marginTop: 75 }}
+                disabled={noDevice ? false : (isConnecting || isScanning)}
+                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), marginTop: 75 }}
                 textStyle={styles.buttonText}
-                onPress={() => { setTimeLeftScan(12); scanForDevice(); }}
+                onPress={() => { /**setTimeLeftScan(15);**/ scanForDevice(); }}
                 text="Connect"
               />
               : <></>
@@ -210,7 +217,6 @@ export default function App() {
         sendDefaultCommand={sendDefaultCommand}
         sendSleepCommand={sendSleepCommand}
         sendSyncCommand={sendSyncSignal}
-        openSettings={() => setSettingsOpen(true)}
         key={1}
       />
 

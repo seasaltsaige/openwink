@@ -20,7 +20,9 @@
 #define RIGHT_DOWN_INPUT 17
 #define RIGHT_UP_INPUT 18
 
-int leftStatus = 0;
+#define GPIO_WAKEUP 1
+
+RTC int leftStatus = 0;
 int rightStatus = 0;
 
 bool buttonInterrupt();
@@ -293,6 +295,8 @@ int initialReadLeftUp = -1;
 int initialReadRightDown = -1;
 int initialReadRightUp = -1;
 
+unsigned long t;
+
 void setup()
 {
   Serial.begin(115200);
@@ -302,6 +306,11 @@ void setup()
   pinMode(OUT_PIN_LEFT_UP, OUTPUT);
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
+
+  // digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+  // digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+  // digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  // digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(LEFT_DOWN_INPUT, INPUT_PULLUP);
@@ -314,7 +323,7 @@ void setup()
 
   NimBLEServer *pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks);
-  NimBLEService *pService = pServer->createService(SERVICE_UUID);
+  NimBLEService *pService = pServer->createService(NimBLEUUID(SERVICE_UUID));
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
@@ -352,12 +361,13 @@ void setup()
   extAdv.setConnectable(true);
   extAdv.setScannable(false);
 
-  extAdv.setServiceData(NimBLEUUID(SERVICE_UUID), std::string("Winkduino"));
-  extAdv.setCompleteServices16({ NimBLEUUID(SERVICE_UUID) });
+  extAdv.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
 
   NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
 
   pAdvertising->setCallbacks(new advertisingCallbacks);
+
+  t = millis();
 
   if (pAdvertising->setInstanceData(0, extAdv))
   {
@@ -370,32 +380,43 @@ void setup()
     printf("Failed to register advertisment data\n");
 }
 
+int advertiseTime = 1000;
+int sleepTime = 2000;
+
 
 void loop()
 {
-  // Serial.println("Loop");
-  // printf("Loop printf\n");
-  int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
-  int readLeftUp = digitalRead(LEFT_UP_INPUT);
-  int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
-  int readRightUp = digitalRead(RIGHT_UP_INPUT);
+    int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
+    int readLeftUp = digitalRead(LEFT_UP_INPUT);
+    int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
+    int readRightUp = digitalRead(RIGHT_UP_INPUT);
 
-  if (((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) && ((readLeftUp != initialReadLeftUp) && (readRightUp != initialReadRightUp))) {
-    if ((readLeftDown == HIGH && readRightDown == HIGH)) {
-      bothUp();
-    } else if ((readLeftDown == LOW && readRightDown == LOW)) {
-      bothDown();
-    }
+    if (((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) && ((readLeftUp != initialReadLeftUp) && (readRightUp != initialReadRightUp))) {
+      if ((readLeftDown == HIGH && readRightDown == HIGH)) {
+        bothUp();
+      } else if ((readLeftDown == LOW && readRightDown == LOW)) {
+        bothDown();
+      }
 
 
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    setAllOff();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
 
-    initialReadLeftDown = readLeftDown;
-    initialReadRightDown = readRightDown;
-    initialReadLeftUp = readLeftUp;
-    initialReadRightUp = readRightUp;
-  } 
+      initialReadLeftDown = readLeftDown;
+      initialReadRightDown = readRightDown;
+      initialReadLeftUp = readLeftUp;
+      initialReadRightUp = readRightUp;
+    } 
+  // }
+  printf("%f\n", millis() - t);
+  if ((millis() - t) > advertiseTime) {
+    esp_sleep_enable_timer_wakeup(sleepTime);
+    printf("START SLEEP\n");
+    esp_light_sleep_start();
+    printf("END SLEEP");
+    t = millis();
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  }
 
 }
 
