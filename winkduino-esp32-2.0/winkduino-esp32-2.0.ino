@@ -1,5 +1,7 @@
 #include <NimBLEDevice.h>
 #include <Arduino.h>
+#include "driver/rtc_io.h"
+#include "driver/gpio.h"
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
@@ -47,8 +49,6 @@ void rightWave();
 
 NimBLECharacteristic *busyChar = nullptr;
 
-// #define RESET_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51522"
-
 #define LEFT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51523"
 #define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
 
@@ -56,7 +56,7 @@ NimBLECharacteristic *busyChar = nullptr;
 #define RIGHT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 #define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
 
-// #define MANUAL_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
+#define LONG_TERM_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
@@ -81,19 +81,45 @@ class ServerCallbacks : public NimBLEServerCallbacks
 {
   void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
   {
+    deviceConnected = true;
     updateHeadlightChars();
     Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
   };
   void onDisconnect(NimBLEServer *pServer)
   {
+    deviceConnected = false;
     printf("Disconnected from client\n");
     NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-    deviceConnected = false;
     if (pAdvertising->start(0))
       printf("Started advertising\n");
     else
       printf("Failed to start advertising\n");
   };
+};
+
+class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onWrite(NimBLECharacteristic *pChar)
+  {
+    printf("long term sleep written\n");
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+
+    gpio_pullup_en((gpio_num_t)LEFT_DOWN_INPUT);
+    gpio_pullup_en((gpio_num_t)RIGHT_DOWN_INPUT);
+
+    int leftDownRead = digitalRead(LEFT_DOWN_INPUT);
+    int rightDownRead = digitalRead(RIGHT_DOWN_INPUT);
+
+    if (leftDownRead == LOW && rightDownRead == LOW) {
+      printf("Down position\n");
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)LEFT_DOWN_INPUT, 1);
+    } else {
+      printf("Up position\n");
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)LEFT_UP_INPUT, 1);
+    }
+    delay(100);
+    esp_deep_sleep_start();
+  }
 };
 
 class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
@@ -265,13 +291,11 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 {
   void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id)
   {
-    /* Check the reason advertising stopped, don't sleep if client is connecting */
-    printf("Advertising instance %u stopped\n", inst_id);
     switch (reason)
     {
     case 0:
-      printf("Client connecting\n");
       deviceConnected = true;
+      printf("Client connecting\n");
       return;
     case BLE_HS_ETIMEOUT:
       // printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
@@ -284,8 +308,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 };
 
 
-
-
 int initialReadLeftDown = -1;
 int initialReadLeftUp = -1;
 int initialReadRightDown = -1;
@@ -294,7 +316,7 @@ int initialReadRightUp = -1;
 unsigned long t;
 
 
-int advertiseTime_ms = 500;
+int advertiseTime_ms = 650;
 int sleepTime_us = 11 * 1000 * 1000;
 
 void setup()
@@ -325,7 +347,7 @@ void setup()
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
-  // NimBLECharacteristic *manualSleepChar = pService->createCharacteristic(MANUAL_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -333,8 +355,6 @@ void setup()
   busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-
-
 
   initialReadLeftDown = digitalRead(LEFT_DOWN_INPUT);
   initialReadLeftUp = digitalRead(LEFT_UP_INPUT);
@@ -353,6 +373,7 @@ void setup()
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
+  longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   // manualSleepChar->setCallbacks(new ManualSleepCharacteristicCallbacks())
 
   pService->start();
@@ -387,30 +408,38 @@ void setup()
 
 void loop()
 {
-    int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
-    int readLeftUp = digitalRead(LEFT_UP_INPUT);
-    int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
-    int readRightUp = digitalRead(RIGHT_UP_INPUT);
+  int readLeftDown = digitalRead(LEFT_DOWN_INPUT);
+  int readLeftUp = digitalRead(LEFT_UP_INPUT);
+  int readRightDown = digitalRead(RIGHT_DOWN_INPUT);
+  int readRightUp = digitalRead(RIGHT_UP_INPUT);
 
-    if (((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) && ((readLeftUp != initialReadLeftUp) && (readRightUp != initialReadRightUp))) {
-      if ((readLeftDown == HIGH && readRightDown == HIGH)) {
-        bothUp();
-      } else if ((readLeftDown == LOW && readRightDown == LOW)) {
-        bothDown();
-      }
+  if (((readLeftDown != initialReadLeftDown) && (readRightDown != initialReadRightDown)) && ((readLeftUp != initialReadLeftUp) && (readRightUp != initialReadRightUp))) {
+    busyChar->setValue("1");
+    busyChar->notify();
+    if ((readLeftDown == HIGH && readRightDown == HIGH)) {
+      printf("BOTH UP\n");
+      bothUp();
+    } else if ((readLeftDown == LOW && readRightDown == LOW)) {
+      printf("BOTH DOWN\n");
+      bothDown();
+    }
 
 
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
 
-      initialReadLeftDown = readLeftDown;
-      initialReadRightDown = readRightDown;
-      initialReadLeftUp = readLeftUp;
-      initialReadRightUp = readRightUp;
-    } 
+    initialReadLeftDown = readLeftDown;
+    initialReadRightDown = readRightDown;
+    initialReadLeftUp = readLeftUp;
+    initialReadRightUp = readRightUp;
+    updateHeadlightChars();
+    busyChar->setValue("0");
+    busyChar->notify();
+  } 
 
   if (!deviceConnected && (millis() - t) > advertiseTime_ms) {
     printf("Deep sleep starting...\n");
+    if (deviceConnected) return;
     delay(100);
     if (!deviceConnected)
       esp_deep_sleep_start();

@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Device } from "react-native-ble-plx";
 import { CommandOutput, CustomCommandStore } from "../AsyncStorage/CustomCommandStore";
 import { useEffect, useState } from "react";
@@ -20,6 +20,67 @@ const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const HEADLIGHT_MOVEMENT_DELAY = 750;
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+const commands: { name: string, value: number }[] = [
+  {
+    name: "Left Up",
+    value: 4,
+  },
+  {
+    name: "Left Down",
+    value: 5,
+  },
+  {
+    name: "Left Wink",
+    value: 6,
+  },
+  {
+    name: "Both Up",
+    value: 1
+  },
+  {
+    name: "Both Down",
+    value: 2,
+  },
+  {
+    name: "Both Blink",
+    value: 3,
+  },
+  {
+    name: "Right Up",
+    value: 7,
+  },
+  {
+    name: "Right Down",
+    value: 8,
+  },
+  {
+    name: "Right Wink",
+    value: 9,
+  },
+  {
+    name: "Left Wave",
+    value: 10,
+  },
+  {
+    name: "Right Wave",
+    value: 11,
+  }
+
+];
+
+
+const parseCommandPartHumanReadable = (part: string) => {
+  if (part.includes("d")) {
+    part = part.slice(1);
+    const ms = parseFloat(part);
+    return `Delay ${ms}ms`;
+  } else {
+    const commandVal = parseInt(part);
+    const cmd = commands.find(c => c.value === commandVal);
+    return cmd?.name;
+  }
+}
 
 export function CustomCommands(props: CustomCommandProps) {
 
@@ -47,8 +108,6 @@ export function CustomCommands(props: CustomCommandProps) {
     const res = await props.device?.readCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID);
     if (base64.decode(res?.value!) === "0") setHeadlightsBusy(false);
     else setHeadlightsBusy(true);
-
-    console.log(parts);
   }
 
   const fetchAllCommands = async () => {
@@ -60,7 +119,7 @@ export function CustomCommands(props: CustomCommandProps) {
     (async () => {
       await fetchAllCommands();
     })();
-  }, []);
+  }, [props.visible]);
 
   return (
     <Modal
@@ -69,26 +128,33 @@ export function CustomCommands(props: CustomCommandProps) {
       animationType="slide"
       hardwareAccelerated
     >
+      <ScrollView contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }} style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }}>
 
-      <View style={styles.container}>
+        <Text style={{ color: "white", fontWeight: "bold", fontSize: 30, marginTop: 20, width: "90%", textAlign: "center" }}>Custom Command Pallet</Text>
+
         <View style={styles.header}>
           <Text style={styles.text}>Left State: {props.leftStatus}</Text>
           <Text style={styles.text}>Right State: {props.rightStatus}</Text>
         </View>
 
-        <OpacityButton
-          onPress={() => fetchAllCommands()}
-          buttonStyle={{ backgroundColor: "rgb(30,30,30)", padding: 10, borderRadius: 4 }}
-          textStyle={{ color: "white" }}
-          text="Refresh Commands"
-        />
-
-        <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", flexWrap: "wrap", columnGap: 3, rowGap: 5 }}>
+        <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", rowGap: 20 }}>
           {
             allCustomCommands.map((cmd, i) => (
-              <View style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", rowGap: 3, backgroundColor: i % 2 === 0 ? "rgb(15, 15, 15)" : "rgb(30, 30, 30)" }}>
+              <View style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 5,
+                backgroundColor: i % 2 === 0 ? "rgb(37, 37, 37)" : "transparent",
+                borderColor: i % 2 === 1 ? "rgb(30, 30, 30)" : "none",
+                borderWidth: i % 2 === 1 ? 3 : 0,
+                padding: 15,
+                paddingHorizontal: 10,
+                rowGap: 7,
+                width: 300,
+              }}>
                 <Text style={styles.text}>{cmd.name}</Text>
-                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15 }}>{cmd.command}</Text>
+                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15 }}>{cmd.command.split("-").map((v) => parseCommandPartHumanReadable(v)).join(" --> ")}</Text>
 
                 <OpacityButton
                   disabled={props.headlightBusy}
@@ -109,7 +175,8 @@ export function CustomCommands(props: CustomCommandProps) {
           onPress={() => props.close()}
           text="Close"
         />
-      </View>
+      </ScrollView>
+      {/* </View> */}
     </Modal>
   )
 }
@@ -119,14 +186,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgb(20, 20, 20)',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     rowGap: 25,
   },
   header: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
+    width: "90%",
     justifyContent: "space-evenly",
   },
   commandColumns: {

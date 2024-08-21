@@ -1,6 +1,4 @@
 import { Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import InputSpinner from "react-native-input-spinner";
-import { Picker, PickerItemProps } from "@react-native-picker/picker";
 
 import { useEffect, useState } from "react";
 
@@ -9,13 +7,16 @@ import { OpacityButton } from "../Components/OpacityButton";
 import CheckBox from "react-native-bouncy-checkbox";
 import { AutoConnectStore, CustomCommandStore, DeviceMACStore, SleepyEyeStore } from "../AsyncStorage";
 import { DeleteDataWarning } from "./DeleteDataWarning";
+import { useBLE } from "../hooks/useBLE";
+import base64 from "react-native-base64";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
+  enterDeepSleep: () => Promise<void>;
 }
 
 export function Settings(props: SettingsProps) {
-
+  const { connectedDevice } = useBLE();
   const [pairedMAC, setPairedMAC] = useState<string | undefined>();
 
   const [leftHeadlight, setLeftHeadlight] = useState(50);
@@ -28,8 +29,6 @@ export function Settings(props: SettingsProps) {
 
 
   const [deleteDataPopup, setDeleteDataPopup] = useState(false);
-
-  const [sleepNum, setSleepNum] = useState(0);
 
   // FETCH SETTINGS
   const fetchPairing = async () => {
@@ -53,6 +52,8 @@ export function Settings(props: SettingsProps) {
     if (setting === undefined) setAutoConnectSetting(true);
     else setAutoConnectSetting(false);
   }
+
+
 
 
   // UPDATE SETTINGS
@@ -252,8 +253,28 @@ export function Settings(props: SettingsProps) {
             </View>
           </View>
 
-          {/* TODO: TURN INTO MODAL */}
           <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
+            <Text style={styles.text}>
+              Long Term Sleep
+            </Text>
+            <Text style={{ color: "white", textAlign: "center" }}>
+              If you plan to leave your car off for a long period of time, (more than 1 week), then it is recommended that you put your module in long term sleep.{"\n"}
+              You will not be able to connect to the module while it is asleep. To wake it up, you must press the headlight retractor button.
+            </Text>
+
+            <OpacityButton
+              text="Put Module to Sleep"
+              buttonStyle={styles.button}
+              textStyle={styles.buttonText}
+              onPress={() => props.enterDeepSleep()}
+            // disabled={!connectedDevice}
+            />
+
+          </View>
+
+
+          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+
             <Text style={styles.text}>Delete all Data</Text>
             <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
             <OpacityButton

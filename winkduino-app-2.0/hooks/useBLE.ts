@@ -12,10 +12,7 @@ const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
-
-const sleep = (ms: number) => {
-  return new Promise((res, rej) => setTimeout(res, ms));
-}
+const SCAN_TIME_SECONDS = 22;
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
@@ -105,26 +102,9 @@ function useBLE() {
     try {
       const connection = await bleManager.connectToDevice(device.id);
       await connection.discoverAllServicesAndCharacteristics();
-      // Logic to discover characteristics and see whats up
-      // if (discovery) {
-      //   console.log("Discovering device: ", connection.id);
-      //   const services = await connection.services();
-      //   const serviceUUIDs = services.map(s => s.uuid);
-      //   console.log(serviceUUIDs);
-      //   let foundService = false;
-      //   if (!serviceUUIDs.includes(SERVICE_UUID)) foundService = false;
-      //   else foundService = true;
 
-      //   if (!foundService) {
-      //     setCheckedMACs((prev) => [...prev, connection.id]);
-      //     console.log("Disconnecting from device: ", connection.id);
-      //     await connection.cancelConnection();
-      //     return false;
-      //   } else {
       await DeviceMACStore.setMAC(connection.id);
       setMAC(connection.id);
-      //   }
-      // }
 
       setConnectedDevice(connection);
       setIsConnecting(false);
@@ -194,50 +174,16 @@ function useBLE() {
     } catch (err) {
       console.log("Failed to connect: ");
       console.log(err);
+
+      setConnectedDevice(null);
+      setIsConnecting(false);
+      setIsScanning(true);
+      setNoDevice(false);
+      await scan();
       return false;
     }
 
   }
-
-
-  // const attemptConnections = async (allDevices: Device[]) => {
-  //   console.log("Stopping scan...");
-
-  //   await bleManager.stopDeviceScan();
-  //   setIsScanning(false);
-
-  //   console.log("Attempting connections...");
-  //   setIsConnecting(true);
-
-  //   const mac = await DeviceMACStore.getStoredMAC();
-  //   console.log("Stored MAC:", mac);
-
-
-  //   if (mac !== undefined) {
-  //     console.log("Stored MAC Found, attempting to connect");
-  //     const device = allDevices.find((dev) => dev.id === mac);
-  //     if (device && device.id === mac) {
-  //       await connectToDevice(device);
-  //     }
-  //   } else {
-  //     console.log("No Stored MAC Found... checking devices");
-  //     let foundConnection = false;
-  //     for (const device of allDevices) {
-  //       if (foundConnection) break;
-  //       // Logic to discover if device is correct
-  //       try {
-  //         if (!checkedMACs.includes(device.id)) {
-  //           console.log("Scan method, new device id: ", device.id);
-  //           const val = await connectToDevice(device, true);
-  //           if (val === true) foundConnection = true;;
-  //         }
-  //       } catch (err) {
-  //         console.log("Error connecting: ", err);
-  //         bleManager.cancelDeviceConnection(device.id).catch(err => console.log("Error cancelling connection:", err));
-  //       }
-  //     }
-  //   }
-  // }
 
   const scan = async () => {
     if (connectedDevice !== null) return;
@@ -260,7 +206,7 @@ function useBLE() {
           scan();
         return;
       }
-    }, 15 * 1000);
+    }, SCAN_TIME_SECONDS * 1000);
 
 
     setIsScanning(true);

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,7 @@ const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
 const RIGHT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
+const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 
 export default function App() {
 
@@ -68,21 +69,18 @@ export default function App() {
       connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
   }
 
-  // const [timeLeftScan, setTimeLeftScan] = useState(15);
-
-  // useEffect(() => {
-  //   let interval: NodeJS.Timeout;
-  //   if (isScanning) {
-  //     let i = 15;
-  //     interval = setInterval(() => {
-  //       setTimeLeftScan((prev) => prev - 1);
-  //       if (--i === 0) {
-  //         clearInterval(interval);
-  //         setTimeLeftScan(15);
-  //       }
-  //     }, 1000);
-  //   }
-  // }, [isScanning]);
+  const enterDeepSleep = async () => {
+    console.log(connectedDevice);
+    if (!connectedDevice) return;
+    try {
+      console.log("Writing");
+      await connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LONG_TERM_SLEEP_UUID, base64.encode("1"));
+      console.log("Wrote");
+    } catch (err) {
+      console.log("ERROR SLEEPING");
+      console.log(err);
+    }
+  }
 
 
   useEffect(() => {
@@ -100,31 +98,14 @@ export default function App() {
     })();
   }, [settingsOpen]);
 
-  // useEffect(() => {
-  //   if (connectedDevice !== null) return;
-
-  //   (async () => {
-  //     const connect = await AutoConnectStore.get();
-  //     if (connect === undefined) setAutoConnect(true);
-  //     else setAutoConnect(false);
-
-  //     if (connect === undefined)
-  //       scanForDevice();
-
-  //     const mac = await DeviceMACStore.getStoredMAC();
-  //     setMAC(mac);
-  //   })();
-  // }, []);
-
-  // TODO: Restyle some pages other than settings to look "better"
   return (
-    <View style={styles.container}>
-      <Text style={{ color: "white", textAlign: "center", fontSize: 20, marginHorizontal: 20 }}>
+    <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+      <Text style={{ color: "white", textAlign: "center", fontSize: 20, marginHorizontal: 20, marginTop: 45 }}>
         {
           !connectedDevice ?
             !noDevice ?
               (isScanning ?
-                `Scanning for Wink Module`
+                "Scanning for Wink Module"
                 : isConnecting ?
                   "Connecting to Wink Module... Stand by..."
                   : (autoConnect && connectedDevice) ?
@@ -136,7 +117,7 @@ export default function App() {
         }
       </Text>
 
-      <View style={{ marginBottom: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
+      <View style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
         {
           !connectedDevice ?
 
@@ -150,22 +131,49 @@ export default function App() {
         <OpacityButton
           buttonStyle={{}}
           text="Device Settings"
-          textStyle={{ ...styles.buttonText, color: "#0060df", textDecorationLine: "underline" }}
+          textStyle={{ ...styles.buttonText, color: "#e63754", textDecorationLine: "underline", fontWeight: "bold" }}
           onPress={() => setSettingsOpen(true)}
         />
       </View>
 
       <>
+        <View style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 20,
+          width: "90%",
+          borderRadius: 5,
+          backgroundColor: "rgb(30, 30, 30)",
+          padding: 30,
+        }}>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
 
-        <OpacityButton
-          buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
-          disabled={!connectedDevice}
-          text="Go to Commands"
-          textStyle={styles.buttonText}
-          onPress={() => setDefaultCommandsOpen(true)}
-        />
+          <OpacityButton
+            buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
+            disabled={!connectedDevice}
+            text="Go to Commands"
+            textStyle={styles.buttonText}
+            onPress={() => setDefaultCommandsOpen(true)}
+          />
+        </View>
 
-        <View style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 20, marginTop: 50, }}>
+        <View style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 20,
+          width: "90%",
+          borderRadius: 5,
+          borderColor: "rgb(50, 50, 50)",
+          borderWidth: 3,
+          padding: 30,
+        }}>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
+          <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
           <OpacityButton
             buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
             disabled={!connectedDevice}
@@ -185,7 +193,7 @@ export default function App() {
           (connectedDevice !== null) ?
             <OpacityButton
               disabled={!connectedDevice}
-              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), marginTop: 75 }}
+              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), }}
               textStyle={styles.buttonText}
               onPress={() => disconnect()}
               text="Disconnect"
@@ -195,9 +203,9 @@ export default function App() {
             !autoConnect ?
               <OpacityButton
                 disabled={noDevice ? false : (isConnecting || isScanning)}
-                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), marginTop: 75 }}
+                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), }}
                 textStyle={styles.buttonText}
-                onPress={() => { /**setTimeLeftScan(15);**/ scanForDevice(); }}
+                onPress={() => scanForDevice()}
                 text="Connect"
               />
               : <></>
@@ -241,23 +249,15 @@ export default function App() {
       <Settings
         close={() => setSettingsOpen(false)}
         visible={settingsOpen}
+        enterDeepSleep={enterDeepSleep}
         key={4}
       />
 
-    </View >
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "rgb(20, 20, 20)",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    rowGap: 20,
-  },
   text: {
     color: "white",
     fontSize: 30,

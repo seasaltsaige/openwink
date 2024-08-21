@@ -242,7 +242,20 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
             {
               allCommands.length > 0 ?
                 allCommands.map((cmd, i) => (
-                  <View style={{ display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 5, backgroundColor: i % 2 === 0 ? "rgb(40, 40, 40)" : "rgb(20, 20, 20)", padding: 15, paddingHorizontal: 10, rowGap: 5, width: 200, height: 160 }}>
+                  <View style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 5,
+                    backgroundColor: i % 2 === 0 ? "rgb(37, 37, 37)" : "transparent",
+                    borderColor: i % 2 === 1 ? "rgb(40, 40, 40)" : "none",
+                    borderWidth: i % 2 === 1 ? 3 : 0,
+                    padding: 15,
+                    paddingHorizontal: 10,
+                    rowGap: 5,
+                    width: 200,
+                    height: 160
+                  }}>
                     <Text style={{ color: "white", fontWeight: "bold", fontSize: 20 }}>{cmd.name}</Text>
                     <Text style={{ color: "white", textAlign: "center" }}>{cmd.command.split("-").map(part => parseCommandPartHumanReadable(part)).join(" --> ")}</Text>
                     <OpacityButton
