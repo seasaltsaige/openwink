@@ -187,71 +187,8 @@ export function Settings(props: SettingsProps) {
             </View>
           </View>
 
-          <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
-            <Text style={styles.text}>Put Wink Module to Sleep</Text>
-            <Text style={{ color: "white", textAlign: "center", fontSize: 13 }}>
-              Putting your Wink Module to sleep can help preserve your cars battery life.{"\n"}
-              While the module draws so little power, that it likely is not an issue, putting it to sleep can help if you don't plan to drive your car often, as it will draw even less power.{"\n\n"}
-              <Text style={{ fontWeight: "bold" }}>You will be unable to connect to the Wink Module while it is sleep mode</Text>, but it will wake up after the timer expires.{"\n"}
-              You can also wake the Wink Module up by pressing the popup button.
-            </Text>
-            <View style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-evenly", flexDirection: "row" }}>
-              <Text style={{ color: "white", fontWeight: "bold", fontSize: 20 }}>
-                Sleep for
-              </Text>
-              <InputSpinner
-                min={0}
-                width={120}
-                height={30}
-                // buttonStyle={{ width: 30, height: 30 }}
-                background="rgb(40, 40, 40)"
-                buttonStyle={{ backgroundColor: "#990033" }}
 
-                onChange={(args) => console.log(args)}
-              />
-
-              {/* <Picker
-
-              >
-                {
-                  ([
-                    {
-                      value: "seconds",
-                      label: "Seconds",
-                    },
-                    {
-                      value: "minutes",
-                      label: "Minutes",
-                    },
-                    {
-                      value: "hours",
-                      label: "Hours"
-                    },
-                    {
-                      value: "days",
-                      label: "Days",
-                    }
-                  ] as PickerItemProps[]).map((val) => (
-                    <Picker.Item
-                      label={val.label}
-                      value={val.value}
-                    >
-
-                    </Picker.Item>
-                  ))
-                }
-              </Picker> */}
-            </View>
-            <OpacityButton
-              buttonStyle={styles.button}
-              onPress={() => { }}
-              text="Put to Sleep"
-              textStyle={styles.buttonText}
-
-            />
-          </View>
-
-          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
+          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
             <View>
               <Text style={styles.text}>
                 Sleepy Eye Settings
@@ -316,7 +253,7 @@ export function Settings(props: SettingsProps) {
           </View>
 
           {/* TODO: TURN INTO MODAL */}
-          <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+          <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
             <Text style={styles.text}>Delete all Data</Text>
             <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
             <OpacityButton

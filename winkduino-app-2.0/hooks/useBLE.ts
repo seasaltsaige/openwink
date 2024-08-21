@@ -242,7 +242,7 @@ function useBLE() {
   const scan = async () => {
     if (connectedDevice !== null) return;
     console.log("BEGIN SCAN");
-
+    setNoDevice(false);
     let foundDevice = false;
 
     // const allDevices: Device[] = [];

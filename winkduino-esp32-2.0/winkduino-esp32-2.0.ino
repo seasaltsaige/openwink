@@ -22,8 +22,8 @@
 
 #define GPIO_WAKEUP 1
 
-RTC int leftStatus = 0;
-int rightStatus = 0;
+RTC_DATA_ATTR int leftStatus = 0;
+RTC_DATA_ATTR int rightStatus = 0;
 
 bool buttonInterrupt();
 void setAllOff();
@@ -56,13 +56,12 @@ NimBLECharacteristic *busyChar = nullptr;
 #define RIGHT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 #define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
 
+// #define MANUAL_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
+
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
 NimBLECharacteristic *leftChar = nullptr;
 NimBLECharacteristic *rightChar = nullptr;
-
-static uint32_t advTime = 100 * 1000;
-static uint32_t sleepSeconds = 1;
 
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
@@ -75,31 +74,27 @@ void updateHeadlightChars()
   rightChar->notify();
 }
 
+bool deviceConnected = false;
+
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
 {
   void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
   {
     updateHeadlightChars();
-    printf("%d\n", leftStatus);
-    printf("%d\n", rightStatus);
-    Serial.println(leftStatus);
-    Serial.println(rightStatus);
     Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
   };
   void onDisconnect(NimBLEServer *pServer)
   {
     printf("Disconnected from client\n");
     NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
-
+    deviceConnected = false;
     if (pAdvertising->start(0))
       printf("Started advertising\n");
     else
       printf("Failed to start advertising\n");
   };
 };
-
-
 
 class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
@@ -276,9 +271,10 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
     {
     case 0:
       printf("Client connecting\n");
+      deviceConnected = true;
       return;
     case BLE_HS_ETIMEOUT:
-      printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
+      // printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
       break;
     default:
       printf("Default case");
@@ -297,6 +293,10 @@ int initialReadRightUp = -1;
 
 unsigned long t;
 
+
+int advertiseTime_ms = 500;
+int sleepTime_us = 11 * 1000 * 1000;
+
 void setup()
 {
   Serial.begin(115200);
@@ -307,10 +307,6 @@ void setup()
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
 
-  // digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-  // digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-  // digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  // digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(LEFT_DOWN_INPUT, INPUT_PULLUP);
@@ -329,12 +325,16 @@ void setup()
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
+  // NimBLECharacteristic *manualSleepChar = pService->createCharacteristic(MANUAL_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
+
   syncChar->setValue(0);
   winkChar->setValue(0);
 
   busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+
+
 
   initialReadLeftDown = digitalRead(LEFT_DOWN_INPUT);
   initialReadLeftUp = digitalRead(LEFT_UP_INPUT);
@@ -353,6 +353,7 @@ void setup()
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
+  // manualSleepChar->setCallbacks(new ManualSleepCharacteristicCallbacks())
 
   pService->start();
 
@@ -369,6 +370,8 @@ void setup()
 
   t = millis();
 
+  esp_sleep_enable_timer_wakeup(sleepTime_us);
+
   if (pAdvertising->setInstanceData(0, extAdv))
   {
     if (pAdvertising->start(0))
@@ -380,8 +383,6 @@ void setup()
     printf("Failed to register advertisment data\n");
 }
 
-int advertiseTime = 1000;
-int sleepTime = 2000;
 
 
 void loop()
@@ -407,17 +408,13 @@ void loop()
       initialReadLeftUp = readLeftUp;
       initialReadRightUp = readRightUp;
     } 
-  // }
-  printf("%f\n", millis() - t);
-  if ((millis() - t) > advertiseTime) {
-    esp_sleep_enable_timer_wakeup(sleepTime);
-    printf("START SLEEP\n");
-    esp_light_sleep_start();
-    printf("END SLEEP");
-    t = millis();
-    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-  }
 
+  if (!deviceConnected && (millis() - t) > advertiseTime_ms) {
+    printf("Deep sleep starting...\n");
+    delay(100);
+    if (!deviceConnected)
+      esp_deep_sleep_start();
+  }
 }
 
 // Both
