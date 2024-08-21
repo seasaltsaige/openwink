@@ -49,7 +49,6 @@ export default function App() {
   }
 
   const sendDefaultCommand = (value: number) => {
-    console.log(value);
     if (headlightsBusy) return;
     if (connectedDevice)
       connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
@@ -70,12 +69,9 @@ export default function App() {
   }
 
   const enterDeepSleep = async () => {
-    console.log(connectedDevice);
     if (!connectedDevice) return;
     try {
-      console.log("Writing");
       await connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LONG_TERM_SLEEP_UUID, base64.encode("1"));
-      console.log("Wrote");
     } catch (err) {
       console.log("ERROR SLEEPING");
       console.log(err);
@@ -86,7 +82,6 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const connect = await AutoConnectStore.get();
-      console.log(connect);
       if (connect === undefined) setAutoConnect(true);
       else setAutoConnect(false);
 
