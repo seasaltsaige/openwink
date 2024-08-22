@@ -22,8 +22,6 @@
 #define RIGHT_DOWN_INPUT 17
 #define RIGHT_UP_INPUT 18
 
-#define GPIO_WAKEUP 1
-
 RTC_DATA_ATTR int leftStatus = 0;
 RTC_DATA_ATTR int rightStatus = 0;
 
@@ -297,9 +295,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
       deviceConnected = true;
       printf("Client connecting\n");
       return;
-    case BLE_HS_ETIMEOUT:
-      // printf("Time expired - sleeping for %" PRIu32 "seconds\n", sleepSeconds);
-      break;
     default:
       printf("Default case");
       break;
@@ -316,8 +311,10 @@ int initialReadRightUp = -1;
 unsigned long t;
 
 
-int advertiseTime_ms = 650;
-int sleepTime_us = 11 * 1000 * 1000;
+int advertiseTime_ms = 500;
+int sleepTime_us = 15 * 1000 * 1000;
+
+NimBLEExtAdvertising *pAdvertising;
 
 void setup()
 {
@@ -337,10 +334,10 @@ void setup()
   pinMode(RIGHT_UP_INPUT, INPUT_PULLUP);
 
   NimBLEDevice::init("Winkduino");
-  NimBLEDevice::setDeviceName("Winkduino");
 
   NimBLEServer *pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks);
+
   NimBLEService *pService = pServer->createService(NimBLEUUID(SERVICE_UUID));
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
@@ -374,7 +371,6 @@ void setup()
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
-  // manualSleepChar->setCallbacks(new ManualSleepCharacteristicCallbacks())
 
   pService->start();
 
@@ -385,13 +381,11 @@ void setup()
 
   extAdv.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
 
-  NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
+  pAdvertising = NimBLEDevice::getAdvertising();
 
   pAdvertising->setCallbacks(new advertisingCallbacks);
 
   t = millis();
-
-  esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   if (pAdvertising->setInstanceData(0, extAdv))
   {
@@ -404,7 +398,7 @@ void setup()
     printf("Failed to register advertisment data\n");
 }
 
-
+bool advertising = true;
 
 void loop()
 {
@@ -432,17 +426,27 @@ void loop()
     initialReadRightDown = readRightDown;
     initialReadLeftUp = readLeftUp;
     initialReadRightUp = readRightUp;
+  
     updateHeadlightChars();
     busyChar->setValue("0");
     busyChar->notify();
   } 
 
-  if (!deviceConnected && (millis() - t) > advertiseTime_ms) {
-    printf("Deep sleep starting...\n");
-    if (deviceConnected) return;
-    delay(100);
-    if (!deviceConnected)
-      esp_deep_sleep_start();
+
+  if (advertising) {
+    if (!deviceConnected && (millis() - t) > advertiseTime_ms) {
+      printf("Advertising Stopping...\n");
+      pAdvertising->stop(0);
+      t = millis();
+      advertising = false;
+    }
+  } else {
+    if ((millis() - t) > (sleepTime_us / 1000)) {
+      printf("Advertising Restarting...\n");
+      pAdvertising->start(0);
+      t = millis();
+      advertising = true;
+    }
   }
 }
 

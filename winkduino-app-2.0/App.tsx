@@ -72,6 +72,7 @@ export default function App() {
     if (!connectedDevice) return;
     try {
       await connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LONG_TERM_SLEEP_UUID, base64.encode("1"));
+      await disconnect();
     } catch (err) {
       console.log("ERROR SLEEPING");
       console.log(err);
@@ -121,7 +122,7 @@ export default function App() {
               If you continue to be unable to connect, try pressing the 'Reset Button' on your Wink Module, and restart the app.
             </Text>
 
-            : <Text style={styles.text}>Connected to Wink Receiver</Text>
+            : <Text style={{ ...styles.text, marginTop: -20 }}>Connected to Wink Receiver</Text>
         }
         <OpacityButton
           buttonStyle={{}}
@@ -188,7 +189,7 @@ export default function App() {
           (connectedDevice !== null) ?
             <OpacityButton
               disabled={!connectedDevice}
-              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), }}
+              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), marginBottom: 20 }}
               textStyle={styles.buttonText}
               onPress={() => disconnect()}
               text="Disconnect"
@@ -198,7 +199,7 @@ export default function App() {
             !autoConnect ?
               <OpacityButton
                 disabled={noDevice ? false : (isConnecting || isScanning)}
-                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), }}
+                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), marginBottom: 20 }}
                 textStyle={styles.buttonText}
                 onPress={() => scanForDevice()}
                 text="Connect"

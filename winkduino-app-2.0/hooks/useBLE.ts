@@ -12,7 +12,7 @@ const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
-const SCAN_TIME_SECONDS = 22;
+const SCAN_TIME_SECONDS = 30;
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);

@@ -7,8 +7,6 @@ import { OpacityButton } from "../Components/OpacityButton";
 import CheckBox from "react-native-bouncy-checkbox";
 import { AutoConnectStore, CustomCommandStore, DeviceMACStore, SleepyEyeStore } from "../AsyncStorage";
 import { DeleteDataWarning } from "./DeleteDataWarning";
-import { useBLE } from "../hooks/useBLE";
-import base64 from "react-native-base64";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
@@ -16,7 +14,6 @@ interface SettingsProps {
 }
 
 export function Settings(props: SettingsProps) {
-  const { connectedDevice } = useBLE();
   const [pairedMAC, setPairedMAC] = useState<string | undefined>();
 
   const [leftHeadlight, setLeftHeadlight] = useState(50);
@@ -27,9 +24,10 @@ export function Settings(props: SettingsProps) {
 
   const [autoConnectSetting, setAutoConnectSetting] = useState(true);
 
-
   const [deleteDataPopup, setDeleteDataPopup] = useState(false);
 
+  const [goodbyeVisible, setGoodbyeVisible] = useState(false);
+  const [shutdownTime, setShutdownTime] = useState(3);
   // FETCH SETTINGS
   const fetchPairing = async () => {
     const storedMAC = await DeviceMACStore.getStoredMAC();
@@ -100,6 +98,23 @@ export function Settings(props: SettingsProps) {
     await fetchHeadlightSettings();
     await fetchAutoConnectSetting();
   }
+
+  const sleepDevice = () => {
+    setShutdownTime(3);
+    setGoodbyeVisible(true);
+    let s = 3;
+    let interval = setInterval(() => {
+      s--;
+      setShutdownTime(s);
+      if (s === 0) {
+        props.enterDeepSleep();
+        setGoodbyeVisible(false);
+        props.close();
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+
 
   useEffect(() => {
     (async () => {
@@ -266,8 +281,7 @@ export function Settings(props: SettingsProps) {
               text="Put Module to Sleep"
               buttonStyle={styles.button}
               textStyle={styles.buttonText}
-              onPress={() => props.enterDeepSleep()}
-            // disabled={!connectedDevice}
+              onPress={() => sleepDevice()}
             />
 
           </View>
@@ -300,6 +314,20 @@ export function Settings(props: SettingsProps) {
         delete={() => deleteData()}
         key={9999}
       />
+
+      <Modal
+        visible={goodbyeVisible}
+        animationType="none"
+      >
+        <View style={{ width: "100%", height: "100%", backgroundColor: "rgb(20, 20, 20)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 24 }}>
+            Goodbye...
+          </Text>
+          <Text style={{ color: "white" }}>
+            Sleeping in {shutdownTime} second(s)...
+          </Text>
+        </View>
+      </Modal>
     </>
   )
 
