@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
+#include "esp_ota_ops.h"
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
@@ -56,6 +57,8 @@ NimBLECharacteristic *busyChar = nullptr;
 
 #define LONG_TERM_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 
+#define OTA_BLE_DEVICE_UPDATE "a144c6b1-5e1a-4460-bb92-3674b2f51529"
+
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
 NimBLECharacteristic *leftChar = nullptr;
@@ -75,6 +78,17 @@ void updateHeadlightChars()
 }
 
 bool deviceConnected = false;
+
+#define FULL_PACKET 512
+#define CHARPOS_UPDATE_FLAG 5
+
+esp_ota_handle_t otaHandler = 0;
+
+bool updateFlag = false;
+bool readyFlag = false;
+int bytesReceived = 0;
+int timesWritten = 0;
+
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
@@ -96,6 +110,36 @@ class ServerCallbacks : public NimBLEServerCallbacks
       printf("Failed to start advertising\n");
   };
 };
+
+class OtaBleUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onWrite(NimBLECharacteristic *pChar) {
+    std::string rxData = pChar->getValue();
+    if (!updateFlag) {
+      printf("Starting BLE OTA Update\n");
+      esp_ota_begin(esp_ota_get_next_update_partition(NULL), OTA_SIZE_UNKNOWN, &otaHandler);
+      updateFlag = true;
+    }
+
+    if (rxData.length() > 0)
+    {
+      esp_ota_write(otaHandler, rxData.c_str(), rxData.length());
+      if (rxData.length() != FULL_PACKET)
+      {
+        esp_ota_end(otaHandler);
+        printf("BLE OTA Ending\n");
+        if (ESP_OK == esp_ota_set_boot_partition(esp_ota_get_next_update_partition(NULL))) {
+          delay(2000);
+          esp_restart();
+        }
+        else {
+          printf("Upload Error\n");
+        }
+      }
+    }
+  }
+};
+
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
@@ -156,7 +200,6 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-// must be in same position to work
 class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
   void onWrite(NimBLECharacteristic *pChar)
@@ -348,7 +391,6 @@ void setup()
 
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(UP_BUTTON_INPUT, INPUT);
-  // pinMode(DOWN_BUTTON_INPUT, INPUT);
   
   setCpuFrequencyMhz(80);
 
@@ -364,6 +406,7 @@ void setup()
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *otaBleUpdateChar = pService->createCharacteristic(OTA_BLE_DEVICE_UPDATE, NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -374,9 +417,6 @@ void setup()
 
   int wakeupValue = initialButton;
   initialButton = digitalRead(UP_BUTTON_INPUT);
-
-  printf("Wakeup Value: %d\n", wakeupValue);
-  printf("Initial Button: %d\n", initialButton);
 
   if (wakeupValue != -1 && (wakeupValue != initialButton)) {
     if (initialButton == 1) {
@@ -407,6 +447,7 @@ void setup()
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
+  otaBleUpdateChar->setCallbacks(new OtaBleUpdateCharacteristicCallbacks());
 
   pService->start();
 
