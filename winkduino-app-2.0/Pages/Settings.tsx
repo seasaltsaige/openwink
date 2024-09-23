@@ -135,22 +135,45 @@ export function Settings(props: SettingsProps) {
         hardwareAccelerated
         onRequestClose={() => props.close()}
       >
-        <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
-          <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30 }}>Device Settings</Text>
-          <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
-            <Text style={{ textAlign: "center", color: "white", fontSize: 23, paddingHorizontal: 5 }}>
+        <ScrollView
+          style={{
+            backgroundColor: props.colorTheme.backgroundPrimaryColor,
+            height: "100%",
+            width: "100%"
+          }}
+          contentContainerStyle={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            rowGap: 20
+          }}>
+          <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30, color: props.colorTheme.headerTextColor }}>Device Settings</Text>
+          <View
+            style={{
+              width: "90%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              rowGap: 10,
+              backgroundColor: props.colorTheme.backgroundSecondaryColor,
+              paddingVertical: 20,
+              paddingHorizontal: 10,
+              borderRadius: 5
+            }}>
+            <Text style={{ textAlign: "center", fontSize: 23, paddingHorizontal: 5 }}>
               {
                 pairedMAC
                   ?
                   <>
-                    <Text>Your paired Receiver ID is{"\n"}</Text>
-                    <Text style={{ fontWeight: "bold", }}>{pairedMAC}{"\n\n"}</Text>
-                    <Text style={{ fontSize: 16 }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
+                    <Text style={{ color: props.colorTheme.headerTextColor }}>Your paired Receiver ID is{"\n"}</Text>
+                    <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{pairedMAC}{"\n\n"}</Text>
+                    <Text style={{ fontSize: 16, color: props.colorTheme.textColor }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
                   </>
                   :
                   <>
-                    <Text>No device paired.{"\n\n"}</Text>
-                    <Text style={{ fontSize: 16 }}>If currently connected, the next time the app starts, you will automatically go through device pairing.</Text>
+                    <Text style={{ color: props.colorTheme.headerTextColor }} >No device paired.{"\n\n"}</Text>
+                    <Text style={{ fontSize: 16, color: props.colorTheme.textColor }}>If currently connected, the next time the app starts, you will automatically go through device pairing.</Text>
                   </>
               }
             </Text>
@@ -158,18 +181,31 @@ export function Settings(props: SettingsProps) {
               pairedMAC &&
               <OpacityButton
                 text="Forget Device"
-                buttonStyle={{ ...styles.button, width: 150, padding: 0, height: 40 }}
+                buttonStyle={{ ...styles.button, width: 150, padding: 0, height: 40, backgroundColor: props.colorTheme.buttonColor }}
                 onPress={() => forgetPair()}
-                textStyle={{ fontSize: 17, color: "white" }}
+                textStyle={{ fontSize: 17, color: props.colorTheme.buttonTextColor }}
               />
             }
           </View>
 
-          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-            <Text style={styles.text}>
+          <View
+            style={{
+              width: "90%",
+              rowGap: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingVertical: 20,
+              paddingHorizontal: 10,
+              borderRadius: 5,
+              borderColor: props.colorTheme.backgroundSecondaryColor,
+              borderWidth: 2
+            }}>
+            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
               Auto Connect
             </Text>
-            <Text style={{ color: "white", textAlign: "center" }}>
+            <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
               When the controller app is opened, or when the 'Disconnect' button is pressed, the app will automatically connect/reconnect to the Wink Module.{"\n"}This is enabled by default.
             </Text>
 
@@ -207,19 +243,35 @@ export function Settings(props: SettingsProps) {
           </View>
 
 
-          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+          <View
+            style={{
+              width: "90%",
+              rowGap: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: props.colorTheme.backgroundSecondaryColor,
+              paddingVertical: 20,
+              paddingHorizontal: 10,
+              borderRadius: 5
+            }}>
+
             <View>
-              <Text style={styles.text}>
+              <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
                 Sleepy Eye Settings
               </Text>
-              <Text style={{ color: "white", textAlign: "center" }}>
+
+              <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
                 Enter a number from 0 to 100. This will be used as a percentage from rest. Leaving them blank will default to 50%.
               </Text>
             </View>
             <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
+
               <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Left Headlight</Text>
-                <Text style={{ color: "white" }}>Set to {leftHeadlight}%</Text>
+
+                <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 17, fontWeight: 500 }}>Left Headlight</Text>
+                <Text style={{ color: props.colorTheme.textColor }}>Set to {leftHeadlight}%</Text>
                 <TextInput
                   style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
                   placeholder="0 to 100%"
@@ -236,8 +288,8 @@ export function Settings(props: SettingsProps) {
                 />
               </View>
               <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <Text style={{ color: "white", textAlign: "center", fontSize: 17, fontWeight: 500 }}>Right Headlight</Text>
-                <Text style={{ color: "white" }}>Set to {rightHeadlight}%</Text>
+                <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 17, fontWeight: 500 }}>Right Headlight</Text>
+                <Text style={{ color: props.colorTheme.textColor }}>Set to {rightHeadlight}%</Text>
                 <TextInput
                   style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3 }}
                   placeholder="0 to 100%"
@@ -264,35 +316,58 @@ export function Settings(props: SettingsProps) {
 
               <OpacityButton
                 text="Reset"
-                buttonStyle={{ ...styles.commandButton, backgroundColor: "#990033", width: 85, height: 40, padding: 0 }}
+                buttonStyle={{ ...styles.commandButton, backgroundColor: "#de142c", width: 85, height: 40, padding: 0 }}
                 textStyle={styles.buttonText}
                 onPress={() => resetHeadlightData()}
               />
             </View>
           </View>
 
-          <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", rowGap: 15, paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-            <Text style={styles.text}>
+          <View style={{
+            width: "90%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            rowGap: 15,
+            paddingVertical: 20,
+            paddingHorizontal: 10,
+            borderRadius: 5,
+            borderColor: props.colorTheme.backgroundSecondaryColor,
+            borderWidth: 2
+          }}>
+            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
               Long Term Sleep
             </Text>
-            <Text style={{ color: "white", textAlign: "center" }}>
+            <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
               If you plan to leave your car off for a long period of time, (more than 1 week), then it is recommended that you put your module in long term sleep.{"\n"}
               You will not be able to connect to the module while it is asleep. To wake it up, you must press the headlight retractor button.
             </Text>
 
             <OpacityButton
               text="Put Module to Sleep"
-              buttonStyle={styles.button}
-              textStyle={styles.buttonText}
+              buttonStyle={{ ...styles.button, backgroundColor: props.colorTheme.buttonColor }}
+              textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
               onPress={() => sleepDevice()}
             />
 
           </View>
 
 
-          <View style={{ width: "90%", rowGap: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundColor: "rgb(30, 30, 30)", paddingVertical: 20, paddingHorizontal: 10, borderRadius: 5 }}>
+          <View
+            style={{
+              width: "90%",
+              rowGap: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: props.colorTheme.backgroundSecondaryColor,
+              paddingVertical: 20,
+              paddingHorizontal: 10,
+              borderRadius: 5
+            }}>
 
-            <Text style={styles.text}>Delete all Data</Text>
+            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>Delete all Data</Text>
             <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
             <OpacityButton
               text="Delete"
@@ -303,8 +378,8 @@ export function Settings(props: SettingsProps) {
           </View>
 
           <OpacityButton
-            buttonStyle={{ ...styles.button, marginBottom: 30 }}
-            textStyle={styles.buttonText}
+            buttonStyle={{ ...styles.button, marginBottom: 30, backgroundColor: props.colorTheme.buttonColor }}
+            textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
             onPress={() => props.close()}
             text="Close"
           />
@@ -323,11 +398,19 @@ export function Settings(props: SettingsProps) {
         visible={goodbyeVisible}
         animationType="none"
       >
-        <View style={{ width: "100%", height: "100%", backgroundColor: "rgb(20, 20, 20)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 24 }}>
+        <View
+          style={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: props.colorTheme.backgroundPrimaryColor,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+          <Text style={{ color: props.colorTheme.headerTextColor, fontWeight: "bold", fontSize: 24 }}>
             Goodbye...
           </Text>
-          <Text style={{ color: "white" }}>
+          <Text style={{ color: props.colorTheme.textColor }}>
             Sleeping in {shutdownTime} second(s)...
           </Text>
         </View>
