@@ -3,6 +3,7 @@ import { Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-nati
 import { Device } from "react-native-ble-plx";
 import { OpacityButton } from "../Components/OpacityButton";
 import { SleepyEyeStore } from "../AsyncStorage";
+import { defaults, useColorTheme } from "../hooks/useColorTheme";
 
 type DefaultModalProps = {
   device: Device | null;
@@ -14,6 +15,7 @@ type DefaultModalProps = {
   sendSyncCommand: () => void;
   leftState: number;
   rightState: number;
+  colorTheme: typeof defaults;
 }
 
 
@@ -90,7 +92,6 @@ function DefaultCommands(props: DefaultModalProps) {
     setNeedsReset((props.leftState !== Math.floor(props.leftState) || props.rightState != Math.floor(props.rightState)));
   }, [props.leftState, props.rightState]);
 
-
   return (
     <Modal
       transparent={false}
@@ -99,7 +100,7 @@ function DefaultCommands(props: DefaultModalProps) {
       hardwareAccelerated
       onRequestClose={() => props.close()}
     >
-      <ScrollView style={styles.container} contentContainerStyle={{
+      <ScrollView style={{ backgroundColor: props.colorTheme.backgroundPrimaryColor }} contentContainerStyle={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ThemeStore } from "../AsyncStorage/ThemeStore";
 
 
-const defaults = {
+export const defaults = {
   backgroundPrimaryColor: "#141414",
   backgroundSecondaryColor: "#1e1e1e",
   buttonColor: "#800020",
@@ -40,7 +40,8 @@ export function useColorTheme() {
   }
 
   async function revertDefaults() {
-
+    await ThemeStore.resetAllThemes();
+    setColorTheme(defaults);
   }
 
   async function resetTheme(theme: keyof typeof defaults) {

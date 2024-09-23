@@ -7,10 +7,12 @@ import { OpacityButton } from "../Components/OpacityButton";
 import CheckBox from "react-native-bouncy-checkbox";
 import { AutoConnectStore, CustomCommandStore, DeviceMACStore, SleepyEyeStore } from "../AsyncStorage";
 import { DeleteDataWarning } from "./DeleteDataWarning";
+import { defaults } from "../hooks/useColorTheme";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
   enterDeepSleep: () => Promise<void>;
+  colorTheme: typeof defaults;
 }
 
 export function Settings(props: SettingsProps) {
@@ -314,6 +316,7 @@ export function Settings(props: SettingsProps) {
         close={() => setDeleteDataPopup(false)}
         delete={() => deleteData()}
         key={9999}
+        colorTheme={props.colorTheme}
       />
 
       <Modal

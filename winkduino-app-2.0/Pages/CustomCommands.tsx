@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import base64 from "react-native-base64";
 import { useBLE } from "../hooks/useBLE";
 import { OpacityButton } from "../Components/OpacityButton";
+import { defaults } from "../hooks/useColorTheme";
 
 type CustomCommandProps = {
   visible: boolean;
@@ -14,6 +15,7 @@ type CustomCommandProps = {
   headlightBusy: boolean;
   leftStatus: number;
   rightStatus: number;
+  colorTheme: typeof defaults;
 }
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";

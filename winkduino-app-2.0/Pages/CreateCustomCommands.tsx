@@ -3,11 +3,13 @@ import { Device } from "react-native-ble-plx";
 import { CommandInput, CommandOutput, CustomCommandStore } from "../AsyncStorage/CustomCommandStore";
 import { useEffect, useState } from "react";
 import { OpacityButton } from "../Components/OpacityButton";
+import { defaults } from "../hooks/useColorTheme";
 
 type CreateCustomCommandProps = {
   visible: boolean;
   device: Device | null;
   close: () => void;
+  colorTheme: typeof defaults;
 }
 
 type CommandInputWithName = CommandInput & { name: string };

@@ -195,14 +195,14 @@ export default function App() {
             buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
             text="Create a Preset Command"
-            textStyle={styles.buttonText}
+            textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
             onPress={() => setCreateCustomOpen(true)}
           />
           <OpacityButton
             buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
             text="Execute a Preset"
-            textStyle={styles.buttonText}
+            textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
             onPress={() => setCustomPresetOpen(true)}
           />
         </View>
@@ -213,7 +213,7 @@ export default function App() {
               buttonStyle={{
                 ...(!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20
               }}
-              textStyle={styles.buttonText}
+              textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
               onPress={() => disconnect()}
               text="Disconnect"
             />
@@ -223,7 +223,7 @@ export default function App() {
               <OpacityButton
                 disabled={noDevice ? false : (isConnecting || isScanning)}
                 buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20 }}
-                textStyle={styles.buttonText}
+                textStyle={((noDevice ? false : (isConnecting || isScanning))) ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
                 onPress={() => scanForDevice()}
                 text="Connect"
               />
@@ -244,6 +244,7 @@ export default function App() {
         sendDefaultCommand={sendDefaultCommand}
         sendSleepCommand={sendSleepCommand}
         sendSyncCommand={sendSyncSignal}
+        colorTheme={colorTheme}
         key={1}
       />
 
