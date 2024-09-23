@@ -131,6 +131,7 @@ export function Settings(props: SettingsProps) {
         visible={props.visible}
         animationType="slide"
         hardwareAccelerated
+        onRequestClose={() => props.close()}
       >
         <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
           <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30 }}>Device Settings</Text>

@@ -97,6 +97,7 @@ function DefaultCommands(props: DefaultModalProps) {
       visible={props.visible && props.device !== null}
       animationType="slide"
       hardwareAccelerated
+      onRequestClose={() => props.close()}
     >
       <ScrollView style={styles.container} contentContainerStyle={{
         display: "flex",

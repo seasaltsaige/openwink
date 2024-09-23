@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MAC_ADDR_KEY = "mac-addr";
 const AUTO_CONNECT_KEY = "auto-reconnect-setting";
+// const COLOR_THEME_KEY = ""
 export interface CommandInput {
   isDelay: boolean;
   delay?: number;
@@ -38,6 +39,7 @@ export class CustomCommandStore {
     const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v !== MAC_ADDR_KEY && v !== "left-sleepy-eye" && v !== "right-sleepy-eye" && v !== AUTO_CONNECT_KEY);
     const commands: CommandOutput[] = [];
     for (const key of allKeys) {
+      if (!key.startsWith("cmd_")) continue;
       try {
         const cmdVal = await AsyncStorage.getItem(key);
         commands.push({ command: cmdVal!, name: key.slice(4, key.length) });

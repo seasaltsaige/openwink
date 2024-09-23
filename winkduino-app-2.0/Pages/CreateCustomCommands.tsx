@@ -146,6 +146,7 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
       visible={props.visible && props.device !== null}
       animationType="slide"
       hardwareAccelerated
+      onRequestClose={() => props.close()}
     >
 
       <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>

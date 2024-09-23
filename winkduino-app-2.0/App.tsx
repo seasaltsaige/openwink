@@ -10,6 +10,8 @@ import { DeviceMACStore } from './AsyncStorage/DeviceMACStore';
 import { Settings } from './Pages/Settings';
 import { OpacityButton } from './Components/OpacityButton';
 import { AutoConnectStore } from './AsyncStorage';
+import { AppTheme } from './Pages/AppTheme';
+import { useColorTheme } from './hooks/useColorTheme';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -36,10 +38,13 @@ export default function App() {
   const [createCustomOpen, setCreateCustomOpen] = useState(false);
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appThemeOpen, setAppThemeOpen] = useState(false);
 
   const [autoConnect, setAutoConnect] = useState(true);
 
-  const [MAC, setMAC] = useState<string | undefined>();
+  const [_, setMAC] = useState<string | undefined>();
+
+  const { colorTheme, update } = useColorTheme();
 
   const scanForDevice = async () => {
     const permsEnabled = await requestPermissions();
@@ -94,9 +99,15 @@ export default function App() {
     })();
   }, [settingsOpen]);
 
+  useEffect(() => {
+    (async () => {
+      update();
+    })();
+  }, [appThemeOpen])
+
   return (
-    <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
-      <Text style={{ color: "white", textAlign: "center", fontSize: 20, marginHorizontal: 20, marginTop: 45 }}>
+    <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+      <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 20, marginHorizontal: 20, marginTop: 45 }}>
         {
           !connectedDevice ?
             !noDevice ?
@@ -117,19 +128,29 @@ export default function App() {
         {
           !connectedDevice ?
 
-            <Text style={{ color: "white", textAlign: "center", marginHorizontal: 20 }}>
+            <Text style={{ color: colorTheme.textColor, textAlign: "center", marginHorizontal: 20 }}>
               If this takes overly long to connect, try restarting the app.{"\n"}
               If you continue to be unable to connect, try pressing the 'Reset Button' on your Wink Module, and restart the app.
             </Text>
 
-            : <Text style={{ ...styles.text, marginTop: -20 }}>Connected to Wink Receiver</Text>
+            : <Text style={{ fontSize: 30, fontWeight: "bold", color: colorTheme.headerTextColor, marginTop: -20 }}>Connected to Wink Receiver</Text>
         }
-        <OpacityButton
-          buttonStyle={{}}
-          text="Device Settings"
-          textStyle={{ ...styles.buttonText, color: "#e63754", textDecorationLine: "underline", fontWeight: "bold" }}
-          onPress={() => setSettingsOpen(true)}
-        />
+
+        <View style={{ display: "flex", flexDirection: "row", width: "90%", justifyContent: "flex-start", alignContent: "center", columnGap: 20 }}>
+          <OpacityButton
+            buttonStyle={{}}
+            text="Device Settings"
+            textStyle={{ ...styles.buttonText, color: colorTheme.buttonColor, textDecorationLine: "underline", fontWeight: "bold" }}
+            onPress={() => setSettingsOpen(true)}
+          />
+
+          <OpacityButton
+            buttonStyle={{}}
+            text="Edit Theme"
+            textStyle={{ ...styles.buttonText, color: colorTheme.buttonColor, textDecorationLine: "underline", fontWeight: "bold" }}
+            onPress={() => setAppThemeOpen(true)}
+          />
+        </View>
       </View>
 
       <>
@@ -141,17 +162,17 @@ export default function App() {
           rowGap: 20,
           width: "90%",
           borderRadius: 5,
-          backgroundColor: "rgb(30, 30, 30)",
+          backgroundColor: colorTheme.backgroundSecondaryColor,
           padding: 30,
         }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
+          <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
+          <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
 
           <OpacityButton
-            buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
+            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
             text="Go to Commands"
-            textStyle={styles.buttonText}
+            textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
             onPress={() => setDefaultCommandsOpen(true)}
           />
         </View>
@@ -164,21 +185,21 @@ export default function App() {
           rowGap: 20,
           width: "90%",
           borderRadius: 5,
-          borderColor: "rgb(50, 50, 50)",
+          borderColor: colorTheme.backgroundSecondaryColor,
           borderWidth: 3,
           padding: 30,
         }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
+          <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
+          <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
           <OpacityButton
-            buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
+            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
             text="Create a Preset Command"
             textStyle={styles.buttonText}
             onPress={() => setCreateCustomOpen(true)}
           />
           <OpacityButton
-            buttonStyle={!connectedDevice ? styles.buttonDisabled : styles.button}
+            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
             text="Execute a Preset"
             textStyle={styles.buttonText}
@@ -189,7 +210,9 @@ export default function App() {
           (connectedDevice !== null) ?
             <OpacityButton
               disabled={!connectedDevice}
-              buttonStyle={{ ...(!connectedDevice ? styles.buttonDisabled : styles.button), marginBottom: 20 }}
+              buttonStyle={{
+                ...(!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20
+              }}
               textStyle={styles.buttonText}
               onPress={() => disconnect()}
               text="Disconnect"
@@ -199,7 +222,7 @@ export default function App() {
             !autoConnect ?
               <OpacityButton
                 disabled={noDevice ? false : (isConnecting || isScanning)}
-                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? styles.buttonDisabled : styles.button), marginBottom: 20 }}
+                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20 }}
                 textStyle={styles.buttonText}
                 onPress={() => scanForDevice()}
                 text="Connect"
@@ -247,6 +270,12 @@ export default function App() {
         visible={settingsOpen}
         enterDeepSleep={enterDeepSleep}
         key={4}
+      />
+
+      <AppTheme
+        close={() => setAppThemeOpen(false)}
+        visible={appThemeOpen}
+        key={5}
       />
 
     </ScrollView>

@@ -57,8 +57,6 @@ NimBLECharacteristic *busyChar = nullptr;
 
 #define LONG_TERM_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 
-#define OTA_BLE_DEVICE_UPDATE "a144c6b1-5e1a-4460-bb92-3674b2f51529"
-
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
 NimBLECharacteristic *leftChar = nullptr;
@@ -66,8 +64,6 @@ NimBLECharacteristic *rightChar = nullptr;
 
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
-
-
 
 void updateHeadlightChars()
 {
@@ -88,7 +84,6 @@ bool updateFlag = false;
 bool readyFlag = false;
 int bytesReceived = 0;
 int timesWritten = 0;
-
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
@@ -111,36 +106,6 @@ class ServerCallbacks : public NimBLEServerCallbacks
   };
 };
 
-class OtaBleUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar) {
-    std::string rxData = pChar->getValue();
-    if (!updateFlag) {
-      printf("Starting BLE OTA Update\n");
-      esp_ota_begin(esp_ota_get_next_update_partition(NULL), OTA_SIZE_UNKNOWN, &otaHandler);
-      updateFlag = true;
-    }
-
-    if (rxData.length() > 0)
-    {
-      esp_ota_write(otaHandler, rxData.c_str(), rxData.length());
-      if (rxData.length() != FULL_PACKET)
-      {
-        esp_ota_end(otaHandler);
-        printf("BLE OTA Ending\n");
-        if (ESP_OK == esp_ota_set_boot_partition(esp_ota_get_next_update_partition(NULL))) {
-          delay(2000);
-          esp_restart();
-        }
-        else {
-          printf("Upload Error\n");
-        }
-      }
-    }
-  }
-};
-
-
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
   void onWrite(NimBLECharacteristic *pChar)
@@ -148,14 +113,12 @@ class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallback
     printf("long term sleep written\n");
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
-
     int buttonInp = digitalRead(UP_BUTTON_INPUT);
     if (buttonInp == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
     else if (buttonInp == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
-    
-    
+
     delay(100);
     esp_deep_sleep_start();
   }
@@ -310,14 +273,16 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 
     // "Wave" left first
     case 10:
-      if (tempRight == 0 || tempLeft == 0) {
+      if (tempRight == 0 || tempLeft == 0)
+      {
         bothUp();
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
         updateHeadlightChars();
       }
       leftWave();
-      if (tempRight == 0 || tempLeft == 0) {
+      if (tempRight == 0 || tempLeft == 0)
+      {
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
         updateHeadlightChars();
@@ -327,14 +292,16 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
       break;
 
     case 11:
-      if (tempRight == 0 || tempLeft == 0) {
+      if (tempRight == 0 || tempLeft == 0)
+      {
         bothUp();
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
         updateHeadlightChars();
       }
       rightWave();
-      if (tempRight == 0 || tempLeft == 0) {
+      if (tempRight == 0 || tempLeft == 0)
+      {
         delay(HEADLIGHT_MOVEMENT_DELAY);
         setAllOff();
         updateHeadlightChars();
@@ -367,10 +334,7 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
   }
 };
 
-
-
 unsigned long t;
-
 
 int advertiseTime_ms = 800;
 int sleepTime_us = 15 * 1000 * 1000;
@@ -391,7 +355,7 @@ void setup()
 
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(UP_BUTTON_INPUT, INPUT);
-  
+
   setCpuFrequencyMhz(80);
 
   NimBLEDevice::init("Winkduino");
@@ -406,7 +370,6 @@ void setup()
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
-  NimBLECharacteristic *otaBleUpdateChar = pService->createCharacteristic(OTA_BLE_DEVICE_UPDATE, NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -418,13 +381,17 @@ void setup()
   int wakeupValue = initialButton;
   initialButton = digitalRead(UP_BUTTON_INPUT);
 
-  if (wakeupValue != -1 && (wakeupValue != initialButton)) {
-    if (initialButton == 1) {
+  if (wakeupValue != -1 && (wakeupValue != initialButton))
+  {
+    if (initialButton == 1)
+    {
       bothUp();
-    } else if (initialButton == 0) {
+    }
+    else if (initialButton == 0)
+    {
       bothDown();
     }
-    
+
     rightStatus = initialButton;
     leftStatus = initialButton;
 
@@ -432,10 +399,13 @@ void setup()
     setAllOff();
   }
 
-  if (initialButton == LOW) {
+  if (initialButton == LOW)
+  {
     leftStatus = 0;
     rightStatus = 0;
-  } else if (initialButton == HIGH) { 
+  }
+  else if (initialButton == HIGH)
+  {
     leftStatus = 1;
     rightStatus = 1;
   }
@@ -456,7 +426,7 @@ void setup()
   extAdv.setConnectable(true);
   extAdv.setScannable(false);
 
-  extAdv.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
+  extAdv.setCompleteServices({NimBLEUUID(SERVICE_UUID)});
 
   pAdvertising = NimBLEDevice::getAdvertising();
 
@@ -482,10 +452,11 @@ bool advertising = true;
 void loop()
 {
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
-  if (buttonInput != initialButton) {
+  if (buttonInput != initialButton)
+  {
     busyChar->setValue("1");
     busyChar->notify();
-    
+
     if (buttonInput == HIGH)
       bothUp();
     else
@@ -500,17 +471,21 @@ void loop()
     busyChar->notify();
   }
 
-  if (!deviceConnected && (millis() - t) > advertiseTime_ms) { 
+  if (!deviceConnected && (millis() - t) > advertiseTime_ms)
+  {
     buttonInput = digitalRead(UP_BUTTON_INPUT);
     if (buttonInput == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
-    if (deviceConnected) return;
+    if (deviceConnected)
+      return;
     printf("Deep Sleep Starting...\n");
     delay(100);
-    if (!deviceConnected) {}
-      esp_deep_sleep_start();
+    if (!deviceConnected)
+    {
+    }
+    esp_deep_sleep_start();
   }
 }
 
@@ -756,7 +731,7 @@ void leftWave()
   // Right back up
   digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-  // Left Up Off 
+  // Left Up Off
   digitalWrite(OUT_PIN_LEFT_UP, LOW);
 
   rightStatus = 1;
@@ -789,7 +764,7 @@ void rightWave()
   digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   // Turn Left Down off
   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-  
+
   // Wait
   delay(HEADLIGHT_MOVEMENT_DELAY);
   rightStatus = 1;

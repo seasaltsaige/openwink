@@ -13,6 +13,7 @@ export function DeleteDataWarning(props: Props) {
             transparent
             style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
             animationType="slide"
+            onRequestClose={() => props.close()}
         >
 
             <View style={{ height: "100%", backgroundColor: "transparent", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
