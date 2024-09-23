@@ -86,14 +86,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
         alignItems: "center",
         justifyContent: "flex-start",
         rowGap: 10
-      }}
-    // contentContainerStyle={{
-    //     display: "flex",
-    //     alignItems: "center",
-    //     justifyContent: "flex-start",
-    //     rowGap: 20
-    // }}>
-    >
+      }}>
       <Text style={{ color: colorTheme.headerTextColor, fontSize: 25, fontWeight: "500", marginTop: 10, }}>
         Edit Color Theme
       </Text>
@@ -119,7 +112,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
           padding: 10,
           borderRadius: 5,
         }}>
-          Selected Theme: {selectedTheme}
+          Selected Theme: {themeOptions.find(v => v.value === selectedTheme)?.label}
         </Text>
 
         <View style={{ width: "100%", height: 245 }}>
