@@ -16,7 +16,8 @@ const SCAN_TIME_SECONDS = 30;
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
+  //@ts-ignore
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>({});
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
   const [rightState, setRightState] = useState(0);

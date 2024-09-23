@@ -107,14 +107,23 @@ function DefaultCommands(props: DefaultModalProps) {
         justifyContent: "flex-start",
         rowGap: 25,
       }}>
-        <Text style={{ color: "white", fontWeight: "bold", textAlign: "center", fontSize: 27, marginBottom: 10, marginTop: 20 }}>Default Commands</Text>
+        <Text style={{
+          color: props.colorTheme.headerTextColor,
+          fontWeight: "bold",
+          textAlign: "center",
+          fontSize: 27,
+          marginBottom: 10,
+          marginTop: 20
+        }}>
+          Default Commands
+        </Text>
         <View style={styles.header}>
-          <Text style={styles.text}>Left State: {props.leftState}</Text>
-          <Text style={styles.text}>Right State: {props.rightState}</Text>
+          <Text style={{ ...styles.text, color: props.colorTheme.textColor }}>Left | {props.leftState === 0 ? "Down" : props.leftState === 1 ? "Up" : `${props.leftState}%`}</Text>
+          <Text style={{ ...styles.text, color: props.colorTheme.textColor }}>Right | {props.rightState === 0 ? "Down" : props.rightState === 1 ? "Up" : `${props.rightState}%`}</Text>
         </View>
 
 
-        <View style={styles.commandColumns} >
+        <View style={{ ...styles.commandColumns, backgroundColor: props.colorTheme.backgroundSecondaryColor }} >
           {
             commands.map((part, i) => (
               <View style={styles.commandRow} key={i}>
@@ -123,8 +132,28 @@ function DefaultCommands(props: DefaultModalProps) {
                     <OpacityButton
                       onPress={() => props.sendDefaultCommand(cmd.value)}
                       disabled={props.headlightsBusy || needsReset}
-                      buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
-                      textStyle={styles.buttonText}
+                      buttonStyle={
+                        (props.headlightsBusy || needsReset) ?
+                          {
+                            ...styles.buttonDisabled,
+                            backgroundColor: props.colorTheme.disabledButtonColor
+                          } :
+                          {
+                            ...styles.commandButton,
+                            backgroundColor: props.colorTheme.buttonColor
+                          }
+                      }
+                      textStyle={
+                        (props.headlightsBusy || needsReset) ?
+                          {
+                            ...styles.buttonDisabled,
+                            color: props.colorTheme.disabledButtonTextColor
+                          } :
+                          {
+                            ...styles.buttonText,
+                            color: props.colorTheme.buttonTextColor
+                          }
+                      }
                       text={cmd.name}
                     />
                   ))
@@ -134,23 +163,64 @@ function DefaultCommands(props: DefaultModalProps) {
           }
         </View>
 
-        <View style={{ display: "flex", width: "90%", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 5, paddingVertical: 15, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-          <Text style={styles.text}>Wave Commands</Text>
-          <Text style={{ color: "white", textAlign: "center", width: "90%" }}>
+        <View style={{
+          display: "flex",
+          width: "90%",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 5,
+          paddingVertical: 15,
+          borderRadius: 5,
+          borderColor: props.colorTheme.backgroundSecondaryColor,
+          borderWidth: 2
+        }}>
+          <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>Wave Commands</Text>
+          <Text style={{ color: props.colorTheme.textColor, textAlign: "center", width: "90%" }}>
             Wave commands start from the specified headlight, and wink from the start headlight to the other  one.
           </Text>
           <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
+
             <OpacityButton
               disabled={props.headlightsBusy || needsReset}
-              buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+              buttonStyle={
+                (props.headlightsBusy || needsReset) ?
+                  {
+                    ...styles.buttonDisabled,
+                    backgroundColor: props.colorTheme.disabledButtonColor
+                  } :
+                  {
+                    ...styles.commandButton,
+                    backgroundColor: props.colorTheme.buttonColor
+                  }
+              }
               onPress={() => props.sendDefaultCommand(10)}
               text="Left Wave"
-              textStyle={styles.buttonText}
+              textStyle={(props.headlightsBusy || needsReset) ?
+                {
+                  ...styles.buttonDisabled,
+                  color: props.colorTheme.disabledButtonTextColor
+                } :
+                {
+                  ...styles.buttonText,
+                  color: props.colorTheme.buttonTextColor
+                }
+              }
             />
 
             <OpacityButton
               disabled={props.headlightsBusy || needsReset}
-              buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
+              buttonStyle={
+                (props.headlightsBusy || needsReset) ?
+                  {
+                    ...styles.buttonDisabled,
+                    backgroundColor: props.colorTheme.disabledButtonColor
+                  } :
+                  {
+                    ...styles.commandButton,
+                    backgroundColor: props.colorTheme.buttonColor
+                  }
+              }
               onPress={() => props.sendDefaultCommand(11)}
               text="Right Wave"
               textStyle={styles.buttonText}
@@ -158,33 +228,89 @@ function DefaultCommands(props: DefaultModalProps) {
           </View>
         </View>
 
-        <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", borderRadius: 5, paddingVertical: 20, }}>
-          {/* TEXT DESCRIBING */}
-          <Text style={styles.text}>Sleepy Eyes</Text>
-          <Text style={{ color: "white" }}>
+        <View style={{
+          width: "90%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 10,
+          backgroundColor: props.colorTheme.backgroundSecondaryColor,
+          borderRadius: 5,
+          paddingVertical: 20,
+        }}>
+
+          <Text style={{
+            ...styles.text,
+            color: props.colorTheme.headerTextColor
+          }}>
+            Sleepy Eyes
+          </Text>
+
+          <Text style={{
+            color: props.colorTheme.textColor
+          }}>
             You can update Sleepy Eye settings from the settings page
           </Text>
-          <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
-            <Text style={{ color: "white" }}>Left setting: {left}%</Text>
-            <Text style={{ color: "white" }}>Right setting: {right}%</Text>
-          </View>
-          {/* TODO: Use settings page values for sleepy eye */}
-          {/* UPDATE THIS CODE TO USE SETTINGS AND NOT INPUT ABOVE */}
 
+          <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+            <Text style={{ color: props.colorTheme.textColor }}>Left setting: {left}%</Text>
+            <Text style={{ color: props.colorTheme.textColor }}>Right setting: {right}%</Text>
+          </View>
 
           <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
             <OpacityButton
               onPress={() => props.sendSleepCommand(left, right)}
               disabled={props.headlightsBusy || needsReset}
-              buttonStyle={(props.headlightsBusy || needsReset) ? styles.buttonDisabled : styles.commandButton}
-              textStyle={styles.buttonText}
+              buttonStyle={
+                (props.headlightsBusy || needsReset) ?
+                  {
+                    ...styles.buttonDisabled,
+                    backgroundColor: props.colorTheme.disabledButtonColor
+                  } :
+                  {
+                    ...styles.commandButton,
+                    backgroundColor: props.colorTheme.buttonColor
+                  }
+              }
+              textStyle={
+                (props.headlightsBusy || needsReset) ?
+                  {
+                    ...styles.buttonDisabled,
+                    color: props.colorTheme.disabledButtonTextColor
+                  } :
+                  {
+                    ...styles.buttonText,
+                    color: props.colorTheme.buttonTextColor
+                  }
+              }
               text="Send Sleepy Eye"
             />
             <OpacityButton
               onPress={() => props.sendSyncCommand()}
               disabled={props.headlightsBusy}
-              buttonStyle={props.headlightsBusy ? styles.buttonDisabled : styles.commandButton}
-              textStyle={styles.buttonText}
+              buttonStyle={
+                props.headlightsBusy ?
+                  {
+                    ...styles.buttonDisabled,
+                    backgroundColor: props.colorTheme.disabledButtonColor
+                  } :
+                  {
+                    ...styles.commandButton,
+                    backgroundColor: props.colorTheme.buttonColor
+                  }
+              }
+              textStyle={
+                props.headlightsBusy ?
+                  {
+                    ...styles.buttonDisabled,
+                    color: props.colorTheme.disabledButtonTextColor
+                  } :
+                  {
+                    ...styles.buttonText,
+                    color: props.colorTheme.buttonTextColor
+                  }
+              }
               text="Reset"
             />
           </View>
@@ -192,8 +318,8 @@ function DefaultCommands(props: DefaultModalProps) {
 
         <OpacityButton
           onPress={() => props.close()}
-          buttonStyle={{ marginTop: 10, marginBottom: 20, ...styles.button }}
-          textStyle={styles.buttonText}
+          buttonStyle={{ marginTop: 10, marginBottom: 20, ...styles.button, backgroundColor: props.colorTheme.buttonColor }}
+          textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
           text="Close"
         />
       </ScrollView>
@@ -202,11 +328,6 @@ function DefaultCommands(props: DefaultModalProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-
-    backgroundColor: 'rgb(20, 20, 20)',
-
-  },
   header: {
     display: "flex",
     flexDirection: "row",
@@ -220,7 +341,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "90%",
-    backgroundColor: "rgb(30, 30, 30)",
     paddingVertical: 20,
     borderRadius: 5,
     columnGap: 10,
@@ -233,7 +353,6 @@ const styles = StyleSheet.create({
     rowGap: 10,
   },
   text: {
-    color: "white",
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
@@ -242,7 +361,6 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#990033",
     borderRadius: 5,
     padding: 10,
   },
@@ -250,7 +368,6 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#990033",
     width: 200,
     height: 50,
     borderRadius: 5,
@@ -259,18 +376,14 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "grey",
     padding: 10,
     borderRadius: 5,
   },
   buttonText: {
-    color: "white",
     fontSize: 20,
   },
   sleepInput: {
-    backgroundColor: "rgb(40, 40, 40)",
     padding: 10,
-    color: "#ffffff",
     textAlign: "center",
     width: 200,
     borderRadius: 5,
