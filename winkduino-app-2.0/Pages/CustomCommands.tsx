@@ -131,13 +131,34 @@ export function CustomCommands(props: CustomCommandProps) {
       hardwareAccelerated
       onRequestClose={() => props.close()}
     >
-      <ScrollView contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }} style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }}>
+      <ScrollView
+        contentContainerStyle={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          rowGap: 20
+        }}
+        style={{
+          backgroundColor: props.colorTheme.backgroundPrimaryColor,
+          height: "100%",
+          width: "100%"
+        }}>
 
-        <Text style={{ color: "white", fontWeight: "bold", fontSize: 30, marginTop: 20, width: "90%", textAlign: "center" }}>Custom Command Pallet</Text>
+        <Text
+          style={{
+            color: props.colorTheme.headerTextColor,
+            fontWeight: "bold",
+            fontSize: 30,
+            marginTop: 20,
+            width: "90%",
+            textAlign: "center"
+          }}>
+          Custom Command Pallet
+        </Text>
 
         <View style={styles.header}>
-          <Text style={styles.text}>Left State: {props.leftStatus}</Text>
-          <Text style={styles.text}>Right State: {props.rightStatus}</Text>
+          <Text style={{ ...styles.text, color: props.colorTheme.textColor }}>Left | {props.leftStatus === 0 ? "Down" : props.leftStatus === 1 ? "Up" : `${props.leftStatus}%`}</Text>
+          <Text style={{ ...styles.text, color: props.colorTheme.textColor }}>Right | {props.rightStatus === 0 ? "Down" : props.rightStatus === 1 ? "Up" : `${props.rightStatus}%`}</Text>
         </View>
 
         <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", rowGap: 20 }}>
@@ -148,21 +169,26 @@ export function CustomCommands(props: CustomCommandProps) {
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 5,
-                backgroundColor: i % 2 === 0 ? "rgb(37, 37, 37)" : "transparent",
-                borderColor: i % 2 === 1 ? "rgb(30, 30, 30)" : "none",
+                backgroundColor: i % 2 === 0 ? props.colorTheme.backgroundSecondaryColor : "transparent",
+                borderColor: i % 2 === 1 ? props.colorTheme.backgroundSecondaryColor : "none",
                 borderWidth: i % 2 === 1 ? 3 : 0,
                 padding: 15,
                 paddingHorizontal: 10,
                 rowGap: 7,
                 width: 300,
               }}>
-                <Text style={styles.text}>{cmd.name}</Text>
-                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15 }}>{cmd.command.split("-").map((v) => parseCommandPartHumanReadable(v)).join(" --> ")}</Text>
+                <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>{cmd.name}</Text>
+                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15, color: props.colorTheme.headerTextColor }}>{cmd.command.split("-").map((v) => parseCommandPartHumanReadable(v)).join(" --> ")}</Text>
 
                 <OpacityButton
                   disabled={props.headlightBusy}
-                  buttonStyle={{ ...(props.headlightBusy ? styles.buttonDisabled : styles.button), width: "auto", height: "auto", padding: 10, }}
-                  textStyle={{ fontSize: 16, textAlign: "center", color: "white" }}
+                  buttonStyle={{
+                    ...(props.headlightBusy ?
+                      { ...styles.buttonDisabled, backgroundColor: props.colorTheme.disabledButtonColor } :
+                      { ...styles.button, backgroundColor: props.colorTheme.buttonColor }
+                    ), width: "auto", height: "auto", padding: 10,
+                  }}
+                  textStyle={{ fontSize: 16, textAlign: "center", color: props.headlightBusy ? props.colorTheme.disabledButtonTextColor : props.colorTheme.buttonTextColor }}
                   text="Execute Command"
                   onPress={() => executeCommand(cmd.command)}
                 />
@@ -173,13 +199,12 @@ export function CustomCommands(props: CustomCommandProps) {
 
 
         <OpacityButton
-          buttonStyle={{ ...styles.button, marginBottom: 10 }}
-          textStyle={styles.buttonText}
+          buttonStyle={{ ...styles.button, marginBottom: 10, backgroundColor: props.colorTheme.buttonColor }}
+          textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
           onPress={() => props.close()}
           text="Close"
         />
       </ScrollView>
-      {/* </View> */}
     </Modal>
   )
 }
