@@ -151,25 +151,45 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
       onRequestClose={() => props.close()}
     >
 
-      <ScrollView style={{ backgroundColor: "rgb(20, 20, 20)", height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+      <ScrollView
+        style={{
+          backgroundColor: props.colorTheme.backgroundPrimaryColor,
+          height: "100%",
+          width: "100%"
+        }}
+        contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
         {
-          success ? <Text style={{ marginTop: 20, textAlign: "center", color: "lightgreen", fontSize: 30 }}>{success}</Text>
-            :
-            <Text style={{ marginTop: 20, textAlign: "center", color: error ? "red" : "lightgreen", fontSize: 30 }}>{error ? `${error}` : "Editing Command"}</Text>
+          success ?
+            <Text style={{ marginTop: 20, textAlign: "center", color: "lightgreen", fontSize: 30 }}>
+              {success}
+            </Text> :
+            <Text style={{ marginTop: 20, textAlign: "center", color: error ? "red" : "lightgreen", fontSize: 30 }}>
+              {error ? `${error}` : "Editing Command"}
+            </Text>
         }
         <TextInput
-          style={{ ...styles.input, fontSize: 18, width: 300 }}
+          style={{ ...styles.input, fontSize: 18, width: 300, backgroundColor: props.colorTheme.backgroundSecondaryColor }}
           value={commandName}
           onChangeText={setCommandName}
           placeholderTextColor={"rgb(200,200,200)"}
           placeholder="Enter Command Name"
         />
 
-        <View style={{ width: "90%", display: "flex", alignItems: "center", justifyContent: "center", paddingVertical: 5, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-          <Text style={{ ...styles.text, fontSize: 23 }}>
+        <View
+          style={{
+            width: "90%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingVertical: 5,
+            borderRadius: 5,
+            borderColor: props.colorTheme.backgroundSecondaryColor,
+            borderWidth: 2
+          }}>
+          <Text style={{ ...styles.text, fontSize: 23, color: props.colorTheme.headerTextColor }}>
             Command Sequence
           </Text>
-          <Text style={{ color: "white", textAlign: "center", padding: 5 }}>
+          <Text style={{ color: props.colorTheme.textColor, textAlign: "center", padding: 5 }}>
             {
               commandSequence.length >= 1 ?
                 commandSequence.map((cmd, i) => (
@@ -180,9 +200,25 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
           </Text>
         </View>
 
-        <View style={{ width: "90%", display: "flex", flexDirection: "column", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", paddingVertical: 15, borderRadius: 5 }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }}>Default Palette</Text>
-          <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+        <View
+          style={{
+            width: "90%",
+            display: "flex",
+            flexDirection: "column",
+            rowGap: 10,
+            backgroundColor: props.colorTheme.backgroundSecondaryColor,
+            paddingVertical: 15,
+            borderRadius: 5
+          }}>
+          <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 30 }}>Default Palette</Text>
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-evenly",
+              width: "100%"
+            }}>
             {
               [
                 [
@@ -206,8 +242,8 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
                     part.map(cmd => (
                       <OpacityButton
                         text={cmd.title}
-                        textStyle={{ ...styles.buttonText, fontSize: 16 }}
-                        buttonStyle={{ ...styles.button, width: "auto", paddingHorizontal: 15 }}
+                        textStyle={{ ...styles.buttonText, fontSize: 16, color: props.colorTheme.buttonTextColor }}
+                        buttonStyle={{ ...styles.button, width: "auto", paddingHorizontal: 15, backgroundColor: props.colorTheme.buttonColor }}
                         onPress={() => setCommandSequence((prev) => [...prev, { isDelay: false, transmitValue: cmd.i, name: cmd.title }])}
                       />
                     ))
@@ -218,29 +254,49 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
           </View>
         </View>
 
-        <View style={{ display: "flex", alignItems: "center", justifyContent: "center", rowGap: 10, padding: 15, borderRadius: 5, borderColor: "rgb(50, 50, 50)", borderWidth: 2 }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }}>Add Delay</Text>
-          <Text style={{ color: "white", textAlign: "center", maxWidth: "90%" }}>Adds delay between command signals. There will already be a small amount of delay between commands by default, due to the headlights movement.</Text>
+        <View
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            rowGap: 10,
+            padding: 15,
+            borderRadius: 5,
+            borderColor: props.colorTheme.backgroundSecondaryColor,
+            borderWidth: 2
+          }}>
+          <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 30 }}>Add Delay</Text>
+          <Text style={{ color: props.colorTheme.textColor, textAlign: "center", maxWidth: "90%" }}>Adds delay between command signals. There will already be a small amount of delay between commands by default, due to the headlights movement.</Text>
           <TextInput
             value={delayMS === 0 ? "" : delayMS.toString()}
             onChangeText={(text) => text === "" ? setDelayMS(0) : setDelayMS(parseFloat(text))}
             keyboardType="number-pad"
-            style={{ ...styles.input, width: 300 }}
+            style={{ ...styles.input, width: 300, backgroundColor: props.colorTheme.backgroundSecondaryColor }}
             placeholder="Delay in milliseconds"
             placeholderTextColor="rgb(200,200,200)"
           />
           <OpacityButton
-            buttonStyle={styles.button}
-            textStyle={styles.buttonText}
+            buttonStyle={{ ...styles.button, backgroundColor: props.colorTheme.buttonColor }}
+            textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
             text="Add Delay"
             onPress={() => setCommandSequence((prev) => [...prev, { isDelay: true, delay: delayMS, name: "", transmitValue: -1 }])}
           />
         </View>
 
 
-        <View style={{ width: "90%", display: "flex", flexDirection: "column", alignItems: "center", rowGap: 10, backgroundColor: "rgb(30, 30, 30)", borderRadius: 5, padding: 15 }}>
-          <Text style={{ color: "white", textAlign: "center", fontSize: 30 }} >Saved Presets</Text>
-          <Text style={{ color: "white", textAlign: "center" }}>Usable from the Presets Menu</Text>
+        <View
+          style={{
+            width: "90%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            rowGap: 10,
+            backgroundColor: props.colorTheme.backgroundSecondaryColor,
+            borderRadius: 5,
+            padding: 15
+          }}>
+          <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 30 }} >Saved Presets</Text>
+          <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>Usable from the Presets Menu</Text>
           <ScrollView horizontal contentContainerStyle={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", columnGap: 20 }} style={{ width: "100%", columnGap: 10, rowGap: 10 }}>
             {
               allCommands.length > 0 ?
@@ -259,11 +315,19 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
                     width: 200,
                     height: 160
                   }}>
-                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 20 }}>{cmd.name}</Text>
-                    <Text style={{ color: "white", textAlign: "center" }}>{cmd.command.split("-").map(part => parseCommandPartHumanReadable(part)).join(" --> ")}</Text>
+                    <Text style={{ color: props.colorTheme.headerTextColor, fontWeight: "bold", fontSize: 20 }}>{cmd.name}</Text>
+                    <ScrollView
+                      contentContainerStyle={{ width: "100%", height: "100%", display: 'flex', flexDirection: "column" }}
+                      style={{ width: "100%", height: "100%" }}
+                    // horizontal
+                    >
+                      <Text style={{ color: props.colorTheme.textColor, textAlign: "left" }}>
+                        {cmd.command.split("-").map(part => parseCommandPartHumanReadable(part)).join(" → ")}
+                      </Text>
+                    </ScrollView>
                     <OpacityButton
-                      buttonStyle={{ backgroundColor: "#b50030", borderRadius: 5, padding: 10 }}
-                      textStyle={{ fontSize: 16, color: "white" }}
+                      buttonStyle={{ backgroundColor: props.colorTheme.buttonColor, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 5 }}
+                      textStyle={{ fontSize: 16, color: props.colorTheme.buttonTextColor }}
                       text="Delete Command"
                       onPress={() => deleteCommand(cmd.name)}
                     />
@@ -295,8 +359,8 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
         </View>
 
         <OpacityButton
-          buttonStyle={{ ...styles.button, marginBottom: 10 }}
-          textStyle={styles.buttonText}
+          buttonStyle={{ ...styles.button, marginBottom: 10, backgroundColor: props.colorTheme.buttonColor }}
+          textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
           text="Close"
           onPress={() => props.close()}
         />
@@ -309,7 +373,6 @@ export function CreateCustomCommands(props: CreateCustomCommandProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgb(20, 20, 20)',
     alignItems: 'center',
     justifyContent: 'center',
     rowGap: 25,

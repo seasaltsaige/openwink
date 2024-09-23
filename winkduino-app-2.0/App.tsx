@@ -252,6 +252,7 @@ export default function App() {
         close={() => setCreateCustomOpen(false)}
         device={connectedDevice}
         visible={createCustomOpen}
+        colorTheme={colorTheme}
         key={2}
       />
 
@@ -263,6 +264,7 @@ export default function App() {
         rightStatus={rightState}
         visible={customPresetOpen}
         sendDefaultCommand={sendDefaultCommand}
+        colorTheme={colorTheme}
         key={3}
       />
 
@@ -270,6 +272,7 @@ export default function App() {
         close={() => setSettingsOpen(false)}
         visible={settingsOpen}
         enterDeepSleep={enterDeepSleep}
+        colorTheme={colorTheme}
         key={4}
       />
 
