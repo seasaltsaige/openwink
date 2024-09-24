@@ -178,7 +178,7 @@ export function CustomCommands(props: CustomCommandProps) {
                 width: 300,
               }}>
                 <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>{cmd.name}</Text>
-                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15, color: props.colorTheme.headerTextColor }}>{cmd.command.split("-").map((v) => parseCommandPartHumanReadable(v)).join(" --> ")}</Text>
+                <Text style={{ ...styles.text, fontWeight: "light", fontSize: 15, color: props.colorTheme.textColor }}>{cmd.command.split("-").map((v) => parseCommandPartHumanReadable(v)).join(" --> ")}</Text>
 
                 <OpacityButton
                   disabled={props.headlightBusy}

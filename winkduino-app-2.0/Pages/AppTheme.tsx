@@ -85,7 +85,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        rowGap: 10
+        rowGap: 15
       }}>
       <Text style={{ color: colorTheme.headerTextColor, fontSize: 25, fontWeight: "500", marginTop: 10, }}>
         Edit Color Theme
@@ -93,15 +93,19 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
       <Text style={{ color: colorTheme.textColor, fontSize: 16 }}>
         Change your apps color theme here
       </Text>
+
       <View
         style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'flex-start',
-          paddingHorizontal: 15,
-          rowGap: 10
+          width: "90%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          paddingVertical: 15,
+          borderRadius: 5,
+          borderColor: colorTheme.backgroundSecondaryColor,
+          borderWidth: 2
         }}>
-
         <Text style={{
           // @ts-ignore
           color: getBackgroundColor(colorTheme[selectedTheme]),
@@ -115,47 +119,6 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
           Selected Theme: {themeOptions.find(v => v.value === selectedTheme)?.label}
         </Text>
 
-        <View style={{ width: "100%", height: 245 }}>
-          <ColorPicker
-            swatches={false}
-            thumbSize={20}
-            discrete={false}
-            sliderSize={20}
-            wheelLoadingIndicator={<ActivityIndicator size={20} />}
-            //@ts-ignore
-            color={colorTheme[selectedTheme]}
-            //@ts-ignore
-            onColorChange={(color) => updateTheme(color)}
-          />
-        </View>
-        <View style={{ display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
-          <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center", marginTop: 10 }}>
-            Color Hex
-          </Text>
-          <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
-            You can edit the colors hex directly if preferred
-          </Text>
-          <TextInput
-            style={{
-              borderColor: colorTheme.backgroundSecondaryColor,
-              borderWidth: 1,
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              borderRadius: 5,
-              color: colorTheme.textColor,
-              fontSize: 18
-            }}
-            //@ts-ignore
-            value={typedTheme}
-            maxLength={7}
-            onChangeText={(text) => {
-              if (text.length > 6)
-                if (isValidHex(text)) updateTheme(text);
-              setTypedTheme(text);
-            }}
-          />
-        </View>
-
 
         <DropDownPicker
           items={themeOptions}
@@ -168,42 +131,117 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
           containerStyle={{ width: "90%" }}
         />
 
-        <View style={{ display: "flex", flexDirection: "row", columnGap: 20 }}>
-          <OpacityButton
-            text="Reset Theme"
+        <View style={{ width: "95%", height: 245 }}>
+          <ColorPicker
+            swatches={false}
+            thumbSize={20}
+            discrete={false}
+            sliderSize={20}
+            wheelLoadingIndicator={<ActivityIndicator size={20} />}
             //@ts-ignore
-            onPress={() => resetTheme(selectedTheme)}
-            buttonStyle={{
-              width: 150,
-              height: 50,
-              borderRadius: 5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: colorTheme.buttonColor
-            }}
-            textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
-          />
-
-
-          <OpacityButton
-            text="Reset All"
-            onPress={() => revertDefaults()}
-            buttonStyle={{
-              width: 150,
-              height: 50,
-              borderRadius: 5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              backgroundColor: colorTheme.buttonColor
-            }}
-            textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
+            color={colorTheme[selectedTheme]}
+            //@ts-ignore
+            onColorChange={(color) => updateTheme(color)}
           />
         </View>
       </View>
 
+
+
+      <View
+        style={{
+          width: "90%",
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          paddingVertical: 20,
+          paddingHorizontal: 10,
+          borderRadius: 5,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          rowGap: 15,
+        }}>
+        <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
+          <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
+            Color Hex
+          </Text>
+          <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
+            You can edit the colors hex directly if preferred
+          </Text>
+          <TextInput
+            style={{
+              borderColor: getBackgroundColor(colorTheme.backgroundSecondaryColor),
+              borderWidth: 1,
+              paddingHorizontal: 20,
+              paddingVertical: 5,
+              borderRadius: 5,
+              color: colorTheme.textColor,
+              fontSize: 18,
+            }}
+            //@ts-ignore
+            value={typedTheme}
+            maxLength={7}
+            onChangeText={(text) => {
+              if (text.length > 6)
+                if (isValidHex(text)) updateTheme(text);
+              setTypedTheme(text);
+            }}
+          />
+        </View>
+
+      </View>
+
+      <View style={{ display: "flex", flexDirection: "row", columnGap: 20, }}>
+        <OpacityButton
+          text="Reset Theme"
+          //@ts-ignore
+          onPress={() => resetTheme(selectedTheme)}
+          buttonStyle={{
+            width: 150,
+            height: 50,
+            borderRadius: 5,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: colorTheme.buttonColor
+          }}
+          textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
+        />
+
+
+        <OpacityButton
+          text="Reset All"
+          onPress={() => revertDefaults()}
+          buttonStyle={{
+            width: 150,
+            height: 50,
+            borderRadius: 5,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: colorTheme.buttonColor
+          }}
+          textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
+        />
+      </View>
+
+      <OpacityButton
+        text="Close"
+        onPress={() => props.close()}
+        buttonStyle={{
+          width: 150,
+          height: 50,
+          borderRadius: 5,
+          marginTop: 20,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colorTheme.buttonColor
+        }}
+        textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
+      />
     </View>
+
 
   </Modal>
 }

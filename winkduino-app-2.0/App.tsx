@@ -2,7 +2,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
-
 import { DefaultCommands } from "./Pages/DefaultCommands";
 import { CreateCustomCommands } from './Pages/CreateCustomCommands';
 import { CustomCommands } from './Pages/CustomCommands';
@@ -18,6 +17,9 @@ const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
 const RIGHT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
+
+
+const UPDATE_URL = "http://...:3000"
 
 export default function App() {
 
@@ -103,7 +105,30 @@ export default function App() {
     (async () => {
       update();
     })();
-  }, [appThemeOpen])
+  }, [appThemeOpen]);
+
+  useEffect(() => {
+
+    // Check for app + or module updates
+
+    // NOTE: will need to be connected to esp
+    // NOTE: useBLE.ts will have esp software version on app connection
+    // TODO: will need a rtc value on esp that keeps track of software version
+    // TODO: will also need a characteristic for notifying phone of version
+    // TODO: Phone on start will check esp version, fetch info from api using esp MAC as key to see if update is needed
+    // TODO: if update is needed download file over phone internet, and store on phone temporarily.
+    // TODO: popup to ask if user wants to update software
+    // TODO: if no, delete update from phone, continue to app
+    // TODO: if yes, alert module it will be updated, so
+    // TODO: this should turn the esps wifi chip on, allowing the phone to connect, prompting them to do so
+    // TODO: tell user update can take time, dont turn off, etc
+    // TODO: send ota update over wifi using espressif example code.
+    // TODO: update module with ota, once completed, updating firmware rtc value
+    // TODO: delete file from phone
+
+    // useState for file storage? since its temp?
+
+  }, []);
 
   return (
     <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
@@ -153,83 +178,83 @@ export default function App() {
         </View>
       </View>
 
-      <>
-        <View style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          rowGap: 20,
-          width: "90%",
-          borderRadius: 5,
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          padding: 30,
-        }}>
-          <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
-          <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
+      <View style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        rowGap: 20,
+        width: "90%",
+        borderRadius: 5,
+        backgroundColor: colorTheme.backgroundSecondaryColor,
+        padding: 30,
+      }}>
+        <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
+        <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
 
-          <OpacityButton
-            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
-            disabled={!connectedDevice}
-            text="Go to Commands"
-            textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-            onPress={() => setDefaultCommandsOpen(true)}
-          />
-        </View>
+        <OpacityButton
+          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
+          disabled={!connectedDevice}
+          text="Go to Commands"
+          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
+          onPress={() => setDefaultCommandsOpen(true)}
+        />
+      </View>
 
-        <View style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          rowGap: 20,
-          width: "90%",
-          borderRadius: 5,
-          borderColor: colorTheme.backgroundSecondaryColor,
-          borderWidth: 3,
-          padding: 30,
-        }}>
-          <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
-          <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
+      <View style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        rowGap: 20,
+        width: "90%",
+        borderRadius: 5,
+        borderColor: colorTheme.backgroundSecondaryColor,
+        borderWidth: 3,
+        padding: 30,
+      }}>
+        <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
+        <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
+        <OpacityButton
+          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
+          disabled={!connectedDevice}
+          text="Create a Preset Command"
+          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
+          onPress={() => setCreateCustomOpen(true)}
+        />
+        <OpacityButton
+          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
+          disabled={!connectedDevice}
+          text="Execute a Preset"
+          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
+          onPress={() => setCustomPresetOpen(true)}
+        />
+      </View>
+
+      {
+        (connectedDevice !== null) ?
           <OpacityButton
-            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
             disabled={!connectedDevice}
-            text="Create a Preset Command"
+            buttonStyle={{
+              ...(!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20
+            }}
             textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-            onPress={() => setCreateCustomOpen(true)}
+            onPress={() => disconnect()}
+            text="Disconnect"
           />
-          <OpacityButton
-            buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
-            disabled={!connectedDevice}
-            text="Execute a Preset"
-            textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-            onPress={() => setCustomPresetOpen(true)}
-          />
-        </View>
-        {
-          (connectedDevice !== null) ?
+          // connectedDevice is null
+          :
+          !autoConnect ?
             <OpacityButton
-              disabled={!connectedDevice}
-              buttonStyle={{
-                ...(!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20
-              }}
-              textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-              onPress={() => disconnect()}
-              text="Disconnect"
+              disabled={noDevice ? false : (isConnecting || isScanning)}
+              buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20 }}
+              textStyle={((noDevice ? false : (isConnecting || isScanning))) ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
+              onPress={() => scanForDevice()}
+              text="Connect"
             />
-            // connectedDevice is null
-            :
-            !autoConnect ?
-              <OpacityButton
-                disabled={noDevice ? false : (isConnecting || isScanning)}
-                buttonStyle={{ ...((noDevice ? false : (isConnecting || isScanning)) ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }), marginBottom: 20 }}
-                textStyle={((noDevice ? false : (isConnecting || isScanning))) ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-                onPress={() => scanForDevice()}
-                text="Connect"
-              />
-              : <></>
-        }
-      </>
+            : <></>
+      }
+
 
 
 

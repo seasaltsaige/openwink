@@ -223,7 +223,16 @@ function DefaultCommands(props: DefaultModalProps) {
               }
               onPress={() => props.sendDefaultCommand(11)}
               text="Right Wave"
-              textStyle={styles.buttonText}
+              textStyle={(props.headlightsBusy || needsReset) ?
+                {
+                  ...styles.buttonDisabled,
+                  color: props.colorTheme.disabledButtonTextColor
+                } :
+                {
+                  ...styles.buttonText,
+                  color: props.colorTheme.buttonTextColor
+                }
+              }
             />
           </View>
         </View>
