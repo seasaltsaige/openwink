@@ -11,6 +11,8 @@ import { OpacityButton } from './Components/OpacityButton';
 import { AutoConnectStore } from './AsyncStorage';
 import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
+
+import { BridgeServer } from 'react-native-http-bridge-refurbished';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -19,7 +21,7 @@ const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 
 
-const UPDATE_URL = "http://...:3000"
+const UPDATE_URL = "http://10.9.26.221:3000";
 
 export default function App() {
 
@@ -110,6 +112,11 @@ export default function App() {
   useEffect(() => {
 
     // Check for app + or module updates
+
+    (async () => {
+      const response = await fetch(UPDATE_URL, { method: "GET" });
+
+    })();
 
     // NOTE: will need to be connected to esp
     // NOTE: useBLE.ts will have esp software version on app connection

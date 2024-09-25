@@ -1,8 +1,15 @@
+#include <string.h>
+
 #include <NimBLEDevice.h>
 #include <Arduino.h>
+
+#include "esp_wifi.h"
+
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "esp_ota_ops.h"
+
+using namespace std;
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
@@ -41,9 +48,7 @@ void leftWave();
 void rightWave();
 
 #define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
-
 #define REQUEST_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51520"
-
 #define BUSY_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51521"
 
 NimBLECharacteristic *busyChar = nullptr;
@@ -56,6 +61,10 @@ NimBLECharacteristic *busyChar = nullptr;
 #define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
 
 #define LONG_TERM_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
+
+#define OTA_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51529"
+
+#define CUSTOM_BUTTON_UPDATE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51530"
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
@@ -74,16 +83,6 @@ void updateHeadlightChars()
 }
 
 bool deviceConnected = false;
-
-#define FULL_PACKET 512
-#define CHARPOS_UPDATE_FLAG 5
-
-esp_ota_handle_t otaHandler = 0;
-
-bool updateFlag = false;
-bool readyFlag = false;
-int bytesReceived = 0;
-int timesWritten = 0;
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
@@ -317,6 +316,71 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
+/**
+ -1 : Unset
+  1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
+  2 : Left Blink
+  3 : Left Blink x2
+  4 : Right Blink
+  5 : Right Blink x2
+  6 : Both Blink
+  7 : Both Blink x2
+  8 : Left Wave
+  9 : Right Wave
+ 10 : ...
+**/
+RTC_NOINIT_ATTR int customButtonPressArray[10] = { 1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+RTC_DATA_ATTR int maxTimeBetween_ms = 500;
+
+
+// 0 : onWrite expects value to be an index, 0-9
+// 1 : index has been read
+int customButtonPressUpdateState = 0;
+
+int indexToUpdate = 0;
+
+class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onWrite(NimBLECharacteristic *pChar) {
+    string value = pChar->getValue();
+
+    // Updating maxTime
+    if (value.length() > 1) 
+    {
+      int newVal = stoi(value);
+      maxTimeBetween_ms = newVal;
+    }
+    else
+    {
+      if (customButtonPressUpdateState == 0)
+      {
+        int index = stoi(value);
+        if (index > 9) return;
+        indexToUpdate = index;
+        customButtonPressUpdateState = 1;
+      }
+      else
+      {
+        int updateValue = stoi(value);
+        customButtonPressArray[indexToUpdate] = updateValue;
+      }
+    }
+  }
+};
+
+
+//https://www.youtube.com/watch?v=r7WNOVq5ggo
+
+class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onWrite(NimBLECharacteristic *pChar) {
+    string pass = pChar->getValue();
+    const char* password = pass.c_str();
+
+    const char* ssid = "ota_connection";
+  }
+};
+
 class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 {
   void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id)
@@ -336,6 +400,7 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 
 unsigned long t;
 
+int awakeTime_ms = 0;
 int advertiseTime_ms = 800;
 int sleepTime_us = 15 * 1000 * 1000;
 
@@ -343,7 +408,18 @@ NimBLEExtAdvertising *pAdvertising;
 
 void setup()
 {
+
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
+    awakeTime_ms = 5 * 1000 * 60;
+  else
+    awakeTime_ms = 0;
+
   Serial.begin(115200);
+
+  printf("Awake time set to %d ms\n", awakeTime_ms);
+
   // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
@@ -370,6 +446,8 @@ void setup()
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *syncChar = pService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *otaUpdateChar = pService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
+  NimBLECharacteristic *customButtonChar = pService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -417,7 +495,8 @@ void setup()
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
-  otaBleUpdateChar->setCallbacks(new OtaBleUpdateCharacteristicCallbacks());
+  otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
+  customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
 
   pService->start();
 
@@ -469,24 +548,35 @@ void loop()
     updateHeadlightChars();
     busyChar->setValue("0");
     busyChar->notify();
+
+    t = millis();
   }
 
-  if (!deviceConnected && (millis() - t) > advertiseTime_ms)
-  {
-    buttonInput = digitalRead(UP_BUTTON_INPUT);
-    if (buttonInput == 1)
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
-    else if (buttonInput == 0)
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
-    if (deviceConnected)
-      return;
-    printf("Deep Sleep Starting...\n");
-    delay(100);
-    if (!deviceConnected)
+
+    if (!deviceConnected && (millis() - t) > advertiseTime_ms && (millis() - t) > awakeTime_ms)
     {
-    }
-    esp_deep_sleep_start();
-  }
+      buttonInput = digitalRead(UP_BUTTON_INPUT);
+      if (buttonInput == 1)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
+      else if (buttonInput == 0)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
+      if (deviceConnected)
+        return;
+
+      if (!deviceConnected)
+      {
+        printf("Deep Sleep Starting...\n");
+        delay(100);
+        esp_deep_sleep_start();
+      } 
+    } 
+}
+
+// Function to handle custom button press
+void handleButtonPresses() {
+
+
+
 }
 
 // Both
