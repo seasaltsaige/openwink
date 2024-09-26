@@ -6,13 +6,18 @@ import { useEffect, useState } from "react";
 import { OpacityButton } from "../Components/OpacityButton";
 import CheckBox from "react-native-bouncy-checkbox";
 import { AutoConnectStore, CustomCommandStore, DeviceMACStore, SleepyEyeStore } from "../AsyncStorage";
-import { DeleteDataWarning } from "./DeleteDataWarning";
+import { DeleteDataWarning } from "./Settings/DeleteDataWarning";
 import { defaults } from "../hooks/useColorTheme";
+import { Device } from "react-native-ble-plx";
+import { OEMButtonCustomization } from "./Settings/OEMButtonCustomization";
+import { ButtonBehaviors } from "../AsyncStorage/CustomOEMButtonStore";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
   enterDeepSleep: () => Promise<void>;
   colorTheme: typeof defaults;
+  device: Device | null;
+  updateOEMButton: (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => Promise<void>;
 }
 
 export function Settings(props: SettingsProps) {
@@ -27,6 +32,7 @@ export function Settings(props: SettingsProps) {
   const [autoConnectSetting, setAutoConnectSetting] = useState(true);
 
   const [deleteDataPopup, setDeleteDataPopup] = useState(false);
+  const [OEMButtonCustomizationVisible, setOEMButtonCustomizationVisible] = useState(false);
 
   const [goodbyeVisible, setGoodbyeVisible] = useState(false);
   const [shutdownTime, setShutdownTime] = useState(3);
@@ -335,23 +341,24 @@ export function Settings(props: SettingsProps) {
             borderColor: props.colorTheme.backgroundSecondaryColor,
             borderWidth: 2
           }}>
-            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
-              Long Term Sleep
+
+            <Text style={{ fontSize: 23, fontWeight: "bold", textAlign: "center", color: props.colorTheme.headerTextColor }}>
+              OEM Button Presets
             </Text>
+
             <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
-              If you plan to leave your car off for a long period of time, (more than 1 week), then it is recommended that you put your module in long term sleep.{"\n"}
-              You will not be able to connect to the module while it is asleep. To wake it up, you must press the headlight retractor button.
+
             </Text>
 
             <OpacityButton
-              text="Put Module to Sleep"
-              buttonStyle={{ ...styles.button, backgroundColor: props.colorTheme.buttonColor }}
-              textStyle={{ ...styles.buttonText, color: props.colorTheme.buttonTextColor }}
-              onPress={() => sleepDevice()}
+              text="Edit Presets"
+              buttonStyle={props.device ? { ...styles.button, backgroundColor: props.colorTheme.buttonColor } : { ...styles.buttonDisabled, backgroundColor: props.colorTheme.disabledButtonColor }}
+              textStyle={props.device ? { ...styles.buttonText, color: props.colorTheme.buttonTextColor } : { ...styles.buttonText, color: props.colorTheme.disabledButtonTextColor }}
+              disabled={!props.device}
+              onPress={() => setOEMButtonCustomizationVisible(true)}
             />
 
           </View>
-
 
           <View
             style={{
@@ -366,6 +373,37 @@ export function Settings(props: SettingsProps) {
               paddingHorizontal: 10,
               borderRadius: 5
             }}>
+            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
+              Long Term Sleep
+            </Text>
+            <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
+              If you plan to leave your car off for a long period of time, (more than 1 week), then it is recommended that you put your module in long term sleep.{"\n"}
+              You will not be able to connect to the module while it is asleep. To wake it up, you must press the headlight retractor button.
+            </Text>
+
+            <OpacityButton
+              text="Put Module to Sleep"
+              buttonStyle={props.device ? { ...styles.button, backgroundColor: props.colorTheme.buttonColor } : { ...styles.buttonDisabled, backgroundColor: props.colorTheme.disabledButtonColor }}
+              textStyle={props.device ? { ...styles.buttonText, color: props.colorTheme.buttonTextColor } : { ...styles.buttonText, color: props.colorTheme.disabledButtonTextColor }}
+              disabled={!props.device}
+              onPress={() => sleepDevice()}
+            />
+
+          </View>
+
+
+          <View style={{
+            width: "90%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            rowGap: 15,
+            paddingVertical: 20,
+            paddingHorizontal: 10,
+            borderRadius: 5,
+            borderColor: props.colorTheme.backgroundSecondaryColor,
+            borderWidth: 2
+          }}>
 
             <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>Delete all Data</Text>
             <Text style={{ color: "red", fontWeight: "bold", textAlign: "center" }}>WARNING: This action is destructive and irreversible. All Custom Commands, device pairings, and stored data will be forgotten.</Text>
@@ -392,6 +430,14 @@ export function Settings(props: SettingsProps) {
         delete={() => deleteData()}
         key={9999}
         colorTheme={props.colorTheme}
+      />
+
+      <OEMButtonCustomization
+        close={() => setOEMButtonCustomizationVisible(false)}
+        colorTheme={props.colorTheme}
+        device={props.device}
+        updateButtonResponse={props.updateOEMButton}
+        visible={OEMButtonCustomizationVisible}
       />
 
       <Modal

@@ -11,8 +11,9 @@ import { OpacityButton } from './Components/OpacityButton';
 import { AutoConnectStore } from './AsyncStorage';
 import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
+import { ButtonBehaviors } from './AsyncStorage/CustomOEMButtonStore';
 
-import { BridgeServer } from 'react-native-http-bridge-refurbished';
+// import { BridgeServer } from 'react-native-http-bridge-refurbished';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -86,6 +87,10 @@ export default function App() {
       console.log("ERROR SLEEPING");
       console.log(err);
     }
+  }
+
+  const updateOEMButtonPresets = async (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
+
   }
 
 
@@ -305,6 +310,8 @@ export default function App() {
         visible={settingsOpen}
         enterDeepSleep={enterDeepSleep}
         colorTheme={colorTheme}
+        device={connectedDevice}
+        updateOEMButton={updateOEMButtonPresets}
         key={4}
       />
 

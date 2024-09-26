@@ -146,8 +146,6 @@ function useBLE() {
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
       const rightInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);
 
-      const hardwareVersion = await connection?.readCharacteristicForService(SERVICE_UUID, "TODO: CHAR");
-
 
       if (leftInitStatus) {
         if (base64.decode(leftInitStatus.value!) === "1") setLeftState(1);

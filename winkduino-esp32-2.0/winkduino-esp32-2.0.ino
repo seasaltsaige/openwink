@@ -84,6 +84,9 @@ void updateHeadlightChars()
 
 bool deviceConnected = false;
 
+
+int awakeTime_ms = 0;
+
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
 {
@@ -91,11 +94,12 @@ class ServerCallbacks : public NimBLEServerCallbacks
   {
     deviceConnected = true;
     updateHeadlightChars();
-    Serial.printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
+    printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
   };
   void onDisconnect(NimBLEServer *pServer)
   {
     deviceConnected = false;
+    awakeTime_ms = 0;
     printf("Disconnected from client\n");
     NimBLEExtAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
     if (pAdvertising->start(0))
@@ -317,7 +321,6 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 };
 
 /**
- -1 : Unset
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
   2 : Left Blink
   3 : Left Blink x2
@@ -329,7 +332,7 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   9 : Right Wave
  10 : ...
 **/
-RTC_NOINIT_ATTR int customButtonPressArray[10] = { 1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 
@@ -343,6 +346,8 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
 {
   void onWrite(NimBLECharacteristic *pChar) {
     string value = pChar->getValue();
+
+    printf("VALUE: %s\n", value.c_str());
 
     // Updating maxTime
     if (value.length() > 1) 
@@ -363,8 +368,14 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
       {
         int updateValue = stoi(value);
         customButtonPressArray[indexToUpdate] = updateValue;
+        customButtonPressUpdateState = 0;
       }
     }
+
+    for (int i = 0; i < 10; i++) {
+      printf("Number of Presses: %d  :  Action: %d\n", i + 1, customButtonPressArray[i]);
+    }
+    printf("MS Between Presses: %d\n", maxTimeBetween_ms);
   }
 };
 
@@ -400,7 +411,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 
 unsigned long t;
 
-int awakeTime_ms = 0;
 int advertiseTime_ms = 800;
 int sleepTime_us = 15 * 1000 * 1000;
 
@@ -574,6 +584,8 @@ void loop()
 
 // Function to handle custom button press
 void handleButtonPresses() {
+// Uses above array of items
+
 
 
 

@@ -146,7 +146,7 @@ function DefaultCommands(props: DefaultModalProps) {
                       textStyle={
                         (props.headlightsBusy || needsReset) ?
                           {
-                            ...styles.buttonDisabled,
+                            ...styles.buttonText,
                             color: props.colorTheme.disabledButtonTextColor
                           } :
                           {
@@ -198,7 +198,7 @@ function DefaultCommands(props: DefaultModalProps) {
               text="Left Wave"
               textStyle={(props.headlightsBusy || needsReset) ?
                 {
-                  ...styles.buttonDisabled,
+                  ...styles.buttonText,
                   color: props.colorTheme.disabledButtonTextColor
                 } :
                 {
@@ -225,7 +225,7 @@ function DefaultCommands(props: DefaultModalProps) {
               text="Right Wave"
               textStyle={(props.headlightsBusy || needsReset) ?
                 {
-                  ...styles.buttonDisabled,
+                  ...styles.buttonText,
                   color: props.colorTheme.disabledButtonTextColor
                 } :
                 {
@@ -285,7 +285,7 @@ function DefaultCommands(props: DefaultModalProps) {
               textStyle={
                 (props.headlightsBusy || needsReset) ?
                   {
-                    ...styles.buttonDisabled,
+                    ...styles.buttonText,
                     color: props.colorTheme.disabledButtonTextColor
                   } :
                   {
@@ -312,7 +312,7 @@ function DefaultCommands(props: DefaultModalProps) {
               textStyle={
                 props.headlightsBusy ?
                   {
-                    ...styles.buttonDisabled,
+                    ...styles.buttonText,
                     color: props.colorTheme.disabledButtonTextColor
                   } :
                   {
@@ -385,8 +385,8 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
     borderRadius: 5,
+    padding: 10,
   },
   buttonText: {
     fontSize: 20,

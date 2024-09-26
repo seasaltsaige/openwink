@@ -27,7 +27,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
   const [open, setOpen] = useState(false);
   const [lastChange, setLastChange] = useState(Date.now());
   const updateTheme = (color: string) => {
-    if ((Date.now() - lastChange) < 50) return;
+    if ((Date.now() - lastChange) < 40) return;
     setLastChange(Date.now());
     //@ts-ignore
     setTheme(selectedTheme, color);
