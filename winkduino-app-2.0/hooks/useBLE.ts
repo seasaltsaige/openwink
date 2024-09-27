@@ -5,6 +5,8 @@ import * as ExpoDevice from "expo-device";
 import base64 from "react-native-base64";
 import { DeviceMACStore } from "../AsyncStorage/DeviceMACStore";
 import { AutoConnectStore } from "../AsyncStorage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { buttonBehaviorMap, CustomOEMButtonStore } from "../AsyncStorage/CustomOEMButtonStore";
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 
@@ -12,7 +14,12 @@ const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
+const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
+
 const SCAN_TIME_SECONDS = 30;
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
@@ -141,6 +148,45 @@ function useBLE() {
       setReqSub(subReq);
       setLeftSub(subLeft);
       setRightSub(subRight);
+
+      // GET ALL BUTTON CONFIG SETTINGS AND UPDATE ESP
+      const allStoredValues = await CustomOEMButtonStore.getAll();
+      if (allStoredValues && allStoredValues?.length! > 0) {
+
+        for (const value of allStoredValues) {
+
+          // Set index to update
+          await connection?.writeCharacteristicWithoutResponseForService(
+            SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode((
+              value.numberPresses - 1
+            ).toString()
+            ));
+
+          // Wait a short time
+          await sleep(20);
+
+          // Set index value
+          await connection?.writeCharacteristicWithoutResponseForService(
+            SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode((
+              buttonBehaviorMap[value.behavior].toString()
+            )));
+
+          await sleep(20);
+        }
+      }
+
+      // Set OEM button delay between presses for customization
+      const storedValue = await CustomOEMButtonStore.getDelay();
+
+      await connection?.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        CUSTOM_BUTTON_UPDATE_UUID,
+        base64.encode((storedValue)?.toString()!)
+      );
 
 
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);

@@ -18,6 +18,7 @@ interface SettingsProps {
   colorTheme: typeof defaults;
   device: Device | null;
   updateOEMButton: (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => Promise<void>;
+  updateButtonDelay: (delay: number) => Promise<void>;
 }
 
 export function Settings(props: SettingsProps) {
@@ -438,6 +439,7 @@ export function Settings(props: SettingsProps) {
         device={props.device}
         updateButtonResponse={props.updateOEMButton}
         visible={OEMButtonCustomizationVisible}
+        updateButtonDelay={props.updateButtonDelay}
       />
 
       <Modal

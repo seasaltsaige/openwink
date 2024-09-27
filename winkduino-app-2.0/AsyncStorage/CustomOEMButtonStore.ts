@@ -30,6 +30,8 @@ export const buttonBehaviorMap = {
 export type ButtonBehaviors = "Default Behavior" | "Left Blink" | "Left Blink x2" | "Right Blink" | "Right Blink x2" | "Both Blink" | "Both Blink x2" | "Left Wave" | "Right Wave";
 
 const BUTTON_KEY = "oem-button-values";
+const BUTTON_DELAY_KEY = "oem-button-delay";
+const DEFAULT_DELAY = 500;
 
 // This should only be called AFTER esp side is updated
 export class CustomOEMButtonStore {
@@ -53,6 +55,24 @@ export class CustomOEMButtonStore {
         all.push({ behavior: strBehavior as ButtonBehaviors, numberPresses: parseInt(numPresses) });
       }
       return all;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  static async getDelay() {
+    try {
+      const value = await AsyncStorage.getItem(BUTTON_DELAY_KEY);
+      if (value === null) return DEFAULT_DELAY;
+      else return parseInt(value);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  static async setDelay(delay: number) {
+    try {
+      await AsyncStorage.setItem(BUTTON_DELAY_KEY, Math.floor(delay).toString());
     } catch (err) {
       console.log(err);
     }

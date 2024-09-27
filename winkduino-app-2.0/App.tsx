@@ -93,6 +93,10 @@ export default function App() {
 
   }
 
+  const updateButtonDelay = async (delay: number) => {
+
+  }
+
 
   useEffect(() => {
     (async () => {
@@ -312,6 +316,7 @@ export default function App() {
         colorTheme={colorTheme}
         device={connectedDevice}
         updateOEMButton={updateOEMButtonPresets}
+        updateButtonDelay={updateButtonDelay}
         key={4}
       />
 
