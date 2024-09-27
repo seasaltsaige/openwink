@@ -1,6 +1,6 @@
 import express from "express";
 import serverless from "serverless-http";
-import Update from "../routes/Update";
+import Update from "./routes/Update";
 
 const app = express();
 
