@@ -332,7 +332,7 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   9 : Right Wave
  10 : ...
 **/
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+RTC_DATA_ATTR int customButtonPressArray[10] = { 1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 
