@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -10,7 +11,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "netlify-cli": "^17.36.2",
+    "netlify-lambda": "^2.0.16",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21"

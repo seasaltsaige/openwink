@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
         const data = JSON.parse(file);
 
         if (fs.existsSync(pathToUpdateBin)) {
-            const bin = fs.createReadStream()
+            const bin = fs.createReadStream(pathToUpdateBin);
         }
 
         res.json(data).send(200);
