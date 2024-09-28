@@ -3,12 +3,12 @@
 #include <NimBLEDevice.h>
 #include <Arduino.h>
 #include <Preferences.h>
-
-#include "esp_wifi.h"
+#include <WiFi.h>
 
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "esp_ota_ops.h"
+#include "esp_mac.h"
 
 using namespace std;
 
@@ -27,6 +27,8 @@ using namespace std;
 // Using Right Headlight Up Wire
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
+
+#define FIRMWARE_VERSION "0.0.1"
 
 Preferences preferences;
 
@@ -66,6 +68,8 @@ NimBLECharacteristic *busyChar = nullptr;
 #define OTA_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51529"
 
 #define CUSTOM_BUTTON_UPDATE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51530"
+
+#define FIRMWARE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51531"
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
@@ -420,7 +424,18 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
 };
 
 
+
+class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+  void onRead()
+  {
+    //
+  }
+};
+
+
 //https://www.youtube.com/watch?v=r7WNOVq5ggo
+
 
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
@@ -428,7 +443,15 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
     string pass = pChar->getValue();
     const char* password = pass.c_str();
 
-    const char* ssid = "ota_connection";
+    const char* ssid = "Wink Module: Update Access Point";
+
+    printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
+
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ssid, password);
+
+    
+
   }
 };
 
@@ -457,6 +480,7 @@ int sleepTime_us = 15 * 1000 * 1000;
 NimBLEExtAdvertising *pAdvertising;
 int pressCounter = 0;
 unsigned long buttonTimer;
+
 void setup()
 {
 
@@ -482,13 +506,6 @@ void setup()
   int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
   maxTimeBetween_ms = del;
 
-
-  for (int i = 0; i < 10; i++) {
-    printf("Presses: %d  -  Action: %d\n", i + 1, customButtonPressArray[i]);
-  }
-
-  printf("Delay: %d\n", maxTimeBetween_ms);
-
   // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
@@ -510,6 +527,15 @@ void setup()
 
   NimBLEService *pService = pServer->createService(NimBLEUUID(SERVICE_UUID));
 
+  uint8_t baseMac[6];
+  esp_read_mac(baseMac, ESP_MAC_BT);
+
+  for (int i = 0; i < 5; i++) {
+    printf("%02X:", baseMac[i]);
+  }
+  printf("%02X\n", baseMac[5]);
+
+
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *rightSleepChar = pService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
@@ -517,6 +543,10 @@ void setup()
   NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *otaUpdateChar = pService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *customButtonChar = pService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
+
+  NimBLECharacteristic *firmwareChar = pService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+
+  firmwareChar->setValue(FIRMWARE_VERSION);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -534,6 +564,8 @@ void setup()
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
+
+  firmwareChar->setCallbacks(new FirmwareCharacteristicCallbacks());
 
   pService->start();
 

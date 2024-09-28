@@ -5,7 +5,7 @@ import { Device } from "react-native-ble-plx";
 import { OpacityButton } from "../../Components/OpacityButton";
 import { useEffect, useState } from "react";
 import CheckBox from "react-native-bouncy-checkbox";
-interface SettingsProps {
+interface OEMButtonCustomizationProps {
   visible: boolean;
   close: () => void;
   colorTheme: typeof defaults;
@@ -20,7 +20,7 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 // ie: 1 in position 0, 2 in position 1, etc
 const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press", "Decuple Press"];
 
-export function OEMButtonCustomization(props: SettingsProps) {
+export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
 
 
   const [delay, setDelay] = useState(500);
@@ -37,8 +37,6 @@ export function OEMButtonCustomization(props: SettingsProps) {
   const [delayVal, setDelayVal] = useState("");
 
   const deleteBehavior = async (i: number) => {
-    // TODO: Update to update other values as well
-    // Other values as in 
     setSetFunctions((old) => {
       let f = JSON.parse(JSON.stringify(old));
       f.splice(i, 1);
@@ -46,36 +44,6 @@ export function OEMButtonCustomization(props: SettingsProps) {
     });
     //@ts-ignore
     await props.updateButtonResponse(i, 0);
-
-
-    // for (let j = 0; j < 10; j++) {
-    //   if (j >= updated.length) {
-    //     console.log("Past len");
-    //     //@ts-ignore
-    //     await props.updateButtonResponse(j, 0);
-    //   } else {
-    //     console.log("In len: ", updated[j]);
-    //     //@ts-ignore
-    //     await props.updateButtonResponse(j, updated[j].behaviorEnglish);
-    //   }
-    //   await sleep(50);
-    // }
-
-
-    // Update rest of i
-    // if (i < setFunctions.length) {
-    //   for (let j = i; j < setFunctions.length; j++) {
-    //     console.log(j);
-    //     //@ts-ignore
-    //     await props.updateButtonDelay(j, 0);
-    //     await sleep(100);
-    //   }
-    //   //@ts-ignore
-    //   await props.updateButtonDelay(setFunctions.length, 0);
-    //   await sleep(100);
-    // }
-
-
   }
 
   const create = async () => {
@@ -208,8 +176,9 @@ export function OEMButtonCustomization(props: SettingsProps) {
             style={{
               display: "flex",
               flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
               rowGap: 8,
-              // width: "90%",
               borderWidth: 2,
               borderColor: props.colorTheme.backgroundSecondaryColor,
               borderRadius: 5,
@@ -241,9 +210,22 @@ export function OEMButtonCustomization(props: SettingsProps) {
               }}
             >
               This section allows you to customize the sensitivity of the max delay between button presses.
-              {/* <OpacityButton text="?" buttonStyle={{ width: 2, height: 20, }} textStyle={{ color: "white" }} onPress={() => { }} /> */}
-            </Text>
 
+            </Text>
+            <OpacityButton
+              text="More info →"
+              buttonStyle={{
+                marginTop: -8,
+              }}
+              textStyle={{
+                color: props.colorTheme.buttonColor,
+                fontWeight: "bold",
+                fontSize: 17,
+                textDecorationColor: props.colorTheme.buttonColor,
+                textDecorationLine: "underline",
+              }}
+              onPress={() => { }}
+            />
 
             <View
               style={{
@@ -286,8 +268,10 @@ export function OEMButtonCustomization(props: SettingsProps) {
                   display: "flex",
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-evenly",
+                  justifyContent: "flex-start",
                   width: "100%",
+                  borderWidth: 1,
+                  columnGap: 40,
                 }}
               >
                 <OpacityButton
@@ -309,6 +293,7 @@ export function OEMButtonCustomization(props: SettingsProps) {
                     color: delayVal.length < 2 ? props.colorTheme.disabledButtonTextColor : props.colorTheme.buttonTextColor,
                   }}
                 />
+
                 <OpacityButton
                   text="Reset"
                   onPress={() => updateDelay("500")}
@@ -499,6 +484,8 @@ export function OEMButtonCustomization(props: SettingsProps) {
         />
 
       </ScrollView>
+
+      {/* <Modal></Modal> */}
 
       <Modal
         visible={editBehavior !== null}

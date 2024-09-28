@@ -7,7 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "plugins": [
-      "react-native-ble-plx"
+      "react-native-ble-plx",
+      "react-native-wifi-reborn"
     ],
     "splash": {
       "image": "./assets/splash.png",
@@ -26,7 +27,8 @@
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
-        "android.permission.BLUETOOTH_CONNECT"
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "package": "com.maxisthemoose.winkduino2"
     },

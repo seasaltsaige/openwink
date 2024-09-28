@@ -15,6 +15,7 @@ const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
+const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
 
 const SCAN_TIME_SECONDS = 30;
 
@@ -31,6 +32,7 @@ function useBLE() {
 
   const [MAC, setMAC] = useState<string | undefined>(undefined);
 
+  const [firmwareVersion, setFirmwareVersion] = useState(null as string | null);
   const [noDevice, setNoDevice] = useState(false);
 
   const [reqSub, setReqSub] = useState<Subscription>();
@@ -83,13 +85,14 @@ function useBLE() {
   };
 
   const requestPermissions = async () => {
+
     if (Platform.OS === "android") {
       if ((ExpoDevice.platformApiLevel ?? -1) < 31) {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: "Location Permission",
-            message: "Bluetooth Low Energy requires Location",
+            message: "This app requires Location Services to function correctly.",
             buttonPositive: "OK",
           }
         );
@@ -163,6 +166,10 @@ function useBLE() {
         else setRightState(0);
       }
 
+      const firmware = await connection?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
+      if (firmware.value) {
+        setFirmwareVersion(base64.decode(firmware.value));
+      }
 
       // Handle disconnect
       connection.onDisconnected(async (err, device) => {
@@ -274,7 +281,8 @@ function useBLE() {
     // allDevices,
     isScanning,
     isConnecting,
-    noDevice
+    noDevice,
+    firmwareVersion
   }
 }
 

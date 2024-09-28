@@ -26,7 +26,6 @@ export function useColorTheme() {
   async function update() {
     const storedTheme = await ThemeStore.getStoredTheme();
     const toSet = {};
-    console.log(storedTheme);
     for (const key in storedTheme) {
       //@ts-ignore
       toSet[key] = storedTheme[key];

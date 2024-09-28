@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
@@ -13,7 +13,11 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-// import { BridgeServer } from 'react-native-http-bridge-refurbished';
+
+import WifiManager from "react-native-wifi-reborn";
+import { BridgeServer } from "react-native-http-bridge-refurbished";
+import { NetworkInfo } from 'react-native-network-info';
+
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
 const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
@@ -22,7 +26,7 @@ const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
-const UPDATE_URL = "http://10.9.26.221:3000";
+const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -39,6 +43,8 @@ export default function App() {
     isConnecting,
     isScanning,
     noDevice,
+    firmwareVersion,
+    MAC
   } = useBLE();
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
@@ -46,6 +52,8 @@ export default function App() {
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appThemeOpen, setAppThemeOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [promptResponse, setPromptResponse] = useState(null);
 
   const [autoConnect, setAutoConnect] = useState(true);
 
@@ -98,7 +106,6 @@ export default function App() {
     else
       await CustomOEMButtonStore.set(presses, to);
 
-    console.log("Setting " + presses + " TO " + to);
     await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode((presses).toString()));
     await sleep(20);
     //@ts-ignore
@@ -138,8 +145,36 @@ export default function App() {
     // Check for app + or module updates
 
     (async () => {
-      const response = await fetch(UPDATE_URL, { method: "GET" });
+      const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
+      const firmware = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
+      if (firmware?.value) {
+        const fw = base64.decode(firmware.value);
+        console.log(fw);
+        const response = await fetch(UPDATE_URL, { method: "GET", headers: { authorization: MAC! }, });
+        if (response.status !== 200) return;
+        const json = await response.json();
+        const apiVersion = json["version"] as string;
 
+        const apiVParts = apiVersion.split(".");
+        const fwParts = fw.split(".");
+
+        let upgradeAvailable = false;
+        for (let i = 0; i < 3; i++) {
+          const apiPart = parseInt(apiVParts[i]);
+          const fwPart = parseInt(fwParts[i]);
+          if (apiPart > fwPart)
+            upgradeAvailable = true;
+        }
+
+        if (upgradeAvailable) {
+          // Create upgrade available popup.
+          // Simple popup that asks user to download file.
+          // If no, continue to app
+          // If yes, download software upgrade and continue with below
+          setUpgradeModalOpen(true);
+
+        }
+      }
     })();
 
     // NOTE: will need to be connected to esp
@@ -159,7 +194,7 @@ export default function App() {
 
     // useState for file storage? since its temp?
 
-  }, []);
+  }, [connectedDevice !== null]);
 
   return (
     <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
@@ -340,6 +375,52 @@ export default function App() {
         visible={appThemeOpen}
         key={5}
       />
+
+      {/* FIRMWARE UPGRADE SCREEN / POPUP */}
+      <Modal
+        visible={connectedDevice !== null && upgradeModalOpen}
+        animationType="slide"
+        hardwareAccelerated
+        transparent
+      >
+
+        <View
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colorTheme.backgroundPrimaryColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              padding: 20,
+              rowGap: 20,
+              width: "80%",
+              borderRadius: 5,
+            }}
+          >
+            {
+              promptResponse === null ?
+                <>
+                </>
+                : promptResponse === true ?
+                  <></>
+                  : <></>
+            }
+          </View>
+        </View>
+
+      </Modal>
 
     </ScrollView>
   );
