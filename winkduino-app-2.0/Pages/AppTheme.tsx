@@ -97,6 +97,49 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
       <View
         style={{
           width: "90%",
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          paddingVertical: 20,
+          paddingHorizontal: 10,
+          borderRadius: 5,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          rowGap: 15,
+        }}>
+        <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
+          <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
+            Color Hex
+          </Text>
+          <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
+            You can edit the colors hex directly if preferred
+          </Text>
+          <TextInput
+            style={{
+              borderColor: getBackgroundColor(colorTheme.backgroundSecondaryColor),
+              borderWidth: 1,
+              paddingHorizontal: 20,
+              paddingVertical: 5,
+              borderRadius: 5,
+              color: colorTheme.textColor,
+              fontSize: 18,
+            }}
+            //@ts-ignore
+            value={typedTheme}
+            maxLength={7}
+            onChangeText={(text) => {
+              if (text.length > 6)
+                if (isValidHex(text)) updateTheme(text);
+              setTypedTheme(text);
+            }}
+          />
+        </View>
+
+      </View>
+
+      <View
+        style={{
+          width: "90%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -144,51 +187,6 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
             onColorChange={(color) => updateTheme(color)}
           />
         </View>
-      </View>
-
-
-
-      <View
-        style={{
-          width: "90%",
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          paddingVertical: 20,
-          paddingHorizontal: 10,
-          borderRadius: 5,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          rowGap: 15,
-        }}>
-        <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
-          <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
-            Color Hex
-          </Text>
-          <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
-            You can edit the colors hex directly if preferred
-          </Text>
-          <TextInput
-            style={{
-              borderColor: getBackgroundColor(colorTheme.backgroundSecondaryColor),
-              borderWidth: 1,
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              borderRadius: 5,
-              color: colorTheme.textColor,
-              fontSize: 18,
-            }}
-            //@ts-ignore
-            value={typedTheme}
-            maxLength={7}
-            onChangeText={(text) => {
-              if (text.length > 6)
-                if (isValidHex(text)) updateTheme(text);
-              setTypedTheme(text);
-            }}
-          />
-        </View>
-
       </View>
 
       <View style={{ display: "flex", flexDirection: "row", columnGap: 20, }}>

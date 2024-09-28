@@ -11,7 +11,7 @@ import { OpacityButton } from './Components/OpacityButton';
 import { AutoConnectStore } from './AsyncStorage';
 import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
-import { ButtonBehaviors } from './AsyncStorage/CustomOEMButtonStore';
+import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
 // import { BridgeServer } from 'react-native-http-bridge-refurbished';
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -20,9 +20,11 @@ const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
 const RIGHT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51527"
 const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
-
+const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 const UPDATE_URL = "http://10.9.26.221:3000";
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export default function App() {
 
@@ -90,11 +92,24 @@ export default function App() {
   }
 
   const updateOEMButtonPresets = async (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
+    //@ts-ignore
+    if (to === 0)
+      await CustomOEMButtonStore.remove(presses);
+    else
+      await CustomOEMButtonStore.set(presses, to);
 
+    console.log(presses, to);
+    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode((presses).toString()));
+    await sleep(20);
+    //@ts-ignore
+    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(to === 0 ? "0" : buttonBehaviorMap[to].toString()));
+    await sleep(20);
   }
 
+  // SHOULD DISALLOW VALUES LESS THAN ~100 ms since that doesn't make a bunch of sense
   const updateButtonDelay = async (delay: number) => {
-
+    await CustomOEMButtonStore.setDelay(delay);
+    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(delay.toString()));
   }
 
 

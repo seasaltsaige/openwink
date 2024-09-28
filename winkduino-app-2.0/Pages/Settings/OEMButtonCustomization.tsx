@@ -1,9 +1,10 @@
 import { Image, Modal, ScrollView, Text, TextInput, View } from "react-native";
-import { buttonBehaviorMap, ButtonBehaviors } from "../../AsyncStorage/CustomOEMButtonStore";
+import { buttonBehaviorMap, buttonBehaviorMapReversed, ButtonBehaviors, CustomOEMButtonStore } from "../../AsyncStorage/CustomOEMButtonStore";
 import { defaults } from "../../hooks/useColorTheme";
 import { Device } from "react-native-ble-plx";
 import { OpacityButton } from "../../Components/OpacityButton";
 import { useEffect, useState } from "react";
+import CheckBox from "react-native-bouncy-checkbox";
 interface SettingsProps {
   visible: boolean;
   close: () => void;
@@ -24,35 +25,104 @@ export function OEMButtonCustomization(props: SettingsProps) {
   const [delay, setDelay] = useState(500);
   const [setFunctions, setSetFunctions] = useState([
     { behavior: buttonBehaviorMap["Default Behavior"], behaviorEnglish: "Default Behavior" },
-  ]);
+  ] as {
+    behavior: number, behaviorEnglish: ButtonBehaviors
+  }[]);
+
+  const [editBehavior, setEditBehavior] = useState(null as null | { behavior: ButtonBehaviors, presses: number });
+  const [createBehavior, setCreateBehavior] = useState(null as null | { behavior: ButtonBehaviors, presses: number });
+  const [selectedBehavior, setSelectedBehavior] = useState(null as ButtonBehaviors | null);
+
+  const [delayVal, setDelayVal] = useState("");
+
+  const deleteBehavior = async (i: number) => {
+    // TODO: Update to update other values as well
+    // Other values as in 
+    setSetFunctions((old) => {
+      let f = JSON.parse(JSON.stringify(old));
+      f.splice(i, 1);
+      return f;
+    });
+    //@ts-ignore
+    await props.updateButtonResponse(i, 0);
+  }
+
+  const create = async () => {
+    if (createBehavior === null) return;
+    const i = setFunctions.length;
+    setSetFunctions((old) => [...old, { behavior: buttonBehaviorMap[createBehavior.behavior], behaviorEnglish: selectedBehavior! }]);
+    //@ts-ignore
+    await props.updateButtonResponse(i, selectedBehavior!);
+
+    setCreateBehavior(null);
+    setSelectedBehavior(null);
+  }
+
+  const saveAction = async () => {
+    setSetFunctions((old) => {
+      const n = JSON.parse(JSON.stringify(old));
+      if (editBehavior === null) return old;
+      if (selectedBehavior === null) return old;
+
+      n[editBehavior.presses].behaviorEnglish = selectedBehavior;
+      n[editBehavior.presses].behavior = buttonBehaviorMap[selectedBehavior];
+
+      return n;
+    });
+    //@ts-ignore
+    await props.updateButtonResponse(editBehavior?.presses!, selectedBehavior);
+
+    setEditBehavior(null);
+    setSelectedBehavior(null);
+  }
+
+  const openSelection = (i: number) => {
+    if (i >= setFunctions.length) return;
+
+    const val = setFunctions[i];
+
+    setSelectedBehavior(val.behaviorEnglish);
+    setEditBehavior({ presses: i, behavior: val.behaviorEnglish });
+  }
+
+  const updateDelay = async (delay: string) => {
+    const d = parseInt(delay);
+    if (isNaN(d)) return setDelayVal("");
+    setDelay(d);
+    setDelayVal("");
+    await props.updateButtonDelay(d);
+  }
 
   useEffect(() => {
+    setSetFunctions([
+      { behavior: buttonBehaviorMap["Default Behavior"], behaviorEnglish: "Default Behavior" },
+    ]);
+  }, [props.visible === false]);
+
+  useEffect(() => {
+
     (async () => {
+      const all = await CustomOEMButtonStore.getAll();
+      console.log(all);
+      if (!all || all.length < 1) return;
+
+      if (all.find(v => v.numberPresses === 0) !== undefined) {
+        console.log("map", all.map((v) => ({ behavior: v.numberPresses, behaviorEnglish: v.behavior })));
+        setSetFunctions(all.map((v) => ({ behavior: v.numberPresses, behaviorEnglish: v.behavior })))
+      } else {
+        console.log("no press")
+        setSetFunctions(old => [
+          ...old,
+          ...all.map(v =>
+          ({
+            behavior: v.numberPresses,
+            behaviorEnglish: v.behavior
+          }))
+        ])
+      }
 
     })();
   }, [props.visible]);
-
-  // const hexToRgb = (hex: string) => {
-  //   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  //   return result ? {
-  //     r: parseInt(result[1], 16),
-  //     g: parseInt(result[2], 16),
-  //     b: parseInt(result[3], 16)
-  //   } : null;
-
-  // }
-
-  // const closeColor = (color: string) => {
-  //   const rgbValue = hexToRgb(color);
-  //   if (rgbValue) {
-  //     const lum = (0.2126 * rgbValue.r + 0.7152 * rgbValue.g + 0.0722 * rgbValue.b) / 255;
-  //     console.log(lum);
-  //     if (lum > 0.5)
-  //       return "black";
-  //     else
-  //       return "white";
-  //   }
-  // }
 
   return (
     <Modal
@@ -64,15 +134,19 @@ export function OEMButtonCustomization(props: SettingsProps) {
     >
 
       <ScrollView
-        style={{ backgroundColor: props.colorTheme.backgroundPrimaryColor }}
+        style={{
+          backgroundColor: props.colorTheme.backgroundPrimaryColor,
+        }}
         contentContainerStyle={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
-          rowGap: 25,
           position: "relative",
-        }}>
+        }}
+        nestedScrollEnabled={true}
+      >
+
         {/* Page Name */}
         <Text
           style={{
@@ -81,7 +155,7 @@ export function OEMButtonCustomization(props: SettingsProps) {
             color: props.colorTheme.headerTextColor,
             fontSize: 27,
             marginTop: 30,
-            fontWeight: "bold"
+            fontWeight: "bold",
           }}
         >
           Retractor Button Customization
@@ -95,8 +169,7 @@ export function OEMButtonCustomization(props: SettingsProps) {
             fontSize: 16,
           }}
         >
-          On this page you will be able to customize the behavior of pressing the OEM button in your car. You are able to customize up to 10 button presses worth of actions.
-          {"\n\n"}<Text style={{ fontWeight: "bold", fontSize: 18 }}>WARNING:</Text>{"\n"}It is <Text style={{ fontWeight: "bold" }}>HIGHLY</Text> recommended to leave the single button press as the default behavior.
+          It is <Text style={{ fontWeight: "bold" }}>HIGHLY</Text> recommended to leave the single button press as the default behavior.
         </Text>
 
         {/* Set max delay between presses */}
@@ -106,59 +179,279 @@ export function OEMButtonCustomization(props: SettingsProps) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-start"
+            justifyContent: "flex-start",
+            marginTop: 25
           }}
         >
-          {/* Include 'disclaimers' about tradeoffs */}
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              rowGap: 8,
+              // width: "90%",
+              borderWidth: 2,
+              borderColor: props.colorTheme.backgroundSecondaryColor,
+              borderRadius: 5,
+              padding: 20,
+              paddingTop: 15,
+            }}
+          >
+            {/* Include 'disclaimers' about tradeoffs */}
+            <Text
+              style={{
+                textAlign: "center",
+                color: props.colorTheme.headerTextColor,
+                fontSize: 23,
+                fontWeight: "bold"
+              }}
+            >
+              Button Delay Sensitivity
+            </Text>
+
+
+            <Text
+              style={{
+                color: props.colorTheme.textColor,
+                textAlign: "center",
+                fontSize: 14,
+                display: "flex",
+                flexDirection: "row", alignItems: "center",
+                justifyContent: "flex-start"
+              }}
+            >
+              This section allows you to customize the sensitivity of the max delay between button presses.
+              {/* <OpacityButton text="?" buttonStyle={{ width: 2, height: 20, }} textStyle={{ color: "white" }} onPress={() => { }} /> */}
+            </Text>
+
+
+            <View
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                rowGap: 10,
+              }}
+            >
+              <Text
+                style={{
+                  color: props.colorTheme.headerTextColor,
+                  fontSize: 17,
+                  textAlign: "center",
+
+                }}
+              >
+                Current sensitivity - {delay}ms
+              </Text>
+              <TextInput
+                style={{
+                  backgroundColor: props.colorTheme.backgroundSecondaryColor,
+                  borderWidth: 1,
+                  borderColor: props.colorTheme.buttonTextColor,
+                  borderRadius: 5,
+                  width: "70%",
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  color: props.colorTheme.textColor,
+                }}
+                placeholder="Enter desired sensitivity in ms"
+                keyboardType="number-pad"
+                placeholderTextColor={props.colorTheme.textColor}
+                onChangeText={(text) => setDelayVal(text)}
+                value={delayVal}
+              />
+
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-evenly",
+                  width: "100%",
+                }}
+              >
+                <OpacityButton
+                  text="Save"
+                  onPress={() => updateDelay(delayVal)}
+                  disabled={delayVal.length < 2}
+                  buttonStyle={{
+                    borderRadius: 5,
+                    padding: 15,
+                    paddingVertical: 5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: delayVal.length < 2 ? props.colorTheme.disabledButtonColor : props.colorTheme.buttonColor,
+                    zIndex: 1,
+                  }}
+                  textStyle={{
+                    fontSize: 20,
+                    color: delayVal.length < 2 ? props.colorTheme.disabledButtonTextColor : props.colorTheme.buttonTextColor,
+                  }}
+                />
+                <OpacityButton
+                  text="Reset"
+                  onPress={() => updateDelay("500")}
+                  buttonStyle={{
+                    borderRadius: 5,
+                    padding: 15,
+                    paddingVertical: 5,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: props.colorTheme.buttonColor,
+                    zIndex: 1,
+                  }}
+                  textStyle={{
+                    fontSize: 20,
+                    color: props.colorTheme.buttonTextColor,
+                  }}
+                />
+              </View>
+            </View>
+
+
+
+          </View>
+
+          {/* Lowering this value means you will have to press the button faster to register multi-button presses.
+            Raising this value can cause unwanted delay after finishing the sequence.
+           */}
+
+        </View>
+
+
+
+
+        <View
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "scroll",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            rowGap: 10,
+            marginVertical: 20,
+            marginBottom: 30,
+          }}
+        >
           <Text
             style={{
               textAlign: "center",
               color: props.colorTheme.headerTextColor,
               fontSize: 23,
-              marginTop: 30,
               fontWeight: "bold"
             }}
           >
-            Button Delay Sensitivity
+            Saved Presets
           </Text>
 
-          <Text
-            style={{
-              color: props.colorTheme.textColor,
-              textAlign: "center",
-              fontSize: 14,
+          <OpacityButton
+            buttonStyle={{
+              padding: 10,
+              backgroundColor: setFunctions.length < 10 ? props.colorTheme.buttonColor : props.colorTheme.disabledButtonColor,
+              borderRadius: 5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
             }}
-          >
-            This section allows you to customize the sensitivity of the max delay between button presses.
-            Lowering this value means you will have to press the button faster to register multi-button presses.
-            Raising this value can cause unwanted delay after finishing the sequence.
-          </Text>
+            textStyle={{
+              color: setFunctions.length < 10 ? props.colorTheme.buttonTextColor : props.colorTheme.disabledButtonTextColor,
+              fontSize: 17,
+            }}
+            text={setFunctions.length < 10 ? `Add ${countToEnglish[setFunctions.length]}` : "None to Add"}
+            disabled={setFunctions.length >= 10}
+            //@ts-ignore
+            onPress={() => { setSelectedBehavior("Left Blink"); setCreateBehavior({ presses: setFunctions.length, behavior: buttonBehaviorMapReversed[setFunctions.length] }); }}
+          />
 
 
 
-
-        </View>
-
-        {/* Create view */}
-        <View>
-          {/* Creating adds to the end of the list */}
-          {/* Deleting removes, then moves the rest up to fit in */}
-        </View>
-
-        <View>
           {
-            setFunctions.map((value, i) => <View>
-              <Text>
-                {countToEnglish[i]}
-              </Text>
-              <Text>
-                {value.behaviorEnglish}
-              </Text>
-              <View>
-                <Text>Update Behavior</Text>
-                <TextInput />
+            setFunctions.map((value, i) => (
+              <View
+                style={{
+                  backgroundColor: i % 2 === 0 ? props.colorTheme.backgroundSecondaryColor : "transparent",
+                  borderColor: i % 2 === 1 ? props.colorTheme.backgroundSecondaryColor : "transparent",
+                  borderWidth: i % 2 === 1 ? 3 : 0,
+                  width: "75%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  paddingVertical: 15,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    color: props.colorTheme.headerTextColor,
+                    fontSize: 18,
+                  }}
+                >
+                  <Text style={{ fontWeight: "bold" }}>Button Presses:</Text> {countToEnglish[i]}
+                </Text>
+                <Text
+                  style={{
+                    marginVertical: 5,
+                    color: props.colorTheme.headerTextColor,
+                    fontSize: 18,
+                  }}
+                >
+                  <Text style={{ fontWeight: "bold" }}>Action:</Text> {value.behaviorEnglish}
+                </Text>
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    marginTop: 10,
+                    columnGap: 20,
+                  }}
+                >
+                  <OpacityButton
+                    buttonStyle={{}}
+                    text="Update Behavior"
+                    textStyle={{
+                      color: props.colorTheme.buttonColor,
+                      textDecorationColor: props.colorTheme.buttonColor,
+                      textDecorationStyle: "solid",
+                      textDecorationLine: "underline",
+                      fontSize: 18,
+                      fontWeight: "bold",
+                    }}
+                    onPress={() => openSelection(i)}
+                  />
+
+
+                  {
+                    i === 0 ?
+                      <></>
+                      :
+                      <OpacityButton
+                        buttonStyle={{}}
+                        text="Delete"
+                        textStyle={{
+                          color: props.colorTheme.buttonColor,
+                          textDecorationColor: props.colorTheme.buttonColor,
+                          textDecorationStyle: "solid",
+                          textDecorationLine: "underline",
+                          fontSize: 18,
+                          fontWeight: "bold",
+                        }}
+                        onPress={() => {
+                          // Delete Action
+                          // CAN NOT DELETE SINGLE PRESS
+                          if (i === 0) return;
+                          deleteBehavior(i);
+                        }}
+                      />
+                  }
+                </View>
               </View>
-            </View>)
+            ))
           }
         </View>
 
@@ -172,6 +465,8 @@ export function OEMButtonCustomization(props: SettingsProps) {
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: props.colorTheme.buttonColor,
+            marginBottom: 25,
+            zIndex: 1,
           }}
           textStyle={{
             fontSize: 20,
@@ -179,10 +474,244 @@ export function OEMButtonCustomization(props: SettingsProps) {
           }}
           text="Close"
           onPress={() => props.close()}
+
         />
 
       </ScrollView>
 
+      <Modal
+        visible={editBehavior !== null}
+        animationType="fade"
+        hardwareAccelerated
+        onRequestClose={() => setEditBehavior(null)}
+        transparent
+      >
+        <View
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: props.colorTheme.backgroundPrimaryColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              padding: 20,
+              rowGap: 20,
+              width: "80%",
+              borderRadius: 10,
+            }}
+          >
+
+
+            <Text
+              style={{
+                color: props.colorTheme.headerTextColor,
+                fontSize: 24,
+                marginBottom: 20,
+              }}
+            >
+              Editing <Text style={{ fontWeight: "bold" }}>{countToEnglish[editBehavior?.presses!]}</Text>
+            </Text>
+
+            {
+              Object.keys(buttonBehaviorMap).map((key, i) => {
+                {
+                  return (editBehavior?.presses! > 0 && i === 0) ?
+                    <></> :
+                    <CheckBox
+                      isChecked={selectedBehavior === key}
+                      text={key}
+                      style={{ width: "70%" }}
+                      iconStyle={{ borderColor: "green" }}
+                      innerIconStyle={{ borderWidth: -4 }}
+                      textStyle={{ textDecorationLine: "none", textAlign: "center", color: props.colorTheme.textColor }}
+                      unFillColor={props.colorTheme.buttonTextColor}
+                      fillColor={props.colorTheme.buttonColor}
+                      onPress={() => { setSelectedBehavior(key as ButtonBehaviors); }}
+                    />
+                }
+              })
+            }
+
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                width: "75%",
+                marginTop: 20,
+                // columnGap: 5,
+              }}
+            >
+              <OpacityButton
+                buttonStyle={{
+                  borderRadius: 5,
+                  padding: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#228B22",
+                  zIndex: 1,
+                }}
+                textStyle={{
+                  fontSize: 20,
+                  color: props.colorTheme.buttonTextColor,
+                }}
+                text="Save"
+                onPress={() => { saveAction(); }}
+
+              />
+
+
+              <OpacityButton
+                buttonStyle={{
+                  borderRadius: 5,
+                  padding: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: props.colorTheme.buttonColor,
+                  zIndex: 1,
+                }}
+                textStyle={{
+                  fontSize: 20,
+                  color: props.colorTheme.buttonTextColor,
+                }}
+                text="Cancel"
+                onPress={() => setEditBehavior(null)}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={createBehavior !== null}
+        animationType="fade"
+        hardwareAccelerated
+        onRequestClose={() => setCreateBehavior(null)}
+        transparent
+      >
+        <View
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            zIndex: 1000,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: props.colorTheme.backgroundPrimaryColor,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              padding: 20,
+              rowGap: 20,
+              width: "80%",
+              borderRadius: 10,
+            }}
+          >
+
+
+            <Text
+              style={{
+                color: props.colorTheme.headerTextColor,
+                fontSize: 24,
+                marginBottom: 20,
+              }}
+            >
+              Creating <Text style={{ fontWeight: "bold" }}>{countToEnglish[createBehavior?.presses!]}</Text>
+            </Text>
+
+            {
+              Object.keys(buttonBehaviorMap).map((key, i) => {
+                {
+                  return (i === 0) ?
+                    <></> :
+                    <CheckBox
+                      isChecked={selectedBehavior === key}
+                      text={key}
+                      style={{ width: "70%" }}
+                      iconStyle={{ borderColor: "green" }}
+                      innerIconStyle={{ borderWidth: -4 }}
+                      textStyle={{ textDecorationLine: "none", textAlign: "center", color: props.colorTheme.textColor }}
+                      unFillColor={props.colorTheme.buttonTextColor}
+                      fillColor={props.colorTheme.buttonColor}
+                      onPress={() => { setSelectedBehavior(key as ButtonBehaviors); }}
+                    />
+                }
+              })
+            }
+
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                width: "75%",
+                marginTop: 20,
+                // columnGap: 5,
+              }}
+            >
+              <OpacityButton
+                buttonStyle={{
+                  borderRadius: 5,
+                  padding: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#228B22",
+                  zIndex: 1,
+                }}
+                textStyle={{
+                  fontSize: 20,
+                  color: props.colorTheme.buttonTextColor,
+                }}
+                text="Save"
+                onPress={() => { create(); }}
+
+              />
+
+
+              <OpacityButton
+                buttonStyle={{
+                  borderRadius: 5,
+                  padding: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: props.colorTheme.buttonColor,
+                  zIndex: 1,
+                }}
+                textStyle={{
+                  fontSize: 20,
+                  color: props.colorTheme.buttonTextColor,
+                }}
+                text="Cancel"
+                onPress={() => setCreateBehavior(null)}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   )
 }

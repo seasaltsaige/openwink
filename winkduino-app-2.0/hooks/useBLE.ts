@@ -24,7 +24,7 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
   //@ts-ignore
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>({});
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
   const [rightState, setRightState] = useState(0);
@@ -150,43 +150,43 @@ function useBLE() {
       setRightSub(subRight);
 
       // GET ALL BUTTON CONFIG SETTINGS AND UPDATE ESP
-      const allStoredValues = await CustomOEMButtonStore.getAll();
-      if (allStoredValues && allStoredValues?.length! > 0) {
+      // const allStoredValues = await CustomOEMButtonStore.getAll();
+      // if (allStoredValues && allStoredValues?.length! > 0) {
 
-        for (const value of allStoredValues) {
+      //   for (const value of allStoredValues) {
 
-          // Set index to update
-          await connection?.writeCharacteristicWithoutResponseForService(
-            SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
-            base64.encode((
-              value.numberPresses - 1
-            ).toString()
-            ));
+      //     // Set index to update
+      //     await connection?.writeCharacteristicWithoutResponseForService(
+      //       SERVICE_UUID,
+      //       CUSTOM_BUTTON_UPDATE_UUID,
+      //       base64.encode((
+      //         value.numberPresses
+      //       ).toString()
+      //       ));
 
-          // Wait a short time
-          await sleep(20);
+      //     // Wait a short time
+      //     await sleep(100);
 
-          // Set index value
-          await connection?.writeCharacteristicWithoutResponseForService(
-            SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
-            base64.encode((
-              buttonBehaviorMap[value.behavior].toString()
-            )));
+      //     // Set index value
+      //     await connection?.writeCharacteristicWithoutResponseForService(
+      //       SERVICE_UUID,
+      //       CUSTOM_BUTTON_UPDATE_UUID,
+      //       base64.encode((
+      //         buttonBehaviorMap[value.behavior].toString()
+      //       )));
 
-          await sleep(20);
-        }
-      }
+      //     await sleep(100);
+      //   }
+      // }
 
-      // Set OEM button delay between presses for customization
-      const storedValue = await CustomOEMButtonStore.getDelay();
+      // // Set OEM button delay between presses for customization
+      // const storedValue = await CustomOEMButtonStore.getDelay();
 
-      await connection?.writeCharacteristicWithoutResponseForService(
-        SERVICE_UUID,
-        CUSTOM_BUTTON_UPDATE_UUID,
-        base64.encode((storedValue)?.toString()!)
-      );
+      // await connection?.writeCharacteristicWithoutResponseForService(
+      //   SERVICE_UUID,
+      //   CUSTOM_BUTTON_UPDATE_UUID,
+      //   base64.encode((storedValue)?.toString()!)
+      // );
 
 
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);

@@ -173,7 +173,6 @@ export function CustomCommands(props: CustomCommandProps) {
                 borderColor: i % 2 === 1 ? props.colorTheme.backgroundSecondaryColor : "none",
                 borderWidth: i % 2 === 1 ? 3 : 0,
                 padding: 15,
-                // paddingHorizontal: 15,
                 rowGap: 12,
                 width: "100%",
               }}>

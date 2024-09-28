@@ -229,7 +229,7 @@ export function Settings(props: SettingsProps) {
                 style={{ width: 110, flexDirection: "row-reverse" }}
                 iconStyle={{ borderColor: "green" }}
                 innerIconStyle={{ borderWidth: -2 }}
-                textStyle={{ textDecorationLine: "none" }}
+                textStyle={{ textDecorationLine: "none", color: props.colorTheme.textColor }}
                 isChecked={autoConnectSetting}
                 onPress={() => saveAutoConnect(true)}
               />
@@ -243,7 +243,7 @@ export function Settings(props: SettingsProps) {
                 style={{ width: 110 }}
                 innerIconStyle={{ borderWidth: -2 }}
                 isChecked={!autoConnectSetting}
-                textStyle={{ textDecorationLine: "none" }}
+                textStyle={{ textDecorationLine: "none", color: props.colorTheme.textColor }}
                 onPress={() => saveAutoConnect(false)}
               />
             </View>
@@ -294,6 +294,7 @@ export function Settings(props: SettingsProps) {
                   maxLength={3}
                 />
               </View>
+
               <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ color: props.colorTheme.headerTextColor, textAlign: "center", fontSize: 17, fontWeight: 500 }}>Right Headlight</Text>
                 <Text style={{ color: props.colorTheme.textColor }}>Set to {rightHeadlight}%</Text>
@@ -344,11 +345,11 @@ export function Settings(props: SettingsProps) {
           }}>
 
             <Text style={{ fontSize: 23, fontWeight: "bold", textAlign: "center", color: props.colorTheme.headerTextColor }}>
-              OEM Button Presets
+              Retractor Button Presets
             </Text>
 
             <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
-
+              Customize the behavior of pressing the OEM button in your car. You are able to customize up to 10 button presses worth of actions.
             </Text>
 
             <OpacityButton

@@ -27,6 +27,18 @@ export const buttonBehaviorMap = {
   "Right Wave": 9,
 }
 
+export const buttonBehaviorMapReversed = {
+  1: "Default Behavior",
+  2: "Left Blink",
+  3: "Left Blink x2",
+  4: "Right Blink",
+  5: "Right Blink x2",
+  6: "Both Blink",
+  7: "Both Blink x2",
+  8: "Left Wave",
+  9: "Right Wave",
+}
+
 export type ButtonBehaviors = "Default Behavior" | "Left Blink" | "Left Blink x2" | "Right Blink" | "Right Blink x2" | "Both Blink" | "Both Blink x2" | "Left Wave" | "Right Wave";
 
 const BUTTON_KEY = "oem-button-values";
@@ -39,6 +51,14 @@ export class CustomOEMButtonStore {
   static async set(presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, buttonVal: ButtonBehaviors) {
     try {
       await AsyncStorage.setItem(`${BUTTON_KEY}-${presses}`, `${buttonBehaviorMap[buttonVal]}_${buttonVal}`);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  static async remove(presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10) {
+    try {
+      await AsyncStorage.removeItem(`${BUTTON_KEY}-${presses}`);
     } catch (err) {
       console.log(err);
     }
