@@ -15,6 +15,7 @@ interface SettingsProps {
 }
 
 
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 // press count - 1
 // ie: 1 in position 0, 2 in position 1, etc
 const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press", "Decuple Press"];
@@ -45,6 +46,36 @@ export function OEMButtonCustomization(props: SettingsProps) {
     });
     //@ts-ignore
     await props.updateButtonResponse(i, 0);
+
+
+    // for (let j = 0; j < 10; j++) {
+    //   if (j >= updated.length) {
+    //     console.log("Past len");
+    //     //@ts-ignore
+    //     await props.updateButtonResponse(j, 0);
+    //   } else {
+    //     console.log("In len: ", updated[j]);
+    //     //@ts-ignore
+    //     await props.updateButtonResponse(j, updated[j].behaviorEnglish);
+    //   }
+    //   await sleep(50);
+    // }
+
+
+    // Update rest of i
+    // if (i < setFunctions.length) {
+    //   for (let j = i; j < setFunctions.length; j++) {
+    //     console.log(j);
+    //     //@ts-ignore
+    //     await props.updateButtonDelay(j, 0);
+    //     await sleep(100);
+    //   }
+    //   //@ts-ignore
+    //   await props.updateButtonDelay(setFunctions.length, 0);
+    //   await sleep(100);
+    // }
+
+
   }
 
   const create = async () => {
@@ -94,23 +125,13 @@ export function OEMButtonCustomization(props: SettingsProps) {
   }
 
   useEffect(() => {
-    setSetFunctions([
-      { behavior: buttonBehaviorMap["Default Behavior"], behaviorEnglish: "Default Behavior" },
-    ]);
-  }, [props.visible === false]);
-
-  useEffect(() => {
-
     (async () => {
       const all = await CustomOEMButtonStore.getAll();
-      console.log(all);
       if (!all || all.length < 1) return;
 
       if (all.find(v => v.numberPresses === 0) !== undefined) {
-        console.log("map", all.map((v) => ({ behavior: v.numberPresses, behaviorEnglish: v.behavior })));
         setSetFunctions(all.map((v) => ({ behavior: v.numberPresses, behaviorEnglish: v.behavior })))
       } else {
-        console.log("no press")
         setSetFunctions(old => [
           ...old,
           ...all.map(v =>

@@ -98,7 +98,7 @@ export default function App() {
     else
       await CustomOEMButtonStore.set(presses, to);
 
-    console.log(presses, to);
+    console.log("Setting " + presses + " TO " + to);
     await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode((presses).toString()));
     await sleep(20);
     //@ts-ignore

@@ -149,45 +149,6 @@ function useBLE() {
       setLeftSub(subLeft);
       setRightSub(subRight);
 
-      // GET ALL BUTTON CONFIG SETTINGS AND UPDATE ESP
-      // const allStoredValues = await CustomOEMButtonStore.getAll();
-      // if (allStoredValues && allStoredValues?.length! > 0) {
-
-      //   for (const value of allStoredValues) {
-
-      //     // Set index to update
-      //     await connection?.writeCharacteristicWithoutResponseForService(
-      //       SERVICE_UUID,
-      //       CUSTOM_BUTTON_UPDATE_UUID,
-      //       base64.encode((
-      //         value.numberPresses
-      //       ).toString()
-      //       ));
-
-      //     // Wait a short time
-      //     await sleep(100);
-
-      //     // Set index value
-      //     await connection?.writeCharacteristicWithoutResponseForService(
-      //       SERVICE_UUID,
-      //       CUSTOM_BUTTON_UPDATE_UUID,
-      //       base64.encode((
-      //         buttonBehaviorMap[value.behavior].toString()
-      //       )));
-
-      //     await sleep(100);
-      //   }
-      // }
-
-      // // Set OEM button delay between presses for customization
-      // const storedValue = await CustomOEMButtonStore.getDelay();
-
-      // await connection?.writeCharacteristicWithoutResponseForService(
-      //   SERVICE_UUID,
-      //   CUSTOM_BUTTON_UPDATE_UUID,
-      //   base64.encode((storedValue)?.toString()!)
-      // );
-
 
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
       const rightInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);

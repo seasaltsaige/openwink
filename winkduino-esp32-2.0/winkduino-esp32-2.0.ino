@@ -367,7 +367,7 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
   void onWrite(NimBLECharacteristic *pChar) {
     string value = pChar->getValue();
 
-    printf("VALUE: %s\n", value.c_str());
+    // printf("VALUE: %s\n", value.c_str());
 
     // Updating maxTime
     if (value.length() > 1) 
@@ -389,13 +389,33 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
         int updateValue = stoi(value);
         customButtonPressArray[indexToUpdate] = updateValue;
         customButtonPressUpdateState = 0;
+
+        if (updateValue == 0) {
+          int maxIndexNotZero = 0;
+          for (int i = 0; i < 10; i++) {
+            if (customButtonPressArray[i] == 0) {
+              maxIndexNotZero = i;
+              // printf("REACHED 0 VALUE: %d\n", i);
+              break;
+            }
+          }
+
+          for (int i = maxIndexNotZero; i < 9; i++) {
+            // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
+            customButtonPressArray[i] = customButtonPressArray[i + 1];
+          }
+          
+
+        }
       }
     }
 
-    for (int i = 0; i < 10; i++) {
-      printf("Number of Presses: %d  :  Action: %d\n", i + 1, customButtonPressArray[i]);
-    }
-    printf("MS Between Presses: %d\n", maxTimeBetween_ms);
+    // printf("---------------------------------------------\n");
+
+    // for (int i = 0; i < 10; i++) {
+    //   printf("Number of Presses: %d  :  Action: %d\n", i + 1, customButtonPressArray[i]);
+    // }
+    // printf("MS Between Presses: %d\n", maxTimeBetween_ms);
   }
 };
 
