@@ -2,6 +2,7 @@
 
 #include <NimBLEDevice.h>
 #include <Arduino.h>
+#include <Preferences.h>
 
 #include "esp_wifi.h"
 
@@ -15,9 +16,7 @@ using namespace std;
 #error Must enable extended advertising, see nimconfig.h file.
 #endif
 
-// #ifdef ESP_PLATFORM
 #include "esp_sleep.h"
-// #endif
 
 #define OUT_PIN_LEFT_DOWN 4
 #define OUT_PIN_LEFT_UP 5
@@ -28,6 +27,8 @@ using namespace std;
 // Using Right Headlight Up Wire
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
+
+Preferences preferences;
 
 RTC_DATA_ATTR int leftStatus = 0;
 RTC_DATA_ATTR int rightStatus = 0;
@@ -83,9 +84,25 @@ void updateHeadlightChars()
 }
 
 bool deviceConnected = false;
-
-
 int awakeTime_ms = 0;
+
+
+const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+const int maxTimeBetween_msDefault = 500;
+/**
+  1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
+  2 : Left Blink
+  3 : Left Blink x2
+  4 : Right Blink
+  5 : Right Blink x2
+  6 : Both Blink
+  7 : Both Blink x2
+  8 : Left Wave
+  9 : Right Wave
+ 10 : ...
+**/
+RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 /* Handler class for server events */
 class ServerCallbacks : public NimBLEServerCallbacks
@@ -98,6 +115,22 @@ class ServerCallbacks : public NimBLEServerCallbacks
   };
   void onDisconnect(NimBLEServer *pServer)
   {
+
+    for (int i = 0; i < 10; i++) {
+      string key = "presses-";
+      key = key + to_string(i);
+      int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
+
+      if (val != customButtonPressArray[i])
+        preferences.putUInt(key.c_str(), customButtonPressArray[i]);
+    }
+  
+    string delayKey = "delay-key";
+    int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
+    if (maxTimeBetween_ms != del)
+      preferences.putUInt(delayKey.c_str(), maxTimeBetween_ms);
+
+
     deviceConnected = false;
     awakeTime_ms = 0;
     printf("Disconnected from client\n");
@@ -320,20 +353,7 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-/**
-  1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
-  2 : Left Blink
-  3 : Left Blink x2
-  4 : Right Blink
-  5 : Right Blink x2
-  6 : Both Blink
-  7 : Both Blink x2
-  8 : Left Wave
-  9 : Right Wave
- 10 : ...
-**/
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-RTC_DATA_ATTR int maxTimeBetween_ms = 500;
+
 
 
 // 0 : onWrite expects value to be an index, 0-9
@@ -415,7 +435,8 @@ int advertiseTime_ms = 800;
 int sleepTime_us = 15 * 1000 * 1000;
 
 NimBLEExtAdvertising *pAdvertising;
-
+int pressCounter = 0;
+unsigned long buttonTimer;
 void setup()
 {
 
@@ -427,8 +448,26 @@ void setup()
     awakeTime_ms = 0;
 
   Serial.begin(115200);
+  preferences.begin("oem-store", false);
+  
+  for (int i = 0; i < 10; i++) {
+    string key = "presses-";
+    key = key + to_string(i);
+    int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
+    customButtonPressArray[i] = val;
+  }
 
-  printf("Awake time set to %d ms\n", awakeTime_ms);
+  string delayKey = "delay-key";
+
+  int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
+  maxTimeBetween_ms = del;
+
+
+  for (int i = 0; i < 10; i++) {
+    printf("Presses: %d  -  Action: %d\n", i + 1, customButtonPressArray[i]);
+  }
+
+  printf("Delay: %d\n", maxTimeBetween_ms);
 
   // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
@@ -466,38 +505,6 @@ void setup()
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
-  int wakeupValue = initialButton;
-  initialButton = digitalRead(UP_BUTTON_INPUT);
-
-  if (wakeupValue != -1 && (wakeupValue != initialButton))
-  {
-    if (initialButton == 1)
-    {
-      bothUp();
-    }
-    else if (initialButton == 0)
-    {
-      bothDown();
-    }
-
-    rightStatus = initialButton;
-    leftStatus = initialButton;
-
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    setAllOff();
-  }
-
-  if (initialButton == LOW)
-  {
-    leftStatus = 0;
-    rightStatus = 0;
-  }
-  else if (initialButton == HIGH)
-  {
-    leftStatus = 1;
-    rightStatus = 1;
-  }
-
   updateHeadlightChars();
 
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
@@ -524,6 +531,14 @@ void setup()
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   t = millis();
+  int wakeupValue = initialButton;
+  initialButton = digitalRead(UP_BUTTON_INPUT);
+
+  if (wakeupValue != -1 && (wakeupValue != initialButton))
+  {
+    pressCounter++;
+    buttonTimer = millis();
+  }
 
   if (pAdvertising->setInstanceData(0, extAdv))
   {
@@ -538,57 +553,153 @@ void setup()
 
 bool advertising = true;
 
+
+
 void loop()
 {
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
-  if (buttonInput != initialButton)
+  if (pressCounter == 0 && buttonInput != initialButton)
   {
-    busyChar->setValue("1");
-    busyChar->notify();
-
-    if (buttonInput == HIGH)
-      bothUp();
-    else
-      bothDown();
-
+    pressCounter++;
     initialButton = buttonInput;
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    setAllOff();
+    buttonTimer = millis();
+    printf("READ INPUT INIT\n");
+  }
+  else if (pressCounter > 0)
+  {
+    if ((millis() - buttonTimer) > maxTimeBetween_ms)
+    {
+      // Execute button value
+      printf("Number of presses read: %d\n", pressCounter);
+      handleButtonPresses(pressCounter - 1);
 
-    updateHeadlightChars();
-    busyChar->setValue("0");
-    busyChar->notify();
+      pressCounter = 0;
+    } 
+    else
+    {
+      int buttonRead = digitalRead(UP_BUTTON_INPUT);
+      if (buttonRead != initialButton) 
+      {
+        pressCounter++;
+        initialButton = buttonRead;
 
-    t = millis();
+        if (pressCounter == 11) 
+        {
+          // Execute last one (has 10 total loaded)
+          printf("REACHED MAX NUMBER!!\n");
+          handleButtonPresses(9);
+          pressCounter = 0;
+        } 
+        else if (customButtonPressArray[pressCounter - 1] == 0) 
+        {
+          // Execute last one (reached last loaded value)
+          printf("REACHED LAST LOADED VALUE! Defaulting to %d\n", pressCounter - 1);
+          handleButtonPresses(pressCounter - 2);
+          pressCounter = 0;
+        }
+        buttonTimer = millis();
+      }
+    }
   }
 
+  if (!deviceConnected && (millis() - t) > advertiseTime_ms && (millis() - t) > awakeTime_ms)
+  {
+    buttonInput = digitalRead(UP_BUTTON_INPUT);
+    if (buttonInput == 1)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
+    else if (buttonInput == 0)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
+    if (deviceConnected)
+      return;
 
-    if (!deviceConnected && (millis() - t) > advertiseTime_ms && (millis() - t) > awakeTime_ms)
+    if (!deviceConnected)
     {
-      buttonInput = digitalRead(UP_BUTTON_INPUT);
-      if (buttonInput == 1)
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
-      else if (buttonInput == 0)
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
-      if (deviceConnected)
-        return;
-
-      if (!deviceConnected)
-      {
-        printf("Deep Sleep Starting...\n");
-        delay(100);
-        esp_deep_sleep_start();
-      } 
+      printf("Deep Sleep Starting...\n");
+      delay(100);
+      esp_deep_sleep_start();
     } 
+  } 
 }
 
 // Function to handle custom button press
-void handleButtonPresses() {
+void handleButtonPresses(int index) {
 // Uses above array of items
+  int valueToExecute = customButtonPressArray[index];
 
+    busyChar->setValue("1");
+    busyChar->notify();
 
+  switch (valueToExecute) {
+/**
+  1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
+  2 : Left Blink
+  3 : Left Blink x2
+  4 : Right Blink
+  5 : Right Blink x2
+  6 : Both Blink
+  7 : Both Blink x2
+  8 : Left Wave
+  9 : Right Wave
+ 10 : ...
+**/
+    case 1:
+      if (initialButton == 1)
+      {
+        bothUp();
+      }
+      else if (initialButton == 0)
+      {
+        bothDown();
+      }
 
+      rightStatus = initialButton;
+      leftStatus = initialButton;
+    break;
 
+    case 2:
+      leftWink();
+    break;
+
+    case 3:
+      leftWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      leftWink();
+    break;
+
+    case 4:
+      rightWink();
+    break;
+
+    case 5:
+      rightWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      rightWink();
+    break;
+
+    case 6:
+      bothBlink();
+    break;
+
+    case 7:
+      bothBlink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      bothBlink();
+    break;
+
+    case 8:
+      leftWave();
+    break;
+
+    case 9:
+      rightWave();
+    break;
+  }
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
+  updateHeadlightChars();
+  busyChar->setValue("0");
+  busyChar->notify();
 }
 
 // Both
