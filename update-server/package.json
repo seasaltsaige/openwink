@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "netlify functions:serve --port 3000",
+    "build": "netlify functions:build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@netlify/functions": "^2.8.1",
     "express": "^4.21.0",
     "netlify-cli": "^17.36.2",
     "netlify-lambda": "^2.0.16",
