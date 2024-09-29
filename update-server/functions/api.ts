@@ -35,8 +35,6 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
 
 router.get("/", auth, async (req, res) => {
   const pathToUpdateJson = path.join(__dirname, "../files/update.json");
-  console.log(pathToUpdateJson);
-  const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
 
   if (fs.existsSync(pathToUpdateJson)) {
     const file = fs.readFileSync(pathToUpdateJson, "ascii");
@@ -48,7 +46,11 @@ router.get("/", auth, async (req, res) => {
 });
 
 router.get("/firmware", auth, async (req, res) => {
-  res.json({ message: "firmware bfhbfbhdhbsdhjbsdgvjbsdgjksd" });
+  const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
+  if (fs.existsSync(pathToUpdateBin)) {
+    res.status(200).sendFile(pathToUpdateBin);
+  } else
+    res.status(500).json({ error: "Update BIN file not found" });
 });
 
 
