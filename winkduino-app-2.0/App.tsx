@@ -15,8 +15,9 @@ import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './Asyn
 
 
 import WifiManager from "react-native-wifi-reborn";
-import { BridgeServer } from "react-native-http-bridge-refurbished";
-import { NetworkInfo } from 'react-native-network-info';
+import { BridgeServer, respond, start, stop } from "react-native-http-bridge-refurbished";
+import { NetworkInfo } from "react-native-network-info";
+
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
@@ -26,9 +27,20 @@ const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
 const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
-const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
+// const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
+const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const generatePassword = (len: number) => {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let retVal = "";
+  for (let i = 0; i < len; ++i) {
+    const n = charset.length;
+    retVal += charset.charAt(Math.floor(Math.random() * n));
+  }
+  return retVal;
+}
+
 
 export default function App() {
 
@@ -52,8 +64,11 @@ export default function App() {
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appThemeOpen, setAppThemeOpen] = useState(false);
+
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [promptResponse, setPromptResponse] = useState(null);
+  const [promptResponse, setPromptResponse] = useState(null as boolean | null);
+  const [firmwareDescription, setFirmwareDescription] = useState("");
+  const [fileSize, setFileSize] = useState(0);
 
   const [autoConnect, setAutoConnect] = useState(true);
 
@@ -145,35 +160,42 @@ export default function App() {
     // Check for app + or module updates
 
     (async () => {
-      const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
-      const firmware = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
-      if (firmware?.value) {
-        const fw = base64.decode(firmware.value);
-        console.log(fw);
-        const response = await fetch(UPDATE_URL, { method: "GET", headers: { authorization: MAC! }, });
-        if (response.status !== 200) return;
-        const json = await response.json();
-        const apiVersion = json["version"] as string;
+      try {
+        const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
+        const firmware = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
+        if (firmware?.value) {
+          const fw = base64.decode(firmware.value);
+          console.log(fw);
+          const response = await fetch(UPDATE_URL, { method: "GET", headers: { authorization: MAC! }, });
+          console.log(response.status);
+          if (response.status !== 200) return;
+          const json = await response.json();
+          const apiVersion = json["version"] as string;
+          console.log(apiVersion);
 
-        const apiVParts = apiVersion.split(".");
-        const fwParts = fw.split(".");
+          const apiVParts = apiVersion.split(".");
+          const fwParts = fw.split(".");
 
-        let upgradeAvailable = false;
-        for (let i = 0; i < 3; i++) {
-          const apiPart = parseInt(apiVParts[i]);
-          const fwPart = parseInt(fwParts[i]);
-          if (apiPart > fwPart)
-            upgradeAvailable = true;
+          let upgradeAvailable = false;
+          for (let i = 0; i < 3; i++) {
+            const apiPart = parseInt(apiVParts[i]);
+            const fwPart = parseInt(fwParts[i]);
+            if (apiPart > fwPart)
+              upgradeAvailable = true;
+          }
+
+          if (upgradeAvailable) {
+            // Create upgrade available popup.
+            // Simple popup that asks user to download file.
+            // If no, continue to app
+            // If yes, download software upgrade and continue with below
+            setUpgradeModalOpen(true);
+
+          }
         }
-
-        if (upgradeAvailable) {
-          // Create upgrade available popup.
-          // Simple popup that asks user to download file.
-          // If no, continue to app
-          // If yes, download software upgrade and continue with below
-          setUpgradeModalOpen(true);
-
-        }
+      } catch (err) {
+        // setUpgradeModalOpen(false);
+        // setPromptResponse(null);
       }
     })();
 
@@ -192,9 +214,51 @@ export default function App() {
     // TODO: update module with ota, once completed, updating firmware rtc value
     // TODO: delete file from phone
 
-    // useState for file storage? since its temp?
-
   }, [connectedDevice !== null]);
+
+  const downloadAndInstallFirmware = async () => {
+    const response = await fetch(`${UPDATE_URL}/firmware`, { method: "GET", headers: { authorization: MAC! } });
+    const blob = await response.blob();
+    // const server = new BridgeServer("ota_update", true);
+    const PORT = 4000;
+
+    start(PORT, 'http_service', request => {
+      // you can use request.url, request.type and request.postData here
+      if (request.type === 'GET') {
+        // setLogs([...logs, request.url]);
+        respond(
+          request.requestId,
+          200,
+          'application/json',
+          '{"message": "OK"}',
+        );
+      }
+
+      return () => {
+        stop();
+      };
+    });
+
+    // const password = generatePassword(16);
+
+    // await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(password));
+    // await sleep(2000);
+    // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
+
+    // server.get("/", async (req, res) => {
+    //   console.log("Hello World");
+    //   res.json({ message: blob });
+    //   res.send
+    // });
+
+    // server.listen(PORT);
+
+    const deviceIP = await NetworkInfo.getIPV4Address();
+
+    console.log(`${deviceIP}:${PORT}`);
+
+    console.log(blob.size);
+  }
 
   return (
     <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
@@ -383,43 +447,136 @@ export default function App() {
         hardwareAccelerated
         transparent
       >
+        {
+          promptResponse === null ?
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "85%",
+                padding: 15,
+                position: "absolute",
+                bottom: 60,
+                elevation: 5,
+                shadowColor: "black",
+                rowGap: 15,
+                shadowOpacity: 1,
+                shadowRadius: 10,
+                borderRadius: 10,
+                alignSelf: "center",
+                backgroundColor: colorTheme.backgroundSecondaryColor,
+              }}
+            >
+              <Text
+                style={{
+                  color: colorTheme.textColor,
+                  textAlign: "center",
+                  fontSize: 17,
+                  width: "100%",
+                }}
+              >
+                An Wink Module Firmware update is available.{"\n"}
+                Would you like to install it now?
+                {firmwareDescription}
+              </Text>
+              <View style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                columnGap: 25,
+              }}>
+                <OpacityButton
+                  text="Install"
+                  buttonStyle={{
+                    backgroundColor: "#228B22",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 15,
+                    paddingVertical: 7,
+                    borderRadius: 5,
+                  }}
+                  textStyle={{
+                    color: colorTheme.buttonTextColor,
+                    fontSize: 17,
+                    fontWeight: "bold",
+                  }}
+                  onPress={async () => {
+                    setUpgradeModalOpen(false);
+                    setPromptResponse(true);
+                    await sleep(100);
+                    setUpgradeModalOpen(true);
+                    await downloadAndInstallFirmware();
+                  }}
+                />
 
-        <View
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "rgba(0, 0, 0, 0.3)",
-            zIndex: 1000,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colorTheme.backgroundPrimaryColor,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              padding: 20,
-              rowGap: 20,
-              width: "80%",
-              borderRadius: 5,
-            }}
-          >
-            {
-              promptResponse === null ?
-                <>
-                </>
-                : promptResponse === true ?
-                  <></>
-                  : <></>
-            }
-          </View>
-        </View>
-
+                <OpacityButton
+                  text="Not now"
+                  buttonStyle={{
+                    backgroundColor: "#de142c",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 15,
+                    paddingVertical: 7,
+                    borderRadius: 5,
+                  }}
+                  textStyle={{
+                    color: colorTheme.buttonTextColor,
+                    fontSize: 17,
+                    fontWeight: "bold",
+                  }}
+                  onPress={async () => {
+                    setUpgradeModalOpen(false);
+                    setPromptResponse(false);
+                    await sleep(500);
+                    setUpgradeModalOpen(true);
+                    setTimeout(() => {
+                      setUpgradeModalOpen(false);
+                      setPromptResponse(null);
+                    }, 5000);
+                  }}
+                />
+              </View>
+            </View>
+            // <View
+            //   style={{
+            //     width: "100%",
+            //     height: "100%",
+            //     display: "flex",
+            //     flexDirection: "column",
+            //     alignItems: "center",
+            //     justifyContent: "center",
+            //     backgroundColor: "rgba(0, 0, 0, 0.3)",
+            //     zIndex: 1000,
+            //   }}
+            // >
+            //   <View
+            //     style={{
+            //       backgroundColor: colorTheme.backgroundPrimaryColor,
+            //       display: "flex",
+            //       flexDirection: "column",
+            //       alignItems: "center",
+            //       justifyContent: "flex-start",
+            //       padding: 20,
+            //       rowGap: 20,
+            //       width: "80%",
+            //       borderRadius: 5,
+            //     }}
+            //   >
+            //   </View>
+            // </View>
+            : promptResponse === false ?
+              // Download denied
+              <></>
+              :
+              // Download accepted
+              <>
+              </>
+        }
       </Modal>
 
     </ScrollView>

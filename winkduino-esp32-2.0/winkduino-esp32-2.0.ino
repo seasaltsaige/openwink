@@ -28,7 +28,7 @@ using namespace std;
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.1"
+#define FIRMWARE_VERSION "0.0.2"
 
 Preferences preferences;
 

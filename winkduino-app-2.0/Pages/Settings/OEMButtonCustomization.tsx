@@ -537,6 +537,7 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
                   return (editBehavior?.presses! > 0 && i === 0) ?
                     <></> :
                     <CheckBox
+                      key={i}
                       isChecked={selectedBehavior === key}
                       text={key}
                       style={{ width: "70%" }}
