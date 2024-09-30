@@ -1,2 +1,3 @@
 # Local Netlify folder
 .netlify
+/winkduino-esp32-2.0/build

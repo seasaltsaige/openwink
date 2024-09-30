@@ -5,10 +5,17 @@
 #include <Preferences.h>
 #include <WiFi.h>
 
+#include <NetworkClient.h>
+#include <SPIFFS.h>
+#include <Update.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "esp_ota_ops.h"
 #include "esp_mac.h"
+#include "esp_sleep.h"
 
 using namespace std;
 
@@ -16,7 +23,6 @@ using namespace std;
 #error Must enable extended advertising, see nimconfig.h file.
 #endif
 
-#include "esp_sleep.h"
 
 #define OUT_PIN_LEFT_DOWN 4
 #define OUT_PIN_LEFT_UP 5
@@ -90,8 +96,7 @@ void updateHeadlightChars()
 bool deviceConnected = false;
 int awakeTime_ms = 0;
 
-
-const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+const int customButtonPressArrayDefaults[10] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 const int maxTimeBetween_msDefault = 500;
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
@@ -105,7 +110,7 @@ const int maxTimeBetween_msDefault = 500;
   9 : Right Wave
  10 : ...
 **/
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+RTC_DATA_ATTR int customButtonPressArray[10] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 /* Handler class for server events */
@@ -120,7 +125,8 @@ class ServerCallbacks : public NimBLEServerCallbacks
   void onDisconnect(NimBLEServer *pServer)
   {
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 10; i++)
+    {
       string key = "presses-";
       key = key + to_string(i);
       int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
@@ -128,12 +134,11 @@ class ServerCallbacks : public NimBLEServerCallbacks
       if (val != customButtonPressArray[i])
         preferences.putUInt(key.c_str(), customButtonPressArray[i]);
     }
-  
+
     string delayKey = "delay-key";
     int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
     if (maxTimeBetween_ms != del)
       preferences.putUInt(delayKey.c_str(), maxTimeBetween_ms);
-
 
     deviceConnected = false;
     awakeTime_ms = 0;
@@ -357,9 +362,6 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-
-
-
 // 0 : onWrite expects value to be an index, 0-9
 // 1 : index has been read
 int customButtonPressUpdateState = 0;
@@ -368,13 +370,14 @@ int indexToUpdate = 0;
 
 class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
-  void onWrite(NimBLECharacteristic *pChar) {
+  void onWrite(NimBLECharacteristic *pChar)
+  {
     string value = pChar->getValue();
 
     // printf("VALUE: %s\n", value.c_str());
 
     // Updating maxTime
-    if (value.length() > 1) 
+    if (value.length() > 1)
     {
       int newVal = stoi(value);
       maxTimeBetween_ms = newVal;
@@ -384,7 +387,8 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
       if (customButtonPressUpdateState == 0)
       {
         int index = stoi(value);
-        if (index > 9) return;
+        if (index > 9)
+          return;
         indexToUpdate = index;
         customButtonPressUpdateState = 1;
       }
@@ -394,22 +398,24 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
         customButtonPressArray[indexToUpdate] = updateValue;
         customButtonPressUpdateState = 0;
 
-        if (updateValue == 0) {
+        if (updateValue == 0)
+        {
           int maxIndexNotZero = 0;
-          for (int i = 0; i < 10; i++) {
-            if (customButtonPressArray[i] == 0) {
+          for (int i = 0; i < 10; i++)
+          {
+            if (customButtonPressArray[i] == 0)
+            {
               maxIndexNotZero = i;
               // printf("REACHED 0 VALUE: %d\n", i);
               break;
             }
           }
 
-          for (int i = maxIndexNotZero; i < 9; i++) {
+          for (int i = maxIndexNotZero; i < 9; i++)
+          {
             // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
             customButtonPressArray[i] = customButtonPressArray[i + 1];
           }
-          
-
         }
       }
     }
@@ -423,8 +429,6 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
   }
 };
 
-
-
 class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
   void onRead()
@@ -434,24 +438,84 @@ class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 };
 
 
-//https://www.youtube.com/watch?v=r7WNOVq5ggo
-
+void updateProgress(size_t progress, size_t size) {
+  static int last_progress = -1;
+  if (size > 0) {
+    progress = (progress * 100) / size;
+    progress = (progress > 100 ? 100 : progress);  //0-100
+    if (progress != last_progress) {
+      // UPDATE APP PROGRESS STATUS
+      last_progress = progress;
+    }
+  }
+}
 
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
-  void onWrite(NimBLECharacteristic *pChar) {
+  void onWrite(NimBLECharacteristic *pChar)
+  {
     string pass = pChar->getValue();
-    const char* password = pass.c_str();
+    const char *password = pass.c_str();
 
-    const char* ssid = "Wink Module: Update Access Point";
+    const char *ssid = "Wink Module: Update Access Point";
 
     printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
 
-    
+    WebServer httpServer(4444);
 
+    httpServer.on("/", HTTP_POST, 
+      [&]() {
+      // handler when file upload finishes
+      if (Update.hasError()) {
+        // ERROR UPDATING -> UPDATE BLE CHAR
+      } else {
+        httpServer.client().setNoDelay(true);
+        // SUCCESS -> UPDATE BLE CHAR
+        delay(100);
+        httpServer.client().stop();
+        ESP.restart();
+      }
+    },
+      [&]() {
+        HTTPUpload &upload = httpServer.upload();
+        if (upload.status == UPLOAD_FILE_START) {
+        Serial.printf("Update: %s\n", upload.filename.c_str());
+        if (upload.name == "filesystem") {
+          if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+            Update.printError(Serial);
+          }
+        } else {
+          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
+            Update.printError(Serial);
+          }
+        }
+      } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
+        if (upload.status == UPLOAD_FILE_ABORTED) {
+          if (!Update.end(false)) {
+            Update.printError(Serial);
+          }
+          Serial.println("Update was aborted");
+        }
+      } else if (upload.status == UPLOAD_FILE_WRITE) {
+        Serial.printf(".");
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+          Update.printError(Serial);
+        }
+      } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {  //true to set the size to the current progress
+          Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+        } else {
+          Update.printError(Serial);
+        }
+      }
+      delay(0);
+    });
+
+    Update.onProgress(updateProgress);
   }
 };
 
@@ -493,8 +557,9 @@ void setup()
 
   Serial.begin(115200);
   preferences.begin("oem-store", false);
-  
-  for (int i = 0; i < 10; i++) {
+
+  for (int i = 0; i < 10; i++)
+  {
     string key = "presses-";
     key = key + to_string(i);
     int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
@@ -530,11 +595,11 @@ void setup()
   uint8_t baseMac[6];
   esp_read_mac(baseMac, ESP_MAC_BT);
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++)
+  {
     printf("%02X:", baseMac[i]);
   }
   printf("%02X\n", baseMac[5]);
-
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
@@ -605,8 +670,6 @@ void setup()
 
 bool advertising = true;
 
-
-
 void loop()
 {
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
@@ -626,23 +689,23 @@ void loop()
       handleButtonPresses(pressCounter - 1);
 
       pressCounter = 0;
-    } 
+    }
     else
     {
       int buttonRead = digitalRead(UP_BUTTON_INPUT);
-      if (buttonRead != initialButton) 
+      if (buttonRead != initialButton)
       {
         pressCounter++;
         initialButton = buttonRead;
 
-        if (pressCounter == 11) 
+        if (pressCounter == 11)
         {
           // Execute last one (has 10 total loaded)
           printf("REACHED MAX NUMBER!!\n");
           handleButtonPresses(9);
           pressCounter = 0;
-        } 
-        else if (customButtonPressArray[pressCounter - 1] == 0) 
+        }
+        else if (customButtonPressArray[pressCounter - 1] == 0)
         {
           // Execute last one (reached last loaded value)
           printf("REACHED LAST LOADED VALUE! Defaulting to %d\n", pressCounter - 1);
@@ -669,81 +732,83 @@ void loop()
       printf("Deep Sleep Starting...\n");
       delay(100);
       esp_deep_sleep_start();
-    } 
-  } 
+    }
+  }
 }
 
 // Function to handle custom button press
-void handleButtonPresses(int index) {
-// Uses above array of items
+void handleButtonPresses(int index)
+{
+  // Uses above array of items
   int valueToExecute = customButtonPressArray[index];
 
-    busyChar->setValue("1");
-    busyChar->notify();
+  busyChar->setValue("1");
+  busyChar->notify();
 
-  switch (valueToExecute) {
-/**
-  1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
-  2 : Left Blink
-  3 : Left Blink x2
-  4 : Right Blink
-  5 : Right Blink x2
-  6 : Both Blink
-  7 : Both Blink x2
-  8 : Left Wave
-  9 : Right Wave
- 10 : ...
-**/
-    case 1:
-      if (initialButton == 1)
-      {
-        bothUp();
-      }
-      else if (initialButton == 0)
-      {
-        bothDown();
-      }
+  switch (valueToExecute)
+  {
+    /**
+      1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
+      2 : Left Blink
+      3 : Left Blink x2
+      4 : Right Blink
+      5 : Right Blink x2
+      6 : Both Blink
+      7 : Both Blink x2
+      8 : Left Wave
+      9 : Right Wave
+     10 : ...
+    **/
+  case 1:
+    if (initialButton == 1)
+    {
+      bothUp();
+    }
+    else if (initialButton == 0)
+    {
+      bothDown();
+    }
 
-      rightStatus = initialButton;
-      leftStatus = initialButton;
+    rightStatus = initialButton;
+    leftStatus = initialButton;
     break;
 
-    case 2:
-      leftWink();
+  case 2:
+    leftWink();
     break;
 
-    case 3:
-      leftWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      leftWink();
+  case 3:
+    leftWink();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    leftWink();
     break;
 
-    case 4:
-      rightWink();
+  case 4:
+    rightWink();
     break;
 
-    case 5:
-      rightWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      rightWink();
+  case 5:
+    rightWink();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    rightWink();
     break;
 
-    case 6:
-      bothBlink();
+  case 6:
+    bothBlink();
     break;
 
-    case 7:
-      bothBlink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      bothBlink();
+  case 7:
+    bothBlink();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    bothBlink();
     break;
 
-    case 8:
-      leftWave();
+  case 8:
+    leftWave();
     break;
 
-    case 9:
-      rightWave();
+  case 9:
+    rightWave();
     break;
   }
 
