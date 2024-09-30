@@ -450,6 +450,9 @@ void updateProgress(size_t progress, size_t size) {
   }
 }
 
+
+WebServer server(4444);
+
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 {
   void onWrite(NimBLECharacteristic *pChar)
@@ -464,58 +467,72 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
 
-    WebServer httpServer(4444);
 
-    httpServer.on("/", HTTP_POST, 
-      [&]() {
-      // handler when file upload finishes
-      if (Update.hasError()) {
-        // ERROR UPDATING -> UPDATE BLE CHAR
-      } else {
-        httpServer.client().setNoDelay(true);
-        // SUCCESS -> UPDATE BLE CHAR
-        delay(100);
-        httpServer.client().stop();
-        ESP.restart();
-      }
-    },
-      [&]() {
-        HTTPUpload &upload = httpServer.upload();
-        if (upload.status == UPLOAD_FILE_START) {
-        Serial.printf("Update: %s\n", upload.filename.c_str());
-        if (upload.name == "filesystem") {
-          if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
-            Update.printError(Serial);
-          }
-        } else {
-          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-          if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
-            Update.printError(Serial);
-          }
-        }
-      } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
-        if (upload.status == UPLOAD_FILE_ABORTED) {
-          if (!Update.end(false)) {
-            Update.printError(Serial);
-          }
-          Serial.println("Update was aborted");
-        }
-      } else if (upload.status == UPLOAD_FILE_WRITE) {
-        Serial.printf(".");
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-          Update.printError(Serial);
-        }
-      } else if (upload.status == UPLOAD_FILE_END) {
-        if (Update.end(true)) {  //true to set the size to the current progress
-          Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-        } else {
-          Update.printError(Serial);
-        }
-      }
-      delay(0);
-    });
+    server.on("/", HTTP_GET,
+      []() {
+        server.send(200, "text/plain", "OK");
+      });
 
-    Update.onProgress(updateProgress);
+    // httpServer.on("/", HTTP_POST, 
+    //   [&]() {
+    //     // handler when file upload finishes
+    //     if (Update.hasError()) {
+    //       // ERROR UPDATING -> UPDATE BLE CHAR
+    //       printf("UPDATE FAILED\n");
+    //     } else {
+    //       httpServer.client().setNoDelay(true);
+    //       // SUCCESS -> UPDATE BLE CHAR
+    //       printf("SUCCESS, REBOOTING NOW\n");
+    //       delay(100);
+    //       httpServer.client().stop();
+    //       ESP.restart();
+    //     }
+    //   },
+    //   [&]() {
+    //     HTTPUpload &upload = httpServer.upload();
+    //     if (upload.status == UPLOAD_FILE_START) {
+    //       Serial.printf("Update: %s\n", upload.filename.c_str());
+    //       if (upload.name == "filesystem") {
+    //         if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+    //           Update.printError(Serial);
+    //         }
+    //       } else {
+    //         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+    //         if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
+    //           Update.printError(Serial);
+    //         }
+    //       }
+    //     } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
+    //       if (upload.status == UPLOAD_FILE_ABORTED) {
+    //         if (!Update.end(false)) {
+    //           Update.printError(Serial);
+    //         }
+    //         Serial.println("Update was aborted");
+    //       }
+    //     } else if (upload.status == UPLOAD_FILE_WRITE) {
+    //       Serial.printf(".");
+    //       if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+    //         Update.printError(Serial);
+    //       }
+    //     } else if (upload.status == UPLOAD_FILE_END) {
+    //     if (Update.end(true)) {  //true to set the size to the current progress
+    //       Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+    //     } else {
+    //       Update.printError(Serial);
+    //     }
+    //   }
+    //   delay(0);
+    // });
+
+    // IPAddress ip = WiFi.softAPIP();
+    // String strIp = ip.toString();
+    // printf("IP: %s\n", strIp);
+    // Available on http://update.local
+    // MDNS.begin("update");
+
+    // server.begin();
+    // Update.onProgress(updateProgress);
+
   }
 };
 

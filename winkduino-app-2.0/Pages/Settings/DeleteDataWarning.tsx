@@ -1,6 +1,7 @@
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { OpacityButton } from "../../Components/OpacityButton";
 import { defaults } from "../../hooks/useColorTheme";
+import React from "react";
 
 interface Props {
   visible: boolean;

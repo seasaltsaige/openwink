@@ -5,6 +5,7 @@ import { Device } from "react-native-ble-plx";
 import { OpacityButton } from "../../Components/OpacityButton";
 import { useEffect, useState } from "react";
 import CheckBox from "react-native-bouncy-checkbox";
+import React from "react";
 interface OEMButtonCustomizationProps {
   visible: boolean;
   close: () => void;

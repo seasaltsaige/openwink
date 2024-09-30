@@ -11,6 +11,7 @@ import { defaults } from "../hooks/useColorTheme";
 import { Device } from "react-native-ble-plx";
 import { OEMButtonCustomization } from "./Settings/OEMButtonCustomization";
 import { ButtonBehaviors } from "../AsyncStorage/CustomOEMButtonStore";
+import React from "react";
 interface SettingsProps {
   visible: boolean;
   close: () => void;

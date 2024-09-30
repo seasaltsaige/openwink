@@ -13,10 +13,10 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-
-import WifiManager from "react-native-wifi-reborn";
+import WifiManager from 'react-native-wifi-reborn';
 import { BridgeServer, respond, start, stop } from "react-native-http-bridge-refurbished";
 import { NetworkInfo } from "react-native-network-info";
+import React from 'react';
 
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -219,45 +219,34 @@ export default function App() {
   const downloadAndInstallFirmware = async () => {
     const response = await fetch(`${UPDATE_URL}/firmware`, { method: "GET", headers: { authorization: MAC! } });
     const blob = await response.blob();
-    // const server = new BridgeServer("ota_update", true);
-    const PORT = 4000;
 
-    start(PORT, 'http_service', request => {
-      // you can use request.url, request.type and request.postData here
-      if (request.type === 'GET') {
-        // setLogs([...logs, request.url]);
-        respond(
-          request.requestId,
-          200,
-          'application/json',
-          '{"message": "OK"}',
-        );
+    const password = generatePassword(16);
+
+    await connectedDevice?.writeCharacteristicWithoutResponseForService(
+      SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(password)
+    );
+    await sleep(2000);
+    // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
+    WifiManager.connectToProtectedWifiSSID({
+      ssid: "Wink Module: Update Access Point",
+      password: password,
+      isWEP: false,
+      isHidden: false,
+      timeout: 10,
+    }).then(async () => {
+      // Success
+      const res = await fetch("http://update.local", { method: "GET" });
+
+      if (res.ok) {
+        console.log("SUCCESSFULLY QUERIED ESP32-S3 HTTP SERVER");
       }
-
-      return () => {
-        stop();
-      };
     });
 
-    // const password = generatePassword(16);
 
-    // await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(password));
-    // await sleep(2000);
-    // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
 
-    // server.get("/", async (req, res) => {
-    //   console.log("Hello World");
-    //   res.json({ message: blob });
-    //   res.send
-    // });
-
-    // server.listen(PORT);
-
-    const deviceIP = await NetworkInfo.getIPV4Address();
-
-    console.log(`${deviceIP}:${PORT}`);
-
-    console.log(blob.size);
+    // console.log(blob.size);
   }
 
   return (
