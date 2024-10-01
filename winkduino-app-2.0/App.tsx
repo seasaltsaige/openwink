@@ -28,7 +28,7 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
+const UPDATE_URL = "http://10.9.26.221:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
@@ -222,29 +222,27 @@ export default function App() {
 
     const password = generatePassword(16);
 
+    console.log(password);
+    const OTA_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51529"
+
     await connectedDevice?.writeCharacteristicWithoutResponseForService(
       SERVICE_UUID,
-      CUSTOM_BUTTON_UPDATE_UUID,
+      OTA_UUID,
       base64.encode(password)
     );
+
     await sleep(2000);
     // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
-    WifiManager.connectToProtectedWifiSSID({
+    await WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
       password: password,
       isWEP: false,
       isHidden: false,
-      timeout: 10,
-    }).then(async () => {
-      // Success
-      const res = await fetch("http://update.local", { method: "GET" });
-
-      if (res.ok) {
-        console.log("SUCCESSFULLY QUERIED ESP32-S3 HTTP SERVER");
-      }
+      timeout: 15,
     });
 
-
+    const res = await fetch("http://update.local", { method: "GET" });
+    alert(res.body);
 
     // console.log(blob.size);
   }

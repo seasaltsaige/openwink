@@ -10,6 +10,7 @@
 #include <Update.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
+#include <DNSServer.h>
 
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
@@ -85,8 +86,7 @@ NimBLECharacteristic *rightChar = nullptr;
 static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
 static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
 
-void updateHeadlightChars()
-{
+void updateHeadlightChars() {
   leftChar->setValue(std::string(String(leftStatus).c_str()));
   rightChar->setValue(std::string(String(rightStatus).c_str()));
   leftChar->notify();
@@ -96,7 +96,7 @@ void updateHeadlightChars()
 bool deviceConnected = false;
 int awakeTime_ms = 0;
 
-const int customButtonPressArrayDefaults[10] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 const int maxTimeBetween_msDefault = 500;
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
@@ -110,23 +110,19 @@ const int maxTimeBetween_msDefault = 500;
   9 : Right Wave
  10 : ...
 **/
-RTC_DATA_ATTR int customButtonPressArray[10] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 /* Handler class for server events */
-class ServerCallbacks : public NimBLEServerCallbacks
-{
-  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
-  {
+class ServerCallbacks : public NimBLEServerCallbacks {
+  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) {
     deviceConnected = true;
     updateHeadlightChars();
     printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
   };
-  void onDisconnect(NimBLEServer *pServer)
-  {
+  void onDisconnect(NimBLEServer *pServer) {
 
-    for (int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
       string key = "presses-";
       key = key + to_string(i);
       int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
@@ -151,10 +147,8 @@ class ServerCallbacks : public NimBLEServerCallbacks
   };
 };
 
-class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
     printf("long term sleep written\n");
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
@@ -169,20 +163,15 @@ class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallback
   }
 };
 
-class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
 
-    if (leftStatus > 1)
-    {
+    if (leftStatus > 1) {
       double valFromTop = (double)(leftStatus - 10) / 100;
       digitalWrite(OUT_PIN_LEFT_UP, HIGH);
       delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    }
-    else if (leftStatus == 0)
-    {
+    } else if (leftStatus == 0) {
       leftUp();
     }
 
@@ -190,15 +179,12 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
     setAllOff();
     updateHeadlightChars();
 
-    if (rightStatus > 1)
-    {
+    if (rightStatus > 1) {
       double valFromTop = (double)(rightStatus - 10) / 100;
       digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
       delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    }
-    else if (rightStatus == 0)
-    {
+    } else if (rightStatus == 0) {
       rightUp();
     }
 
@@ -208,18 +194,15 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
     std::string value = pChar->getValue();
     int headlightValue = String(value.c_str()).toInt();
     double percentage = ((double)headlightValue) / 100;
 
     // Client blocks this endpoint when headlights are already sleepy
 
-    if (leftStatus == 1)
-    {
+    if (leftStatus == 1) {
       leftDown();
       delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
@@ -234,17 +217,14 @@ class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
     std::string value = pChar->getValue();
     int headlightValue = String(value.c_str()).toInt();
     double percentage = ((double)headlightValue) / 100;
 
     // Client blocks this endpoint when headlights are already sleepy
-    if (rightStatus == 1)
-    {
+    if (rightStatus == 1) {
       rightDown();
       delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
@@ -259,100 +239,93 @@ class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
   }
 };
 
-class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pCharacteristic)
-  {
+class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pCharacteristic) {
     int tempLeft = leftStatus;
     int tempRight = rightStatus;
     std::string value = pCharacteristic->getValue();
     int valueInt = String(value.c_str()).toInt();
     busyChar->setValue("1");
     busyChar->notify();
-    switch (valueInt)
-    {
-    // Both Up
-    case 1:
-      bothUp();
-      break;
-
-    // Both Down
-    case 2:
-      bothDown();
-      break;
-    // Both Blink
-    case 3:
-      // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
-      bothBlink();
-      break;
-
-    // Left Up
-    case 4:
-      leftUp();
-      break;
-
-    // Left Down
-    case 5:
-      leftDown();
-      break;
-
-    // Left Blink (Wink)
-    case 6:
-      leftWink();
-      break;
-
-    // Right Up
-    case 7:
-      rightUp();
-      break;
-
-    // Right Down
-    case 8:
-      rightDown();
-      break;
-
-    // Right Blink (Wink)
-    case 9:
-      rightWink();
-      break;
-
-    // "Wave" left first
-    case 10:
-      if (tempRight == 0 || tempLeft == 0)
-      {
+    switch (valueInt) {
+      // Both Up
+      case 1:
         bothUp();
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-        setAllOff();
-        updateHeadlightChars();
-      }
-      leftWave();
-      if (tempRight == 0 || tempLeft == 0)
-      {
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-        setAllOff();
-        updateHeadlightChars();
-        bothDown();
-      }
+        break;
 
-      break;
-
-    case 11:
-      if (tempRight == 0 || tempLeft == 0)
-      {
-        bothUp();
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-        setAllOff();
-        updateHeadlightChars();
-      }
-      rightWave();
-      if (tempRight == 0 || tempLeft == 0)
-      {
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-        setAllOff();
-        updateHeadlightChars();
+      // Both Down
+      case 2:
         bothDown();
-      }
-      break;
+        break;
+      // Both Blink
+      case 3:
+        // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
+        bothBlink();
+        break;
+
+      // Left Up
+      case 4:
+        leftUp();
+        break;
+
+      // Left Down
+      case 5:
+        leftDown();
+        break;
+
+      // Left Blink (Wink)
+      case 6:
+        leftWink();
+        break;
+
+      // Right Up
+      case 7:
+        rightUp();
+        break;
+
+      // Right Down
+      case 8:
+        rightDown();
+        break;
+
+      // Right Blink (Wink)
+      case 9:
+        rightWink();
+        break;
+
+      // "Wave" left first
+      case 10:
+        if (tempRight == 0 || tempLeft == 0) {
+          bothUp();
+          delay(HEADLIGHT_MOVEMENT_DELAY);
+          setAllOff();
+          updateHeadlightChars();
+        }
+        leftWave();
+        if (tempRight == 0 || tempLeft == 0) {
+          delay(HEADLIGHT_MOVEMENT_DELAY);
+          setAllOff();
+          updateHeadlightChars();
+          bothDown();
+        }
+
+        break;
+
+      case 11:
+        if (tempRight == 0 || tempLeft == 0) {
+          bothUp();
+          delay(HEADLIGHT_MOVEMENT_DELAY);
+          setAllOff();
+          updateHeadlightChars();
+        }
+        rightWave();
+        if (tempRight == 0 || tempLeft == 0) {
+          delay(HEADLIGHT_MOVEMENT_DELAY);
+          setAllOff();
+          updateHeadlightChars();
+          bothDown();
+        }
+        break;
     }
     delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
@@ -368,51 +341,39 @@ int customButtonPressUpdateState = 0;
 
 int indexToUpdate = 0;
 
-class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
     string value = pChar->getValue();
 
     // printf("VALUE: %s\n", value.c_str());
 
     // Updating maxTime
-    if (value.length() > 1)
-    {
+    if (value.length() > 1) {
       int newVal = stoi(value);
       maxTimeBetween_ms = newVal;
-    }
-    else
-    {
-      if (customButtonPressUpdateState == 0)
-      {
+    } else {
+      if (customButtonPressUpdateState == 0) {
         int index = stoi(value);
         if (index > 9)
           return;
         indexToUpdate = index;
         customButtonPressUpdateState = 1;
-      }
-      else
-      {
+      } else {
         int updateValue = stoi(value);
         customButtonPressArray[indexToUpdate] = updateValue;
         customButtonPressUpdateState = 0;
 
-        if (updateValue == 0)
-        {
+        if (updateValue == 0) {
           int maxIndexNotZero = 0;
-          for (int i = 0; i < 10; i++)
-          {
-            if (customButtonPressArray[i] == 0)
-            {
+          for (int i = 0; i < 10; i++) {
+            if (customButtonPressArray[i] == 0) {
               maxIndexNotZero = i;
               // printf("REACHED 0 VALUE: %d\n", i);
               break;
             }
           }
 
-          for (int i = maxIndexNotZero; i < 9; i++)
-          {
+          for (int i = maxIndexNotZero; i < 9; i++) {
             // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
             customButtonPressArray[i] = customButtonPressArray[i + 1];
           }
@@ -429,10 +390,8 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
   }
 };
 
-class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onRead()
-  {
+class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onRead() {
     //
   }
 };
@@ -450,13 +409,27 @@ void updateProgress(size_t progress, size_t size) {
   }
 }
 
+static const char UpdatePage_HTML[] PROGMEM =
+  R"(<!DOCTYPE html>
+     <html lang='en'>
+     <head>
+         <title>Image Upload</title>
+         <meta charset='utf-8'>
+         <meta name='viewport' content='width=device-width,initial-scale=1'/>
+     </head>
+     <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
+        <h1>Hello World</h1>
+     </body>
+     </html>)";
 
-WebServer server(4444);
+const char *update_path = "update";
 
-class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
-{
-  void onWrite(NimBLECharacteristic *pChar)
-  {
+void setupHttpUpdateServer() {
+}
+
+
+class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic *pChar) {
     string pass = pChar->getValue();
     const char *password = pass.c_str();
 
@@ -464,91 +437,123 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks
 
     printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
 
+
+
+
+    DNSServer dnsServer;
+    WebServer httpServer(80);
+
+
+    // IPAddress localIp(192, 168, 4, 2);
+    // IPAddress gateway(192, 168, 4, 1);
+    // IPAddress subnetMask(255, 255, 255, 0);
+
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+    dnsServer.start(53, "*", WiFi.softAPIP());  //if DNS started with "*" for domain name, it will reply with provided IP to all DNS request
+    Serial.printf("Wifi AP started, IP address: %s\n", WiFi.softAPIP().toString().c_str());
+    Serial.printf("You can connect to ESP32 AP use:-\n    ssid: %s\npassword: %s\n\n", ssid, password);
+
+    // WiFi.softAPConfig(localIp, gateway, subnetMask);
+
+    delay(150);
+
+    if (MDNS.begin("module-update")) {
+      Serial.println("mDNS responder started");
+    }
 
 
-    server.on("/", HTTP_GET,
-      []() {
-        server.send(200, "text/plain", "OK");
+
+    //redirecting not found web pages back to update page
+    httpServer.onNotFound([&]() {  //webpage not found
+      httpServer.sendHeader("Location", String("../") + String(update_path));
+      httpServer.send(302, F("text/html"), "");
+    });
+
+    // handler for the update web page
+    httpServer.on("/update", HTTP_GET, [&]() {
+      printf("REQUEST RECIEVED\n");
+      httpServer.send_P(200, PSTR("text/html"), UpdatePage_HTML);
+    });
+
+    // handler for the update page form POST
+    httpServer.on(
+      "/update", HTTP_POST,
+      [&]() {
+        // handler when file upload finishes
+        if (Update.hasError()) {
+          httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
+        } else {
+          httpServer.client().setNoDelay(true);
+          httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
+          delay(100);
+          httpServer.client().stop();
+          ESP.restart();
+        }
+      },
+      [&]() {
+        // handler for the file upload, gets the sketch bytes, and writes
+        // them through the Update object
+        HTTPUpload &upload = httpServer.upload();
+        if (upload.status == UPLOAD_FILE_START) {
+          Serial.printf("Update: %s\n", upload.filename.c_str());
+          if (upload.name == "filesystem") {
+            if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+              Update.printError(Serial);
+            }
+          } else {
+            uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+            if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
+              Update.printError(Serial);
+            }
+          }
+        } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
+          if (upload.status == UPLOAD_FILE_ABORTED) {
+            if (!Update.end(false)) {
+              Update.printError(Serial);
+            }
+            Serial.println("Update was aborted");
+          }
+        } else if (upload.status == UPLOAD_FILE_WRITE) {
+          Serial.printf(".");
+          if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+            Update.printError(Serial);
+          }
+        } else if (upload.status == UPLOAD_FILE_END) {
+          if (Update.end(true)) {  //true to set the size to the current progress
+            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+          } else {
+            Update.printError(Serial);
+          }
+        }
+        delay(0);
       });
 
-    // httpServer.on("/", HTTP_POST, 
-    //   [&]() {
-    //     // handler when file upload finishes
-    //     if (Update.hasError()) {
-    //       // ERROR UPDATING -> UPDATE BLE CHAR
-    //       printf("UPDATE FAILED\n");
-    //     } else {
-    //       httpServer.client().setNoDelay(true);
-    //       // SUCCESS -> UPDATE BLE CHAR
-    //       printf("SUCCESS, REBOOTING NOW\n");
-    //       delay(100);
-    //       httpServer.client().stop();
-    //       ESP.restart();
-    //     }
-    //   },
-    //   [&]() {
-    //     HTTPUpload &upload = httpServer.upload();
-    //     if (upload.status == UPLOAD_FILE_START) {
-    //       Serial.printf("Update: %s\n", upload.filename.c_str());
-    //       if (upload.name == "filesystem") {
-    //         if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
-    //           Update.printError(Serial);
-    //         }
-    //       } else {
-    //         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-    //         if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
-    //           Update.printError(Serial);
-    //         }
-    //       }
-    //     } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
-    //       if (upload.status == UPLOAD_FILE_ABORTED) {
-    //         if (!Update.end(false)) {
-    //           Update.printError(Serial);
-    //         }
-    //         Serial.println("Update was aborted");
-    //       }
-    //     } else if (upload.status == UPLOAD_FILE_WRITE) {
-    //       Serial.printf(".");
-    //       if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-    //         Update.printError(Serial);
-    //       }
-    //     } else if (upload.status == UPLOAD_FILE_END) {
-    //     if (Update.end(true)) {  //true to set the size to the current progress
-    //       Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-    //     } else {
-    //       Update.printError(Serial);
-    //     }
-    //   }
-    //   delay(0);
-    // });
+    httpServer.begin();
 
-    // IPAddress ip = WiFi.softAPIP();
-    // String strIp = ip.toString();
-    // printf("IP: %s\n", strIp);
-    // Available on http://update.local
-    // MDNS.begin("update");
+    MDNS.addService("http", "tcp", 80);
 
-    // server.begin();
-    // Update.onProgress(updateProgress);
+    Update.onProgress(updateProgress);
 
+    printf("HTTP Server started\n");
+
+    // while (true) {
+    dnsServer.processNextRequest();
+    // }
   }
 };
 
-class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
-{
-  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id)
-  {
-    switch (reason)
-    {
-    case 0:
-      deviceConnected = true;
-      printf("Client connecting\n");
-      return;
-    default:
-      printf("Default case");
-      break;
+class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
+  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id) {
+    switch (reason) {
+      case 0:
+        deviceConnected = true;
+        printf("Client connecting\n");
+        return;
+      default:
+        printf("Default case");
+        break;
     }
   }
 };
@@ -562,8 +567,7 @@ NimBLEExtAdvertising *pAdvertising;
 int pressCounter = 0;
 unsigned long buttonTimer;
 
-void setup()
-{
+void setup() {
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
@@ -575,8 +579,7 @@ void setup()
   Serial.begin(115200);
   preferences.begin("oem-store", false);
 
-  for (int i = 0; i < 10; i++)
-  {
+  for (int i = 0; i < 10; i++) {
     string key = "presses-";
     key = key + to_string(i);
     int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
@@ -612,8 +615,7 @@ void setup()
   uint8_t baseMac[6];
   esp_read_mac(baseMac, ESP_MAC_BT);
 
-  for (int i = 0; i < 5; i++)
-  {
+  for (int i = 0; i < 5; i++) {
     printf("%02X:", baseMac[i]);
   }
   printf("%02X\n", baseMac[5]);
@@ -656,7 +658,7 @@ void setup()
   extAdv.setConnectable(true);
   extAdv.setScannable(false);
 
-  extAdv.setCompleteServices({NimBLEUUID(SERVICE_UUID)});
+  extAdv.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
 
   pAdvertising = NimBLEDevice::getAdvertising();
 
@@ -664,66 +666,55 @@ void setup()
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
+
+  setupHttpUpdateServer();
+
   t = millis();
   int wakeupValue = initialButton;
   initialButton = digitalRead(UP_BUTTON_INPUT);
 
-  if (wakeupValue != -1 && (wakeupValue != initialButton))
-  {
+  if (wakeupValue != -1 && (wakeupValue != initialButton)) {
     pressCounter++;
     buttonTimer = millis();
   }
 
-  if (pAdvertising->setInstanceData(0, extAdv))
-  {
+  if (pAdvertising->setInstanceData(0, extAdv)) {
     if (pAdvertising->start(0))
       printf("Started advertising\n");
     else
       printf("Failed to start advertising\n");
-  }
-  else
+  } else
     printf("Failed to register advertisment data\n");
 }
 
 bool advertising = true;
 
-void loop()
-{
+void loop() {
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
-  if (pressCounter == 0 && buttonInput != initialButton)
-  {
+  if (pressCounter == 0 && buttonInput != initialButton) {
     pressCounter++;
     initialButton = buttonInput;
     buttonTimer = millis();
     printf("READ INPUT INIT\n");
-  }
-  else if (pressCounter > 0)
-  {
-    if ((millis() - buttonTimer) > maxTimeBetween_ms)
-    {
+  } else if (pressCounter > 0) {
+    if ((millis() - buttonTimer) > maxTimeBetween_ms) {
       // Execute button value
       printf("Number of presses read: %d\n", pressCounter);
       handleButtonPresses(pressCounter - 1);
 
       pressCounter = 0;
-    }
-    else
-    {
+    } else {
       int buttonRead = digitalRead(UP_BUTTON_INPUT);
-      if (buttonRead != initialButton)
-      {
+      if (buttonRead != initialButton) {
         pressCounter++;
         initialButton = buttonRead;
 
-        if (pressCounter == 11)
-        {
+        if (pressCounter == 11) {
           // Execute last one (has 10 total loaded)
           printf("REACHED MAX NUMBER!!\n");
           handleButtonPresses(9);
           pressCounter = 0;
-        }
-        else if (customButtonPressArray[pressCounter - 1] == 0)
-        {
+        } else if (customButtonPressArray[pressCounter - 1] == 0) {
           // Execute last one (reached last loaded value)
           printf("REACHED LAST LOADED VALUE! Defaulting to %d\n", pressCounter - 1);
           handleButtonPresses(pressCounter - 2);
@@ -734,8 +725,7 @@ void loop()
     }
   }
 
-  if (!deviceConnected && (millis() - t) > advertiseTime_ms && (millis() - t) > awakeTime_ms)
-  {
+  if (!deviceConnected && (millis() - t) > advertiseTime_ms && (millis() - t) > awakeTime_ms) {
     buttonInput = digitalRead(UP_BUTTON_INPUT);
     if (buttonInput == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
@@ -744,8 +734,7 @@ void loop()
     if (deviceConnected)
       return;
 
-    if (!deviceConnected)
-    {
+    if (!deviceConnected) {
       printf("Deep Sleep Starting...\n");
       delay(100);
       esp_deep_sleep_start();
@@ -754,17 +743,15 @@ void loop()
 }
 
 // Function to handle custom button press
-void handleButtonPresses(int index)
-{
+void handleButtonPresses(int index) {
   // Uses above array of items
   int valueToExecute = customButtonPressArray[index];
 
   busyChar->setValue("1");
   busyChar->notify();
 
-  switch (valueToExecute)
-  {
-    /**
+  switch (valueToExecute) {
+      /**
       1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
       2 : Left Blink
       3 : Left Blink x2
@@ -776,57 +763,54 @@ void handleButtonPresses(int index)
       9 : Right Wave
      10 : ...
     **/
-  case 1:
-    if (initialButton == 1)
-    {
-      bothUp();
-    }
-    else if (initialButton == 0)
-    {
-      bothDown();
-    }
+    case 1:
+      if (initialButton == 1) {
+        bothUp();
+      } else if (initialButton == 0) {
+        bothDown();
+      }
 
-    rightStatus = initialButton;
-    leftStatus = initialButton;
-    break;
+      rightStatus = initialButton;
+      leftStatus = initialButton;
+      break;
 
-  case 2:
-    leftWink();
-    break;
+    case 2:
+      leftWink();
+      break;
 
-  case 3:
-    leftWink();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    leftWink();
-    break;
+    case 3:
+      leftWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      leftWink();
+      break;
 
-  case 4:
-    rightWink();
-    break;
+    case 4:
+      rightWink();
+      break;
 
-  case 5:
-    rightWink();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    rightWink();
-    break;
+    case 5:
+      rightWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      rightWink();
+      break;
 
-  case 6:
-    bothBlink();
-    break;
+    case 6:
+      bothBlink();
+      break;
 
-  case 7:
-    bothBlink();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    bothBlink();
-    break;
+    case 7:
+      bothBlink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      bothBlink();
+      break;
 
-  case 8:
-    leftWave();
-    break;
+    case 8:
+      leftWave();
+      break;
 
-  case 9:
-    rightWave();
-    break;
+    case 9:
+      rightWave();
+      break;
   }
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
@@ -837,16 +821,13 @@ void handleButtonPresses(int index)
 }
 
 // Both
-void bothUp()
-{
-  if (leftStatus != 1)
-  {
+void bothUp() {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
   }
 
-  if (rightStatus != 1)
-  {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   }
@@ -855,16 +836,13 @@ void bothUp()
   rightStatus = 1;
 }
 
-void bothDown()
-{
-  if (leftStatus != 0)
-  {
+void bothDown() {
+  if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
   }
 
-  if (rightStatus != 0)
-  {
+  if (rightStatus != 0) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
   }
@@ -873,29 +851,22 @@ void bothDown()
   rightStatus = 0;
 }
 
-void bothBlink()
-{
-  if (leftStatus != 1)
-  {
+void bothBlink() {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
 
-  if (rightStatus != 1)
-  {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
@@ -904,27 +875,21 @@ void bothBlink()
   updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
-  if (leftStatus != 1)
-  {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
 
-  if (rightStatus != 1)
-  {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
@@ -933,37 +898,29 @@ void bothBlink()
 }
 
 // Left
-void leftUp()
-{
-  if (leftStatus != 1)
-  {
+void leftUp() {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
   }
 }
 
-void leftDown()
-{
-  if (leftStatus != 0)
-  {
+void leftDown() {
+  if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
 }
 
-void leftWink()
-{
+void leftWink() {
 
-  if (leftStatus != 1)
-  {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
@@ -972,14 +929,11 @@ void leftWink()
   updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
-  if (leftStatus != 1)
-  {
+  if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
@@ -988,37 +942,29 @@ void leftWink()
 }
 
 // Right
-void rightUp()
-{
-  if (rightStatus != 1)
-  {
+void rightUp() {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
   }
 }
 
-void rightDown()
-{
-  if (rightStatus != 0)
-  {
+void rightDown() {
+  if (rightStatus != 0) {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     rightStatus = 0;
   }
 }
 
-void rightWink()
-{
+void rightWink() {
 
-  if (rightStatus != 1)
-  {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
@@ -1027,14 +973,11 @@ void rightWink()
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
-  if (rightStatus != 1)
-  {
+  if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
-  }
-  else
-  {
+  } else {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
@@ -1042,8 +985,7 @@ void rightWink()
   updateHeadlightChars();
 }
 
-void leftWave()
-{
+void leftWave() {
   // Left Down
   digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
   digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -1084,8 +1026,7 @@ void leftWave()
   rightStatus = 1;
 }
 
-void rightWave()
-{
+void rightWave() {
   // Right Down
   digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
   digitalWrite(OUT_PIN_RIGHT_UP, LOW);
@@ -1126,8 +1067,7 @@ void rightWave()
   leftStatus = 1;
 }
 
-void setAllOff()
-{
+void setAllOff() {
   digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
   digitalWrite(OUT_PIN_LEFT_UP, LOW);
   digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
