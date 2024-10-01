@@ -13,6 +13,7 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
+import axios from 'axios';
 import WifiManager, { } from 'react-native-wifi-reborn';
 import { NetworkInfo } from "react-native-network-info";
 
@@ -25,7 +26,7 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
+const UPDATE_URL = "http://192.168.1.196:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
@@ -67,7 +68,7 @@ export default function App() {
   const [promptResponse, setPromptResponse] = useState(null as boolean | null);
   const [firmwareDescription, setFirmwareDescription] = useState("");
   const [wifiConnected, setWifiConnected] = useState(false);
-  const [fileSize, setFileSize] = useState(0);
+  const [file, setFileBlob] = useState(null as null | Blob);
 
   const [autoConnect, setAutoConnect] = useState(true);
 
@@ -216,8 +217,19 @@ export default function App() {
   }, [connectedDevice !== null]);
 
   const downloadAndInstallFirmware = async () => {
-    const response = await fetch(`${UPDATE_URL}/firmware`, { method: "GET", headers: { authorization: MAC! } });
-    const blob = await response.blob();
+    const response = await fetch(
+      `${UPDATE_URL}/firmware`,
+      {
+        method: "GET",
+        headers: {
+          authorization: MAC!
+        }
+      });
+
+    setFileBlob(await response.blob());
+
+    // console.log(fmdta);
+    // const blob = await response.blob();
 
     const password = generatePassword(16);
 
@@ -230,35 +242,52 @@ export default function App() {
       base64.encode(password)
     );
 
-    await sleep(3000);
-    // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
-    WifiManager.connectToProtectedWifiSSID({
+    await sleep(2000);
+
+    await WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
-      password: password,
-      isWEP: true,
+      password,
       isHidden: false,
-      timeout: 15,
-    }).then(async () => {
-
-      console.log(NetworkInfo.getIPV4Address());
-      // await sleep(20000);
-
-      setWifiConnected(true);
-      const formData = new FormData();
-      // const file = new File([blob], "firmware.bin", { type: "application/octet-stream" });
-
-      // formData.append("firmware", file);
-      formData.append("firmware", blob, "firmware.bin");
-      await fetch(//module-update
-        "http://192.168.4.1/update",
-        {
-          method: "POST",
-          body: formData,
-        });
-
+      isWEP: false,
+      timeout: 15
     });
 
-    // console.log(blob.size);
+    setWifiConnected(true);
+
+  }
+
+  const makePost = async () => {
+    // Get the firmware file as a Blob
+    const firmwareBlob = file!;
+
+    // Create FormData and append the firmware Blob
+    const formData = new FormData();
+    formData.append('firmware', new File([file!], "firmware.bin", { type: file!.type }));
+
+    console.log(formData);
+
+    try {
+      await axios({
+        url: "http://module-update.local/update",
+        data: formData,
+        method: "POST",
+        timeout: 1000,
+        onUploadProgress(progressEvent) {
+          console.log(progressEvent);
+        },
+      })
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  const makeGet = async () => {
+    try {
+      const res = await axios.get("http://module-update.local/update");
+      console.log(res.status);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   return (
@@ -575,8 +604,9 @@ export default function App() {
                   }}
                 >
                   {
-                    wifiConnected === false ?
-                      <>
+                    // wifiConnected === false ?
+                    <>
+                      {wifiConnected === false ?
                         <Text
                           style={{
                             color: colorTheme.headerTextColor,
@@ -585,43 +615,83 @@ export default function App() {
                             textAlign: "center",
                           }}
                         >
+
                           Connecting to Wink Module update server...
                         </Text>
-                      </>
-                      : <>
-                        <Text
-                          style={{
-                            color: colorTheme.headerTextColor,
-                            fontSize: 20,
-                            fontWeight: "bold",
-                            textAlign: "center",
-                          }}
-                        >
-                          Wink Module update in progress...
-                        </Text>
+                        : <>
+                          <OpacityButton
+                            text="TEST POST"
+                            buttonStyle={{
+                              backgroundColor: "#de142c",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 15,
+                              paddingVertical: 7,
+                              borderRadius: 5,
+                            }}
+                            textStyle={{
+                              color: colorTheme.buttonTextColor,
+                              fontSize: 17,
+                              fontWeight: "bold",
+                            }}
+                            onPress={() => makePost()}
+                          />
+                          <OpacityButton
+                            text="TEST GET"
+                            buttonStyle={{
+                              backgroundColor: "#de142c",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 15,
+                              paddingVertical: 7,
+                              borderRadius: 5,
+                            }}
+                            textStyle={{
+                              color: colorTheme.buttonTextColor,
+                              fontSize: 17,
+                              fontWeight: "bold",
+                            }}
+                            onPress={() => makeGet()}
+                          />
+                        </>
+                      }
+                    </>
+                    // : <>
+                    //   <Text
+                    //     style={{
+                    //       color: colorTheme.headerTextColor,
+                    //       fontSize: 20,
+                    //       fontWeight: "bold",
+                    //       textAlign: "center",
+                    //     }}
+                    //   >
+                    //     Wink Module update in progress...
+                    //   </Text>
 
-                        <Text
-                          style={{
-                            color: colorTheme.textColor,
-                            fontSize: 16,
-                            textAlign: "center"
-                          }}
-                        >
-                          Update Status: {updatingStatus}{"\n\n"}
-                          Update Progress: {updateProgress}%
-                        </Text>
+                    //   <Text
+                    //     style={{
+                    //       color: colorTheme.textColor,
+                    //       fontSize: 16,
+                    //       textAlign: "center"
+                    //     }}
+                    //   >
+                    //     Update Status: {updatingStatus}{"\n\n"}
+                    //     Update Progress: {updateProgress}%
+                    //   </Text>
 
 
-                        <Text
-                          style={{
-                            color: colorTheme.textColor,
-                            fontSize: 18,
-                            textAlign: "center"
-                          }}
-                        >
-                          Please wait, this can take a minute... Please do not unplug the Module or disconnect from the device while in progress...
-                        </Text>
-                      </>
+                    //   <Text
+                    //     style={{
+                    //       color: colorTheme.textColor,
+                    //       fontSize: 18,
+                    //       textAlign: "center"
+                    //     }}
+                    //   >
+                    //     Please wait, this can take a minute... Please do not unplug the Module or disconnect from the device while in progress...
+                    //   </Text>
+                    // </>
                   }
                 </View>
               </View>
@@ -629,6 +699,7 @@ export default function App() {
       </Modal>
 
     </ScrollView>
+
   );
 }
 

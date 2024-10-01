@@ -428,37 +428,12 @@ void updateProgress(size_t progress, size_t size) {
 
 bool wifi_started = false;
 
-// const char *update_path = "update";
-
-// static const char UpdatePage_HTML[] PROGMEM =
-//   R"(<!DOCTYPE html>
-//      <html lang='en'>
-//      <head>
-//          <title>Image Upload</title>
-//          <meta charset='utf-8'>
-//          <meta name='viewport' content='width=device-width,initial-scale=1'/>
-//      </head>
-//      <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
-//      <form method='POST' action='' enctype='multipart/form-data'>
-//          Firmware:<br><br>
-//          <input type='file' accept='.bin,.bin.gz' name='firmware' style='font-size:20px;'><br><br>
-//          <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
-//      </form>
-//      <br><br><br>
-//      <form method='POST' action='' enctype='multipart/form-data'>
-//          FileSystem:<br><br>
-//          <input type='file' accept='.bin,.bin.gz,.image' name='filesystem' style='font-size:20px;'><br><br>
-//          <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
-//      </form>
-//      </body>
-    //  </html>)";
-
 void setupHttpUpdateServer() {
 
   httpServer.on(
-    String("/"), HTTP_GET,
+    String("/") + String(update_path), HTTP_GET,
     [&]() {
-      httpServer.send(200, F("text/plain"), String(F("Hello World")));
+      httpServer.send(200);
     }
   );
 
@@ -466,18 +441,21 @@ void setupHttpUpdateServer() {
   httpServer.on(
     String("/") + String(update_path), HTTP_POST,
     [&]() {
+      printf("POST REQUEST RECIEVED ON /update finished?\n");
       // handler when file upload finishes
       if (Update.hasError()) {
-        // httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
+        httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
       } else {
         httpServer.client().setNoDelay(true);
-        // httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
+        httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
         delay(100);
         httpServer.client().stop();
         ESP.restart();
       }
     },
     [&]() {
+      
+      printf("POST REQUEST RECIEVED ON /update\n");
       // handler for the file upload, gets the sketch bytes, and writes
       // them through the Update object
       HTTPUpload &upload = httpServer.upload();
