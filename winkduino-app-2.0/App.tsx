@@ -1,4 +1,4 @@
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
 import { useEffect, useState } from 'react';
@@ -13,11 +13,8 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-import WifiManager from 'react-native-wifi-reborn';
-import { BridgeServer, respond, start, stop } from "react-native-http-bridge-refurbished";
+import WifiManager, { } from 'react-native-wifi-reborn';
 import { NetworkInfo } from "react-native-network-info";
-import React from 'react';
-
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
@@ -28,7 +25,7 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://10.9.26.221:3000/.netlify/functions/api/update";
+const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
@@ -55,8 +52,9 @@ export default function App() {
     isConnecting,
     isScanning,
     noDevice,
-    firmwareVersion,
-    MAC
+    MAC,
+    updateProgress,
+    updatingStatus
   } = useBLE();
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
@@ -68,6 +66,7 @@ export default function App() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [promptResponse, setPromptResponse] = useState(null as boolean | null);
   const [firmwareDescription, setFirmwareDescription] = useState("");
+  const [wifiConnected, setWifiConnected] = useState(false);
   const [fileSize, setFileSize] = useState(0);
 
   const [autoConnect, setAutoConnect] = useState(true);
@@ -194,8 +193,8 @@ export default function App() {
           }
         }
       } catch (err) {
-        // setUpgradeModalOpen(false);
-        // setPromptResponse(null);
+        setUpgradeModalOpen(false);
+        setPromptResponse(null);
       }
     })();
 
@@ -231,18 +230,33 @@ export default function App() {
       base64.encode(password)
     );
 
-    await sleep(2000);
+    await sleep(3000);
     // await WifiManager.connectToProtectedSSIDOnce("Wink Module: Update Access Point", password, true, true);
-    await WifiManager.connectToProtectedWifiSSID({
+    WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
       password: password,
-      isWEP: false,
+      isWEP: true,
       isHidden: false,
       timeout: 15,
-    });
+    }).then(async () => {
 
-    const res = await fetch("http://update.local", { method: "GET" });
-    alert(res.body);
+      console.log(NetworkInfo.getIPV4Address());
+      // await sleep(20000);
+
+      setWifiConnected(true);
+      const formData = new FormData();
+      // const file = new File([blob], "firmware.bin", { type: "application/octet-stream" });
+
+      // formData.append("firmware", file);
+      formData.append("firmware", blob, "firmware.bin");
+      await fetch(//module-update
+        "http://192.168.4.1/update",
+        {
+          method: "POST",
+          body: formData,
+        });
+
+    });
 
     // console.log(blob.size);
   }
@@ -436,6 +450,7 @@ export default function App() {
       >
         {
           promptResponse === null ?
+            // Prompting user for download
             <View
               style={{
                 display: "flex",
@@ -529,40 +544,87 @@ export default function App() {
                 />
               </View>
             </View>
-            // <View
-            //   style={{
-            //     width: "100%",
-            //     height: "100%",
-            //     display: "flex",
-            //     flexDirection: "column",
-            //     alignItems: "center",
-            //     justifyContent: "center",
-            //     backgroundColor: "rgba(0, 0, 0, 0.3)",
-            //     zIndex: 1000,
-            //   }}
-            // >
-            //   <View
-            //     style={{
-            //       backgroundColor: colorTheme.backgroundPrimaryColor,
-            //       display: "flex",
-            //       flexDirection: "column",
-            //       alignItems: "center",
-            //       justifyContent: "flex-start",
-            //       padding: 20,
-            //       rowGap: 20,
-            //       width: "80%",
-            //       borderRadius: 5,
-            //     }}
-            //   >
-            //   </View>
-            // </View>
             : promptResponse === false ?
               // Download denied
               <></>
-              :
-              // Download accepted
-              <>
-              </>
+
+              // Download Accepted
+              : <View
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  zIndex: 1000,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: colorTheme.backgroundPrimaryColor,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    padding: 20,
+                    rowGap: 20,
+                    width: "80%",
+                    borderRadius: 5,
+                  }}
+                >
+                  {
+                    wifiConnected === false ?
+                      <>
+                        <Text
+                          style={{
+                            color: colorTheme.headerTextColor,
+                            fontSize: 20,
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Connecting to Wink Module update server...
+                        </Text>
+                      </>
+                      : <>
+                        <Text
+                          style={{
+                            color: colorTheme.headerTextColor,
+                            fontSize: 20,
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Wink Module update in progress...
+                        </Text>
+
+                        <Text
+                          style={{
+                            color: colorTheme.textColor,
+                            fontSize: 16,
+                            textAlign: "center"
+                          }}
+                        >
+                          Update Status: {updatingStatus}{"\n\n"}
+                          Update Progress: {updateProgress}%
+                        </Text>
+
+
+                        <Text
+                          style={{
+                            color: colorTheme.textColor,
+                            fontSize: 18,
+                            textAlign: "center"
+                          }}
+                        >
+                          Please wait, this can take a minute... Please do not unplug the Module or disconnect from the device while in progress...
+                        </Text>
+                      </>
+                  }
+                </View>
+              </View>
         }
       </Modal>
 

@@ -78,6 +78,9 @@ NimBLECharacteristic *busyChar = nullptr;
 
 #define FIRMWARE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51531"
 
+#define SOFTWARE_UPDATING_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51532"
+#define SOFTWARE_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51533"
+
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
 NimBLECharacteristic *leftChar = nullptr;
@@ -397,6 +400,19 @@ class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 };
 
 
+const char *update_path = "update";
+
+// void setupHttpUpdateServer() {
+// }
+
+// Contains update progress value (0 to 100)%
+NimBLECharacteristic *firmareUpdateNotifier = nullptr;
+// POSSIBLE STATUS
+// "idle" "updating" "failed" "success"
+NimBLECharacteristic *firmwareStatus = nullptr;
+DNSServer dnsServer;
+WebServer httpServer(80);
+
 void updateProgress(size_t progress, size_t size) {
   static int last_progress = -1;
   if (size > 0) {
@@ -404,27 +420,103 @@ void updateProgress(size_t progress, size_t size) {
     progress = (progress > 100 ? 100 : progress);  //0-100
     if (progress != last_progress) {
       // UPDATE APP PROGRESS STATUS
+      firmareUpdateNotifier->setValue(to_string(progress));
       last_progress = progress;
     }
   }
 }
 
-static const char UpdatePage_HTML[] PROGMEM =
-  R"(<!DOCTYPE html>
-     <html lang='en'>
-     <head>
-         <title>Image Upload</title>
-         <meta charset='utf-8'>
-         <meta name='viewport' content='width=device-width,initial-scale=1'/>
-     </head>
-     <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
-        <h1>Hello World</h1>
-     </body>
-     </html>)";
+bool wifi_started = false;
 
-const char *update_path = "update";
+// const char *update_path = "update";
+
+// static const char UpdatePage_HTML[] PROGMEM =
+//   R"(<!DOCTYPE html>
+//      <html lang='en'>
+//      <head>
+//          <title>Image Upload</title>
+//          <meta charset='utf-8'>
+//          <meta name='viewport' content='width=device-width,initial-scale=1'/>
+//      </head>
+//      <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
+//      <form method='POST' action='' enctype='multipart/form-data'>
+//          Firmware:<br><br>
+//          <input type='file' accept='.bin,.bin.gz' name='firmware' style='font-size:20px;'><br><br>
+//          <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
+//      </form>
+//      <br><br><br>
+//      <form method='POST' action='' enctype='multipart/form-data'>
+//          FileSystem:<br><br>
+//          <input type='file' accept='.bin,.bin.gz,.image' name='filesystem' style='font-size:20px;'><br><br>
+//          <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
+//      </form>
+//      </body>
+    //  </html>)";
 
 void setupHttpUpdateServer() {
+
+  httpServer.on(
+    String("/"), HTTP_GET,
+    [&]() {
+      httpServer.send(200, F("text/plain"), String(F("Hello World")));
+    }
+  );
+
+  // handler for the update page form POST
+  httpServer.on(
+    String("/") + String(update_path), HTTP_POST,
+    [&]() {
+      // handler when file upload finishes
+      if (Update.hasError()) {
+        // httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
+      } else {
+        httpServer.client().setNoDelay(true);
+        // httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
+        delay(100);
+        httpServer.client().stop();
+        ESP.restart();
+      }
+    },
+    [&]() {
+      // handler for the file upload, gets the sketch bytes, and writes
+      // them through the Update object
+      HTTPUpload &upload = httpServer.upload();
+      if (upload.status == UPLOAD_FILE_START) {
+        printf("Update: %s\n", upload.filename.c_str());
+        if (upload.name == "filesystem") {
+          if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+            Update.printError(Serial);
+          }
+        } else {
+          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
+            Update.printError(Serial);
+          }
+        }
+      } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
+        if (upload.status == UPLOAD_FILE_ABORTED) {
+          if (!Update.end(false)) {
+            Update.printError(Serial);
+          }
+          printf("Update was aborted\n");
+        }
+      } else if (upload.status == UPLOAD_FILE_WRITE) {
+        printf(".\n");
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+          Update.printError(Serial);
+        }
+      } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {  //true to set the size to the current progress
+          printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+        } else {
+          Update.printError(Serial);
+        }
+      }
+      delay(0);
+    }
+  );
+
+  Update.onProgress(updateProgress);
 }
 
 
@@ -437,25 +529,11 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
     printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
 
-
-
-
-    DNSServer dnsServer;
-    WebServer httpServer(80);
-
-
-    // IPAddress localIp(192, 168, 4, 2);
-    // IPAddress gateway(192, 168, 4, 1);
-    // IPAddress subnetMask(255, 255, 255, 0);
-
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
     dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer.start(53, "*", WiFi.softAPIP());  //if DNS started with "*" for domain name, it will reply with provided IP to all DNS request
-    Serial.printf("Wifi AP started, IP address: %s\n", WiFi.softAPIP().toString().c_str());
-    Serial.printf("You can connect to ESP32 AP use:-\n    ssid: %s\npassword: %s\n\n", ssid, password);
-
-    // WiFi.softAPConfig(localIp, gateway, subnetMask);
+    printf("Wifi AP started, IP address: %s\n", WiFi.softAPIP().toString().c_str());
 
     delay(150);
 
@@ -463,83 +541,18 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       Serial.println("mDNS responder started");
     }
 
-
-
-    //redirecting not found web pages back to update page
-    httpServer.onNotFound([&]() {  //webpage not found
-      httpServer.sendHeader("Location", String("../") + String(update_path));
-      httpServer.send(302, F("text/html"), "");
-    });
-
-    // handler for the update web page
-    httpServer.on("/update", HTTP_GET, [&]() {
-      printf("REQUEST RECIEVED\n");
-      httpServer.send_P(200, PSTR("text/html"), UpdatePage_HTML);
-    });
-
-    // handler for the update page form POST
-    httpServer.on(
-      "/update", HTTP_POST,
-      [&]() {
-        // handler when file upload finishes
-        if (Update.hasError()) {
-          httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
-        } else {
-          httpServer.client().setNoDelay(true);
-          httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
-          delay(100);
-          httpServer.client().stop();
-          ESP.restart();
-        }
-      },
-      [&]() {
-        // handler for the file upload, gets the sketch bytes, and writes
-        // them through the Update object
-        HTTPUpload &upload = httpServer.upload();
-        if (upload.status == UPLOAD_FILE_START) {
-          Serial.printf("Update: %s\n", upload.filename.c_str());
-          if (upload.name == "filesystem") {
-            if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
-              Update.printError(Serial);
-            }
-          } else {
-            uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-            if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
-              Update.printError(Serial);
-            }
-          }
-        } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
-          if (upload.status == UPLOAD_FILE_ABORTED) {
-            if (!Update.end(false)) {
-              Update.printError(Serial);
-            }
-            Serial.println("Update was aborted");
-          }
-        } else if (upload.status == UPLOAD_FILE_WRITE) {
-          Serial.printf(".");
-          if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-            Update.printError(Serial);
-          }
-        } else if (upload.status == UPLOAD_FILE_END) {
-          if (Update.end(true)) {  //true to set the size to the current progress
-            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-          } else {
-            Update.printError(Serial);
-          }
-        }
-        delay(0);
-      });
+    setupHttpUpdateServer();
 
     httpServer.begin();
 
     MDNS.addService("http", "tcp", 80);
 
-    Update.onProgress(updateProgress);
-
     printf("HTTP Server started\n");
 
     // while (true) {
-    dnsServer.processNextRequest();
+    wifi_started = true;
+
+      // delay(10);
     // }
   }
 };
@@ -638,6 +651,10 @@ void setup() {
   busyChar = pService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  firmareUpdateNotifier = pService->createCharacteristic(SOFTWARE_UPDATING_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  
+  firmwareStatus = pService->createCharacteristic(SOFTWARE_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  firmwareStatus->setValue("idle");
 
   updateHeadlightChars();
 
@@ -666,9 +683,6 @@ void setup() {
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
-
-  setupHttpUpdateServer();
-
   t = millis();
   int wakeupValue = initialButton;
   initialButton = digitalRead(UP_BUTTON_INPUT);
@@ -690,6 +704,10 @@ void setup() {
 bool advertising = true;
 
 void loop() {
+
+  httpServer.handleClient();
+  dnsServer.processNextRequest();
+
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
   if (pressCounter == 0 && buttonInput != initialButton) {
     pressCounter++;

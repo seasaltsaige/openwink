@@ -7,8 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "plugins": [
-      "react-native-ble-plx",
-      "react-native-wifi-reborn"
+      "react-native-ble-plx"
     ],
     "splash": {
       "image": "./assets/splash.png",

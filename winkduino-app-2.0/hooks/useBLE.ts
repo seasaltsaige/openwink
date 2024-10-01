@@ -14,8 +14,10 @@ const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
 const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
 const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
 
-const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
+
+const SOFTWARE_UPDATING_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51532"
+const SOFTWARE_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51533"
 
 const SCAN_TIME_SECONDS = 30;
 
@@ -43,6 +45,10 @@ function useBLE() {
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
+
+  // Update tracking / status
+  const [updateProgress, setUpdateProgress] = useState(0);
+  const [updatingStatus, setUpdatingStatus] = useState("idle" as "idle" | "updating" | "failed" | "success");
 
   useEffect(() => {
     (async () => {
@@ -147,10 +153,25 @@ function useBLE() {
         } else setRightState(intVal);
       });
 
+      const updateProgress = connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_UPDATING_UUID, (err, char) => {
+        if (err) return console.log(err);
+        const strVal = base64.decode(char?.value!);
+        const val = parseInt(strVal);
+        setUpdateProgress(val);
+      })
 
-      setReqSub(subReq);
-      setLeftSub(subLeft);
-      setRightSub(subRight);
+      connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_STATUS_UUID, (err, char) => {
+        if (err) return console.log(err);
+        const val = base64.decode(char?.value!);
+        if (val !== "idle" && val !== "updating" && val !== "failed" && val !== "success") return;
+
+        setUpdatingStatus(val);
+      });
+
+
+      // setReqSub(subReq);
+      // setLeftSub(subLeft);
+      // setRightSub(subRight);
 
 
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
@@ -278,11 +299,12 @@ function useBLE() {
     rightState,
     bleManager,
     MAC,
-    // allDevices,
     isScanning,
     isConnecting,
     noDevice,
-    firmwareVersion
+    firmwareVersion,
+    updateProgress,
+    updatingStatus,
   }
 }
 
