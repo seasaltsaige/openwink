@@ -1,7 +1,7 @@
-import React, { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { Modal, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
-import { useEffect, useState } from 'react';
+import { createRef, useCallback, useEffect, useState } from 'react';
 import { DefaultCommands } from "./Pages/DefaultCommands";
 import { CreateCustomCommands } from './Pages/CreateCustomCommands';
 import { CustomCommands } from './Pages/CustomCommands';
@@ -13,9 +13,9 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-import axios from 'axios';
-import WifiManager, { } from 'react-native-wifi-reborn';
-import { NetworkInfo } from "react-native-network-info";
+// import axios from 'axios';
+
+import WifiManager from 'react-native-wifi-reborn';
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
 const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
@@ -216,6 +216,7 @@ export default function App() {
 
   }, [connectedDevice !== null]);
 
+
   const downloadAndInstallFirmware = async () => {
     const response = await fetch(
       `${UPDATE_URL}/firmware`,
@@ -226,10 +227,7 @@ export default function App() {
         }
       });
 
-    setFileBlob(await response.blob());
-
-    // console.log(fmdta);
-    // const blob = await response.blob();
+    const blob = await response.blob();
 
     const password = generatePassword(16);
 
@@ -254,44 +252,37 @@ export default function App() {
 
     setWifiConnected(true);
 
-  }
-
-  const makePost = async () => {
-    // Get the firmware file as a Blob
-    const firmwareBlob = file!;
-
-    // Create FormData and append the firmware Blob
-    const formData = new FormData();
-    formData.append('firmware', new File([file!], "firmware.bin", { type: file!.type }));
-
-    console.log(formData);
-
     try {
-      await axios({
-        url: "http://module-update.local/update",
-        data: formData,
+
+      const file = new File([blob], "update.bin", { type: "application/octet-stream", lastModified: Date.now() });
+
+      const form = new FormData();
+      form.append("filesystem", file);
+
+
+      await fetch("http://module-update.local/update", {
         method: "POST",
-        timeout: 1000,
-        onUploadProgress(progressEvent) {
-          console.log(progressEvent);
-        },
-      })
+        body: form
+      });
+
+
     } catch (err) {
+      alert(err);
       console.log(err);
     }
+
   }
 
-  const makeGet = async () => {
-    try {
-      const res = await axios.get("http://module-update.local/update");
-      console.log(res.status);
-    } catch (err) {
-      console.log(err);
-    }
-  }
+
+
 
   return (
     <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+
+      {/* <form ref={formRef} style={{ display: "none" }} hidden={true} onSubmit={(ev) => makePost(ev)}>
+        < type='file' name='firmware' onP />
+      </form> */}
+
       <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 20, marginHorizontal: 20, marginTop: 45 }}>
         {
           !connectedDevice ?
@@ -476,6 +467,7 @@ export default function App() {
         animationType="slide"
         hardwareAccelerated
         transparent
+        onRequestClose={() => setUpgradeModalOpen(false)}
       >
         {
           promptResponse === null ?
@@ -604,9 +596,9 @@ export default function App() {
                   }}
                 >
                   {
-                    // wifiConnected === false ?
-                    <>
-                      {wifiConnected === false ?
+                    wifiConnected === false ?
+                      <>
+
                         <Text
                           style={{
                             color: colorTheme.headerTextColor,
@@ -618,80 +610,42 @@ export default function App() {
 
                           Connecting to Wink Module update server...
                         </Text>
-                        : <>
-                          <OpacityButton
-                            text="TEST POST"
-                            buttonStyle={{
-                              backgroundColor: "#de142c",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: 15,
-                              paddingVertical: 7,
-                              borderRadius: 5,
-                            }}
-                            textStyle={{
-                              color: colorTheme.buttonTextColor,
-                              fontSize: 17,
-                              fontWeight: "bold",
-                            }}
-                            onPress={() => makePost()}
-                          />
-                          <OpacityButton
-                            text="TEST GET"
-                            buttonStyle={{
-                              backgroundColor: "#de142c",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: 15,
-                              paddingVertical: 7,
-                              borderRadius: 5,
-                            }}
-                            textStyle={{
-                              color: colorTheme.buttonTextColor,
-                              fontSize: 17,
-                              fontWeight: "bold",
-                            }}
-                            onPress={() => makeGet()}
-                          />
-                        </>
-                      }
-                    </>
-                    // : <>
-                    //   <Text
-                    //     style={{
-                    //       color: colorTheme.headerTextColor,
-                    //       fontSize: 20,
-                    //       fontWeight: "bold",
-                    //       textAlign: "center",
-                    //     }}
-                    //   >
-                    //     Wink Module update in progress...
-                    //   </Text>
 
-                    //   <Text
-                    //     style={{
-                    //       color: colorTheme.textColor,
-                    //       fontSize: 16,
-                    //       textAlign: "center"
-                    //     }}
-                    //   >
-                    //     Update Status: {updatingStatus}{"\n\n"}
-                    //     Update Progress: {updateProgress}%
-                    //   </Text>
+                      </>
+                      : <>
+                        <Text
+                          style={{
+                            color: colorTheme.headerTextColor,
+                            fontSize: 20,
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          }}
+                        >
+                          Wink Module update in progress...
+                        </Text>
+
+                        <Text
+                          style={{
+                            color: colorTheme.textColor,
+                            fontSize: 16,
+                            textAlign: "center"
+                          }}
+                        >
+                          Update Status: {updatingStatus}{"\n\n"}
+                          Update Progress: {updateProgress}%
+                        </Text>
 
 
-                    //   <Text
-                    //     style={{
-                    //       color: colorTheme.textColor,
-                    //       fontSize: 18,
-                    //       textAlign: "center"
-                    //     }}
-                    //   >
-                    //     Please wait, this can take a minute... Please do not unplug the Module or disconnect from the device while in progress...
-                    //   </Text>
-                    // </>
+                        <Text
+                          style={{
+                            color: colorTheme.textColor,
+                            fontSize: 18,
+                            textAlign: "center"
+                          }}
+                        >
+                          Please wait, this can take a minute... Please do not unplug the Module or disconnect from the device while in progress...
+                        </Text>
+                      </>
                   }
                 </View>
               </View>

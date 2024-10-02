@@ -428,20 +428,46 @@ void updateProgress(size_t progress, size_t size) {
 
 bool wifi_started = false;
 
-void setupHttpUpdateServer() {
+static const char UpdatePage_HTML[] PROGMEM =
+  R"(<!DOCTYPE html>
+     <html lang='en'>
+     <head>
+         <title>Image Upload</title>
+         <meta charset='utf-8'>
+         <meta name='viewport' content='width=device-width,initial-scale=1'/>
+     </head>
+     <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
+     <form method='POST' action='' enctype='multipart/form-data'>
+         Firmware:<br><br>
+         <input type='file' accept='.bin,.bin.gz' name='firmware' style='font-size:20px;'><br><br>
+         <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
+     </form>
+     <br><br><br>
+     <form method='POST' action='' enctype='multipart/form-data'>
+         FileSystem:<br><br>
+         <input type='file' accept='.bin,.bin.gz,.image' name='filesystem' style='font-size:20px;'><br><br>
+         <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
+     </form>
+     </body>
+     </html>)";
 
-  httpServer.on(
-    String("/") + String(update_path), HTTP_GET,
-    [&]() {
-      httpServer.send(200);
-    }
-  );
+
+void setupHttpUpdateServer() {
+//redirecting not found web pages back to update page
+  httpServer.onNotFound([&]() {  //webpage not found
+    httpServer.sendHeader("Location", String("../") + String(update_path));
+    httpServer.send(302, F("text/html"), "");
+  });
+
+  // handler for the update web page
+  httpServer.on(String("/") + String(update_path), HTTP_GET, [&]() {
+    httpServer.send_P(200, PSTR("text/html"), UpdatePage_HTML);
+  });
 
   // handler for the update page form POST
   httpServer.on(
     String("/") + String(update_path), HTTP_POST,
     [&]() {
-      printf("POST REQUEST RECIEVED ON /update finished?\n");
       // handler when file upload finishes
       if (Update.hasError()) {
         httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
@@ -454,13 +480,11 @@ void setupHttpUpdateServer() {
       }
     },
     [&]() {
-      
-      printf("POST REQUEST RECIEVED ON /update\n");
       // handler for the file upload, gets the sketch bytes, and writes
       // them through the Update object
       HTTPUpload &upload = httpServer.upload();
       if (upload.status == UPLOAD_FILE_START) {
-        printf("Update: %s\n", upload.filename.c_str());
+        Serial.printf("Update: %s\n", upload.filename.c_str());
         if (upload.name == "filesystem") {
           if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
             Update.printError(Serial);
@@ -476,16 +500,16 @@ void setupHttpUpdateServer() {
           if (!Update.end(false)) {
             Update.printError(Serial);
           }
-          printf("Update was aborted\n");
+          Serial.println("Update was aborted");
         }
       } else if (upload.status == UPLOAD_FILE_WRITE) {
-        printf(".\n");
+        Serial.printf(".");
         if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
           Update.printError(Serial);
         }
       } else if (upload.status == UPLOAD_FILE_END) {
         if (Update.end(true)) {  //true to set the size to the current progress
-          printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+          Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
         } else {
           Update.printError(Serial);
         }
@@ -493,7 +517,7 @@ void setupHttpUpdateServer() {
       delay(0);
     }
   );
-
+  
   Update.onProgress(updateProgress);
 }
 
@@ -570,16 +594,16 @@ void setup() {
   Serial.begin(115200);
   preferences.begin("oem-store", false);
 
+  char key[15]; // Allocate enough space for the key strings
+
   for (int i = 0; i < 10; i++) {
-    string key = "presses-";
-    key = key + to_string(i);
-    int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
-    customButtonPressArray[i] = val;
+      snprintf(key, sizeof(key), "presses-%d", i); // Use snprintf to format the key
+      int val = preferences.getUInt(key, customButtonPressArrayDefaults[i]);
+      customButtonPressArray[i] = val;
   }
 
-  string delayKey = "delay-key";
-
-  int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
+  const char* delayKey = "delay-key";
+  int del = preferences.getUInt(delayKey, maxTimeBetween_msDefault);
   maxTimeBetween_ms = del;
 
   // Might not be necessary since deep sleep is more or less a reboot
@@ -603,13 +627,13 @@ void setup() {
 
   NimBLEService *pService = pServer->createService(NimBLEUUID(SERVICE_UUID));
 
-  uint8_t baseMac[6];
-  esp_read_mac(baseMac, ESP_MAC_BT);
+  // uint8_t baseMac[6];
+  // esp_read_mac(baseMac, ESP_MAC_BT);
 
-  for (int i = 0; i < 5; i++) {
-    printf("%02X:", baseMac[i]);
-  }
-  printf("%02X\n", baseMac[5]);
+  // for (int i = 0; i < 5; i++) {
+  //   printf("%02X:", baseMac[i]);
+  // }
+  // printf("%02X\n", baseMac[5]);
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
