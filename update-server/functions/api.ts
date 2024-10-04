@@ -49,6 +49,9 @@ router.get("/firmware", auth, async (req, res) => {
   const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
   console.log(pathToUpdateBin);
   if (fs.existsSync(pathToUpdateBin)) {
+    // const blob = await fs.openAsBlob(pathToUpdateBin);
+    // console.log(blob);
+    // const blobOctet = blob.slice(0, blob.size, "application/octet-stream");
     res.status(200).contentType("application/octet-stream").sendFile(pathToUpdateBin);
   } else
     res.status(500).json({ error: "Update BIN file not found" });

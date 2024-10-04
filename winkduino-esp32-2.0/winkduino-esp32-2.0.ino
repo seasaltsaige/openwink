@@ -6,11 +6,11 @@
 #include <WiFi.h>
 
 #include <NetworkClient.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
+// #include <LittleFS.h>
 #include <Update.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
-#include <DNSServer.h>
 
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
@@ -35,7 +35,7 @@ using namespace std;
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.2"
+#define FIRMWARE_VERSION "0.0.3"
 
 Preferences preferences;
 
@@ -383,13 +383,6 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
         }
       }
     }
-
-    // printf("---------------------------------------------\n");
-
-    // for (int i = 0; i < 10; i++) {
-    //   printf("Number of Presses: %d  :  Action: %d\n", i + 1, customButtonPressArray[i]);
-    // }
-    // printf("MS Between Presses: %d\n", maxTimeBetween_ms);
   }
 };
 
@@ -402,15 +395,11 @@ class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 const char *update_path = "update";
 
-// void setupHttpUpdateServer() {
-// }
-
 // Contains update progress value (0 to 100)%
 NimBLECharacteristic *firmareUpdateNotifier = nullptr;
 // POSSIBLE STATUS
 // "idle" "updating" "failed" "success"
 NimBLECharacteristic *firmwareStatus = nullptr;
-DNSServer dnsServer;
 WebServer httpServer(80);
 
 void updateProgress(size_t progress, size_t size) {
@@ -421,49 +410,15 @@ void updateProgress(size_t progress, size_t size) {
     if (progress != last_progress) {
       // UPDATE APP PROGRESS STATUS
       firmareUpdateNotifier->setValue(to_string(progress));
+      firmareUpdateNotifier->notify();
       last_progress = progress;
     }
   }
 }
 
 bool wifi_started = false;
-
-static const char UpdatePage_HTML[] PROGMEM =
-  R"(<!DOCTYPE html>
-     <html lang='en'>
-     <head>
-         <title>Image Upload</title>
-         <meta charset='utf-8'>
-         <meta name='viewport' content='width=device-width,initial-scale=1'/>
-     </head>
-     <body style='background-color:black;color:#ffff66;text-align: center;font-size:20px;'>
-     <form method='POST' action='' enctype='multipart/form-data'>
-         Firmware:<br><br>
-         <input type='file' accept='.bin,.bin.gz' name='firmware' style='font-size:20px;'><br><br>
-         <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
-     </form>
-     <br><br><br>
-     <form method='POST' action='' enctype='multipart/form-data'>
-         FileSystem:<br><br>
-         <input type='file' accept='.bin,.bin.gz,.image' name='filesystem' style='font-size:20px;'><br><br>
-         <input type='submit' value='Update' style='font-size:25px; height:50px; width:100px'>
-     </form>
-     </body>
-     </html>)";
-
-
 void setupHttpUpdateServer() {
-//redirecting not found web pages back to update page
-  httpServer.onNotFound([&]() {  //webpage not found
-    httpServer.sendHeader("Location", String("../") + String(update_path));
-    httpServer.send(302, F("text/html"), "");
-  });
-
-  // handler for the update web page
-  httpServer.on(String("/") + String(update_path), HTTP_GET, [&]() {
-    httpServer.send_P(200, PSTR("text/html"), UpdatePage_HTML);
-  });
-
+  // Other code...
   // handler for the update page form POST
   httpServer.on(
     String("/") + String(update_path), HTTP_POST,
@@ -471,9 +426,20 @@ void setupHttpUpdateServer() {
       // handler when file upload finishes
       if (Update.hasError()) {
         httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
+        firmwareStatus->setValue("failed");
+        firmwareStatus->notify();
       } else {
         httpServer.client().setNoDelay(true);
         httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
+        firmwareStatus->setValue("success");
+        firmwareStatus->notify();
+
+        if (Update.isFinished()) {
+          esp_ota_mark_app_valid_cancel_rollback();
+        } else {
+          esp_ota_mark_app_invalid_rollback_and_reboot();
+        }
+
         delay(100);
         httpServer.client().stop();
         ESP.restart();
@@ -482,45 +448,41 @@ void setupHttpUpdateServer() {
     [&]() {
       // handler for the file upload, gets the sketch bytes, and writes
       // them through the Update object
-      HTTPUpload &upload = httpServer.upload();
-      if (upload.status == UPLOAD_FILE_START) {
-        Serial.printf("Update: %s\n", upload.filename.c_str());
-        if (upload.name == "filesystem") {
-          if (!Update.begin(SPIFFS.totalBytes(), U_SPIFFS)) {  //start with max available size
-            Update.printError(Serial);
-          }
+      HTTPRaw &raw = httpServer.raw();
+      if (raw.status == RAW_START) {
+        if (!Update.begin(LittleFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+          Update.printError(Serial);
         } else {
-          uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-          if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
-            Update.printError(Serial);
-          }
+          firmwareStatus->setValue("updating");
+          firmwareStatus->notify();
         }
-      } else if (upload.status == UPLOAD_FILE_ABORTED || Update.hasError()) {
-        if (upload.status == UPLOAD_FILE_ABORTED) {
+
+      } else if (raw.status == RAW_ABORTED || Update.hasError()) {
+        if (raw.status == RAW_ABORTED) {
           if (!Update.end(false)) {
             Update.printError(Serial);
+            firmwareStatus->setValue("failed");
+            firmwareStatus->notify();
           }
           Serial.println("Update was aborted");
         }
-      } else if (upload.status == UPLOAD_FILE_WRITE) {
+      } else if (raw.status == RAW_WRITE) {
         Serial.printf(".");
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
           Update.printError(Serial);
         }
-      } else if (upload.status == UPLOAD_FILE_END) {
+      } else if (raw.status == RAW_END) {
         if (Update.end(true)) {  //true to set the size to the current progress
-          Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+          Serial.printf("Update Success: %u\nRebooting...\n", raw.totalSize);
         } else {
           Update.printError(Serial);
         }
       }
       delay(0);
-    }
-  );
-  
+    });
+
   Update.onProgress(updateProgress);
 }
-
 
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic *pChar) {
@@ -533,29 +495,22 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
-    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
-    dnsServer.start(53, "*", WiFi.softAPIP());  //if DNS started with "*" for domain name, it will reply with provided IP to all DNS request
-    printf("Wifi AP started, IP address: %s\n", WiFi.softAPIP().toString().c_str());
 
     delay(150);
 
-    if (MDNS.begin("module-update")) {
-      Serial.println("mDNS responder started");
-    }
+    MDNS.begin("module-update");
+
+
+    // Update.setupCrypt(0, 0, 0xf, U_AES_DECRYPT_AUTO);
 
     setupHttpUpdateServer();
-
     httpServer.begin();
 
     MDNS.addService("http", "tcp", 80);
 
     printf("HTTP Server started\n");
 
-    // while (true) {
     wifi_started = true;
-
-      // delay(10);
-    // }
   }
 };
 
@@ -594,15 +549,15 @@ void setup() {
   Serial.begin(115200);
   preferences.begin("oem-store", false);
 
-  char key[15]; // Allocate enough space for the key strings
+  char key[15];  // Allocate enough space for the key strings
 
   for (int i = 0; i < 10; i++) {
-      snprintf(key, sizeof(key), "presses-%d", i); // Use snprintf to format the key
-      int val = preferences.getUInt(key, customButtonPressArrayDefaults[i]);
-      customButtonPressArray[i] = val;
+    snprintf(key, sizeof(key), "presses-%d", i);  // Use snprintf to format the key
+    int val = preferences.getUInt(key, customButtonPressArrayDefaults[i]);
+    customButtonPressArray[i] = val;
   }
 
-  const char* delayKey = "delay-key";
+  const char *delayKey = "delay-key";
   int del = preferences.getUInt(delayKey, maxTimeBetween_msDefault);
   maxTimeBetween_ms = del;
 
@@ -622,18 +577,12 @@ void setup() {
 
   NimBLEDevice::init("Winkduino");
 
+  // NimBLEDevice::setM
+
   NimBLEServer *pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks);
 
   NimBLEService *pService = pServer->createService(NimBLEUUID(SERVICE_UUID));
-
-  // uint8_t baseMac[6];
-  // esp_read_mac(baseMac, ESP_MAC_BT);
-
-  // for (int i = 0; i < 5; i++) {
-  //   printf("%02X:", baseMac[i]);
-  // }
-  // printf("%02X\n", baseMac[5]);
 
   NimBLECharacteristic *winkChar = pService->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *leftSleepChar = pService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
@@ -654,7 +603,7 @@ void setup() {
   leftChar = pService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightChar = pService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   firmareUpdateNotifier = pService->createCharacteristic(SOFTWARE_UPDATING_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  
+
   firmwareStatus = pService->createCharacteristic(SOFTWARE_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   firmwareStatus->setValue("idle");
 
@@ -671,6 +620,10 @@ void setup() {
   firmwareChar->setCallbacks(new FirmwareCharacteristicCallbacks());
 
   pService->start();
+
+  if (!LittleFS.begin(true)) {
+    printf("Little FS FAILED\n");
+  }
 
   NimBLEExtAdvertisement extAdv(primaryPhy, secondaryPhy);
 
@@ -694,6 +647,9 @@ void setup() {
     buttonTimer = millis();
   }
 
+
+
+
   if (pAdvertising->setInstanceData(0, extAdv)) {
     if (pAdvertising->start(0))
       printf("Started advertising\n");
@@ -706,10 +662,9 @@ void setup() {
 bool advertising = true;
 
 void loop() {
-
-  httpServer.handleClient();
-  dnsServer.processNextRequest();
-
+  if (wifi_started) {
+    httpServer.handleClient();
+  }
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
   if (pressCounter == 0 && buttonInput != initialButton) {
     pressCounter++;

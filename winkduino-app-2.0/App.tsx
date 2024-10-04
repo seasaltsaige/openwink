@@ -13,8 +13,7 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-// import axios from 'axios';
-
+import axios from 'axios';
 import WifiManager from 'react-native-wifi-reborn';
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -68,7 +67,6 @@ export default function App() {
   const [promptResponse, setPromptResponse] = useState(null as boolean | null);
   const [firmwareDescription, setFirmwareDescription] = useState("");
   const [wifiConnected, setWifiConnected] = useState(false);
-  const [file, setFileBlob] = useState(null as null | Blob);
 
   const [autoConnect, setAutoConnect] = useState(true);
 
@@ -156,13 +154,13 @@ export default function App() {
   }, [appThemeOpen]);
 
   useEffect(() => {
-
+    if (connectedDevice === null) return;
     // Check for app + or module updates
 
     (async () => {
       try {
         const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
-        const firmware = await connectedDevice?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
+        const firmware = await connectedDevice.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
         if (firmware?.value) {
           const fw = base64.decode(firmware.value);
           console.log(fw);
@@ -184,36 +182,15 @@ export default function App() {
               upgradeAvailable = true;
           }
 
-          if (upgradeAvailable) {
-            // Create upgrade available popup.
-            // Simple popup that asks user to download file.
-            // If no, continue to app
-            // If yes, download software upgrade and continue with below
+          if (upgradeAvailable)
             setUpgradeModalOpen(true);
-
-          }
         }
       } catch (err) {
         setUpgradeModalOpen(false);
         setPromptResponse(null);
+        console.log(err);
       }
     })();
-
-    // NOTE: will need to be connected to esp
-    // NOTE: useBLE.ts will have esp software version on app connection
-    // TODO: will need a rtc value on esp that keeps track of software version
-    // TODO: will also need a characteristic for notifying phone of version
-    // TODO: Phone on start will check esp version, fetch info from api using esp MAC as key to see if update is needed
-    // TODO: if update is needed download file over phone internet, and store on phone temporarily.
-    // TODO: popup to ask if user wants to update software
-    // TODO: if no, delete update from phone, continue to app
-    // TODO: if yes, alert module it will be updated, so
-    // TODO: this should turn the esps wifi chip on, allowing the phone to connect, prompting them to do so
-    // TODO: tell user update can take time, dont turn off, etc
-    // TODO: send ota update over wifi using espressif example code.
-    // TODO: update module with ota, once completed, updating firmware rtc value
-    // TODO: delete file from phone
-
   }, [connectedDevice !== null]);
 
 
@@ -223,11 +200,9 @@ export default function App() {
       {
         method: "GET",
         headers: {
-          authorization: MAC!
-        }
+          authorization: MAC!,
+        },
       });
-
-    const blob = await response.blob();
 
     const password = generatePassword(16);
 
@@ -254,17 +229,20 @@ export default function App() {
 
     try {
 
-      const file = new File([blob], "update.bin", { type: "application/octet-stream", lastModified: Date.now() });
-
-      const form = new FormData();
-      form.append("filesystem", file);
-
+      const blob = await response.blob();
+      const blobtet = blob.slice(0, blob.size, "application/octet-stream");
 
       await fetch("http://module-update.local/update", {
         method: "POST",
-        body: form
+        body: blobtet,
+
       });
 
+      // await axios.post("http://module-update.local/update", await response.blob(), {
+      //   headers: {
+      //     "Content-Type": "application/octet-stream",
+      //   }
+      // });
 
     } catch (err) {
       alert(err);

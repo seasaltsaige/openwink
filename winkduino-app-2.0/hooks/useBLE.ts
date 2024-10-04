@@ -163,9 +163,9 @@ function useBLE() {
       connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_STATUS_UUID, (err, char) => {
         if (err) return console.log(err);
         const val = base64.decode(char?.value!);
-        if (val !== "idle" && val !== "updating" && val !== "failed" && val !== "success") return;
+        // if (val !== "idle" && val !== "updating" && val !== "failed" && val !== "success") return;
 
-        setUpdatingStatus(val);
+        setUpdatingStatus(val as any);
       });
 
 
