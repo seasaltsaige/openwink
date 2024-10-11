@@ -25,7 +25,7 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://192.168.1.196:3000/.netlify/functions/api/update";
+const UPDATE_URL = "http://10.9.22.237:3001/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
@@ -153,6 +153,43 @@ export default function App() {
     })();
   }, [appThemeOpen]);
 
+  // temp
+  useEffect(() => {
+    (async () => {
+
+      const res = await fetch(`${UPDATE_URL}/firmware`, {
+        method: "GET",
+        headers: {
+          "authorization": MAC!,
+          // 'Expires': Math.floor(Math.random() * 100).toString(),
+          // 'Cache-Control': 'no-cache, no-store, must-revalidate',
+          // 'Pragma': 'no-cache',
+          // 'Expires': '0',
+        }
+      });
+
+      const blob = await res.blob();
+      const blobTet = blob.slice(0, blob.size, "application/octet-stream");
+      console.log(blobTet);
+      // console.log(res.);
+      try {
+        await fetch(`${UPDATE_URL}/firmware`, {
+          method: "POST",
+          body: blobTet,
+          headers: {
+            // authorization: MAC!,
+            // "Content-Type": "application/octet-stream",
+            // "Content-Length": blobTet.size.toString(),
+          }
+        });
+      } catch (err) {
+        console.log(err);
+      }
+
+    })();
+  }, []);
+
+
   useEffect(() => {
     if (connectedDevice === null) return;
     // Check for app + or module updates
@@ -201,8 +238,25 @@ export default function App() {
         method: "GET",
         headers: {
           authorization: MAC!,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         },
       });
+
+
+    // const res = await axios(`${UPDATE_URL}/firmware`, {
+    //   responseType: "arraybuffer",
+    //   method: "GET",
+    //   headers: {
+    //     "authorization": MAC!,
+    //     'Cache-Control': 'no-cache, no-store, must-revalidate',
+    //     'Pragma': 'no-cache',
+    //     'Expires': '0',
+    //   }
+    // });
+    // console.log(res.data);
+    // const dataBlob = new Blob([res.data], { type: "application/octet-stream" });
 
     const password = generatePassword(16);
 
@@ -217,30 +271,31 @@ export default function App() {
 
     await sleep(2000);
 
-    await WifiManager.connectToProtectedWifiSSID({
-      ssid: "Wink Module: Update Access Point",
-      password,
-      isHidden: false,
-      isWEP: false,
-      timeout: 15
-    });
+    // await WifiManager.connectToProtectedWifiSSID({
+    //   ssid: "Wink Module: Update Access Point",
+    //   password,
+    //   isHidden: false,
+    //   isWEP: false,
+    //   timeout: 15
+    // });
 
     setWifiConnected(true);
 
     try {
 
       const blob = await response.blob();
+      // console.log(blob);
       const blobtet = blob.slice(0, blob.size, "application/octet-stream");
-
-      await fetch("http://module-update.local/update", {
+      //http://module-update.local/update
+      await fetch("https://enfun1fo4otie.x.pipedream.net", {
         method: "POST",
         body: blobtet,
-
       });
 
-      // await axios.post("http://module-update.local/update", await response.blob(), {
+      // await axios.post("http://module-update.local/update", dataBlob, {
       //   headers: {
       //     "Content-Type": "application/octet-stream",
+      //     "Content-Length"
       //   }
       // });
 

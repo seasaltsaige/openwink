@@ -45,22 +45,41 @@ router.get("/", auth, async (req, res) => {
     res.status(500).json({ error: "Update JSON file not found" });
 });
 
-router.get("/firmware", auth, async (req, res) => {
+router.get("/firmware", /**auth**/ async (req, res) => {
   const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
   console.log(pathToUpdateBin);
   if (fs.existsSync(pathToUpdateBin)) {
-    // const blob = await fs.openAsBlob(pathToUpdateBin);
-    // console.log(blob);
+    const blob = await fs.openAsBlob(pathToUpdateBin);
+    // console.log(new Blob([blob], { type: "application/octet-stream" }));
+    // console.log(new Uint8Array(await blob.arrayBuffer()));
     // const blobOctet = blob.slice(0, blob.size, "application/octet-stream");
+    // res.status(200).sendFile()
+    // res.writeHead(200, {
+    //   'Content-Type': "application/octet-stream",
+    //   'Content-Length': blob.size,
+    // });
+
+    // const base64 = fs.readFileSync(pathToUpdateBin, "base64");
+    // console.log(base64);
+    // res.status(200).send(base64);
     res.status(200).contentType("application/octet-stream").sendFile(pathToUpdateBin);
   } else
     res.status(500).json({ error: "Update BIN file not found" });
 });
 
+router.post("/firmware", express.raw({ limit: "2mb" }), async (req, res) => {
+  const data = req.body;
+  const blob = new Blob([data], { type: "application/octet-stream" });
+  console.log(new Uint8Array(await blob.arrayBuffer()));
+  res.sendStatus(200);
+});
+
 
 app.use("/.netlify/functions/api/update", router);
 
-const handler = serverless(app);
+const handler = serverless(app, {
+  binary: ['application/json', 'application/octet-stream'],
+});
 
 //@ts-ignore
 module.exports.handler = async (event, context) => {

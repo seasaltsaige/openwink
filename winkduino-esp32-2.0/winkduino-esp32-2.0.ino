@@ -6,8 +6,6 @@
 #include <WiFi.h>
 
 #include <NetworkClient.h>
-#include <LittleFS.h>
-// #include <LittleFS.h>
 #include <Update.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -17,6 +15,15 @@
 #include "esp_ota_ops.h"
 #include "esp_mac.h"
 #include "esp_sleep.h"
+
+
+
+#include "Update.h"
+#include "Arduino.h"
+#include "spi_flash_mmap.h"
+#include "esp_ota_ops.h"
+#include "esp_image_format.h"
+#include "mbedtls/aes.h"
 
 using namespace std;
 
@@ -35,7 +42,7 @@ using namespace std;
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.3"
+#define FIRMWARE_VERSION "0.0.2"
 
 Preferences preferences;
 
@@ -404,14 +411,18 @@ WebServer httpServer(80);
 
 void updateProgress(size_t progress, size_t size) {
   static int last_progress = -1;
+  size_t prog = 0;
+      printf("PROGRESS  cb: %d %d\n", progress, size);
+
   if (size > 0) {
-    progress = (progress * 100) / size;
-    progress = (progress > 100 ? 100 : progress);  //0-100
-    if (progress != last_progress) {
+    prog = (progress * 100) / size;
+    prog = (prog > 100 ? 100 : prog);  //0-100
+    if (prog != last_progress) {
       // UPDATE APP PROGRESS STATUS
-      firmareUpdateNotifier->setValue(to_string(progress));
-      firmareUpdateNotifier->notify();
-      last_progress = progress;
+      printf("PROGRESS: %d%\n", prog);
+      // firmareUpdateNotifier->setValue(to_string(progress));
+      // firmareUpdateNotifier->notify();
+      last_progress = prog;
     }
   }
 }
@@ -450,7 +461,9 @@ void setupHttpUpdateServer() {
       // them through the Update object
       HTTPRaw &raw = httpServer.raw();
       if (raw.status == RAW_START) {
-        if (!Update.begin(LittleFS.totalBytes(), U_SPIFFS)) {  //start with max available size
+        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+        printf("MAX SKETCH SPACE: %d\n", maxSketchSpace);
+        if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
           Update.printError(Serial);
         } else {
           firmwareStatus->setValue("updating");
@@ -467,8 +480,12 @@ void setupHttpUpdateServer() {
           Serial.println("Update was aborted");
         }
       } else if (raw.status == RAW_WRITE) {
-        Serial.printf(".");
-        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
+        // Serial.printf(".");
+        printf("Sector size %d\n", SPI_FLASH_SEC_SIZE);
+        printf("CURR BUFF SIZE: %d\nBUF[0]: %d\nCurrent Proggress: %d\n", raw.currentSize, raw.buf[0], Update.progress());
+        size_t amountWritten = Update.write(raw.buf, raw.currentSize);
+        printf("AMOUNT WRITTEN: %d\nAfter Proggress: %d\n", amountWritten, Update.progress());
+        if (amountWritten != raw.currentSize) {
           Update.printError(Serial);
         }
       } else if (raw.status == RAW_END) {
@@ -500,11 +517,14 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
     MDNS.begin("module-update");
 
-
-    // Update.setupCrypt(0, 0, 0xf, U_AES_DECRYPT_AUTO);
-
     setupHttpUpdateServer();
     httpServer.begin();
+
+    // httpServer.onFileUpload();
+
+    // Update.setupCrypt();
+    Update.setCryptMode(0);
+    // Update.setupCrypt()
 
     MDNS.addService("http", "tcp", 80);
 
@@ -577,8 +597,6 @@ void setup() {
 
   NimBLEDevice::init("Winkduino");
 
-  // NimBLEDevice::setM
-
   NimBLEServer *pServer = NimBLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks);
 
@@ -621,10 +639,6 @@ void setup() {
 
   pService->start();
 
-  if (!LittleFS.begin(true)) {
-    printf("Little FS FAILED\n");
-  }
-
   NimBLEExtAdvertisement extAdv(primaryPhy, secondaryPhy);
 
   extAdv.setConnectable(true);
@@ -646,8 +660,6 @@ void setup() {
     pressCounter++;
     buttonTimer = millis();
   }
-
-
 
 
   if (pAdvertising->setInstanceData(0, extAdv)) {
