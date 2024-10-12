@@ -13,7 +13,6 @@ import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
 
-import axios from 'axios';
 import WifiManager from 'react-native-wifi-reborn';
 
 const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -66,6 +65,7 @@ export default function App() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [promptResponse, setPromptResponse] = useState(null as boolean | null);
   const [firmwareDescription, setFirmwareDescription] = useState("");
+  const [firmwareVersions, setFirmwareVersions] = useState({ old: "", new: "" });
   const [wifiConnected, setWifiConnected] = useState(false);
 
   const [autoConnect, setAutoConnect] = useState(true);
@@ -164,27 +164,37 @@ export default function App() {
         const firmware = await connectedDevice.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
         if (firmware?.value) {
           const fw = base64.decode(firmware.value);
-          console.log(fw);
+
           const response = await fetch(UPDATE_URL, { method: "GET", headers: { authorization: MAC! }, });
-          console.log(response.status);
+
           if (response.status !== 200) return;
+
           const json = await response.json();
           const apiVersion = json["version"] as string;
-          console.log(apiVersion);
 
-          const apiVParts = apiVersion.split(".");
-          const fwParts = fw.split(".");
+          const apiVersionParts = apiVersion.split(".");
+          const firmwareParts = fw.split(".");
 
           let upgradeAvailable = false;
           for (let i = 0; i < 3; i++) {
-            const apiPart = parseInt(apiVParts[i]);
-            const fwPart = parseInt(fwParts[i]);
-            if (apiPart > fwPart)
+            const apiPart = parseInt(apiVersionParts[i]);
+            const firmwarePart = parseInt(firmwareParts[i]);
+            if (apiPart > firmwarePart) {
               upgradeAvailable = true;
+              break;
+            }
           }
 
-          if (upgradeAvailable)
+          setFirmwareVersions({
+            old: fw,
+            new: apiVersion
+          })
+
+          if (upgradeAvailable) {
             setUpgradeModalOpen(true);
+            const description = json["description"] as string | undefined;
+            setFirmwareDescription(description ? description : "");
+          }
         }
       } catch (err) {
         setUpgradeModalOpen(false);
@@ -215,7 +225,7 @@ export default function App() {
       base64.encode(password)
     );
 
-    await sleep(2000);
+    await sleep(1500);
 
     await WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
@@ -242,6 +252,9 @@ export default function App() {
       await connectedDevice?.cancelConnection();
 
       if (updateResponse.ok) {
+        setWifiConnected(false);
+        setUpgradeModalOpen(false);
+        setPromptResponse(null);
       } else {
       }
 
@@ -479,8 +492,9 @@ export default function App() {
                   width: "100%",
                 }}
               >
-                An Wink Module Firmware update is available.{"\n"}
+                A Wink Module Firmware update is available.{"\n"}
                 Would you like to install it now?
+                { } → { }
                 {firmwareDescription}
               </Text>
               <View style={{
