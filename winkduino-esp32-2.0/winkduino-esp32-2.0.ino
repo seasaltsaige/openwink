@@ -16,15 +16,6 @@
 #include "esp_mac.h"
 #include "esp_sleep.h"
 
-
-
-#include "Update.h"
-#include "Arduino.h"
-#include "spi_flash_mmap.h"
-#include "esp_ota_ops.h"
-#include "esp_image_format.h"
-#include "mbedtls/aes.h"
-
 using namespace std;
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
@@ -411,18 +402,15 @@ WebServer httpServer(80);
 
 void updateProgress(size_t progress, size_t size) {
   static int last_progress = -1;
-  size_t prog = 0;
-      printf("PROGRESS  cb: %d %d\n", progress, size);
 
   if (size > 0) {
-    prog = (progress * 100) / size;
-    prog = (prog > 100 ? 100 : prog);  //0-100
-    if (prog != last_progress) {
+    progress = (progress * 100) / size;
+    progress = (progress > 100 ? 100 : progress);  //0-100
+    if (progress != last_progress) {
       // UPDATE APP PROGRESS STATUS
-      printf("PROGRESS: %d%\n", prog);
-      // firmareUpdateNotifier->setValue(to_string(progress));
-      // firmareUpdateNotifier->notify();
-      last_progress = prog;
+      firmareUpdateNotifier->setValue(to_string(progress));
+      firmareUpdateNotifier->notify();
+      last_progress = progress;
     }
   }
 }
@@ -436,20 +424,14 @@ void setupHttpUpdateServer() {
     [&]() {
       // handler when file upload finishes
       if (Update.hasError()) {
-        httpServer.send(200, F("text/html"), String(F("<META http-equiv=\"refresh\" content=\"5;URL=/\">Update error: ")) + String(Update.errorString()));
+        httpServer.send(200);
         firmwareStatus->setValue("failed");
         firmwareStatus->notify();
       } else {
         httpServer.client().setNoDelay(true);
-        httpServer.send(200, PSTR("text/html"), String(F("<META http-equiv=\"refresh\" content=\"15;URL=/\">Update Success! Rebooting...")));
+        httpServer.send(200);
         firmwareStatus->setValue("success");
         firmwareStatus->notify();
-
-        if (Update.isFinished()) {
-          esp_ota_mark_app_valid_cancel_rollback();
-        } else {
-          esp_ota_mark_app_invalid_rollback_and_reboot();
-        }
 
         delay(100);
         httpServer.client().stop();
@@ -457,12 +439,28 @@ void setupHttpUpdateServer() {
       }
     },
     [&]() {
+      // int headerCount = httpServer.headers();
+      // int headerSize = -1;
+      // for (int i = 0; i < headerCount; i++) {
+      //   String tmpName = httpServer.headerName(i);
+      //   if (tmpName.equals("Content-Length")) {
+      //     String size = httpServer.header(i);
+      //     string sizeStr = string(size.c_str());
+      //     int sizeNum = stoi(sizeStr);
+      //     headerSize = sizeNum;
+      //     break;
+      //   }
+      // }
+
+      // printf("HEADER SIZE: %d\n", headerSize);
       // handler for the file upload, gets the sketch bytes, and writes
       // them through the Update object
       HTTPRaw &raw = httpServer.raw();
+      // raw.totalSize
       if (raw.status == RAW_START) {
+        int size = httpServer.header(String("Content-Length")).toInt();
+        printf("SIZE: %d\n", size);
         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-        printf("MAX SKETCH SPACE: %d\n", maxSketchSpace);
         if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
           Update.printError(Serial);
         } else {
@@ -480,12 +478,7 @@ void setupHttpUpdateServer() {
           Serial.println("Update was aborted");
         }
       } else if (raw.status == RAW_WRITE) {
-        // Serial.printf(".");
-        printf("Sector size %d\n", SPI_FLASH_SEC_SIZE);
-        printf("CURR BUFF SIZE: %d\nBUF[0]: %d\nCurrent Proggress: %d\n", raw.currentSize, raw.buf[0], Update.progress());
-        size_t amountWritten = Update.write(raw.buf, raw.currentSize);
-        printf("AMOUNT WRITTEN: %d\nAfter Proggress: %d\n", amountWritten, Update.progress());
-        if (amountWritten != raw.currentSize) {
+        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
           Update.printError(Serial);
         }
       } else if (raw.status == RAW_END) {
@@ -519,12 +512,6 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
     setupHttpUpdateServer();
     httpServer.begin();
-
-    // httpServer.onFileUpload();
-
-    // Update.setupCrypt();
-    Update.setCryptMode(0);
-    // Update.setupCrypt()
 
     MDNS.addService("http", "tcp", 80);
 
@@ -661,6 +648,7 @@ void setup() {
     buttonTimer = millis();
   }
 
+  printf("----------------------------- UPDATED CODE!! -----------------------------\n");
 
   if (pAdvertising->setInstanceData(0, extAdv)) {
     if (pAdvertising->start(0))
