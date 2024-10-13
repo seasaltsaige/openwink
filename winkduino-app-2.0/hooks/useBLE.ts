@@ -27,7 +27,7 @@ const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
   //@ts-ignore
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>({});
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
   const [rightState, setRightState] = useState(0);

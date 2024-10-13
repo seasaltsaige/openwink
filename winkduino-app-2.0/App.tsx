@@ -459,7 +459,7 @@ export default function App() {
         animationType="slide"
         hardwareAccelerated
         transparent
-        onRequestClose={() => setUpgradeModalOpen(false)}
+      // onRequestClose={() => setUpgradeModalOpen(false)}
       >
         {
           promptResponse === null ?
@@ -494,7 +494,8 @@ export default function App() {
               >
                 A Wink Module Firmware update is available.{"\n"}
                 Would you like to install it now?
-                { } → { }
+                {firmwareVersions.old} → {firmwareVersions.new}
+                {"\n"}Whats New?
                 {firmwareDescription}
               </Text>
               <View style={{
@@ -520,13 +521,15 @@ export default function App() {
                     fontSize: 17,
                     fontWeight: "bold",
                   }}
-                  onPress={async () => {
-                    setUpgradeModalOpen(false);
-                    setPromptResponse(true);
-                    await sleep(100);
-                    setUpgradeModalOpen(true);
-                    await downloadAndInstallFirmware();
-                  }}
+                  onPress={
+                    async () => {
+                      setUpgradeModalOpen(false);
+                      setPromptResponse(true);
+                      await sleep(100);
+                      setUpgradeModalOpen(true);
+                      await downloadAndInstallFirmware();
+                    }
+                  }
                 />
 
                 <OpacityButton
@@ -545,22 +548,56 @@ export default function App() {
                     fontSize: 17,
                     fontWeight: "bold",
                   }}
-                  onPress={async () => {
-                    setUpgradeModalOpen(false);
-                    setPromptResponse(false);
-                    await sleep(500);
-                    setUpgradeModalOpen(true);
-                    setTimeout(() => {
+                  // USER DENIES FIRMWARE UPDATE
+                  onPress={
+                    async () => {
                       setUpgradeModalOpen(false);
-                      setPromptResponse(null);
-                    }, 5000);
-                  }}
+                      setPromptResponse(false);
+                      await sleep(500);
+                      setUpgradeModalOpen(true);
+                      setTimeout(() => {
+                        setUpgradeModalOpen(false);
+                        setPromptResponse(null);
+                      }, 5000);
+                    }
+                  }
                 />
               </View>
             </View>
             : promptResponse === false ?
               // Download denied
-              <></>
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "85%",
+                  padding: 15,
+                  position: "absolute",
+                  bottom: 60,
+                  elevation: 5,
+                  shadowColor: "black",
+                  rowGap: 15,
+                  shadowOpacity: 1,
+                  shadowRadius: 10,
+                  borderRadius: 10,
+                  alignSelf: "center",
+                  backgroundColor: colorTheme.backgroundSecondaryColor,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colorTheme.textColor,
+                    textAlign: "center",
+                    fontSize: 17,
+                    width: "100%"
+                  }}
+                >
+                  Consider installing the latest Wink Mod firmware to stay up to date with bug fixes.
+                </Text>
+              </View>
+
 
               // Download Accepted
               : <View
@@ -645,7 +682,7 @@ export default function App() {
         }
       </Modal>
 
-    </ScrollView>
+    </ScrollView >
 
   );
 }
