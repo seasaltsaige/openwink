@@ -24,11 +24,11 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://10.9.22.237:3001/.netlify/functions/api/update";
+const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\",./<>?|\\";
   let retVal = "";
   for (let i = 0; i < len; ++i) {
     const n = charset.length;
@@ -37,6 +37,14 @@ const generatePassword = (len: number) => {
   return retVal;
 }
 
+enum UpdateStates {
+  CLOSED,
+  PROMPT,
+  ACCEPTED,
+  DENIED,
+  FAILED,
+  SUCCESS,
+}
 
 export default function App() {
 
@@ -63,7 +71,7 @@ export default function App() {
   const [appThemeOpen, setAppThemeOpen] = useState(false);
 
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [promptResponse, setPromptResponse] = useState(null as boolean | null);
+  const [promptResponse, setPromptResponse] = useState(UpdateStates.CLOSED);
   const [firmwareDescription, setFirmwareDescription] = useState("");
   const [firmwareVersions, setFirmwareVersions] = useState({ old: "", new: "" });
   const [wifiConnected, setWifiConnected] = useState(false);
@@ -192,13 +200,14 @@ export default function App() {
 
           if (upgradeAvailable) {
             setUpgradeModalOpen(true);
+            setPromptResponse(UpdateStates.PROMPT);
             const description = json["description"] as string | undefined;
             setFirmwareDescription(description ? description : "");
           }
         }
       } catch (err) {
         setUpgradeModalOpen(false);
-        setPromptResponse(null);
+        setPromptResponse(UpdateStates.CLOSED);
         console.log(err);
       }
     })();
@@ -206,6 +215,7 @@ export default function App() {
 
 
   const downloadAndInstallFirmware = async () => {
+
     const response = await fetch(
       `${UPDATE_URL}/firmware`,
       {
@@ -213,7 +223,8 @@ export default function App() {
         headers: {
           authorization: MAC!,
         },
-      });
+      }
+    );
 
     const password = generatePassword(16);
 
@@ -254,7 +265,7 @@ export default function App() {
       if (updateResponse.ok) {
         setWifiConnected(false);
         setUpgradeModalOpen(false);
-        setPromptResponse(null);
+        setPromptResponse(UpdateStates.CLOSED);
       } else {
       }
 
@@ -462,7 +473,7 @@ export default function App() {
       // onRequestClose={() => setUpgradeModalOpen(false)}
       >
         {
-          promptResponse === null ?
+          promptResponse === UpdateStates.PROMPT ?
             // Prompting user for download
             <View
               style={{
@@ -524,7 +535,7 @@ export default function App() {
                   onPress={
                     async () => {
                       setUpgradeModalOpen(false);
-                      setPromptResponse(true);
+                      setPromptResponse(UpdateStates.ACCEPTED);
                       await sleep(100);
                       setUpgradeModalOpen(true);
                       await downloadAndInstallFirmware();
@@ -552,19 +563,19 @@ export default function App() {
                   onPress={
                     async () => {
                       setUpgradeModalOpen(false);
-                      setPromptResponse(false);
+                      setPromptResponse(UpdateStates.DENIED);
                       await sleep(500);
                       setUpgradeModalOpen(true);
                       setTimeout(() => {
                         setUpgradeModalOpen(false);
-                        setPromptResponse(null);
+                        setPromptResponse(UpdateStates.CLOSED);
                       }, 5000);
                     }
                   }
                 />
               </View>
             </View>
-            : promptResponse === false ?
+            : promptResponse === UpdateStates.DENIED ?
               // Download denied
               <View
                 style={{
