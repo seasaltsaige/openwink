@@ -5,28 +5,22 @@ import * as ExpoDevice from "expo-device";
 import base64 from "react-native-base64";
 import { DeviceMACStore } from "../AsyncStorage/DeviceMACStore";
 import { AutoConnectStore } from "../AsyncStorage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { buttonBehaviorMap, CustomOEMButtonStore } from "../AsyncStorage/CustomOEMButtonStore";
 
-const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
-
-const BUSY_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51521";
-const LEFT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51523";
-const RIGHT_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51524";
-
-const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
-
-const SOFTWARE_UPDATING_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51532"
-const SOFTWARE_STATUS_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51533"
-
-const SCAN_TIME_SECONDS = 30;
-
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+import {
+  BUSY_CHAR_UUID,
+  FIRMWARE_UUID,
+  LEFT_STATUS_UUID,
+  RIGHT_STATUS_UUID,
+  SCAN_TIME_SECONDS,
+  SERVICE_UUID,
+  SOFTWARE_STATUS_UUID,
+  SOFTWARE_UPDATING_UUID
+} from "../helper/Constants";
 
 
 function useBLE() {
   const bleManager = useMemo(() => new BleManager(), []);
-  //@ts-ignore
+
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
   const [leftState, setLeftState] = useState(0);
@@ -36,10 +30,6 @@ function useBLE() {
 
   const [firmwareVersion, setFirmwareVersion] = useState(null as string | null);
   const [noDevice, setNoDevice] = useState(false);
-
-  const [reqSub, setReqSub] = useState<Subscription>();
-  const [leftSub, setLeftSub] = useState<Subscription>();
-  const [rightSub, setRightSub] = useState<Subscription>();
 
   // Home page states
   const [isScanning, setIsScanning] = useState(false);
@@ -126,14 +116,14 @@ function useBLE() {
       setConnectedDevice(connection);
       setIsConnecting(false);
 
-      const subReq = connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
+      connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
         if (err) return console.log(err);
         const strVal = base64.decode(char?.value!);
         if (parseInt(strVal) === 1) setHeadlightsBusy(true);
         else setHeadlightsBusy(false);
       });
 
-      const subLeft = connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
+      connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
         if (err) return console.log(err);
         const strVal = base64.decode(char?.value!);
         const intVal = parseInt(strVal);
@@ -143,7 +133,7 @@ function useBLE() {
         } else setLeftState(intVal);
       });
 
-      const subRight = connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
+      connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
         if (err) return console.log(err);
         const strVal = base64.decode(char?.value!);
         const intVal = parseInt(strVal);
@@ -153,7 +143,7 @@ function useBLE() {
         } else setRightState(intVal);
       });
 
-      const updateProgress = connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_UPDATING_UUID, (err, char) => {
+      connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_UPDATING_UUID, (err, char) => {
         if (err) return console.log(err);
         const strVal = base64.decode(char?.value!);
         const val = parseInt(strVal);
@@ -163,15 +153,8 @@ function useBLE() {
       connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_STATUS_UUID, (err, char) => {
         if (err) return console.log(err);
         const val = base64.decode(char?.value!);
-        // if (val !== "idle" && val !== "updating" && val !== "failed" && val !== "success") return;
-
         setUpdatingStatus(val as any);
       });
-
-
-      // setReqSub(subReq);
-      // setLeftSub(subLeft);
-      // setRightSub(subRight);
 
 
       const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
@@ -188,18 +171,18 @@ function useBLE() {
       }
 
       const firmware = await connection?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
-      if (firmware.value) {
+      if (firmware.value)
         setFirmwareVersion(base64.decode(firmware.value));
-      }
 
       // Handle disconnect
       connection.onDisconnected(async (err, device) => {
         if (err)
           return console.log("Error disconnecting from device: ", err);
+
         console.log("Disconnected from device");
         setConnectedDevice(null);
 
-        // CHECK IF AUTOCONNECT IS ENABLED
+        // CHECK IF AUTO CONNECT IS ENABLED
         const autoConnect = await AutoConnectStore.get();
         if (autoConnect === undefined)
           scan();
@@ -216,7 +199,9 @@ function useBLE() {
       setIsConnecting(false);
       setIsScanning(true);
       setNoDevice(false);
-      await scan();
+      const autoConnect = await AutoConnectStore.get();
+      if (autoConnect === undefined)
+        await scan();
       return false;
     }
 
@@ -224,26 +209,32 @@ function useBLE() {
 
   const scan = async () => {
     if (connectedDevice !== null) return;
-    console.log("BEGIN SCAN");
+    console.log("Device Scan Started...");
+
     setNoDevice(false);
+
     let foundDevice = false;
 
-    // const allDevices: Device[] = [];
     const mac = await DeviceMACStore.getStoredMAC();
     setTimeout(async () => {
 
       const autoConnect = await AutoConnectStore.get();
       if (!foundDevice) {
+
         setNoDevice(true);
         setIsConnecting(false);
         setIsScanning(false);
+
         await bleManager.stopDeviceScan();
+
         console.log("No Device Found");
+
         if (autoConnect === undefined)
           scan();
+
         return;
       }
-    }, SCAN_TIME_SECONDS * 1000);
+    }, SCAN_TIME_SECONDS);
 
 
     setIsScanning(true);
@@ -277,14 +268,10 @@ function useBLE() {
 
 
   const disconnect = async () => {
-    console.log("BEGIN DISCONNECT");
+    console.log("Disconnecting From Device");
     const isConnected = await connectedDevice?.isConnected();
-    if (isConnected) {
-      reqSub?.remove();
-      leftSub?.remove();
-      rightSub?.remove();
+    if (isConnected)
       await connectedDevice?.cancelConnection();
-    }
   }
 
 
@@ -308,4 +295,6 @@ function useBLE() {
   }
 }
 
-export { useBLE };
+export {
+  useBLE
+};

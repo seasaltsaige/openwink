@@ -1,6 +1,4 @@
-import { Modal, View, Text, ScrollView, ActivityIndicator, TextInput } from "react-native";
-import { ThemeStore } from "../AsyncStorage/ThemeStore";
-import { useColorScheme } from "react-native";
+import { Modal, View, Text, ActivityIndicator, TextInput } from "react-native";
 import { useEffect, useState } from "react";
 import { useColorTheme } from "../hooks/useColorTheme";
 import DropDownPicker from "react-native-dropdown-picker";
@@ -147,8 +145,10 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
           paddingVertical: 15,
           borderRadius: 5,
           borderColor: colorTheme.backgroundSecondaryColor,
-          borderWidth: 2
+          borderWidth: 2,
+          rowGap: 15,
         }}>
+
         <Text style={{
           // @ts-ignore
           color: getBackgroundColor(colorTheme[selectedTheme]),
@@ -171,7 +171,32 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
           value={selectedTheme}
           setItems={setThemeOptions}
           placeholder="Select a theme component"
-          containerStyle={{ width: "90%" }}
+          containerStyle={{
+            width: "90%",
+            backgroundColor: colorTheme.backgroundPrimaryColor
+            // zIndex: 1000,
+          }}
+        // style={{
+        //   backgroundColor: colorTheme.backgroundSecondaryColor,
+        //   borderColor: colorTheme.backgroundSecondaryColor,
+        //   borderWidth: 3,
+        // }}
+        // textStyle={{
+        //   color: colorTheme.textColor,
+        //   fontSize: 16
+        // }}
+        // dropDownContainerStyle={{
+        //   backgroundColor: colorTheme.backgroundSecondaryColor,
+        //   borderColor: colorTheme.backgroundSecondaryColor,
+        //   borderBottomEndRadius: 3,
+        //   borderBottomStartRadius: 3,
+        // }}
+        // itemSeparatorStyle={{
+        //   backgroundColor: "white"
+        // }}
+        // badgeStyle={{
+        //   backgroundColor: colorTheme.textColor
+        // }}
         />
 
         <View style={{ width: "95%", height: 245 }}>

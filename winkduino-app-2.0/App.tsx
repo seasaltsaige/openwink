@@ -1,7 +1,7 @@
-import React, { Modal, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import base64 from "react-native-base64";
 import { useBLE } from './hooks/useBLE';
-import { createRef, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DefaultCommands } from "./Pages/DefaultCommands";
 import { CreateCustomCommands } from './Pages/CreateCustomCommands';
 import { CustomCommands } from './Pages/CustomCommands';
@@ -12,30 +12,25 @@ import { AutoConnectStore } from './AsyncStorage';
 import { AppTheme } from './Pages/AppTheme';
 import { useColorTheme } from './hooks/useColorTheme';
 import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore } from './AsyncStorage/CustomOEMButtonStore';
-
 import WifiManager from 'react-native-wifi-reborn';
 
-const SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
-const REQUEST_CHAR_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51520";
-const LEFT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51525";
-const RIGHT_SLEEPY_EYE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51527"
-const SYNC_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51526";
-const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
-const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
-// const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
+import {
+  SERVICE_UUID,
+  CUSTOM_BUTTON_UPDATE_UUID,
+  FIRMWARE_UUID,
+  LEFT_SLEEPY_EYE_UUID,
+  LONG_TERM_SLEEP_UUID,
+  REQUEST_CHAR_UUID,
+  RIGHT_SLEEPY_EYE_UUID,
+  SYNC_UUID,
+  UPDATE_URL
+} from './helper/Constants';
 
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-const generatePassword = (len: number) => {
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\",./<>?|\\";
-  let retVal = "";
-  for (let i = 0; i < len; ++i) {
-    const n = charset.length;
-    retVal += charset.charAt(Math.floor(Math.random() * n));
-  }
-  return retVal;
-}
+import {
+  generatePassword,
+  sleep,
+} from "./helper/Functions";
 
 enum UpdateStates {
   CLOSED,
@@ -168,12 +163,18 @@ export default function App() {
 
     (async () => {
       try {
-        const FIRMWARE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51531";
         const firmware = await connectedDevice.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
         if (firmware?.value) {
           const fw = base64.decode(firmware.value);
 
-          const response = await fetch(UPDATE_URL, { method: "GET", headers: { authorization: MAC! }, });
+          const response = await fetch(UPDATE_URL,
+            {
+              method: "GET",
+              headers: {
+                authorization: MAC!
+              },
+            }
+          );
 
           if (response.status !== 200) return;
 
@@ -196,7 +197,7 @@ export default function App() {
           setFirmwareVersions({
             old: fw,
             new: apiVersion
-          })
+          });
 
           if (upgradeAvailable) {
             setUpgradeModalOpen(true);
@@ -208,7 +209,6 @@ export default function App() {
       } catch (err) {
         setUpgradeModalOpen(false);
         setPromptResponse(UpdateStates.CLOSED);
-        console.log(err);
       }
     })();
   }, [connectedDevice !== null]);
@@ -283,13 +283,28 @@ export default function App() {
 
 
   return (
-    <ScrollView style={{ backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%", width: "100%" }} contentContainerStyle={{ display: "flex", alignItems: "center", justifyContent: "flex-start", rowGap: 20 }}>
+    <ScrollView
+      style={{
+        backgroundColor: colorTheme.backgroundPrimaryColor,
+        height: "100%",
+        width: "100%"
+      }}
+      contentContainerStyle={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        rowGap: 20
+      }}>
 
-      {/* <form ref={formRef} style={{ display: "none" }} hidden={true} onSubmit={(ev) => makePost(ev)}>
-        < type='file' name='firmware' onP />
-      </form> */}
+      <Text
+        style={{
+          color: colorTheme.headerTextColor,
+          textAlign: "center",
+          fontSize: 20,
+          marginHorizontal: 20,
+          marginTop: 45
+        }}>
 
-      <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 20, marginHorizontal: 20, marginTop: 45 }}>
         {
           !connectedDevice ?
             !noDevice ?
@@ -304,32 +319,73 @@ export default function App() {
                 : "No Wink Module Scanned... Try scanning again, or restarting the app."
             : ""
         }
+
       </Text>
 
-      <View style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", rowGap: 10 }}>
+      <View
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 10
+        }}>
+
         {
           !connectedDevice ?
 
-            <Text style={{ color: colorTheme.textColor, textAlign: "center", marginHorizontal: 20 }}>
+            <Text
+              style={{
+                color: colorTheme.textColor,
+                textAlign: "center",
+                marginHorizontal: 20
+              }}>
               If this takes overly long to connect, try restarting the app.{"\n"}
               If you continue to be unable to connect, try pressing the 'Reset Button' on your Wink Module, and restart the app.
             </Text>
 
-            : <Text style={{ fontSize: 30, fontWeight: "bold", color: colorTheme.headerTextColor, marginTop: -20 }}>Connected to Wink Receiver</Text>
+            : <Text
+              style={{
+                fontSize: 30,
+                fontWeight: "bold",
+                color: colorTheme.headerTextColor,
+                marginTop: -20
+              }}>
+              Connected to Wink Receiver
+            </Text>
         }
 
-        <View style={{ display: "flex", flexDirection: "row", width: "90%", justifyContent: "flex-start", alignContent: "center", columnGap: 20 }}>
+        <View
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            width: "90%",
+            justifyContent: "flex-start",
+            alignContent: "center",
+            columnGap: 20
+          }}>
+
           <OpacityButton
             buttonStyle={{}}
             text="Device Settings"
-            textStyle={{ ...styles.buttonText, color: colorTheme.buttonColor, textDecorationLine: "underline", fontWeight: "bold" }}
+            textStyle={{
+              ...styles.buttonText,
+              color: colorTheme.buttonColor,
+              textDecorationLine: "underline",
+              fontWeight: "bold"
+            }}
             onPress={() => setSettingsOpen(true)}
           />
 
           <OpacityButton
             buttonStyle={{}}
             text="Edit Theme"
-            textStyle={{ ...styles.buttonText, color: colorTheme.buttonColor, textDecorationLine: "underline", fontWeight: "bold" }}
+            textStyle={{
+              ...styles.buttonText,
+              color: colorTheme.buttonColor,
+              textDecorationLine: "underline",
+              fontWeight: "bold"
+            }}
             onPress={() => setAppThemeOpen(true)}
           />
         </View>
@@ -346,14 +402,53 @@ export default function App() {
         backgroundColor: colorTheme.backgroundSecondaryColor,
         padding: 30,
       }}>
-        <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Default Commands</Text>
-        <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>A list of pre-loaded commands that cover a variety of movements.</Text>
+
+        <Text
+          style={{
+            color: colorTheme.headerTextColor,
+            textAlign: "center",
+            fontSize: 24,
+            fontWeight: "bold"
+          }}>
+          Default Commands
+        </Text>
+
+        <Text
+          style={{
+            color: colorTheme.textColor,
+            textAlign: "center",
+            fontSize: 16
+          }}>
+          A list of pre-loaded commands that cover a variety of movements.
+        </Text>
 
         <OpacityButton
-          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
+          buttonStyle={
+            !connectedDevice ?
+              {
+                ...styles.buttonDisabled,
+                backgroundColor: colorTheme.disabledButtonColor
+              } :
+              {
+                ...styles.button,
+                backgroundColor: colorTheme.buttonColor
+              }
+          }
+
           disabled={!connectedDevice}
           text="Go to Commands"
-          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
+          textStyle={
+            !connectedDevice ?
+              {
+                ...styles.buttonText,
+                color: colorTheme.disabledButtonTextColor
+              } :
+              {
+                ...styles.buttonText,
+                color: colorTheme.buttonTextColor
+              }
+
+          }
           onPress={() => setDefaultCommandsOpen(true)}
         />
       </View>
@@ -370,8 +465,25 @@ export default function App() {
         borderWidth: 3,
         padding: 30,
       }}>
-        <Text style={{ color: colorTheme.headerTextColor, textAlign: "center", fontSize: 24, fontWeight: "bold" }}>Custom Presets</Text>
-        <Text style={{ color: colorTheme.textColor, textAlign: "center", fontSize: 16 }}>If the default commands on this app aren't doing it for you, try making your own sequence of headlight movements!</Text>
+        <Text
+          style={{
+            color: colorTheme.headerTextColor,
+            textAlign: "center",
+            fontSize: 24,
+            fontWeight: "bold"
+          }}>
+          Custom Presets
+        </Text>
+
+        <Text
+          style={{
+            color: colorTheme.textColor,
+            textAlign: "center",
+            fontSize: 16
+          }}>
+          If the default commands on this app aren't enough for you, try making your own sequence of headlight movements!
+        </Text>
+
         <OpacityButton
           buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
           disabled={!connectedDevice}
@@ -466,6 +578,8 @@ export default function App() {
         visible={appThemeOpen}
         key={5}
       />
+
+
 
       {/* FIRMWARE UPGRADE SCREEN / POPUP */}
       <Modal
