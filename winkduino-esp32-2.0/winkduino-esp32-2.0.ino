@@ -444,22 +444,16 @@ void setupHttpUpdateServer() {
       // them through the Update object
       HTTPRaw &raw = httpServer.raw();
       // raw.totalSize
-      if (raw.status == RAW_START) {
+
+      printf("Raw Size: %d\n", raw.totalSize);
 
         int headerCount = httpServer.headers();
-        int headerSize = -1;
         for (int i = 0; i < headerCount; i++) {
           String tmpName = httpServer.headerName(i);
           printf("%s\n", tmpName.c_str());
-          // if (tmpName.equals("Content-Length")) {
-          //   String size = httpServer.header(i);
-          //   string sizeStr = string(size.c_str());
-          //   int sizeNum = stoi(sizeStr);
-          //   headerSize = sizeNum;
-          //   break;
-          // }
         }
 
+      if (raw.status == RAW_START) {
         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
         if (!Update.begin(maxSketchSpace, U_FLASH)) {  //start with max available size
           Update.printError(Serial);

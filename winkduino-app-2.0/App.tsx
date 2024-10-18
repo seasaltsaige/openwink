@@ -24,7 +24,7 @@ const LONG_TERM_SLEEP_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51528"
 const CUSTOM_BUTTON_UPDATE_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51530";
 
 // const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-const UPDATE_URL = "http://10.9.89.31:3000/.netlify/functions/api/update";
+const UPDATE_URL = "http://192.168.1.107:3000/.netlify/functions/api/update";
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const generatePassword = (len: number) => {
@@ -256,6 +256,9 @@ export default function App() {
       const updateResponse = await fetch("http://module-update.local/update", {
         method: "POST",
         body: blobWithType,
+        headers: {
+          "Content-Length": blobWithType.size.toString(),
+        }
       });
 
 
