@@ -40,7 +40,7 @@ export function useColorTheme() {
 
   async function revertDefaults() {
     await ThemeStore.resetAllThemes();
-    setColorTheme(defaults);
+    setColorTheme((prev) => ({ ...defaults }));
   }
 
   async function resetTheme(theme: keyof typeof defaults) {

@@ -4,6 +4,7 @@ import { useColorTheme } from "../hooks/useColorTheme";
 import DropDownPicker from "react-native-dropdown-picker";
 import ColorPicker from "react-native-wheel-color-picker";
 import { OpacityButton } from "../Components/OpacityButton";
+import { getBackgroundColor, isValidHex } from "../helper/Functions";
 
 export function AppTheme(props: { visible: boolean; close: () => void; }) {
 
@@ -31,31 +32,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
     setTheme(selectedTheme, color);
   }
 
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
 
-  }
-
-  const getBackgroundColor = (color: string) => {
-    const rgbValue = hexToRgb(color);
-    if (rgbValue) {
-      const lum = (0.2126 * rgbValue.r + 0.7152 * rgbValue.g + 0.0722 * rgbValue.b) / 255;
-      if (lum > 0.5)
-        return "black";
-      else
-        return "white";
-    }
-  }
-
-  const isValidHex = (str: string) => {
-    const hexaPattern = /^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
-    return hexaPattern.test(str);
-  }
 
 
   useEffect(() => {
@@ -68,177 +45,197 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
     setTypedTheme(colorTheme[selectedTheme])
   }, []);
 
-  return <Modal
-    transparent={false}
-    visible={props.visible}
-    animationType="slide"
-    hardwareAccelerated
-    onRequestClose={() => props.close()}
-  >
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        rowGap: 15
-      }}>
-      <Text style={{ color: colorTheme.headerTextColor, fontSize: 25, fontWeight: "500", marginTop: 10, }}>
-        Edit Color Theme
-      </Text>
-      <Text style={{ color: colorTheme.textColor, fontSize: 16 }}>
-        Change your apps color theme here
-      </Text>
-
+  return (
+    <Modal
+      transparent={false}
+      visible={props.visible}
+      animationType="slide"
+      hardwareAccelerated
+      onRequestClose={() => props.close()}
+    >
       <View
         style={{
-          width: "90%",
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          paddingVertical: 20,
-          paddingHorizontal: 10,
-          borderRadius: 5,
+          backgroundColor: colorTheme.backgroundPrimaryColor,
+          height: "100%",
+          width: "100%",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
-          rowGap: 15,
+          rowGap: 15
         }}>
-        <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
-          <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
-            Color Hex
-          </Text>
-          <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
-            You can edit the colors hex directly if preferred
-          </Text>
-          <TextInput
-            style={{
-              borderColor: getBackgroundColor(colorTheme.backgroundSecondaryColor),
-              borderWidth: 1,
-              paddingHorizontal: 20,
-              paddingVertical: 5,
-              borderRadius: 5,
-              color: colorTheme.textColor,
-              fontSize: 18,
-            }}
-            //@ts-ignore
-            value={typedTheme}
-            maxLength={7}
-            onChangeText={(text) => {
-              if (text.length > 6)
-                if (isValidHex(text)) updateTheme(text);
-              setTypedTheme(text);
-            }}
-          />
-        </View>
-
-      </View>
-
-      <View
-        style={{
-          width: "90%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          paddingVertical: 15,
-          borderRadius: 5,
-          borderColor: colorTheme.backgroundSecondaryColor,
-          borderWidth: 2,
-          rowGap: 15,
-        }}>
-
-        <Text style={{
-          // @ts-ignore
-          color: getBackgroundColor(colorTheme[selectedTheme]),
-          // @ts-ignore
-          backgroundColor: colorTheme[selectedTheme],
-          fontSize: 18,
-          fontWeight: "bold",
-          padding: 10,
-          borderRadius: 5,
-        }}>
-          Selected Theme: {themeOptions.find(v => v.value === selectedTheme)?.label}
+        <Text style={{ color: colorTheme.headerTextColor, fontSize: 25, fontWeight: "500", marginTop: 10, }}>
+          Edit Color Theme
+        </Text>
+        <Text style={{ color: colorTheme.textColor, fontSize: 16 }}>
+          Change your apps color theme here
         </Text>
 
-
-        <DropDownPicker
-          items={themeOptions}
-          open={open}
-          setOpen={setOpen}
-          setValue={setSelectedTheme}
-          value={selectedTheme}
-          setItems={setThemeOptions}
-          placeholder="Select a theme component"
-          containerStyle={{
+        <View
+          style={{
             width: "90%",
-            backgroundColor: colorTheme.backgroundPrimaryColor
-            // zIndex: 1000,
-          }}
-        // style={{
-        //   backgroundColor: colorTheme.backgroundSecondaryColor,
-        //   borderColor: colorTheme.backgroundSecondaryColor,
-        //   borderWidth: 3,
-        // }}
-        // textStyle={{
-        //   color: colorTheme.textColor,
-        //   fontSize: 16
-        // }}
-        // dropDownContainerStyle={{
-        //   backgroundColor: colorTheme.backgroundSecondaryColor,
-        //   borderColor: colorTheme.backgroundSecondaryColor,
-        //   borderBottomEndRadius: 3,
-        //   borderBottomStartRadius: 3,
-        // }}
-        // itemSeparatorStyle={{
-        //   backgroundColor: "white"
-        // }}
-        // badgeStyle={{
-        //   backgroundColor: colorTheme.textColor
-        // }}
-        />
+            backgroundColor: colorTheme.backgroundSecondaryColor,
+            paddingVertical: 20,
+            paddingHorizontal: 10,
+            borderRadius: 5,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            rowGap: 15,
+          }}>
+          <View style={{ display: "flex", rowGap: 5, flexDirection: "column", alignContent: "center", justifyContent: "flex-start" }}>
+            <Text style={{ color: colorTheme.headerTextColor, fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
+              Color Hex
+            </Text>
+            <Text style={{ color: colorTheme.textColor, fontSize: 17, textAlign: "center" }}>
+              You can edit the colors hex directly if preferred
+            </Text>
+            <TextInput
+              style={{
+                borderColor: getBackgroundColor(colorTheme.backgroundSecondaryColor),
+                borderWidth: 1,
+                paddingHorizontal: 20,
+                paddingVertical: 5,
+                borderRadius: 5,
+                color: colorTheme.textColor,
+                fontSize: 18,
+              }}
+              //@ts-ignore
+              value={typedTheme}
+              maxLength={7}
+              onChangeText={(text) => {
+                if (text.length > 6)
+                  if (isValidHex(text)) updateTheme(text);
+                setTypedTheme(text);
+              }}
+            />
+          </View>
 
-        <View style={{ width: "95%", height: 245 }}>
-          <ColorPicker
-            swatches={false}
-            thumbSize={20}
-            discrete={false}
-            sliderSize={20}
-            wheelLoadingIndicator={<ActivityIndicator size={20} />}
+        </View>
+
+        <View
+          style={{
+            width: "90%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            paddingVertical: 15,
+            borderRadius: 5,
+            borderColor: colorTheme.backgroundSecondaryColor,
+            borderWidth: 2,
+            rowGap: 15,
+          }}>
+
+          <Text style={{
+            // @ts-ignore
+            color: getBackgroundColor(colorTheme[selectedTheme]),
+            // @ts-ignore
+            backgroundColor: colorTheme[selectedTheme],
+            fontSize: 18,
+            fontWeight: "bold",
+            padding: 10,
+            borderRadius: 5,
+
+          }}>
+            Selected Theme: {themeOptions.find(v => v.value === selectedTheme)?.label}
+          </Text>
+
+          <DropDownPicker
+            items={themeOptions}
+            open={open}
+            setOpen={setOpen}
+            setValue={setSelectedTheme}
+            value={selectedTheme}
+            setItems={setThemeOptions}
+            placeholder="Select a theme component"
+            theme={getBackgroundColor(colorTheme.backgroundSecondaryColor) ? "DARK" : "LIGHT"}
+            containerStyle={{ width: "90%" }}
+
+            style={{
+              backgroundColor: colorTheme.backgroundSecondaryColor,
+              borderColor: colorTheme.backgroundSecondaryColor,
+            }}
+            searchContainerStyle={{
+              backgroundColor: colorTheme.backgroundSecondaryColor,
+              borderColor: colorTheme.backgroundSecondaryColor,
+            }}
+            listItemContainerStyle={{
+              backgroundColor: colorTheme.backgroundSecondaryColor,
+              borderColor: colorTheme.backgroundSecondaryColor,
+            }}
+            textStyle={{
+              color: colorTheme.textColor,
+              fontSize: 17
+            }}
+            dropDownContainerStyle={{
+              backgroundColor: colorTheme.backgroundSecondaryColor,
+              borderColor: colorTheme.backgroundSecondaryColor,
+            }}
+
+          />
+
+          <View style={{ width: "95%", height: 245 }}>
+            <ColorPicker
+              swatches={false}
+              thumbSize={20}
+              discrete={false}
+              sliderSize={20}
+              wheelLoadingIndicator={
+                <ActivityIndicator
+                  size={20}
+                />
+              }
+              //@ts-ignore
+              color={colorTheme[selectedTheme]}
+              //@ts-ignore
+              onColorChange={(color) => updateTheme(color)}
+            />
+          </View>
+        </View>
+
+        <View style={{ display: "flex", flexDirection: "row", columnGap: 20, }}>
+          <OpacityButton
+            text="Reset Theme"
             //@ts-ignore
-            color={colorTheme[selectedTheme]}
-            //@ts-ignore
-            onColorChange={(color) => updateTheme(color)}
+            onPress={() => resetTheme(selectedTheme)}
+            buttonStyle={{
+              width: 150,
+              height: 50,
+              borderRadius: 5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colorTheme.buttonColor
+            }}
+            textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
+          />
+
+
+          <OpacityButton
+            text="Reset All"
+            onPress={() => revertDefaults()}
+            buttonStyle={{
+              width: 150,
+              height: 50,
+              borderRadius: 5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: colorTheme.buttonColor
+            }}
+            textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
           />
         </View>
-      </View>
 
-      <View style={{ display: "flex", flexDirection: "row", columnGap: 20, }}>
         <OpacityButton
-          text="Reset Theme"
-          //@ts-ignore
-          onPress={() => resetTheme(selectedTheme)}
+          text="Close"
+          onPress={() => props.close()}
           buttonStyle={{
             width: 150,
             height: 50,
             borderRadius: 5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: colorTheme.buttonColor
-          }}
-          textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
-        />
-
-
-        <OpacityButton
-          text="Reset All"
-          onPress={() => revertDefaults()}
-          buttonStyle={{
-            width: 150,
-            height: 50,
-            borderRadius: 5,
+            marginTop: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -248,23 +245,7 @@ export function AppTheme(props: { visible: boolean; close: () => void; }) {
         />
       </View>
 
-      <OpacityButton
-        text="Close"
-        onPress={() => props.close()}
-        buttonStyle={{
-          width: 150,
-          height: 50,
-          borderRadius: 5,
-          marginTop: 20,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: colorTheme.buttonColor
-        }}
-        textStyle={{ fontSize: 20, color: colorTheme.buttonTextColor }}
-      />
-    </View>
 
-
-  </Modal>
+    </Modal>
+  )
 }

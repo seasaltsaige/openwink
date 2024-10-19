@@ -152,9 +152,11 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      console.log("hello");
+      console.log(colorTheme)
       update();
     })();
-  }, [appThemeOpen]);
+  }, [appThemeOpen === false]);
 
 
   useEffect(() => {

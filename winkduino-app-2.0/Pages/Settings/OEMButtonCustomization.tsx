@@ -15,8 +15,6 @@ interface OEMButtonCustomizationProps {
   updateButtonDelay: (delay: number) => Promise<void>;
 }
 
-
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 // press count - 1
 // ie: 1 in position 0, 2 in position 1, etc
 const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press", "Decuple Press"];
@@ -449,8 +447,6 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
                           fontWeight: "bold",
                         }}
                         onPress={() => {
-                          // Delete Action
-                          // CAN NOT DELETE SINGLE PRESS
                           if (i === 0) return;
                           deleteBehavior(i);
                         }}
@@ -485,8 +481,6 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
         />
 
       </ScrollView>
-
-      {/* <Modal></Modal> */}
 
       <Modal
         visible={editBehavior !== null}
