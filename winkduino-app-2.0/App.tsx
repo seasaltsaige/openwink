@@ -56,7 +56,8 @@ export default function App() {
     noDevice,
     MAC,
     updateProgress,
-    updatingStatus
+    updatingStatus,
+    firmwareVersion,
   } = useBLE();
 
   const [defaultCommandsOpen, setDefaultCommandsOpen] = useState(false);
@@ -152,8 +153,6 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      console.log("hello");
-      console.log(colorTheme)
       update();
     })();
   }, [appThemeOpen === false]);
@@ -572,6 +571,7 @@ export default function App() {
         device={connectedDevice}
         updateOEMButton={updateOEMButtonPresets}
         updateButtonDelay={updateButtonDelay}
+        firmwareVersion={firmwareVersion || "Unknown"}
         key={4}
       />
 

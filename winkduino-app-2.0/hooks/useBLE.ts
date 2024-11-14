@@ -27,8 +27,8 @@ function useBLE() {
   const [rightState, setRightState] = useState(0);
 
   const [MAC, setMAC] = useState<string | undefined>(undefined);
-
   const [firmwareVersion, setFirmwareVersion] = useState(null as string | null);
+
   const [noDevice, setNoDevice] = useState(false);
 
   // Home page states
@@ -39,6 +39,12 @@ function useBLE() {
   // Update tracking / status
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updatingStatus, setUpdatingStatus] = useState("idle" as "idle" | "updating" | "failed" | "success");
+
+
+  // Delay between when headlights start moving
+  // Default is 750 ms
+  const [waveDelay, setWaveDelay] = useState(750);
+
 
   useEffect(() => {
     (async () => {
@@ -170,9 +176,12 @@ function useBLE() {
         else setRightState(0);
       }
 
+
       const firmware = await connection?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
-      if (firmware.value)
+      if (firmware.value) {
         setFirmwareVersion(base64.decode(firmware.value));
+        await DeviceMACStore.setFirmwareVersion(base64.decode(firmware.value));
+      }
 
       // Handle disconnect
       connection.onDisconnected(async (err, device) => {

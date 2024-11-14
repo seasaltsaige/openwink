@@ -20,6 +20,7 @@ interface SettingsProps {
   device: Device | null;
   updateOEMButton: (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
+  firmwareVersion: string;
 }
 
 export function Settings(props: SettingsProps) {
@@ -94,6 +95,7 @@ export function Settings(props: SettingsProps) {
 
   const forgetPair = async () => {
     await DeviceMACStore.forgetMAC();
+    await DeviceMACStore.removeFirmwareVersion();
     await fetchPairing();
   }
 
@@ -155,7 +157,21 @@ export function Settings(props: SettingsProps) {
             justifyContent: "flex-start",
             rowGap: 20
           }}>
-          <Text style={{ ...styles.text, width: "90%", fontSize: 27, marginTop: 30, color: props.colorTheme.headerTextColor }}>Device Settings</Text>
+
+
+          <Text
+            style={{
+              ...styles.text,
+              width: "90%",
+              fontSize: 27,
+              marginTop: 30,
+              color: props.colorTheme.headerTextColor
+            }}>
+            Device Settings
+          </Text>
+
+
+          {/* SOFTWARE INFO / MAC ID */}
           <View
             style={{
               width: "90%",
@@ -169,6 +185,8 @@ export function Settings(props: SettingsProps) {
               paddingHorizontal: 10,
               borderRadius: 5
             }}>
+
+
             <Text style={{ textAlign: "center", fontSize: 23, paddingHorizontal: 5 }}>
               {
                 pairedMAC
@@ -176,6 +194,10 @@ export function Settings(props: SettingsProps) {
                   <>
                     <Text style={{ color: props.colorTheme.headerTextColor }}>Your paired Receiver ID is{"\n"}</Text>
                     <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{pairedMAC}{"\n\n"}</Text>
+
+                    <Text style={{ color: props.colorTheme.headerTextColor }}>Receiver Software Version{"\n"}</Text>
+                    <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{props.firmwareVersion}{"\n\n"}</Text>
+
                     <Text style={{ fontSize: 16, color: props.colorTheme.textColor }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
                   </>
                   :
@@ -196,6 +218,8 @@ export function Settings(props: SettingsProps) {
             }
           </View>
 
+
+          {/* AUTO CONNECT */}
           <View
             style={{
               width: "90%",
@@ -250,7 +274,12 @@ export function Settings(props: SettingsProps) {
             </View>
           </View>
 
+          {/* WAVE DELAY */}
+          <View>
 
+          </View>
+
+          {/* SLEEPY EYE SETTINGS */}
           <View
             style={{
               width: "90%",
@@ -332,6 +361,7 @@ export function Settings(props: SettingsProps) {
             </View>
           </View>
 
+          {/* RETRACTOR BUTTON PRESETS */}
           <View style={{
             width: "90%",
             display: "flex",
@@ -363,6 +393,7 @@ export function Settings(props: SettingsProps) {
 
           </View>
 
+          {/* LONG TERM SLEEP */}
           <View
             style={{
               width: "90%",
@@ -394,7 +425,7 @@ export function Settings(props: SettingsProps) {
 
           </View>
 
-
+          {/* DELETE ALL DATA */}
           <View style={{
             width: "90%",
             display: "flex",
