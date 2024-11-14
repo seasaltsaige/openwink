@@ -158,6 +158,8 @@ export default function App() {
   }, [appThemeOpen === false]);
 
 
+  // TODO: get firmware version from store and update
+
   useEffect(() => {
     if (connectedDevice === null) return;
     // Check for app + or module updates
