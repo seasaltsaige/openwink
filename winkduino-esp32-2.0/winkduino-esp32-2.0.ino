@@ -32,7 +32,7 @@ using namespace std;
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.2"
+#define FIRMWARE_VERSION "0.0.1"
 
 Preferences preferences;
 
@@ -601,7 +601,7 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 
 unsigned long t;
 
-int advertiseTime_ms = 800;
+int advertiseTime_ms = 1000;
 int sleepTime_us = 15 * 1000 * 1000;
 
 NimBLEExtAdvertising *pAdvertising;
