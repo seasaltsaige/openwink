@@ -26,4 +26,14 @@ export class SleepyEyeStore {
             else return parseFloat(value);
         } catch (err) { };
     }
+
+    static async setWaveDelay(delay: number) {
+        await AsyncStorage.setItem("wave-delay", delay.toString());
+    }
+    static async getWaveDelay() {
+        return await AsyncStorage.getItem("wave-delay");
+    }
+    static async resetWaveDelay() {
+        await AsyncStorage.removeItem("wave-delay");
+    }
 }

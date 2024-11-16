@@ -25,4 +25,8 @@ export class DeviceMACStore {
   static async removeFirmwareVersion() {
     await AsyncStorage.removeItem(VERSION_KEY);
   }
+
+  static async getFirmwareVersion() {
+    return await AsyncStorage.getItem(VERSION_KEY);
+  }
 }

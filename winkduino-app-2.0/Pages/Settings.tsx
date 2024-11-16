@@ -20,7 +20,8 @@ interface SettingsProps {
   device: Device | null;
   updateOEMButton: (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
-  firmwareVersion: string;
+  updateWaveDelay: (delay: number) => Promise<void>;
+  // firmwareVersion: string;
 }
 
 export function Settings(props: SettingsProps) {
@@ -32,6 +33,9 @@ export function Settings(props: SettingsProps) {
   const [toUpdateLeft, setToUpdateLeft] = useState<undefined | number>();
   const [toUpdateRight, setToUpdateRight] = useState<undefined | number>();
 
+  const [headlightMulti, setHeadlightMulti] = useState(100);
+  const [toUpdateMulti, setToUpdateMulti] = useState<undefined | number>();
+
   const [autoConnectSetting, setAutoConnectSetting] = useState(true);
 
   const [deleteDataPopup, setDeleteDataPopup] = useState(false);
@@ -39,6 +43,9 @@ export function Settings(props: SettingsProps) {
 
   const [goodbyeVisible, setGoodbyeVisible] = useState(false);
   const [shutdownTime, setShutdownTime] = useState(3);
+
+  const [firmwareVersion, setFirmwareVersion] = useState(null as null | string);
+
   // FETCH SETTINGS
   const fetchPairing = async () => {
     const storedMAC = await DeviceMACStore.getStoredMAC();
@@ -73,6 +80,21 @@ export function Settings(props: SettingsProps) {
     setToUpdateLeft(undefined);
     setToUpdateRight(undefined);
     await fetchHeadlightSettings();
+  }
+
+  const saveDelayValue = async () => {
+    await SleepyEyeStore.setWaveDelay(toUpdateMulti || 100);
+
+    await props.updateWaveDelay(toUpdateMulti || 100);
+
+    setHeadlightMulti(toUpdateMulti || 100);
+    setToUpdateMulti(undefined);
+  }
+
+  const resetDelayValue = async () => {
+    await SleepyEyeStore.resetWaveDelay();
+    setHeadlightMulti(100);
+    setToUpdateMulti(undefined);
   }
 
   const saveAutoConnect = async (value: boolean) => {
@@ -130,6 +152,16 @@ export function Settings(props: SettingsProps) {
 
   useEffect(() => {
     (async () => {
+      // if (props.firmwareVersion)
+
+      const firmware = await DeviceMACStore.getFirmwareVersion();
+      if (firmware) setFirmwareVersion(firmware);
+      else setFirmwareVersion(null);
+
+      const waveDelay = await SleepyEyeStore.getWaveDelay();
+      if (waveDelay) setHeadlightMulti(parseInt(waveDelay));
+      else setHeadlightMulti(100);
+
       await fetchPairing();
       await fetchHeadlightSettings();
       await fetchAutoConnectSetting();
@@ -196,7 +228,7 @@ export function Settings(props: SettingsProps) {
                     <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{pairedMAC}{"\n\n"}</Text>
 
                     <Text style={{ color: props.colorTheme.headerTextColor }}>Receiver Software Version{"\n"}</Text>
-                    <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{props.firmwareVersion}{"\n\n"}</Text>
+                    <Text style={{ fontWeight: "bold", color: props.colorTheme.headerTextColor }}>{firmwareVersion || "Unknown"}{"\n\n"}</Text>
 
                     <Text style={{ fontSize: 16, color: props.colorTheme.textColor }}>Forgetting your Wink Module will allow you to pair to a new device if needed.</Text>
                   </>
@@ -275,7 +307,60 @@ export function Settings(props: SettingsProps) {
           </View>
 
           {/* WAVE DELAY */}
-          <View>
+          <View
+            style={{
+              width: "90%",
+              rowGap: 10,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: props.colorTheme.backgroundSecondaryColor,
+              paddingVertical: 20,
+              paddingHorizontal: 10,
+              borderRadius: 5
+            }}>
+
+            <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>
+              Wave Delay Settings
+            </Text>
+
+            <Text style={{ color: props.colorTheme.textColor, textAlign: "center" }}>
+              Enter a number from 0 to 100. This will act as a percentage multiplier for the delay between when each headlight begins a 'wave'. By default, this is 100%.
+            </Text>
+
+            <Text style={{ color: props.colorTheme.textColor }}>Delay set to {headlightMulti}%</Text>
+            <TextInput
+              style={{ backgroundColor: "rgb(40, 40, 40)", paddingVertical: 5, paddingHorizontal: 15, color: "white", borderRadius: 3, width: "50%", textAlign: "center" }}
+              placeholder="0 to 100%"
+              placeholderTextColor="rgb(200,200,200)"
+              keyboardType="numeric"
+              value={toUpdateMulti?.toString() || ""}
+              onChangeText={(text) => {
+                if (parseInt(text) > 100) setToUpdateMulti(100);
+                else if (parseInt(text) < 0) setToUpdateMulti(0);
+                else if (text === "") setToUpdateMulti(undefined);
+                else setToUpdateMulti(parseFloat(text))
+              }}
+              maxLength={3}
+            />
+
+
+            <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+              <OpacityButton
+                text="Save"
+                buttonStyle={{ ...styles.commandButton, backgroundColor: "#228B22", width: 85, height: 40, padding: 0 }}
+                textStyle={styles.buttonText}
+                onPress={() => saveDelayValue()}
+              />
+
+              <OpacityButton
+                text="Reset"
+                buttonStyle={{ ...styles.commandButton, backgroundColor: "#de142c", width: 85, height: 40, padding: 0 }}
+                textStyle={styles.buttonText}
+                onPress={() => resetDelayValue()}
+              />
+            </View>
 
           </View>
 

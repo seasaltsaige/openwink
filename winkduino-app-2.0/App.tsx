@@ -24,7 +24,8 @@ import {
   REQUEST_CHAR_UUID,
   RIGHT_SLEEPY_EYE_UUID,
   SYNC_UUID,
-  UPDATE_URL
+  UPDATE_URL,
+  HEADLIGHT_MOVEMENT_DELAY_UUID
 } from './helper/Constants';
 
 import {
@@ -134,6 +135,10 @@ export default function App() {
   const updateButtonDelay = async (delay: number) => {
     await CustomOEMButtonStore.setDelay(delay);
     await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(delay.toString()));
+  }
+
+  const updateWaveDelay = async (delay: number) => {
+    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, base64.encode(delay.toString()));
   }
 
 
@@ -573,7 +578,8 @@ export default function App() {
         device={connectedDevice}
         updateOEMButton={updateOEMButtonPresets}
         updateButtonDelay={updateButtonDelay}
-        firmwareVersion={firmwareVersion || "Unknown"}
+        updateWaveDelay={updateWaveDelay}
+        // firmwareVersion={firmwareVersion || "Unknown"}
         key={4}
       />
 
