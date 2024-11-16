@@ -177,7 +177,7 @@ function DefaultCommands(props: DefaultModalProps) {
         }}>
           <Text style={{ ...styles.text, color: props.colorTheme.headerTextColor }}>Wave Commands</Text>
           <Text style={{ color: props.colorTheme.textColor, textAlign: "center", width: "90%" }}>
-            Wave commands start from the specified headlight, and wink from the start headlight to the other  one.
+            Wave commands start from the specified headlight, and wink from the start headlight to the other one.
           </Text>
           <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
 

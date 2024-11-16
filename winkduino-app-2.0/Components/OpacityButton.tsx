@@ -20,7 +20,13 @@ class KeyCounter {
 export function OpacityButton(props: OpacityButtonProps) {
 
   return (
-    <TouchableOpacity disabled={props.disabled} style={props.buttonStyle} key={KeyCounter.newKey()} onPress={(event) => props.onPress(event)}>
+    <TouchableOpacity
+      disabled={props.disabled}
+      style={props.buttonStyle}
+      key={KeyCounter.newKey()}
+      onPress={(event) => props.onPress(event)}
+    >
+
       <Text style={props.textStyle}>
         {props.text}
       </Text>

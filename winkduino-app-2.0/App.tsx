@@ -89,28 +89,52 @@ export default function App() {
   const sendDefaultCommand = (value: number) => {
     if (headlightsBusy) return;
     if (connectedDevice)
-      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, REQUEST_CHAR_UUID, base64.encode(value.toString())).catch(err => console.log(err));
+      connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        REQUEST_CHAR_UUID,
+        base64.encode(value.toString())
+      ).catch(err => console.log(err));
   }
 
   const sendSleepCommand = (left: number, right: number) => {
     if (headlightsBusy) return;
     if (connectedDevice) {
-      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LEFT_SLEEPY_EYE_UUID, base64.encode(left.toString())).catch(err => console.log(err));
-      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, RIGHT_SLEEPY_EYE_UUID, base64.encode(right.toString())).catch(err => console.log(err));
+      connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        LEFT_SLEEPY_EYE_UUID,
+        base64.encode(left.toString())
+      ).catch(err => console.log(err));
+
+      connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        RIGHT_SLEEPY_EYE_UUID,
+        base64.encode(right.toString())
+      ).catch(err => console.log(err));
     }
   }
 
   const sendSyncSignal = () => {
     if (headlightsBusy) return;
     if (connectedDevice)
-      connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, SYNC_UUID, base64.encode("1"));
+      connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        SYNC_UUID,
+        base64.encode("1")
+      );
   }
 
   const enterDeepSleep = async () => {
     if (!connectedDevice) return;
     try {
-      await connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, LONG_TERM_SLEEP_UUID, base64.encode("1"));
+
+      await connectedDevice.writeCharacteristicWithoutResponseForService(
+        SERVICE_UUID,
+        LONG_TERM_SLEEP_UUID,
+        base64.encode("1")
+      );
+
       await disconnect();
+
     } catch (err) {
       console.log("ERROR SLEEPING");
       console.log(err);
@@ -118,27 +142,50 @@ export default function App() {
   }
 
   const updateOEMButtonPresets = async (presses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
+    if (!connectedDevice) return;
+
     //@ts-ignore
     if (to === 0)
       await CustomOEMButtonStore.remove(presses);
     else
       await CustomOEMButtonStore.set(presses, to);
 
-    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode((presses).toString()));
+    await connectedDevice.writeCharacteristicWithoutResponseForService(
+      SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode((presses).toString())
+    );
+
     await sleep(20);
-    //@ts-ignore
-    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(to === 0 ? "0" : buttonBehaviorMap[to].toString()));
+
+    await connectedDevice.writeCharacteristicWithoutResponseForService(
+      SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,     //@ts-ignore
+      base64.encode(to === 0 ? "0" : buttonBehaviorMap[to].toString())
+    );
     await sleep(20);
   }
 
   // SHOULD DISALLOW VALUES LESS THAN ~100 ms since that doesn't make a bunch of sense
   const updateButtonDelay = async (delay: number) => {
+    if (!connectedDevice || delay < 100) return;
+
     await CustomOEMButtonStore.setDelay(delay);
-    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(delay.toString()));
+
+    await connectedDevice.writeCharacteristicWithoutResponseForService(
+      SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(delay.toString())
+    );
   }
 
   const updateWaveDelay = async (delay: number) => {
-    await connectedDevice?.writeCharacteristicWithoutResponseForService(SERVICE_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, base64.encode(delay.toString()));
+    if (!connectedDevice) return;
+    await connectedDevice.writeCharacteristicWithoutResponseForService(
+      SERVICE_UUID,
+      HEADLIGHT_MOVEMENT_DELAY_UUID,
+      base64.encode(delay.toString())
+    );
   }
 
 
@@ -162,19 +209,17 @@ export default function App() {
     })();
   }, [appThemeOpen === false]);
 
-
-  // TODO: get firmware version from store and update
-
   useEffect(() => {
     if (connectedDevice === null) return;
-    // Check for app + or module updates
 
     (async () => {
       try {
+        // Get firmware version from wink module
         const firmware = await connectedDevice.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
         if (firmware?.value) {
           const fw = base64.decode(firmware.value);
 
+          // Fetch update data from api
           const response = await fetch(UPDATE_URL,
             {
               method: "GET",
@@ -193,6 +238,8 @@ export default function App() {
           const firmwareParts = fw.split(".");
 
           let upgradeAvailable = false;
+
+          // Compare versions
           for (let i = 0; i < 3; i++) {
             const apiPart = parseInt(apiVersionParts[i]);
             const firmwarePart = parseInt(firmwareParts[i]);
@@ -207,6 +254,7 @@ export default function App() {
             new: apiVersion
           });
 
+          // If an update is available, prompt user to install it
           if (upgradeAvailable) {
             setUpgradeModalOpen(true);
             setPromptResponse(UpdateStates.PROMPT);
@@ -221,9 +269,10 @@ export default function App() {
     })();
   }, [connectedDevice !== null]);
 
-
+  // Runs if user accepts install
   const downloadAndInstallFirmware = async () => {
 
+    // fetch update bin file
     const response = await fetch(
       `${UPDATE_URL}/firmware`,
       {
@@ -234,10 +283,12 @@ export default function App() {
       }
     );
 
+    // Generate a password for the wifi network
     const password = generatePassword(16);
 
     const OTA_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51529"
 
+    // Send password, and start wifi/http service
     await connectedDevice?.writeCharacteristicWithoutResponseForService(
       SERVICE_UUID,
       OTA_UUID,
@@ -246,6 +297,7 @@ export default function App() {
 
     await sleep(1500);
 
+    // Connect phone to modules wifi ap
     await WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
       password,
@@ -258,9 +310,12 @@ export default function App() {
 
     try {
 
+      // Create blob to send to esp
       const blob = await response.blob();
       const blobWithType = blob.slice(0, blob.size, "application/octet-stream");
 
+
+      // Post to esp
       const updateResponse = await fetch("http://module-update.local/update", {
         method: "POST",
         body: blobWithType,
@@ -269,15 +324,26 @@ export default function App() {
         }
       });
 
-
+      // Once completed, disconnect from wifi, and ble
       await WifiManager.disconnect();
       await connectedDevice?.cancelConnection();
 
       if (updateResponse.ok) {
         setWifiConnected(false);
-        setUpgradeModalOpen(false);
-        setPromptResponse(UpdateStates.CLOSED);
+        setPromptResponse(UpdateStates.SUCCESS);
+
+        setTimeout(() => {
+          setUpgradeModalOpen(false);
+          setPromptResponse(UpdateStates.CLOSED);
+        }, 3000);
       } else {
+        setWifiConnected(false);
+        setPromptResponse(UpdateStates.FAILED);
+
+        setTimeout(() => {
+          setUpgradeModalOpen(false);
+          setPromptResponse(UpdateStates.CLOSED);
+        }, 3000);
       }
 
     } catch (err) {
@@ -301,7 +367,8 @@ export default function App() {
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        rowGap: 20
+        height: "100%",
+        rowGap: 30
       }}>
 
       <Text
@@ -320,11 +387,8 @@ export default function App() {
                 "Scanning for Wink Module"
                 : isConnecting ?
                   "Connecting to Wink Module... Stand by..."
-                  : (autoConnect && connectedDevice) ?
-                    "" : (!autoConnect && connectedDevice) ? "" :
-                      "Scanner standing by... Press \"Connect\" to start scanning.")
-              : autoConnect ? "No Wink Module Scanned... Trying again..."
-                : "No Wink Module Scanned... Try scanning again, or restarting the app."
+                  : "Scanner standing by... Press \"Connect\" to start scanning."
+              ) : "No Wink Module Scanned... Try scanning again, or restarting the app."
             : ""
         }
 
@@ -336,31 +400,31 @@ export default function App() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          rowGap: 10
+          rowGap: 10,
         }}>
 
         {
           !connectedDevice ?
-
-            <Text
-              style={{
-                color: colorTheme.textColor,
-                textAlign: "center",
-                marginHorizontal: 20
-              }}>
-              If this takes overly long to connect, try restarting the app.{"\n"}
-              If you continue to be unable to connect, try pressing the 'Reset Button' on your Wink Module, and restart the app.
-            </Text>
-
-            : <Text
-              style={{
-                fontSize: 30,
-                fontWeight: "bold",
-                color: colorTheme.headerTextColor,
-                marginTop: -20
-              }}>
-              Connected to Wink Receiver
-            </Text>
+            (
+              <Text
+                style={{
+                  color: colorTheme.textColor,
+                  textAlign: "center",
+                  marginHorizontal: 20
+                }}>
+                If this takes more than 30 seconds to connect, try restarting the app.
+              </Text>
+            ) : (
+              <Text
+                style={{
+                  fontSize: 30,
+                  fontWeight: "bold",
+                  color: colorTheme.headerTextColor,
+                  marginTop: -20
+                }}>
+                Connected to Wink Receiver
+              </Text>
+            )
         }
 
         <View
@@ -398,114 +462,143 @@ export default function App() {
           />
         </View>
       </View>
-
       <View style={{
+        width: "100%",
+        height: "60%",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        rowGap: 20,
-        width: "90%",
-        borderRadius: 5,
-        backgroundColor: colorTheme.backgroundSecondaryColor,
-        padding: 30,
+        rowGap: 50
       }}>
+        <View style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 10,
+          width: "90%",
+          borderRadius: 5,
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          padding: 15,
+          paddingHorizontal: 25,
+        }}>
 
-        <Text
-          style={{
-            color: colorTheme.headerTextColor,
-            textAlign: "center",
-            fontSize: 24,
-            fontWeight: "bold"
-          }}>
-          Default Commands
-        </Text>
+          <Text
+            style={{
+              color: colorTheme.headerTextColor,
+              textAlign: "center",
+              fontSize: 24,
+              fontWeight: "bold"
+            }}>
+            Default Commands
+          </Text>
 
-        <Text
-          style={{
-            color: colorTheme.textColor,
-            textAlign: "center",
-            fontSize: 16
-          }}>
-          A list of pre-loaded commands that cover a variety of movements.
-        </Text>
+          <Text
+            style={{
+              color: colorTheme.textColor,
+              textAlign: "center",
+              fontSize: 16
+            }}>
+            A list of pre-loaded commands that cover a variety of movements.
+          </Text>
 
-        <OpacityButton
-          buttonStyle={
-            !connectedDevice ?
-              {
-                ...styles.buttonDisabled,
-                backgroundColor: colorTheme.disabledButtonColor
-              } :
-              {
-                ...styles.button,
-                backgroundColor: colorTheme.buttonColor
-              }
-          }
+          <OpacityButton
+            buttonStyle={
+              {}
+            }
 
-          disabled={!connectedDevice}
-          text="Go to Commands"
-          textStyle={
-            !connectedDevice ?
-              {
-                ...styles.buttonText,
-                color: colorTheme.disabledButtonTextColor
-              } :
-              {
-                ...styles.buttonText,
-                color: colorTheme.buttonTextColor
-              }
+            disabled={!connectedDevice}
+            text="Go to Commands"
+            textStyle={{
+              ...
+              !connectedDevice ?
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.disabledButtonColor,
+                  textDecorationColor: colorTheme.disabledButtonColor,
+                } :
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.buttonColor
+                },
+              fontWeight: "bold", textDecorationLine: "underline"
+            }}
+            onPress={() => setDefaultCommandsOpen(true)}
+          />
+        </View>
 
-          }
-          onPress={() => setDefaultCommandsOpen(true)}
-        />
-      </View>
+        <View style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 10,
+          width: "90%",
+          borderRadius: 5,
+          borderColor: colorTheme.backgroundSecondaryColor,
+          borderWidth: 3,
+          padding: 15,
+          paddingHorizontal: 25,
+        }}>
+          <Text
+            style={{
+              color: colorTheme.headerTextColor,
+              textAlign: "center",
+              fontSize: 24,
+              fontWeight: "bold"
+            }}>
+            Custom Presets
+          </Text>
 
-      <View style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        rowGap: 20,
-        width: "90%",
-        borderRadius: 5,
-        borderColor: colorTheme.backgroundSecondaryColor,
-        borderWidth: 3,
-        padding: 30,
-      }}>
-        <Text
-          style={{
-            color: colorTheme.headerTextColor,
-            textAlign: "center",
-            fontSize: 24,
-            fontWeight: "bold"
-          }}>
-          Custom Presets
-        </Text>
+          <Text
+            style={{
+              color: colorTheme.textColor,
+              textAlign: "center",
+              fontSize: 16
+            }}>
+            If the default commands on this app aren't enough for you, try making your own sequence of headlight movements!
+          </Text>
 
-        <Text
-          style={{
-            color: colorTheme.textColor,
-            textAlign: "center",
-            fontSize: 16
-          }}>
-          If the default commands on this app aren't enough for you, try making your own sequence of headlight movements!
-        </Text>
-
-        <OpacityButton
-          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
-          disabled={!connectedDevice}
-          text="Create a Preset Command"
-          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-          onPress={() => setCreateCustomOpen(true)}
-        />
-        <OpacityButton
-          buttonStyle={!connectedDevice ? { ...styles.buttonDisabled, backgroundColor: colorTheme.disabledButtonColor } : { ...styles.button, backgroundColor: colorTheme.buttonColor }}
-          disabled={!connectedDevice}
-          text="Execute a Preset"
-          textStyle={!connectedDevice ? { ...styles.buttonText, color: colorTheme.disabledButtonTextColor } : { ...styles.buttonText, color: colorTheme.buttonTextColor }}
-          onPress={() => setCustomPresetOpen(true)}
-        />
+          <OpacityButton
+            buttonStyle={{}}
+            disabled={!connectedDevice}
+            text="Create a Preset Command"
+            textStyle={{
+              ...
+              !connectedDevice ?
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.disabledButtonColor,
+                  textDecorationColor: colorTheme.disabledButtonColor,
+                } :
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.buttonColor
+                },
+              fontWeight: "bold", textDecorationLine: "underline"
+            }}
+            onPress={() => setCreateCustomOpen(true)}
+          />
+          <OpacityButton
+            buttonStyle={{}}
+            disabled={!connectedDevice}
+            text="Execute a Preset"
+            textStyle={{
+              ...
+              !connectedDevice ?
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.disabledButtonColor,
+                  textDecorationColor: colorTheme.disabledButtonColor,
+                } :
+                {
+                  ...styles.buttonText,
+                  color: colorTheme.buttonColor
+                },
+              fontWeight: "bold", textDecorationLine: "underline"
+            }} onPress={() => setCustomPresetOpen(true)}
+          />
+        </View>
       </View>
 
       {

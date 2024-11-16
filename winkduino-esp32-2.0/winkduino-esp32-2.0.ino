@@ -32,7 +32,7 @@ using namespace std;
 // Meaning up should be 1, down should be 0
 #define UP_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.2"
+#define FIRMWARE_VERSION "0.0.4"
 
 Preferences preferences;
 
@@ -246,8 +246,7 @@ class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic *pCharacteristic) {
-    int tempLeft = leftStatus;
-    int tempRight = rightStatus;
+
     std::string value = pCharacteristic->getValue();
     int valueInt = String(value.c_str()).toInt();
     busyChar->setValue("1");
@@ -301,60 +300,27 @@ class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
       // "Wave" left first
       case 10:
 
-        if (tempRight != tempLeft) {
+        if (leftStatus != rightStatus) {
           bothUp();
           delay(HEADLIGHT_MOVEMENT_DELAY);
           setAllOff();
           updateHeadlightChars();
         }
 
-
-
-        // if (tempRight == 0 || tempLeft == 0) {
-        //   bothUp();
-        //   delay(HEADLIGHT_MOVEMENT_DELAY);
-        //   setAllOff();
-        //   updateHeadlightChars();
-        // }
-
         leftWave();
-
-        // if (tempRight == 0 || tempLeft == 0) {
-        //   delay(HEADLIGHT_MOVEMENT_DELAY);
-        //   setAllOff();
-        //   updateHeadlightChars();
-        //   bothDown();
-        // }
-
         break;
 
       case 11:
 
-        if (tempRight != tempLeft) {
+        if (leftStatus != rightStatus) {
           bothUp();
           delay(HEADLIGHT_MOVEMENT_DELAY);
           setAllOff();
           updateHeadlightChars();
         }
 
-
-        // if (tempRight == 0 || tempLeft == 0) {
-        //   bothUp();
-        //   delay(HEADLIGHT_MOVEMENT_DELAY);
-        //   setAllOff();
-        //   updateHeadlightChars();
-        // }
-
-
         rightWave();
 
-
-        // if (tempRight == 0 || tempLeft == 0) {
-        //   delay(HEADLIGHT_MOVEMENT_DELAY);
-        //   setAllOff();
-        //   updateHeadlightChars();
-        //   bothDown();
-        // }
         break;
     }
     delay(HEADLIGHT_MOVEMENT_DELAY);
@@ -369,7 +335,7 @@ class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic *pChar) {
     string val = pChar->getValue();
 
-    double multi = stod(val);
+    double multi = stod(val) / 100.0;
     const char *headlightKey = "headlight-key";
     preferences.putDouble(headlightKey, multi);
     headlightMultiplier = multi;
@@ -439,12 +405,17 @@ NimBLECharacteristic *firmareUpdateNotifier = nullptr;
 NimBLECharacteristic *firmwareStatus = nullptr;
 WebServer httpServer(80);
 
+double slope = 1.0 * (100 - 0) / (60 - 0);
+
 void updateProgress(size_t progress, size_t size) {
   static int last_progress = -1;
 
   if (size > 0) {
     progress = (progress * 100) / size;
     progress = (progress > 100 ? 100 : progress);  // 0-100
+
+    progress = 0 + slope * (progress - 0);
+
     if (progress != last_progress) {
       // UPDATE APP PROGRESS STATUS
       firmareUpdateNotifier->setValue(to_string(progress));
@@ -463,34 +434,26 @@ void setupHttpUpdateServer() {
     [&]() {
       // handler when file upload finishes
       if (Update.hasError()) {
+        printf("ERROR: %d\n", Update.getError());
         httpServer.send(200);
         firmwareStatus->setValue("failed");
         firmwareStatus->notify();
+        printf("UPDATE FAILED\n");
       } else {
         httpServer.client().setNoDelay(true);
+        printf("ERROR: %d\n", Update.getError());
         httpServer.send(200);
         firmwareStatus->setValue("success");
         firmwareStatus->notify();
-
+        printf("UPDATE SUCCESS\n");
         delay(100);
         httpServer.client().stop();
+        esp_ota_mark_app_valid_cancel_rollback();
         ESP.restart();
       }
     },
     [&]() {
-      // printf("HEADER SIZE: %d\n", headerSize);
-      // handler for the file upload, gets the sketch bytes, and writes
-      // them through the Update object
       HTTPRaw &raw = httpServer.raw();
-      // raw.totalSize
-
-      printf("Raw Size: %d\n", raw.totalSize);
-
-      int headerCount = httpServer.headers();
-      for (int i = 0; i < headerCount; i++) {
-        String tmpName = httpServer.headerName(i);
-        printf("%s\n", tmpName.c_str());
-      }
 
       if (raw.status == RAW_START) {
         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
@@ -689,7 +652,7 @@ void setup() {
     buttonTimer = millis();
   }
 
-  printf("----------------------------- UPDATED CODE!! -----------------------------\n");
+  printf("Version %s\n", FIRMWARE_VERSION);
 
   if (pAdvertising->setInstanceData(0, extAdv)) {
     if (pAdvertising->start(0))

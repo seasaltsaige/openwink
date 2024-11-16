@@ -95,6 +95,7 @@ export function Settings(props: SettingsProps) {
     await SleepyEyeStore.resetWaveDelay();
     setHeadlightMulti(100);
     setToUpdateMulti(undefined);
+    await props.updateWaveDelay(100);
   }
 
   const saveAutoConnect = async (value: boolean) => {
@@ -124,9 +125,11 @@ export function Settings(props: SettingsProps) {
   const deleteData = async () => {
     await CustomCommandStore.deleteAllCommands();
     await DeviceMACStore.forgetMAC();
+    await DeviceMACStore.removeFirmwareVersion();
     await SleepyEyeStore.save("left", undefined);
     await SleepyEyeStore.save("right", undefined);
     await AutoConnectStore.enable();
+    await SleepyEyeStore.resetWaveDelay();
 
     await fetchPairing();
     await fetchHeadlightSettings();

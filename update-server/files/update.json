@@ -1,4 +1,4 @@
 {
-  "version": "0.0.2",
-  "description": "This update adds a 'wave delay' functionality, allowing you to customize how your waves function and look. Additionally allowed wave to function from both up and down positioning."
+  "version": "0.0.4",
+  "description": "This update is a test to check OTA Updates functionality, along with update progress."
 }

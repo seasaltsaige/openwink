@@ -41,6 +41,7 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
       f.splice(i, 1);
       return f;
     });
+    console.log(i);
     //@ts-ignore
     await props.updateButtonResponse(i, 0);
   }
@@ -96,9 +97,9 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
       const all = await CustomOEMButtonStore.getAll();
       if (!all || all.length < 1) return;
 
-      if (all.find(v => v.numberPresses === 0) !== undefined) {
+      if (all.find(v => v.numberPresses === 0) !== undefined)
         setSetFunctions(all.map((v) => ({ behavior: v.numberPresses, behaviorEnglish: v.behavior })))
-      } else {
+      else {
         setSetFunctions(old => [
           ...old,
           ...all.map(v =>
@@ -185,7 +186,7 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
               paddingTop: 15,
             }}
           >
-            {/* Include 'disclaimers' about tradeoffs */}
+            {/* TODO: Include 'disclaimers' about tradeoffs */}
             <Text
               style={{
                 textAlign: "center",
@@ -247,8 +248,6 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
               <TextInput
                 style={{
                   backgroundColor: props.colorTheme.backgroundSecondaryColor,
-                  borderWidth: 1,
-                  borderColor: props.colorTheme.buttonTextColor,
                   borderRadius: 5,
                   width: "70%",
                   paddingHorizontal: 10,
@@ -269,7 +268,7 @@ export function OEMButtonCustomization(props: OEMButtonCustomizationProps) {
                   alignItems: "center",
                   justifyContent: "flex-start",
                   width: "100%",
-                  borderWidth: 1,
+
                   columnGap: 40,
                 }}
               >
