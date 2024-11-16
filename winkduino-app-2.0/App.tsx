@@ -631,9 +631,9 @@ export default function App() {
                 }}
               >
                 A Wink Module Firmware update is available.{"\n"}
-                Would you like to install it now?
-                {firmwareVersions.old} → {firmwareVersions.new}
-                {"\n"}Whats New?
+                Would you like to install it now?{"\n"}
+                {firmwareVersions.old} → {firmwareVersions.new}{"\n"}
+                {"\n"}Whats New?{"\n"}
                 {firmwareDescription}
               </Text>
               <View style={{
