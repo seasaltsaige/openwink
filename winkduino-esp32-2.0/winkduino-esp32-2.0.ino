@@ -16,29 +16,14 @@
 #include "esp_mac.h"
 #include "esp_sleep.h"
 
+#include "constants.h"
+
 using namespace std;
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
 #endif
 
-#define OUT_PIN_LEFT_DOWN 4
-#define OUT_PIN_LEFT_UP 5
-
-#define OUT_PIN_RIGHT_DOWN 6
-#define OUT_PIN_RIGHT_UP 7
-
-// Using Right Headlight Up Wire
-// Meaning up should be 1, down should be 0
-#define UP_BUTTON_INPUT 15
-
-#define FIRMWARE_VERSION "0.0.4"
-
-Preferences preferences;
-
-RTC_DATA_ATTR int leftStatus = 0;
-RTC_DATA_ATTR int rightStatus = 0;
-RTC_DATA_ATTR int initialButton = -1;
 
 bool buttonInterrupt();
 void setAllOff();
@@ -54,42 +39,11 @@ void rightWink();
 void leftWave();
 void rightWave();
 
-#define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
-#define REQUEST_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51520"
-#define BUSY_CHAR_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51521"
 
 NimBLECharacteristic *busyChar = nullptr;
-
-#define LEFT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51523"
-#define RIGHT_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51524"
-
-#define LEFT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51525"
-#define RIGHT_SLEEPY_EYE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51527"
-#define SYNC_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51526"
-
-#define LONG_TERM_SLEEP_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51528"
-
-#define OTA_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51529"
-
-#define CUSTOM_BUTTON_UPDATE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51530"
-
-#define FIRMWARE_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51531"
-
-#define SOFTWARE_UPDATING_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51532"
-#define SOFTWARE_STATUS_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51533"
-
-#define HEADLIGHT_MOVEMENT_DELAY_UUID "a144c6b1-5e1a-4460-bb92-3674b2f51534"
-
-
-#define HEADLIGHT_MOVEMENT_DELAY 750
-
-double headlightMultiplier = 1.0;
-
 NimBLECharacteristic *leftChar = nullptr;
 NimBLECharacteristic *rightChar = nullptr;
 
-static uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
-static uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
 
 void updateHeadlightChars() {
   leftChar->setValue(std::string(String(leftStatus).c_str()));
@@ -101,8 +55,8 @@ void updateHeadlightChars() {
 bool deviceConnected = false;
 int awakeTime_ms = 0;
 
-const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-const int maxTimeBetween_msDefault = 500;
+double headlightMultiplier = 1.0;
+
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
   2 : Left Blink
@@ -542,8 +496,6 @@ unsigned long buttonTimer;
 void setup() {
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-
-  
 
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
     awakeTime_ms = 5 * 1000 * 60;
