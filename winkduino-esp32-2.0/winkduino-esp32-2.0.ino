@@ -17,28 +17,17 @@
 #include "esp_sleep.h"
 
 #include "constants.h"
+#include "WifiUpdateServer.h"
+#include "Storage.h"
+#include "MainFunctions.h"
+#include "BLE.h"
+#include "ButtonHandler.h"
 
 using namespace std;
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
 #endif
-
-
-bool buttonInterrupt();
-void setAllOff();
-void bothUp();
-void leftUp();
-void rightUp();
-void bothDown();
-void leftDown();
-void rightDown();
-void bothBlink();
-void leftWink();
-void rightWink();
-void leftWave();
-void rightWave();
-
 
 NimBLECharacteristic *busyChar = nullptr;
 NimBLECharacteristic *leftChar = nullptr;
@@ -550,10 +539,9 @@ void setup() {
   NimBLECharacteristic *longTermSleepChar = pService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *otaUpdateChar = pService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
   NimBLECharacteristic *customButtonChar = pService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
-
   NimBLECharacteristic *headlightDelayChar = pService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
-
   NimBLECharacteristic *firmwareChar = pService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+
 
   firmwareChar->setValue(FIRMWARE_VERSION);
   headlightDelayChar->setValue(1.0);
