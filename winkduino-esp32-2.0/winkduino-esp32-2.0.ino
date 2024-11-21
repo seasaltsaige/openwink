@@ -1,11 +1,9 @@
 #include <string.h>
-
-#include <NimBLEDevice.h>
 #include <Arduino.h>
-#include <Preferences.h>
-#include <WiFi.h>
 
-#include <NetworkClient.h>
+#include <Preferences.h>
+
+#include <WiFi.h>
 #include <Update.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -24,10 +22,6 @@
 #include "ButtonHandler.h"
 
 using namespace std;
-
-#if !CONFIG_BT_NIMBLE_EXT_ADV
-#error Must enable extended advertising, see nimconfig.h file.
-#endif
 
 NimBLECharacteristic *busyChar = nullptr;
 NimBLECharacteristic *leftChar = nullptr;
@@ -565,6 +559,7 @@ void setup() {
 
   NimBLEExtAdvertisement extAdv(primaryPhy, secondaryPhy);
 
+  extAdv.setName("Winkduino");
   extAdv.setConnectable(true);
   extAdv.setScannable(false);
 
