@@ -1,6 +1,8 @@
 #ifndef _MAINFUNCTIONS_H
 #define _MAINFUNCTIONS_H
 
+
+
 bool buttonInterrupt();
 void setAllOff();
 void bothUp();
@@ -14,5 +16,6 @@ void leftWink();
 void rightWink();
 void leftWave();
 void rightWave();
+void updateHeadlightChars();
 
 #endif
