@@ -5,6 +5,7 @@
 #include "BLE.h"
 #include "MainFunctions.h"
 #include "esp_sleep.h"
+#include "Storage.h"
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer) {
   deviceConnected = true;
@@ -13,18 +14,11 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer) {
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
-  // TODO: Storage.h
-  // for (int i = 0; i < 10; i++) {
-  //   string key = "presses-";
-  //   key = key + to_string(i);
-  //   int val = preferences.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
-  //   if (val != customButtonPressArray[i])
-  //     preferences.putUInt(key.c_str(), customButtonPressArray[i]);
-  // }
-  // string delayKey = "delay-key";
-  // int del = preferences.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
-  // if (maxTimeBetween_ms != del)
-  //   preferences.putUInt(delayKey.c_str(), maxTimeBetween_ms);
+
+  Storage::setCustomButtonPressArrayDefaults(customButtonPressArray);
+
+  Storage::setDelay(maxTimeBetween_ms)
+
   deviceConnected = false;
   awakeTime_ms = 0;
 
@@ -205,8 +199,7 @@ void HeadlightCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   string val = pChar->getValue();
 
   double multi = stod(val) / 100.0;
-  const char* headlightKey = "headlight-key";
-  preferences.putDouble(headlightKey, multi);
+  Storage::setHeadlightMulti(multi);
   headlightMultiplier = multi;
 }
 

@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include "MainFunctions.h"
 #include "constants.h"
 #include "BLE.h"

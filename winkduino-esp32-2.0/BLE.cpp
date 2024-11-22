@@ -2,15 +2,20 @@
 #include "constants.h"
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
-  #error Must enable extended advertising, see nimconfig.h file.
+#error Must enable extended advertising, see nimconfig.h file.
 #endif
 
-void WinkduinoBLE::init(string deviceName) {
-    NimBLEDevice::init(deviceName);
-    server = NimBLEDevice::createServer();
-    service = server->createService(NimBLEUUID(SERVICE_UUID));
+void WinkduinoBLE::init(std::string deviceName) {
+  NimBLEDevice::init(deviceName);
+  server = NimBLEDevice::createServer();
+  service = server->createService(NimBLEUUID(SERVICE_UUID));
 
-    NimBLEExtAdvertisement advertisement(primaryPhy, secondaryPhy);
+  NimBLEExtAdvertisement advertisement(primaryPhy, secondaryPhy);
+
+  initDeviceServer();
+  initServerService();
+  initServiceCharacteristics();
+  initAdvertising();
 }
 
 void WinkduinoBLE::initDeviceServer() {
@@ -55,7 +60,6 @@ void WinkduinoBLE::initServiceCharacteristics() {
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
   firmwareChar->setCallbacks(new FirmwareCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
-
 }
 
 void WinkduinoBLE::initAdvertising() {
@@ -67,13 +71,6 @@ void WinkduinoBLE::initAdvertising() {
 
   advertising = NimBLEDevice::getAdvertising();
   advertising->setCallbacks(new AdvertisingCallbacks());
-}
-
-void WinkduinoBLE::initDevice() {
-  initDeviceServer();
-  initServerService();
-  initServiceCharacteristics();
-  initAdvertising();
 }
 
 void WinkduinoBLE::start() {

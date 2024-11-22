@@ -20,19 +20,9 @@
 #include "MainFunctions.h"
 #include "BLE.h"
 #include "ButtonHandler.h"
+#include "BLECallbacks.h"
 
 using namespace std;
-
-class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic *pChar) {
-    string val = pChar->getValue();
-
-    double multi = stod(val) / 100.0;
-    const char *headlightKey = "headlight-key";
-    preferences.putDouble(headlightKey, multi);
-    headlightMultiplier = multi;
-  }
-};
 
 // 0 : onWrite expects value to be an index, 0-9
 // 1 : index has been read
@@ -82,19 +72,7 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
   }
 };
 
-class FirmwareCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onRead() {
-    //
-  }
-};
 
-const char *update_path = "update";
-
-// Contains update progress value (0 to 100)%
-NimBLECharacteristic *firmareUpdateNotifier = nullptr;
-// POSSIBLE STATUS
-// "idle" "updating" "failed" "success"
-NimBLECharacteristic *firmwareStatus = nullptr;
 WebServer httpServer(80);
 
 double slope = 1.0 * (100 - 0) / (60 - 0);
@@ -119,12 +97,9 @@ void updateProgress(size_t progress, size_t size) {
 
 bool wifi_started = false;
 void setupHttpUpdateServer() {
-  // Other code...
-  // handler for the update page form POST
   httpServer.on(
-    String("/") + String(update_path), HTTP_POST,
+    String("/update"), HTTP_POST,
     [&]() {
-      // handler when file upload finishes
       if (Update.hasError()) {
         printf("ERROR: %d\n", Update.getError());
         httpServer.send(200);
@@ -223,11 +198,6 @@ class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
 };
 
 unsigned long t;
-
-int advertiseTime_ms = 1000;
-int sleepTime_us = 15 * 1000 * 1000;
-
-NimBLEExtAdvertising *pAdvertising;
 int pressCounter = 0;
 unsigned long buttonTimer;
 
@@ -241,10 +211,9 @@ void setup() {
     awakeTime_ms = 0;
 
   Serial.begin(115200);
+
   Storage::begin("oem-store");
-
-
-
+  Storage::getFromStorage();
 
   // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
@@ -260,7 +229,7 @@ void setup() {
 
   setCpuFrequencyMhz(80);
 
-  WinkduinoBLE
+  WinkduinoBLE::init("Winkduino");
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
@@ -275,13 +244,7 @@ void setup() {
 
   printf("Version %s\n", FIRMWARE_VERSION);
 
-  if (pAdvertising->setInstanceData(0, extAdv)) {
-    if (pAdvertising->start(0))
-      printf("Started advertising\n");
-    else
-      printf("Failed to start advertising\n");
-  } else
-    printf("Failed to register advertisment data\n");
+  WinkduinoBLE::start();
 }
 
 bool advertising = true;

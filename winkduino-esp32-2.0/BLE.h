@@ -33,17 +33,16 @@ class WinkduinoBLE
     static NimBLECharacteristic *rightChar;
     static NimBLECharacteristic *firmareUpdateNotifier;
     static NimBLECharacteristic *firmwareStatus;
-    static void init(string deviceName);
+
     static void initDeviceServer();
     static void initServerService();
     static void initAdvertising();
     static void initServiceCharacteristics();
   public:
     WinkduinoBLE() = delete;
+    
     static void init(string deviceName);
-    static void initDevice();
     static void start();
-
     static void updateHeadlightChars();
     static void setBusy(bool busy);
 };
