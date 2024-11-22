@@ -12,8 +12,6 @@
 
 #define FIRMWARE_VERSION "0.0.4"
 
-Preferences preferences;
-
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 #define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"

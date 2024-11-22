@@ -1,12 +1,6 @@
 #include "MainFunctions.h"
 #include "constants.h"
-void updateHeadlightChars() {
-  leftChar->setValue(std::string(String(leftStatus).c_str()));
-  rightChar->setValue(std::string(String(rightStatus).c_str()));
-  leftChar->notify();
-  rightChar->notify();
-}
-
+#include "BLE.h"
 
 // Both
 void bothUp() {
@@ -60,7 +54,7 @@ void bothBlink() {
     rightStatus = 0;
   }
 
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
   if (leftStatus != 1) {
@@ -82,7 +76,7 @@ void bothBlink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
 }
 
 // Left
@@ -114,7 +108,7 @@ void leftWink() {
     leftStatus = 0;
   }
 
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
   if (leftStatus != 1) {
@@ -126,7 +120,7 @@ void leftWink() {
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
 }
 
 // Right
@@ -157,7 +151,7 @@ void rightWink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
 
@@ -170,7 +164,7 @@ void rightWink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  updateHeadlightChars();
+  WinkduinoBLE::updateHeadlightChars();
 }
 
 void leftWave() {
@@ -194,7 +188,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
     
     leftStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start left down
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -204,7 +198,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
 
     rightStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start right down
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
@@ -214,7 +208,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
 
     leftStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Left Off
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -224,7 +218,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
     
     rightStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
@@ -247,7 +241,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
     
     leftStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start left up
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -257,7 +251,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
 
     rightStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start right up
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -267,7 +261,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
 
     leftStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Left Off
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -277,7 +271,7 @@ void leftWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
     
     rightStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
@@ -305,7 +299,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
     
     rightStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start right down
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
@@ -315,7 +309,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
 
     leftStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start left down
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -325,7 +319,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
 
     rightStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Right Off
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
@@ -335,7 +329,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
     
     leftStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -358,7 +352,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
     
     rightStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start right up
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -368,7 +362,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
 
     leftStatus = 0;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Start left up
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -378,7 +372,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
 
     rightStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     // Right Off
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
@@ -388,7 +382,7 @@ void rightWave() {
     delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
     
     leftStatus = 1;
-    updateHeadlightChars();
+    WinkduinoBLE::updateHeadlightChars();
 
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
