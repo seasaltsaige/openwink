@@ -1,7 +1,4 @@
-#ifndef _MAINFUNCTIONS_H
-#define _MAINFUNCTIONS_H
-
-
+#pragma once
 
 bool buttonInterrupt();
 void setAllOff();
@@ -17,5 +14,3 @@ void rightWink();
 void leftWave();
 void rightWave();
 void updateHeadlightChars();
-
-#endif

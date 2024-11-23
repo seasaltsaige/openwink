@@ -3,6 +3,7 @@
 #include "MainFunctions.h"
 #include "constants.h"
 #include "BLE.h"
+#include "BLECallbacks.h"
 
 // Both
 void bothUp() {

@@ -1,5 +1,4 @@
-#ifndef _CONSTANTS_H
-#define _CONSTANTS_H
+#pragma once
 
 #define OUT_PIN_LEFT_DOWN 4
 #define OUT_PIN_LEFT_UP 5
@@ -33,10 +32,7 @@
 
 #define HEADLIGHT_MOVEMENT_DELAY 750
 
-const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-const int maxTimeBetween_msDefault = 500;
-
-const int advertiseTime_ms = 1000;
-const int sleepTime_us = 15 * 1000 * 1000;
-
-#endif
+extern const int customButtonPressArrayDefaults[10];
+extern const int maxTimeBetween_msDefault;
+extern const int sleepTime_us;
+extern const int advertiseTime_ms;

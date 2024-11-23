@@ -1,16 +1,44 @@
 #include "BLE.h"
+#include "BLECallbacks.h"
 #include "constants.h"
+
+using namespace std;
 
 #if !CONFIG_BT_NIMBLE_EXT_ADV
 #error Must enable extended advertising, see nimconfig.h file.
 #endif
 
-void WinkduinoBLE::init(std::string deviceName) {
+
+RTC_DATA_ATTR int leftStatus = 0;
+RTC_DATA_ATTR int rightStatus = 0;
+RTC_DATA_ATTR int initialButton = -1;
+
+
+NimBLEServer* WinkduinoBLE::server;
+NimBLEService*  WinkduinoBLE::service;
+NimBLEExtAdvertisement WinkduinoBLE::advertisement;
+NimBLEExtAdvertising*  WinkduinoBLE::advertising;
+NimBLECharacteristic* WinkduinoBLE::winkChar;
+NimBLECharacteristic* WinkduinoBLE::leftSleepChar;
+NimBLECharacteristic* WinkduinoBLE::rightSleepChar;
+NimBLECharacteristic* WinkduinoBLE::syncChar;
+NimBLECharacteristic* WinkduinoBLE::longTermSleepChar; 
+NimBLECharacteristic* WinkduinoBLE::otaUpdateChar;
+NimBLECharacteristic* WinkduinoBLE::customButtonChar;
+NimBLECharacteristic* WinkduinoBLE::headlightDelayChar;
+NimBLECharacteristic* WinkduinoBLE::firmwareChar;
+NimBLECharacteristic* WinkduinoBLE::busyChar;
+NimBLECharacteristic* WinkduinoBLE::leftChar;
+NimBLECharacteristic* WinkduinoBLE::rightChar;
+NimBLECharacteristic* WinkduinoBLE::firmareUpdateNotifier;
+NimBLECharacteristic* WinkduinoBLE::firmwareStatus;
+
+void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
   server = NimBLEDevice::createServer();
   service = server->createService(NimBLEUUID(SERVICE_UUID));
 
-  NimBLEExtAdvertisement advertisement(primaryPhy, secondaryPhy);
+  NimBLEExtAdvertisement advertisement(BLE_HCI_LE_PHY_CODED, BLE_HCI_LE_PHY_CODED);
 
   initDeviceServer();
   initServerService();
@@ -58,23 +86,22 @@ void WinkduinoBLE::initServiceCharacteristics() {
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
-  firmwareChar->setCallbacks(new FirmwareCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
 }
 
 void WinkduinoBLE::initAdvertising() {
   service->start();
-  extAdv.setName("Winkduino");
-  extAdv.setConnectable(true);
-  extAdv.setScannable(false);
-  extAdv.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
+  advertisement.setName("Winkduino");
+  advertisement.setConnectable(true);
+  advertisement.setScannable(false);
+  advertisement.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
 
   advertising = NimBLEDevice::getAdvertising();
   advertising->setCallbacks(new AdvertisingCallbacks());
 }
 
 void WinkduinoBLE::start() {
-  if (advertising->setInstanceData(0, extAdv)) {
+  if (advertising->setInstanceData(0, advertisement)) {
     if (advertising->start(0))
       printf("Started advertising\n");
     else
@@ -97,4 +124,14 @@ void WinkduinoBLE::setBusy(bool busy) {
     busyChar->setValue("0");
   }
   busyChar->notify();
+}
+
+void WinkduinoBLE::setFirmwareUpdateStatus(string status) {
+  firmwareStatus->setValue(status.c_str());
+  firmwareStatus->notify();
+}
+
+void WinkduinoBLE::setFirmwarePercent(string stringPercentage) {
+  firmareUpdateNotifier->setValue(stringPercentage);
+  firmareUpdateNotifier->notify();
 }

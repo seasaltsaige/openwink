@@ -1,6 +1,11 @@
+#include <string.h>
 #include "Storage.h"
 #include "constants.h"
 #include "BLECallbacks.h"
+
+using namespace std;
+
+Preferences Storage::storage;
 
 void Storage::begin(const char *name) {
   storage.begin(name, false);
@@ -26,7 +31,7 @@ void Storage::getFromStorage() {
 
 
 
-void Storage::setCustomButtonPressArrayDefaults(int[10] defaults) {
+void Storage::setCustomButtonPressArrayDefaults(int defaults[10]) {
     for (int i = 0; i < 10; i++) {
     string key = "presses-";
     key = key + to_string(i);

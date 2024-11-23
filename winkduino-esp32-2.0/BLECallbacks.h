@@ -1,12 +1,12 @@
-#ifndef _BLECALLBACKS_H
-#define _BLECALLBACKS_H
+#pragma once
 
+#include "NimBLEServer.h"
 #include <NimBLEDevice.h>
 
 
-bool deviceConnected = false;
-int awakeTime_ms = 0;
-double headlightMultiplier = 1.0;
+extern bool deviceConnected;
+extern int awakeTime_ms;
+extern double headlightMultiplier;
 
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
@@ -20,18 +20,46 @@ double headlightMultiplier = 1.0;
   9 : Right Wave
  10 : ...
 **/
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-RTC_DATA_ATTR int maxTimeBetween_ms = 500;
+RTC_DATA_ATTR extern int customButtonPressArray[10];
+RTC_DATA_ATTR extern int maxTimeBetween_ms;
 
-class ServerCallbacks : public NimBLEServerCallbacks {};
-class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {};
-class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {};
+class ServerCallbacks : public NimBLEServerCallbacks {
+  void onConnect(NimBLEServer* pServer);
+  void onDisconnect(NimBLEServer* pServer);
+};
 
-#endif
+class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar);
+};
+
+class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
+  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id);
+};

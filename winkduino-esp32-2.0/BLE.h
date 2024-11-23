@@ -1,16 +1,14 @@
-#ifndef _BLE_H
-#define _BLE_H
+#pragma once
 
 #include <string.h>
 #include <NimBLEDevice.h>
 #include "constants.h"
 
-const uint8_t primaryPhy = BLE_HCI_LE_PHY_CODED;
-const uint8_t secondaryPhy = BLE_HCI_LE_PHY_CODED;
+using namespace std;
 
-RTC_DATA_ATTR int leftStatus = 0;
-RTC_DATA_ATTR int rightStatus = 0;
-RTC_DATA_ATTR int initialButton = -1;
+RTC_DATA_ATTR extern int leftStatus;
+RTC_DATA_ATTR extern int rightStatus;
+RTC_DATA_ATTR extern int initialButton;
 
 class WinkduinoBLE
 {
@@ -18,7 +16,9 @@ class WinkduinoBLE
     static NimBLEServer* server;
     static NimBLEService* service;
     static NimBLEExtAdvertisement advertisement;
+
     static NimBLEExtAdvertising* advertising;
+    
     static NimBLECharacteristic *winkChar;
     static NimBLECharacteristic *leftSleepChar;
     static NimBLECharacteristic *rightSleepChar;
@@ -39,12 +39,10 @@ class WinkduinoBLE
     static void initAdvertising();
     static void initServiceCharacteristics();
   public:
-    WinkduinoBLE() = delete;
-    
     static void init(string deviceName);
     static void start();
     static void updateHeadlightChars();
     static void setBusy(bool busy);
+    static void setFirmwareUpdateStatus(string status);
+    static void setFirmwarePercent(string stringPercentage);
 };
-
-#endif

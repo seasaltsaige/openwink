@@ -1,18 +1,10 @@
 #include <string.h>
 #include <Arduino.h>
 
-#include <Preferences.h>
-
-#include <WiFi.h>
-#include <Update.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 #include "esp_ota_ops.h"
 #include "esp_mac.h"
-
 
 #include "constants.h"
 #include "WifiUpdateServer.h"
@@ -24,184 +16,17 @@
 
 using namespace std;
 
-// 0 : onWrite expects value to be an index, 0-9
-// 1 : index has been read
-int customButtonPressUpdateState = 0;
-
-int indexToUpdate = 0;
-
-class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic *pChar) {
-    string value = pChar->getValue();
-
-    // printf("VALUE: %s\n", value.c_str());
-
-    // Updating maxTime
-    if (value.length() > 1) {
-      int newVal = stoi(value);
-      maxTimeBetween_ms = newVal;
-    } else {
-      if (customButtonPressUpdateState == 0) {
-        int index = stoi(value);
-        if (index > 9)
-          return;
-        indexToUpdate = index;
-        customButtonPressUpdateState = 1;
-      } else {
-        int updateValue = stoi(value);
-        customButtonPressArray[indexToUpdate] = updateValue;
-        customButtonPressUpdateState = 0;
-
-        if (updateValue == 0) {
-          int maxIndexNotZero = 0;
-          for (int i = 0; i < 10; i++) {
-            if (customButtonPressArray[i] == 0) {
-              maxIndexNotZero = i;
-              // printf("REACHED 0 VALUE: %d\n", i);
-              break;
-            }
-          }
-
-          for (int i = maxIndexNotZero; i < 9; i++) {
-            // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
-            customButtonPressArray[i] = customButtonPressArray[i + 1];
-          }
-        }
-      }
-    }
-  }
-};
-
-
-WebServer httpServer(80);
-
-double slope = 1.0 * (100 - 0) / (60 - 0);
-
-void updateProgress(size_t progress, size_t size) {
-  static int last_progress = -1;
-
-  if (size > 0) {
-    progress = (progress * 100) / size;
-    progress = (progress > 100 ? 100 : progress);  // 0-100
-
-    progress = 0 + slope * (progress - 0);
-
-    if (progress != last_progress) {
-      // UPDATE APP PROGRESS STATUS
-      firmareUpdateNotifier->setValue(to_string(progress));
-      firmareUpdateNotifier->notify();
-      last_progress = progress;
-    }
-  }
-}
-
-bool wifi_started = false;
-void setupHttpUpdateServer() {
-  httpServer.on(
-    String("/update"), HTTP_POST,
-    [&]() {
-      if (Update.hasError()) {
-        printf("ERROR: %d\n", Update.getError());
-        httpServer.send(200);
-        firmwareStatus->setValue("failed");
-        firmwareStatus->notify();
-        printf("UPDATE FAILED\n");
-      } else {
-        httpServer.client().setNoDelay(true);
-        printf("ERROR: %d\n", Update.getError());
-        httpServer.send(200);
-        firmwareStatus->setValue("success");
-        firmwareStatus->notify();
-        printf("UPDATE SUCCESS\n");
-        delay(100);
-        httpServer.client().stop();
-        esp_ota_mark_app_valid_cancel_rollback();
-        ESP.restart();
-      }
-    },
-    [&]() {
-      HTTPRaw &raw = httpServer.raw();
-
-      if (raw.status == RAW_START) {
-        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-        if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
-          Update.printError(Serial);
-        } else {
-          firmwareStatus->setValue("updating");
-          firmwareStatus->notify();
-        }
-      } else if (raw.status == RAW_ABORTED || Update.hasError()) {
-        if (raw.status == RAW_ABORTED) {
-          if (!Update.end(false)) {
-            Update.printError(Serial);
-            firmwareStatus->setValue("failed");
-            firmwareStatus->notify();
-          }
-          Serial.println("Update was aborted");
-        }
-      } else if (raw.status == RAW_WRITE) {
-        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
-          Update.printError(Serial);
-        }
-      } else if (raw.status == RAW_END) {
-        if (Update.end(true)) {  // true to set the size to the current progress
-          Serial.printf("Update Success: %u\nRebooting...\n", raw.totalSize);
-        } else {
-          Update.printError(Serial);
-        }
-      }
-      delay(0);
-    });
-
-  Update.onProgress(updateProgress);
-}
-
-class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic *pChar) {
-    string pass = pChar->getValue();
-    const char *password = pass.c_str();
-
-    const char *ssid = "Wink Module: Update Access Point";
-
-    printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
-
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid, password);
-
-    delay(150);
-
-    MDNS.begin("module-update");
-
-    setupHttpUpdateServer();
-    httpServer.begin();
-
-    MDNS.addService("http", "tcp", 80);
-
-    printf("HTTP Server started\n");
-
-    wifi_started = true;
-  }
-};
-
-class advertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
-  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id) {
-    switch (reason) {
-      case 0:
-        deviceConnected = true;
-        printf("Client connecting\n");
-        return;
-      default:
-        printf("Default case");
-        break;
-    }
-  }
-};
+const int customButtonPressArrayDefaults[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+const int maxTimeBetween_msDefault = 500;
+const int sleepTime_us = 15 * 1000 * 1000;
+const int advertiseTime_ms = 1000;
 
 unsigned long t;
 int pressCounter = 0;
 unsigned long buttonTimer;
 
 void setup() {
+  Serial.begin(115200);
 
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
@@ -210,7 +35,6 @@ void setup() {
   else
     awakeTime_ms = 0;
 
-  Serial.begin(115200);
 
   Storage::begin("oem-store");
   Storage::getFromStorage();
@@ -223,7 +47,6 @@ void setup() {
   pinMode(OUT_PIN_LEFT_UP, OUTPUT);
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
-
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(UP_BUTTON_INPUT, INPUT);
 
@@ -250,9 +73,11 @@ void setup() {
 bool advertising = true;
 
 void loop() {
-  if (wifi_started) {
-    httpServer.handleClient();
-  }
+
+  if (WifiUpdateServer::getWifiStatus())
+    WifiUpdateServer::handleHTTPClient();
+
+
   int buttonInput = digitalRead(UP_BUTTON_INPUT);
   if (pressCounter == 0 && buttonInput != initialButton) {
     pressCounter++;
@@ -310,8 +135,7 @@ void handleButtonPresses(int index) {
   // Uses above array of items
   int valueToExecute = customButtonPressArray[index];
 
-  busyChar->setValue("1");
-  busyChar->notify();
+  WinkduinoBLE::setBusy(true);
 
   switch (valueToExecute) {
       /**
@@ -378,7 +202,7 @@ void handleButtonPresses(int index) {
 
   delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
-  updateHeadlightChars();
-  busyChar->setValue("0");
-  busyChar->notify();
+
+  WinkduinoBLE::updateHeadlightChars();
+  WinkduinoBLE::setBusy(false);
 }

@@ -1,5 +1,5 @@
-#ifndef _STORAGE_H
-#define _STORAGE_H
+#pragma once
+
 #include <Preferences.h>
 
 class Storage {
@@ -7,14 +7,10 @@ class Storage {
     static Preferences storage;
 
   public:
-    Storage() = delete;
     static void begin(const char* name);
     static void getFromStorage();
     
     static void setHeadlightMulti(double multi);
-    static void setCustomButtonPressArrayDefaults(int[10] defaults);
+    static void setCustomButtonPressArrayDefaults(int defaults[10]);
     static void setDelay(int delay);
 };
-
-
-#endif

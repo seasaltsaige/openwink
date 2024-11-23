@@ -1,33 +1,43 @@
 #include "NimBLEDevice.h"
 #include <Arduino.h>
+#include <string.h>
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "BLE.h"
 #include "MainFunctions.h"
 #include "esp_sleep.h"
 #include "Storage.h"
+#include "WifiUpdateServer.h"
+
+using namespace std;
+
+bool deviceConnected = false;
+int awakeTime_ms = 0;
+double headlightMultiplier = 1.0;
+
+RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer) {
   deviceConnected = true;
   WinkduinoBLE::updateHeadlightChars();
-  printf("Client connected:: %s\n", connInfo.getAddress().toString().c_str());
+  printf("Client connected:: %s\n");
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
 
   Storage::setCustomButtonPressArrayDefaults(customButtonPressArray);
 
-  Storage::setDelay(maxTimeBetween_ms)
+  Storage::setDelay(maxTimeBetween_ms);
 
   deviceConnected = false;
   awakeTime_ms = 0;
 
-  printf("Disconnected from client\n");
 
   WinkduinoBLE::start();
 }
 
-void LongTermSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   printf("long term sleep written\n");
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
@@ -41,7 +51,7 @@ void LongTermSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   esp_deep_sleep_start();
 }
 
-void SyncCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   if (leftStatus > 1) {
     double valFromTop = (double)(leftStatus - 10) / 100;
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -69,7 +79,7 @@ void SyncCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   WinkduinoBLE::updateHeadlightChars();
 }
 
-void LeftSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void LeftSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   std::string value = pChar->getValue();
   int headlightValue = String(value.c_str()).toInt();
   double percentage = ((double)headlightValue) / 100;
@@ -90,7 +100,7 @@ void LeftSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   WinkduinoBLE::updateHeadlightChars();
 }
 
-void RightSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void RightSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   std::string value = pChar->getValue();
   int headlightValue = String(value.c_str()).toInt();
   double percentage = ((double)headlightValue) / 100;
@@ -110,7 +120,7 @@ void RightSleepCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   WinkduinoBLE::updateHeadlightChars();
 }
 
-void RequestCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   std::string value = pChar->getValue();
   int valueInt = String(value.c_str()).toInt();
 
@@ -195,7 +205,7 @@ void RequestCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   WinkduinoBLE::setBusy(false);
 }
 
-void HeadlightCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
   string val = pChar->getValue();
 
   double multi = stod(val) / 100.0;
@@ -203,11 +213,68 @@ void HeadlightCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
   headlightMultiplier = multi;
 }
 
-void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+// 0 : onWrite expects value to be an index, 0-9
+// 1 : index has been read
+int customButtonPressUpdateState = 0;
+int indexToUpdate = 0;
+
+void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
+
+  string value = pChar->getValue();
+  // Updating maxTime
+  if (value.length() > 1) {
+    int newVal = stoi(value);
+    maxTimeBetween_ms = newVal;
+  } else {
+    if (customButtonPressUpdateState == 0) {
+      int index = stoi(value);
+      if (index > 9)
+        return;
+      indexToUpdate = index;
+      customButtonPressUpdateState = 1;
+    } else {
+      int updateValue = stoi(value);
+      customButtonPressArray[indexToUpdate] = updateValue;
+      customButtonPressUpdateState = 0;
+
+      if (updateValue == 0) {
+        int maxIndexNotZero = 0;
+        for (int i = 0; i < 10; i++) {
+          if (customButtonPressArray[i] == 0) {
+            maxIndexNotZero = i;
+            // printf("REACHED 0 VALUE: %d\n", i);
+            break;
+          }
+        }
+
+        for (int i = maxIndexNotZero; i < 9; i++) {
+          // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
+          customButtonPressArray[i] = customButtonPressArray[i + 1];
+        }
+      }
+    }
+  }
 }
 
-void OTAUpdateCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar) {
+void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
+  const char* password = pChar->getValue().c_str();
+
+  WifiUpdateServer::init();
+
+  WifiUpdateServer::startWifiService(password);
+  WifiUpdateServer::startHTTPClient();
+
+  WifiUpdateServer::setWifiStatus(true);
 }
 
-void AdvertisingCallbacks::onRead(NimBLECharacteristic* pChar) {
-}
+void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id) {
+    switch (reason) {
+      case 0:
+        deviceConnected = true;
+        printf("Client connecting\n");
+        return;
+      default:
+        printf("Default case");
+        break;
+    }
+  }
