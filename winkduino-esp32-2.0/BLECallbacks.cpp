@@ -11,15 +11,13 @@
 
 using namespace std;
 
-bool deviceConnected = false;
-int awakeTime_ms = 0;
-double headlightMultiplier = 1.0;
+RTC_DATA_ATTR double headlightMultiplier = 1.0;
 
 RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer) {
-  deviceConnected = true;
+  WifiUpdateServer::setDeviceConnected(true);
   WinkduinoBLE::updateHeadlightChars();
   printf("Client connected:: %s\n");
 }
@@ -27,12 +25,10 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer) {
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
 
   Storage::setCustomButtonPressArrayDefaults(customButtonPressArray);
-
   Storage::setDelay(maxTimeBetween_ms);
 
-  deviceConnected = false;
+  WifiUpdateServer::setDeviceConnected(false);
   awakeTime_ms = 0;
-
 
   WinkduinoBLE::start();
 }
@@ -41,11 +37,11 @@ void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) 
   printf("long term sleep written\n");
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
-  int buttonInp = digitalRead(UP_BUTTON_INPUT);
+  int buttonInp = digitalRead(OEM_BUTTON_INPUT);
   if (buttonInp == 1)
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 0);
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
   else if (buttonInp == 0)
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)UP_BUTTON_INPUT, 1);
+    esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
 
   delay(100);
   esp_deep_sleep_start();
@@ -270,7 +266,7 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id) {
     switch (reason) {
       case 0:
-        deviceConnected = true;
+        WifiUpdateServer::setDeviceConnected(true);
         printf("Client connecting\n");
         return;
       default:

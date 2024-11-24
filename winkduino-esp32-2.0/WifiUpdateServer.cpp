@@ -33,6 +33,7 @@ void updateProgress(size_t progress, size_t size) {
 const char* WifiUpdateServer::ssid;
 WebServer WifiUpdateServer::server;
 bool WifiUpdateServer::wifi_enabled;
+bool WifiUpdateServer::deviceConnected;
 
 void WifiUpdateServer::startWifiService(const char* password) {
   WiFi.mode(WIFI_AP);

@@ -3,10 +3,7 @@
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
 
-
-extern bool deviceConnected;
-extern int awakeTime_ms;
-extern double headlightMultiplier;
+RTC_DATA_ATTR extern double headlightMultiplier;
 
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)

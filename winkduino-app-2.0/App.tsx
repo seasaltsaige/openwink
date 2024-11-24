@@ -238,7 +238,8 @@ export default function App() {
           const firmwareParts = fw.split(".");
 
           let upgradeAvailable = false;
-
+          console.log(apiVersion);
+          console.log(firmwareParts);
           // Compare versions
           for (let i = 0; i < 3; i++) {
             const apiPart = parseInt(apiVersionParts[i]);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "esp_sleep.h"
+
 #define OUT_PIN_LEFT_DOWN 4
 #define OUT_PIN_LEFT_UP 5
 #define OUT_PIN_RIGHT_DOWN 6
@@ -7,10 +9,9 @@
 
 // Using Right Headlight Up Wire
 // Meaning up should be 1, down should be 0
-#define UP_BUTTON_INPUT 15
+#define OEM_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.0.4"
-
+#define FIRMWARE_VERSION "0.1.0"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 #define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
@@ -36,3 +37,4 @@ extern const int customButtonPressArrayDefaults[10];
 extern const int maxTimeBetween_msDefault;
 extern const int sleepTime_us;
 extern const int advertiseTime_ms;
+extern int awakeTime_ms;

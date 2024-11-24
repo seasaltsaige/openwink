@@ -11,7 +11,6 @@ using namespace std;
 
 RTC_DATA_ATTR int leftStatus = 0;
 RTC_DATA_ATTR int rightStatus = 0;
-RTC_DATA_ATTR int initialButton = -1;
 
 
 NimBLEServer* WinkduinoBLE::server;

@@ -1,4 +1,4 @@
 {
-  "version": "0.0.4",
-  "description": "This update is a test to check OTA Updates functionality, along with update progress."
+  "version": "0.1.0",
+  "description": "Major refactor of code-base. All functionality should be retained."
 }
