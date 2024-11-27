@@ -19,3 +19,14 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 
 export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://192.168.0.11:3000/.netlify/functions/api/update";
+
+export const colorThemeDefaults = {
+  backgroundPrimaryColor: "#141414",
+  backgroundSecondaryColor: "#1e1e1e",
+  buttonColor: "#800020",
+  disabledButtonColor: "#878787",
+  buttonTextColor: "#ffffff",
+  disabledButtonTextColor: "#ffffff",
+  headerTextColor: "#ffffff",
+  textColor: "#ffffff",
+}
