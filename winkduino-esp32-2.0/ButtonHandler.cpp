@@ -5,7 +5,6 @@
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
-#include "WifiUpdateServer.h"
 
 using namespace std;
 
@@ -150,7 +149,7 @@ void ButtonHandler::loopButtonHandler() {
 void ButtonHandler::updateButtonSleep() {
 
   if (
-    !WifiUpdateServer::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
+    !WinkduinoBLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
     if (buttonInput == 1)
@@ -158,7 +157,7 @@ void ButtonHandler::updateButtonSleep() {
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
 
-    if (!WifiUpdateServer::getDeviceConnected())
+    if (!WinkduinoBLE::getDeviceConnected())
       esp_deep_sleep_start();
   }
 }

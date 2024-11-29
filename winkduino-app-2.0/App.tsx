@@ -214,6 +214,7 @@ export default function App() {
 
     (async () => {
       try {
+        console.log("getting firmware version");
         // Get firmware version from wink module
         const firmware = await connectedDevice.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
         if (firmware?.value) {
@@ -272,7 +273,8 @@ export default function App() {
 
   // Runs if user accepts install
   const downloadAndInstallFirmware = async () => {
-
+    console.log("Starting ota update.");
+    console.log("Downloading firmware");
     // fetch update bin file
     const response = await fetch(
       `${UPDATE_URL}/firmware`,
@@ -284,10 +286,14 @@ export default function App() {
       }
     );
 
+    console.log("Blob downloaded");
+
     // Generate a password for the wifi network
     const password = generatePassword(16);
 
     const OTA_UUID = "a144c6b1-5e1a-4460-bb92-3674b2f51529"
+
+    console.log("Sending Wifi start command");
 
     // Send password, and start wifi/http service
     await connectedDevice?.writeCharacteristicWithoutResponseForService(
@@ -298,14 +304,18 @@ export default function App() {
 
     await sleep(1500);
 
+
+    console.log("Attempting to connect to wifi service");
+    console.log(password);
+
     // Connect phone to modules wifi ap
     await WifiManager.connectToProtectedWifiSSID({
       ssid: "Wink Module: Update Access Point",
-      password,
-      isHidden: false,
-      isWEP: false,
-      timeout: 15
-    });
+      password
+    }).catch(err => console.log(`CONNECTION ERROR: ${err}`));
+
+    console.log(await WifiManager.connectionStatus());
+    console.log(await WifiManager.getCurrentWifiSSID());
 
     setWifiConnected(true);
 

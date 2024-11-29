@@ -3,7 +3,6 @@
 #include "esp_mac.h"
 
 #include "constants.h"
-#include "WifiUpdateServer.h"
 #include "Storage.h"
 #include "MainFunctions.h"
 #include "BLE.h"
@@ -52,8 +51,8 @@ void setup() {
 
 void loop() {
 
-  if (WifiUpdateServer::getWifiStatus())
-    WifiUpdateServer::handleHTTPClient();
+  if (wifi_enabled)
+    handleHTTPClient();
 
   ButtonHandler::loopButtonHandler();
 

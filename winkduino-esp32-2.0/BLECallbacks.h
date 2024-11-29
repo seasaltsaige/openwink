@@ -2,6 +2,7 @@
 
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
+#include <WebServer.h>
 
 RTC_DATA_ATTR extern double headlightMultiplier;
 
@@ -19,6 +20,8 @@ RTC_DATA_ATTR extern double headlightMultiplier;
 **/
 RTC_DATA_ATTR extern int customButtonPressArray[10];
 RTC_DATA_ATTR extern int maxTimeBetween_ms;
+
+extern bool wifi_enabled;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer);
@@ -56,6 +59,8 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar);
 };
+
+void handleHTTPClient();
 
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
   void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id);

@@ -7,7 +7,13 @@
 #include "MainFunctions.h"
 #include "esp_sleep.h"
 #include "Storage.h"
-#include "WifiUpdateServer.h"
+
+#include <WiFi.h>
+#include <Update.h>
+#include <WebServer.h>
+#include <ESPmDNS.h>
+
+#include "esp_ota_ops.h"
 
 using namespace std;
 
@@ -16,10 +22,13 @@ RTC_DATA_ATTR double headlightMultiplier = 1.0;
 RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 
+WebServer server(80);
+bool wifi_enabled = false;
+
 void ServerCallbacks::onConnect(NimBLEServer* pServer) {
-  WifiUpdateServer::setDeviceConnected(true);
-  WinkduinoBLE::updateHeadlightChars();
   printf("Client connected:: %s\n");
+  WinkduinoBLE::setDeviceConnected(true);
+  WinkduinoBLE::updateHeadlightChars();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
@@ -27,7 +36,7 @@ void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
   Storage::setCustomButtonPressArrayDefaults(customButtonPressArray);
   Storage::setDelay(maxTimeBetween_ms);
 
-  WifiUpdateServer::setDeviceConnected(false);
+  WinkduinoBLE::setDeviceConnected(false);
   awakeTime_ms = 0;
 
   WinkduinoBLE::start();
@@ -252,25 +261,120 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   }
 }
 
-void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
-  const char* password = pChar->getValue().c_str();
+void updateProgress(size_t progress, size_t size) {
+  double slope = 1.0 * (100 - 0) / (60 - 0);
+  static int last_progress = -1;
 
-  WifiUpdateServer::init();
+  if (size > 0) {
+    progress = (progress * 100) / size;
+    progress = (progress > 100 ? 100 : progress);  // 0-100
 
-  WifiUpdateServer::startWifiService(password);
-  WifiUpdateServer::startHTTPClient();
+    progress = 0 + slope * (progress - 0);
 
-  WifiUpdateServer::setWifiStatus(true);
-}
-
-void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id) {
-    switch (reason) {
-      case 0:
-        WifiUpdateServer::setDeviceConnected(true);
-        printf("Client connecting\n");
-        return;
-      default:
-        printf("Default case");
-        break;
+    if (progress != last_progress) {
+      // UPDATE APP PROGRESS STATUS
+      WinkduinoBLE::setFirmwarePercent(to_string(progress));
+      last_progress = progress;
     }
   }
+}
+
+void setupUpdateServer() {
+  server.onNotFound([]() {
+    server.send(404, "text/plain", "Not Found");
+  });
+
+  server.on(
+    String("/update"), HTTP_POST,
+    [&]() {
+      if (Update.hasError()) {
+        server.send(200);
+        WinkduinoBLE::setFirmwareUpdateStatus("failed");
+      } else {
+
+        server.client().setNoDelay(true);
+        server.send(200);
+        WinkduinoBLE::setFirmwareUpdateStatus("success");
+        delay(100);
+        server.client().stop();
+        esp_ota_mark_app_valid_cancel_rollback();
+        ESP.restart();
+      }
+    },
+    [&]() {
+      HTTPRaw& raw = server.raw();
+
+      if (raw.status == RAW_START) {
+        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+        if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
+          Update.printError(Serial);
+        }
+        WinkduinoBLE::setFirmwareUpdateStatus("updating");
+
+      } else if (raw.status == RAW_ABORTED || Update.hasError()) {
+        if (raw.status == RAW_ABORTED) {
+
+          if (!Update.end(false)) {
+            Update.printError(Serial);
+            WinkduinoBLE::setFirmwareUpdateStatus("failed");
+          }
+
+          Serial.println("Update was aborted");
+        }
+      } else if (raw.status == RAW_WRITE) {
+        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
+          Update.printError(Serial);
+        }
+      } else if (raw.status == RAW_END) {
+        if (Update.end(true)) {  // true to set the size to the current progress
+          Serial.printf("Update Success: %u\nRebooting...\n", raw.totalSize);
+        } else {
+          Update.printError(Serial);
+        }
+      }
+      delay(0);
+    });
+
+  Update.onProgress(updateProgress);
+}
+
+void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar) {
+
+  string pass = pChar->getValue();
+  const char* password = pass.c_str();
+
+  const char* ssid = "Wink Module: Update Access Point";
+
+  printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+
+  delay(150);
+
+  setupUpdateServer();
+
+  MDNS.begin("module-update");
+
+  server.begin();
+
+  MDNS.addService("http", "tcp", 80);
+
+  wifi_enabled = true;
+}
+
+void handleHTTPClient() {
+  server.handleClient();
+}
+
+void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
+  switch (reason) {
+    case 0:
+      WinkduinoBLE::setDeviceConnected(true);
+      printf("Client connecting\n");
+      return;
+    default:
+      printf("Default case");
+      break;
+  }
+}

@@ -32,6 +32,8 @@ NimBLECharacteristic* WinkduinoBLE::rightChar;
 NimBLECharacteristic* WinkduinoBLE::firmareUpdateNotifier;
 NimBLECharacteristic* WinkduinoBLE::firmwareStatus;
 
+bool WinkduinoBLE::deviceConnected = false;
+
 void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
   server = NimBLEDevice::createServer();
