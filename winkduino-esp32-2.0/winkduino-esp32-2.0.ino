@@ -1,8 +1,6 @@
 #include <string.h>
 #include <Arduino.h>
-
-#include "driver/rtc_io.h"
-#include "driver/gpio.h"
+#include "esp_mac.h"
 
 #include "constants.h"
 #include "WifiUpdateServer.h"
@@ -16,6 +14,16 @@ using namespace std;
 
 void setup() {
   Serial.begin(115200);
+
+  // Variable to store the MAC address
+  uint8_t baseMac[6];
+  
+  esp_read_mac(baseMac, ESP_MAC_BT);
+  Serial.print("Bluetooth MAC: ");
+  for (int i = 0; i < 5; i++) {
+    Serial.printf("%02X:", baseMac[i]);
+  }
+  Serial.printf("%02X\n", baseMac[5]);
 
   ButtonHandler::init();
 

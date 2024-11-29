@@ -1,4 +1,4 @@
 {
-  "version": "0.1.0",
-  "description": "Major refactor of code-base. All functionality should be retained."
+  "version": "0.1.1",
+  "description": "Pin function update, changed pin 15 to pullup input."
 }

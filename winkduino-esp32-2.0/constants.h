@@ -11,7 +11,7 @@
 // Meaning up should be 1, down should be 0
 #define OEM_BUTTON_INPUT 15
 
-#define FIRMWARE_VERSION "0.1.0"
+#define FIRMWARE_VERSION "0.1.1"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 #define SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"

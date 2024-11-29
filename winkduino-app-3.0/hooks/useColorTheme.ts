@@ -15,14 +15,25 @@ export function useColorTheme() {
   }
 
   async function setTheme(theme: keyof typeof colorThemeDefaults, color: string) {
-
+    await ThemeStore.setTheme(theme, color);
+    setColorTheme((prev) => ({ ...prev, [theme]: color }));
   }
 
   async function revertTheme(theme: keyof typeof colorThemeDefaults) {
-
+    await ThemeStore.resetThemeColor(theme);
+    setColorTheme((prev) => ({ ...prev, [theme]: colorThemeDefaults[theme] }));
   }
 
   async function revertAllThemes() {
+    await ThemeStore.resetAllThemeColors();
+    setColorTheme((_) => ({ ...colorThemeDefaults }));
+  }
 
+  return {
+    colorTheme,
+    revertAllThemes,
+    revertTheme,
+    setTheme,
+    update,
   }
 }

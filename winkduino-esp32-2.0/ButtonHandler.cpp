@@ -1,3 +1,4 @@
+#include "esp32-hal-gpio.h"
 #include <Arduino.h>
 #include "ButtonHandler.h"
 #include "BLE.h"
@@ -22,7 +23,7 @@ void ButtonHandler::setupGPIO() {
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
   // OEM Wiring inputs to detect initial state of headlights
-  pinMode(OEM_BUTTON_INPUT, INPUT);
+  pinMode(OEM_BUTTON_INPUT, INPUT_PULLUP);
 }
 
 void ButtonHandler::readOnWakeup() {
