@@ -279,6 +279,8 @@ void updateProgress(size_t progress, size_t size) {
   }
 }
 
+// TODO: FIGURE OUT THE WEIRD UPDATE STATUS TEXT. IT IS NOT COMING THROUGH CORRECTLY.
+
 void setupUpdateServer() {
   server.onNotFound([]() {
     server.send(404, "text/plain", "Not Found");
