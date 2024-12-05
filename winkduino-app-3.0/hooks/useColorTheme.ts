@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { ThemeStore } from "../Storage";
-import { colorThemeDefaults } from "../helper/Constants";
+import { ColorTheme } from "../helper/Constants";
 
 export function useColorTheme() {
-  const [colorTheme, setColorTheme] = useState(colorThemeDefaults);
+  const [colorTheme, setColorTheme] = useState(ColorTheme.colorThemeDefaults);
 
   useEffect(() => {
     return () => { };
@@ -14,19 +14,19 @@ export function useColorTheme() {
     setColorTheme((prev) => ({ ...prev, theme }));
   }
 
-  async function setTheme(theme: keyof typeof colorThemeDefaults, color: string) {
+  async function setTheme(theme: keyof typeof ColorTheme.colorThemeDefaults, color: string) {
     await ThemeStore.setTheme(theme, color);
     setColorTheme((prev) => ({ ...prev, [theme]: color }));
   }
 
-  async function revertTheme(theme: keyof typeof colorThemeDefaults) {
+  async function revertTheme(theme: keyof typeof ColorTheme.colorThemeDefaults) {
     await ThemeStore.resetThemeColor(theme);
-    setColorTheme((prev) => ({ ...prev, [theme]: colorThemeDefaults[theme] }));
+    setColorTheme((prev) => ({ ...prev, [theme]: ColorTheme.colorThemeDefaults[theme] }));
   }
 
   async function revertAllThemes() {
     await ThemeStore.resetAllThemeColors();
-    setColorTheme((_) => ({ ...colorThemeDefaults }));
+    setColorTheme((_) => ({ ...ColorTheme.colorThemeDefaults }));
   }
 
   return {
