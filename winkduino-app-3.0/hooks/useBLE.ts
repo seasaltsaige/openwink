@@ -79,7 +79,46 @@ function useBLE() {
                 buttonPositive: "OK"
             }
         );
+
+        const fineLocationPermission = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+                title: "Location Permission",
+                message: "Bluetooth Low Energy requires Location",
+                buttonPositive: "OK",
+            }
+        );
+
+        return (
+            bluetoothScanPermission === "granted" &&
+            bluetoothConnectPermission === "granted" &&
+            fineLocationPermission === "granted"
+        );
+    };
+
+    const requestPermissions = async () => {
+        if (Platform.OS === "android") {
+            if ((ExpoDevice.platformApiLevel ?? -1) < 31) {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+                    {
+                        title: "Location Permission",
+                        message: "This app requires Location Services to function correctly.",
+                        buttonPositive: "OK",
+                    }
+                );
+                return (granted === PermissionsAndroid.RESULTS.GRANTED);
+
+            } else return await requestAndroid31Permissions();
+        } else return true;
     }
 
+
+
+    return {
+        requestPermissions,
+
+
+    }
 
 }
