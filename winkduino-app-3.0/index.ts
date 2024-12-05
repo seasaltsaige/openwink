@@ -1,4 +1,6 @@
 import { registerRootComponent } from 'expo';
+import { CustomOEMButtonStore } from './Storage';
+CustomOEMButtonStore.getAll();
 
 import App from './App';
 
