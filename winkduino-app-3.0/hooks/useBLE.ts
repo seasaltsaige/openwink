@@ -7,7 +7,8 @@ import { BleManager, Device, ScanCallbackType, ScanMode, Subscription } from "re
 
 import {
     DeviceMACStore,
-    AutoConnectStore
+    AutoConnectStore,
+    FirmwareStore
 } from "../Storage";
 
 import {
@@ -21,6 +22,9 @@ import {
     SOFTWARE_UPDATING_UUID,
 } from "../helper/Constants";
 
+import {
+    toProperCase
+} from "../helper/Functions";
 function useBLE() {
 
     // Main BLE state Manager
@@ -113,6 +117,163 @@ function useBLE() {
         } else return true;
     }
 
+    // TODO: Handle erros from these
+    const initBLEMonitors = async (connection: Device) => {
+        connection.monitorCharacteristicForService(SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
+            if (err) return console.log(err);
+            const strVal = base64.decode(char?.value!);
+            if (parseInt(strVal) === 1) setHeadlightsBusy(true);
+            else setHeadlightsBusy(false);
+        });
+
+        connection.monitorCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID, (err, char) => {
+            if (err) return console.log(err);
+            const strVal = base64.decode(char?.value!);
+            const intVal = parseInt(strVal);
+            if (intVal > 1) {
+                const realValDecimal = (intVal - 10) / 100;
+                setLeftStatus(realValDecimal);
+            } else setLeftStatus(intVal);
+        });
+
+        connection.monitorCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID, (err, char) => {
+            if (err) return console.log(err);
+            const strVal = base64.decode(char?.value!);
+            const intVal = parseInt(strVal);
+            if (intVal > 1) {
+                const realValDecimal = (intVal - 10) / 100;
+                setRightStatus(realValDecimal);
+            } else setRightStatus(intVal);
+        });
+
+        connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_UPDATING_UUID, (err, char) => {
+            if (err) return console.log(err);
+            const strVal = base64.decode(char?.value!);
+            const val = parseInt(strVal);
+            setUpdateProgress(val);
+        })
+
+        connection.monitorCharacteristicForService(SERVICE_UUID, SOFTWARE_STATUS_UUID, (err, char) => {
+            if (err)
+                return console.log(err);
+
+            const statusValue = toProperCase(base64.decode(char?.value!) as "idle" | "updating" | "failed" | "success");
+            setUpdatingStatus(statusValue);
+        });
+    }
+
+    const readInitialBLEStatus = async (connection: Device) => {
+        const leftInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, LEFT_STATUS_UUID);
+
+        if (leftInitStatus) {
+            if (base64.decode(leftInitStatus.value!) === "1") setLeftStatus(1);
+            else setLeftStatus(0);
+        }
+
+        const rightInitStatus = await connection?.readCharacteristicForService(SERVICE_UUID, RIGHT_STATUS_UUID);
+        if (rightInitStatus) {
+            if (base64.decode(rightInitStatus.value!) === "1") setRightStatus(1);
+            else setRightStatus(0);
+        }
+
+        const firmware = await connection?.readCharacteristicForService(SERVICE_UUID, FIRMWARE_UUID);
+        if (firmware.value) {
+            setFirmwareVersion(base64.decode(firmware.value));
+            await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
+        }
+    }
+
+
+    const connectToBLEDevice = async (dev: Device) => {
+        setIsConnecting(true);
+        try {
+            const connection = await manager.connectToDevice(dev.id);
+            await connection.discoverAllServicesAndCharacteristics();
+
+            await DeviceMACStore.setMAC(connection.id);
+            setMac(connection.id);
+
+            setDevice(connection);
+            setIsConnecting(false);
+
+            await initBLEMonitors(connection);
+            await readInitialBLEStatus(connection);
+
+            connection.onDisconnected(async (err, d) => {
+                if (err) {
+                    // TODO: Handle errors
+                    console.log(err);
+                    return;
+                }
+
+                setDevice(null);
+                const autoConnectStatus = await AutoConnectStore.get();
+                if (autoConnectStatus) scanForModule();
+            });
+
+        } catch (err) {
+            // TODO: Handle error
+            // (alert user)
+
+            setDevice(null);
+            setIsConnecting(false);
+            setIsScanning(false);
+
+            const autoConnect = await AutoConnectStore.get();
+            if (autoConnect === null) { }
+            if (autoConnect) {
+                setIsScanning(true);
+                await scanForModule();
+            }
+        }
+    }
+
+    const scanForModule = async () => {
+        if (device !== null) return;
+
+        setIsScanning(true);
+        const deviceMac = await DeviceMACStore.getStoredMAC();
+
+        let deviceFound = false;
+
+        setTimeout(async () => {
+            const autoConnectStatus = await AutoConnectStore.get();
+            if (autoConnectStatus === null) { /* TODO: Handle error */ }
+
+            if (!deviceFound) {
+                await manager.stopDeviceScan().catch(err => console.log(err));
+
+                setIsConnecting(false);
+                setIsScanning(false);
+
+                if (autoConnectStatus)
+                    scanForModule();
+            }
+        }, SCAN_TIME_SECONDS);
+
+        manager.startDeviceScan(null, {
+            allowDuplicates: false,
+            callbackType: ScanCallbackType.FirstMatch,
+            legacyScan: false,
+            scanMode: ScanMode.LowLatency
+        }, async (err, deviceToConnect) => {
+            if (err) {
+                // TODO: Handle scan error
+                console.log(err);
+            }
+
+            if (deviceToConnect !== null) {
+                if (deviceToConnect.id === deviceMac || (deviceToConnect.serviceUUIDs && deviceToConnect.serviceUUIDs.includes(SERVICE_UUID))) {
+                    deviceFound = true;
+                    await manager.stopDeviceScan();
+                    setIsScanning(false);
+                    await connectToBLEDevice(deviceToConnect);
+                }
+            }
+        });
+
+
+    }
 
 
     return {

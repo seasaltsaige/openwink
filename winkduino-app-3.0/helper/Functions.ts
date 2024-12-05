@@ -34,3 +34,14 @@ export const isValidHex = (str: string) => {
   const hexaPattern = /^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
   return hexaPattern.test(str);
 }
+
+type ToProperCase<S extends string> =
+  S extends `${infer First}${infer Rest}`
+  ? `${Uppercase<First>}${Rest}`
+  : S;
+
+export const toProperCase = <S extends string>(str: S): ToProperCase<S> => {
+  const first = str.at(0)?.toUpperCase();
+  const rest = str.slice(1);
+  return `${first}${rest}` as ToProperCase<S>;
+}
