@@ -4,3 +4,4 @@ export * from "./CustomCommands";
 export * from "./Home";
 export * from "./Settings";
 export * from "./StandardCommands";
+export * from "./HowToUse";

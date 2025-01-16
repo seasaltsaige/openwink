@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { colorThemeDefaults } from "../helper/Constants";
+import { ColorTheme, Theme } from "../helper/Constants";
 
 export abstract class ThemeStore {
-  static async setTheme(key: keyof typeof colorThemeDefaults, color: string) {
+  static async setTheme(key: keyof Theme, color: string) {
     try {
       await AsyncStorage.setItem(`color-theme-${key}`, color);
     } catch (err) {
@@ -11,13 +11,14 @@ export abstract class ThemeStore {
   }
 
   static async getStoredTheme() {
-    const theme: Partial<typeof colorThemeDefaults> = {};
+    const theme: Partial<Theme> = {};
 
-    for (const key in colorThemeDefaults) {
+    for (const key in ColorTheme.colorThemeDefaults) {
       try {
         const storedValue = await AsyncStorage.getItem(`color-theme-${key}`);
         if (storedValue === null) continue;
-        else theme[key as keyof typeof colorThemeDefaults] = storedValue;
+        //@ts-ignore
+        else theme[key] = storedValue;
       } catch (err) {
         console.log(err, key);
       }
@@ -27,7 +28,7 @@ export abstract class ThemeStore {
   }
 
   static async resetAllThemeColors() {
-    for (const key in colorThemeDefaults) {
+    for (const key in ColorTheme.colorThemeDefaults) {
       try {
         await AsyncStorage.removeItem(`color-theme-${key}`);
       } catch (err) {
@@ -36,7 +37,7 @@ export abstract class ThemeStore {
     }
   }
 
-  static async resetThemeColor(theme: keyof typeof colorThemeDefaults) {
+  static async resetThemeColor(theme: keyof Theme) {
     try {
       await AsyncStorage.removeItem(`color-theme-${theme}`);
     } catch (err) {

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "winkduino-app-3.0",
-    "slug": "winkduino-app-3.0",
+    "slug": "winkduino3",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,7 +19,14 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.maxisthemoose.winkduino3"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,6 +34,11 @@
     "plugins": [
       "react-native-ble-plx",
       "react-native-wifi-reborn"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "03332a0c-de38-4206-b190-0bc6d7c3111c"
+      }
+    }
   }
 }

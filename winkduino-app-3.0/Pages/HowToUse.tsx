@@ -3,7 +3,7 @@ import { SafeAreaView, Text, View } from "react-native"
 import { useColorTheme } from "../hooks/useColorTheme";
 import { NavigationBar } from "../Components/NavigationBar";
 
-export function Settings() {
+export function HowToUse() {
 
   const { colorTheme } = useColorTheme();
 
