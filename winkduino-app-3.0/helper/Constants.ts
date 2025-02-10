@@ -52,7 +52,7 @@ export interface Theme {
 export namespace ColorTheme {
   export const colorThemeDefaults: Theme = {
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#37383b",
+    backgroundSecondaryColor: "#262629",
     buttonColor: "#800020", // Burgundy (default)
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
