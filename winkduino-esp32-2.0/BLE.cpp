@@ -1,3 +1,4 @@
+#include "NimBLEServer.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
 #include "constants.h"
@@ -12,32 +13,40 @@ using namespace std;
 RTC_DATA_ATTR int leftStatus = 0;
 RTC_DATA_ATTR int rightStatus = 0;
 
-
 NimBLEServer* WinkduinoBLE::server;
-NimBLEService*  WinkduinoBLE::service;
+
 NimBLEExtAdvertisement WinkduinoBLE::advertisement;
 NimBLEExtAdvertising*  WinkduinoBLE::advertising;
+
+NimBLEService* WinkduinoBLE::winkService;
+// WINK CHARACTERISTICS
 NimBLECharacteristic* WinkduinoBLE::winkChar;
+NimBLECharacteristic* WinkduinoBLE::busyChar;
+NimBLECharacteristic* WinkduinoBLE::leftStatusChar;
+NimBLECharacteristic* WinkduinoBLE::rightStatusChar;
 NimBLECharacteristic* WinkduinoBLE::leftSleepChar;
 NimBLECharacteristic* WinkduinoBLE::rightSleepChar;
 NimBLECharacteristic* WinkduinoBLE::syncChar;
-NimBLECharacteristic* WinkduinoBLE::longTermSleepChar; 
+
+
+NimBLEService* WinkduinoBLE::otaService;
+// OTA CHARACTERISTICS
 NimBLECharacteristic* WinkduinoBLE::otaUpdateChar;
-NimBLECharacteristic* WinkduinoBLE::customButtonChar;
-NimBLECharacteristic* WinkduinoBLE::headlightDelayChar;
-NimBLECharacteristic* WinkduinoBLE::firmwareChar;
-NimBLECharacteristic* WinkduinoBLE::busyChar;
-NimBLECharacteristic* WinkduinoBLE::leftChar;
-NimBLECharacteristic* WinkduinoBLE::rightChar;
 NimBLECharacteristic* WinkduinoBLE::firmareUpdateNotifier;
 NimBLECharacteristic* WinkduinoBLE::firmwareStatus;
+NimBLECharacteristic* WinkduinoBLE::firmwareChar;
+
+
+NimBLEService* WinkduinoBLE::settingsService;
+// SETTINGS CHARACTERISTICS
+NimBLECharacteristic* WinkduinoBLE::longTermSleepChar; 
+NimBLECharacteristic* WinkduinoBLE::customButtonChar;
+NimBLECharacteristic* WinkduinoBLE::headlightDelayChar;
 
 bool WinkduinoBLE::deviceConnected = false;
 
 void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
-  server = NimBLEDevice::createServer();
-  service = server->createService(NimBLEUUID(SERVICE_UUID));
 
   NimBLEExtAdvertisement advertisement(BLE_HCI_LE_PHY_CODED, BLE_HCI_LE_PHY_CODED);
 
@@ -50,55 +59,73 @@ void WinkduinoBLE::init(string deviceName) {
 void WinkduinoBLE::initDeviceServer() {
   server = NimBLEDevice::createServer();
   server->setCallbacks(new ServerCallbacks());
+  server->
 }
 
 void WinkduinoBLE::initServerService() {
-  service = server->createService(NimBLEUUID(SERVICE_UUID));
+  winkService = server->createService(NimBLEUUID(WINK_SERVICE_UUID));
+  otaService = server->createService(NimBLEUUID(OTA_SERVICE_UUID));
+  settingsService = server->createService(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
 }
 
 void WinkduinoBLE::initServiceCharacteristics() {
 
-  winkChar = service->createCharacteristic(REQUEST_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
-  leftSleepChar = service->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
-  rightSleepChar = service->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
-  syncChar = service->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
-  longTermSleepChar = service->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
-  otaUpdateChar = service->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
-  customButtonChar = service->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
-  headlightDelayChar = service->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
-  firmwareChar = service->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
-  busyChar = service->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
-  leftChar = service->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  rightChar = service->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  firmareUpdateNotifier = service->createCharacteristic(SOFTWARE_UPDATING_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  firmwareStatus = service->createCharacteristic(SOFTWARE_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-
-  firmwareChar->setValue(FIRMWARE_VERSION);
-  headlightDelayChar->setValue(1.0);
+  winkChar = winkService->createCharacteristic(HEADLIGHT_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
+  leftSleepChar = winkService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  rightSleepChar = winkService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
+  busyChar = winkService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
+  leftStatusChar = winkService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
+  
   syncChar->setValue(0);
   winkChar->setValue(0);
-  firmwareStatus->setValue("idle");
-
 
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   leftSleepChar->setCallbacks(new LeftSleepCharacteristicCallbacks());
   rightSleepChar->setCallbacks(new RightSleepCharacteristicCallbacks());
-  longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
+
+
+  otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
+  firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+  firmareUpdateNotifier = otaService->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  
+  firmwareChar->setValue(FIRMWARE_VERSION);
+  firmwareStatus->setValue("idle");
+
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
+
+
+  longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
+  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
+  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
+  headlightDelayChar->setValue(1.0);
+  longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
+
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
 }
 
 void WinkduinoBLE::initAdvertising() {
-  service->start();
+  winkService->start();
+  otaService->start();
+  settingsService->start();
+
   advertisement.setName("Winkduino");
+
   advertisement.setConnectable(true);
   advertisement.setScannable(false);
-  advertisement.setCompleteServices({ NimBLEUUID(SERVICE_UUID) });
+
+  advertisement.addServiceUUID(NimBLEUUID(WINK_SERVICE_UUID));
+  advertisement.addServiceUUID(NimBLEUUID(OTA_SERVICE_UUID));
+  advertisement.addServiceUUID(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
 
   advertising = NimBLEDevice::getAdvertising();
+  
   advertising->setCallbacks(new AdvertisingCallbacks());
+
 }
 
 void WinkduinoBLE::start() {
@@ -112,10 +139,10 @@ void WinkduinoBLE::start() {
 }
 
 void WinkduinoBLE::updateHeadlightChars() {
-  leftChar->setValue(std::string(String(leftStatus).c_str()));
-  rightChar->setValue(std::string(String(rightStatus).c_str()));
-  leftChar->notify();
-  rightChar->notify();
+  leftStatusChar->setValue(std::string(String(leftStatus).c_str()));
+  rightStatusChar->setValue(std::string(String(rightStatus).c_str()));
+  leftStatusChar->notify();
+  rightStatusChar->notify();
 }
 
 void WinkduinoBLE::setBusy(bool busy) {

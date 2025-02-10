@@ -1,7 +1,6 @@
 import { useTheme } from "@react-navigation/native";
 import { SafeAreaView, Text, View } from "react-native"
 import { useColorTheme } from "../hooks/useColorTheme";
-import { NavigationBar } from "../Components/NavigationBar";
 
 export function Home() {
 
@@ -14,8 +13,7 @@ export function Home() {
         height: "100%",
       }}
     >
-
-      <NavigationBar />
+      <Text style={{ color: colorTheme.headerTextColor, fontWeight: "bold", fontSize: 40 }}>HELLO WORLD</Text>
     </View>
   );
 }

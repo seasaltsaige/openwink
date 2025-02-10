@@ -52,8 +52,8 @@ export interface Theme {
 export namespace ColorTheme {
   export const colorThemeDefaults: Theme = {
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    buttonColor: "#800020",
+    backgroundSecondaryColor: "#37383b",
+    buttonColor: "#800020", // Burgundy (default)
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#ffffff",
@@ -62,26 +62,68 @@ export namespace ColorTheme {
   }
 
   export const lightTheme: Theme = {
-
+    backgroundPrimaryColor: "#f5f5f5",
+    backgroundSecondaryColor: "#e0e0e0",
+    buttonColor: "#800020",
+    disabledButtonColor: "#c0c0c0",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#ffffff",
+    headerTextColor: "#000000",
+    textColor: "#141414",
   }
 
   export const darkTheme: Theme = {
-
+    backgroundPrimaryColor: "#0a0a0a",
+    backgroundSecondaryColor: "#1c1c1c",
+    buttonColor: "#800020",
+    disabledButtonColor: "#555555",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#bbbbbb",
+    headerTextColor: "#ffffff",
+    textColor: "#e0e0e0",
   }
 
   export const classicRedTheme: Theme = {
-
+    backgroundPrimaryColor: "#141414",
+    backgroundSecondaryColor: "#1e1e1e",
+    buttonColor: "#c8102e", // Classic Red
+    disabledButtonColor: "#5a0015",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#bbbbbb",
+    headerTextColor: "#c8102e",
+    textColor: "#ffffff",
   }
 
   export const classicYellowTheme: Theme = {
-
+    backgroundPrimaryColor: "#141414",
+    backgroundSecondaryColor: "#1e1e1e",
+    buttonColor: "#ffcc00", // Sunburst Yellow
+    disabledButtonColor: "#b38f00",
+    buttonTextColor: "#141414",
+    disabledButtonTextColor: "#bbbbbb",
+    headerTextColor: "#ffcc00",
+    textColor: "#ffffff",
   }
 
   export const classicBlueTheme: Theme = {
-
+    backgroundPrimaryColor: "#141414",
+    backgroundSecondaryColor: "#1e1e1e",
+    buttonColor: "#0033a0", // Marina Blue
+    disabledButtonColor: "#002275",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#bbbbbb",
+    headerTextColor: "#0033a0",
+    textColor: "#ffffff",
   }
 
   export const classicGreenTheme: Theme = {
-
+    backgroundPrimaryColor: "#141414",
+    backgroundSecondaryColor: "#1e1e1e",
+    buttonColor: "#004d26", // British Racing Green
+    disabledButtonColor: "#00331a",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#bbbbbb",
+    headerTextColor: "#004d26",
+    textColor: "#ffffff",
   }
 }
