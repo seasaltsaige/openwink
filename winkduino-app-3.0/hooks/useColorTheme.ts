@@ -3,7 +3,7 @@ import { ThemeStore } from "../Storage";
 import { ColorTheme } from "../helper/Constants";
 
 export function useColorTheme() {
-  const [colorTheme, setColorTheme] = useState(ColorTheme.colorThemeDefaults);
+  const [colorTheme, setColorTheme] = useState(ColorTheme.brilliantBlack);
 
   useEffect(() => {
     return () => { };
@@ -14,19 +14,19 @@ export function useColorTheme() {
     setColorTheme((prev) => ({ ...prev, theme }));
   }
 
-  async function setTheme(theme: keyof typeof ColorTheme.colorThemeDefaults, color: string) {
+  async function setTheme(theme: keyof typeof ColorTheme.brilliantBlack, color: string) {
     await ThemeStore.setTheme(theme, color);
     setColorTheme((prev) => ({ ...prev, [theme]: color }));
   }
 
-  async function revertTheme(theme: keyof typeof ColorTheme.colorThemeDefaults) {
+  async function revertTheme(theme: keyof typeof ColorTheme.brilliantBlack) {
     await ThemeStore.resetThemeColor(theme);
-    setColorTheme((prev) => ({ ...prev, [theme]: ColorTheme.colorThemeDefaults[theme] }));
+    setColorTheme((prev) => ({ ...prev, [theme]: ColorTheme.brilliantBlack[theme] }));
   }
 
   async function revertAllThemes() {
     await ThemeStore.resetAllThemeColors();
-    setColorTheme((_) => ({ ...ColorTheme.colorThemeDefaults }));
+    setColorTheme((_) => ({ ...ColorTheme.brilliantBlack }));
   }
 
   return {

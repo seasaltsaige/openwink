@@ -1,22 +1,11 @@
 import { Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import { useNavigation, useNavigationState, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
-import { ColorTheme } from "../../helper/Constants";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
+export default function TermsOfUse() {
 
-const themeData = {
-  crystalWhite: "Crystal White",
-  brilliantBlack: "Brilliant Black",
-  classicRed: "Classic Red",
-  sunburstYellow: "Sunburst Yellow",
-  marinerBlue: "Mariner Blue",
-  britishRacingGreen: "British Racing Green",
-}
-
-
-export function AppTheme() {
   const { colorTheme } = useColorTheme();
 
   const navigation = useNavigation();
@@ -59,7 +48,7 @@ export function AppTheme() {
           onPressOut={() => backPressed(false)}
           onPress={() => navigation.goBack()}
         >
-          <IonIcons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+          <Ionicons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
 
           <Text style={{
             color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
@@ -76,20 +65,9 @@ export function AppTheme() {
           width: "auto",
           marginRight: 10,
         }}
-        >App Theme</Text>
+        >Terms Of Use</Text>
 
       </View>
-
-
-      {
-        Object.keys(ColorTheme).map((val, i) => (
-          <View>
-            <Text style={{ color: "black" }}>{val}</Text>
-          </View>
-        ))
-      }
-
-
     </View>
   )
 }

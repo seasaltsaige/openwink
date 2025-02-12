@@ -50,10 +50,23 @@ export interface Theme {
 }
 
 export namespace ColorTheme {
-  export const colorThemeDefaults: Theme = {
+
+
+  export const crystalWhite: Theme = {
+    backgroundPrimaryColor: "#f5f5f5",
+    backgroundSecondaryColor: "#eaeaea",
+    buttonColor: "#bd9664",
+    disabledButtonColor: "#aaaaaa",
+    buttonTextColor: "#ffffff",
+    disabledButtonTextColor: "#ffffff",
+    headerTextColor: "#000000",
+    textColor: "#141414",
+  }
+
+  export const brilliantBlack: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
-    buttonColor: "#800020", // Burgundy (default)
+    buttonColor: "#550000", // Burgundy (default)
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#ffffff",
@@ -61,29 +74,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const lightTheme: Theme = {
-    backgroundPrimaryColor: "#f5f5f5",
-    backgroundSecondaryColor: "#e0e0e0",
-    buttonColor: "#800020",
-    disabledButtonColor: "#c0c0c0",
-    buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#ffffff",
-    headerTextColor: "#000000",
-    textColor: "#141414",
-  }
-
-  export const darkTheme: Theme = {
-    backgroundPrimaryColor: "#0a0a0a",
-    backgroundSecondaryColor: "#1c1c1c",
-    buttonColor: "#800020",
-    disabledButtonColor: "#555555",
-    buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#ffffff",
-    textColor: "#e0e0e0",
-  }
-
-  export const classicRedTheme: Theme = {
+  export const classicRed: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     buttonColor: "#c8102e", // Classic Red
@@ -94,7 +85,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const classicYellowTheme: Theme = {
+  export const sunburstYellow: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     buttonColor: "#ffcc00", // Sunburst Yellow
@@ -105,7 +96,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const classicBlueTheme: Theme = {
+  export const marinerBlue: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     buttonColor: "#0033a0", // Marina Blue
@@ -116,7 +107,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const classicGreenTheme: Theme = {
+  export const britishRacingGreen: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     buttonColor: "#004d26", // British Racing Green

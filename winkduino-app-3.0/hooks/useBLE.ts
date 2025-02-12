@@ -289,15 +289,23 @@ function useBLE() {
         }
       }
     });
+  }
 
-
+  const disconnectFromModule = async () => {
+    const isConnected = await device?.isConnected();
+    if (isConnected)
+      await device?.cancelConnection();
   }
 
 
   return {
     requestPermissions,
+    scanForModule,
 
 
   }
 
 }
+
+
+export { useBLE };

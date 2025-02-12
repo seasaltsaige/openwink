@@ -6,18 +6,48 @@ export function Home() {
 
   const { colorTheme } = useColorTheme();
 
+
   return (
-    <>
-
-
+    <View
+      style={{
+        backgroundColor: colorTheme.backgroundPrimaryColor,
+        height: "100%",
+        padding: 10,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        rowGap: 25,
+      }}
+    >
       <View
         style={{
-          backgroundColor: colorTheme.backgroundPrimaryColor,
-          height: "100%",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Text style={{ color: colorTheme.headerTextColor, fontWeight: "bold", fontSize: 40 }}>HELLO WORLD</Text>
+
+        <Text
+          style={{
+            fontSize: 40,
+            fontWeight: "bold",
+            color: colorTheme.headerTextColor,
+            width: "100%",
+          }}
+        >Home</Text>
+
       </View>
-    </>
+
+      <View>
+        <Text>
+          {
+            "No device connected"
+          }
+        </Text>
+      </View>
+
+    </View>
+
   );
 }

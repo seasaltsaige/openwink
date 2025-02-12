@@ -1,5 +1,5 @@
-import { useNavigation, useTheme } from "@react-navigation/native";
-import { Modal, Pressable, SafeAreaView, ScrollView, Text, View } from "react-native"
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { Modal, Pressable, Text, View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -115,6 +115,11 @@ const settingsData: Array<{
       pageSymbol: "build-outline"
     },
     {
+      pageName: "Terms Of Use",
+      navigationName: "TermsOfUse",
+      pageSymbol: "document-text-outline",
+    },
+    {
       pageName: "App Data",
       navigationName: "StoredData",
       pageSymbol: "finger-print-outline"
@@ -129,6 +134,7 @@ export function Settings() {
   const [popupHeader, setPopupHeader] = useState("");
 
   const navigate = useNavigation();
+  const route = useRoute();
 
   return (
     <>
@@ -157,11 +163,10 @@ export function Settings() {
               fontSize: 40,
               fontWeight: "bold",
               color: colorTheme.headerTextColor,
-              // alignSelf: "flex-start",
               width: "100%",
             }}
           >Settings</Text>
-          {/* <ion-icon name="chevron-back-circle-outline"></ion-icon> */}
+
         </View>
 
         <View
@@ -177,18 +182,8 @@ export function Settings() {
           {
             settingsData.map((c, i) => (
               <Pressable
-                style={({ pressed }) => pressed ? ({
-                  backgroundColor: colorTheme.buttonColor,
-                  width: "100%",
-                  padding: 5,
-                  paddingVertical: 13,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                }) : ({
-                  backgroundColor: colorTheme.backgroundSecondaryColor,
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   width: "100%",
                   padding: 5,
                   paddingVertical: 13,
@@ -199,7 +194,7 @@ export function Settings() {
                   borderRadius: 8,
                 })}
                 //@ts-ignore
-                onPress={() => navigate.navigate(c.navigationName)}
+                onPress={() => navigate.navigate(c.navigationName, { back: route.name })}
                 key={i}>
                 <View
                   style={{

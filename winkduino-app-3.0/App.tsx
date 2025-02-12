@@ -15,14 +15,14 @@ import {
   StandardCommands,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// import { enableScreens } from 'react-native-screens';
+import AppInfo from './Pages/Settings/AppInfo';
+import ModuleInfo from './Pages/Settings/ModuleInfo';
+import ModuleSettings from './Pages/Settings/ModuleSettings';
+import AppData from './Pages/Settings/AppData';
 
-// enableScreens(false);
 const Tab = createBottomTabNavigator();
 
-
-const withStatusBar = (Component: React.FC, backgroundColor: string = "#141414") => {
+const withStatusBar = (Component: React.FC, backgroundColor: string) => {
   return (props: any) => (
     <View style={{ flex: 1, backgroundColor }}>
       <StatusBar backgroundColor={backgroundColor} barStyle="light-content" />
@@ -48,16 +48,15 @@ function BottomTabs() {
 
           return <Ionicons name={iconName} size={size} color={focused ? colorTheme.buttonTextColor : colorTheme.disabledButtonColor} />
         },
-        // tabBarActiveBackgroundColor: colorTheme.buttonColor,
-        // tabBarInactiveBackgroundColor: colorTheme.buttonColor,
         tabBarLabelStyle: {
           color: colorTheme.buttonTextColor,
+          fontSize: 13
         },
         headerShown: false,
         tabBarStyle: {
+          height: 55,
           backgroundColor: colorTheme.buttonColor
         }
-        // tabBar: () => null,
       })}
     >
       <Tab.Screen name='Home' component={withStatusBar(Home, colorTheme.backgroundPrimaryColor)} />
@@ -80,12 +79,46 @@ function AppNavigator() {
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       <Stack.Screen name="Theme" component={AppTheme} />
+      <Stack.Screen name="AppInfo" component={AppInfo} />
+      <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
+      <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
+      <Stack.Screen name="StoredData" component={AppData} />
+
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
       <Stack.Screen name="CustomCommands" component={CustomCommand} />
       <Stack.Screen name="StandardCommands" component={StandardCommands} />
     </Stack.Navigator>
   )
 }
+
+/**
+    {
+      pageName: "App Info",
+      navigationName: "AppInfo",
+      pageSymbol: "information-circle-outline",
+    },
+    {
+      pageName: "Module Info",
+      navigationName: "ModuleInfo",
+      pageSymbol: "information-circle-outline"
+    },
+    {
+      pageName: "App Theme",
+      navigationName: "Theme",
+      pageSymbol: "color-fill-outline"
+    },
+    {
+      pageName: "Module Settings",
+      navigationName: "ModuleSettings",
+      pageSymbol: "build-outline"
+    },
+    {
+      pageName: "App Data",
+      navigationName: "StoredData",
+      pageSymbol: "finger-print-outline"
+    }
+ 
+ */
 
 export default function App() {
   const { colorTheme } = useColorTheme();

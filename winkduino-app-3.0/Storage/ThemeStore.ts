@@ -13,7 +13,7 @@ export abstract class ThemeStore {
   static async getStoredTheme() {
     const theme: Partial<Theme> = {};
 
-    for (const key in ColorTheme.colorThemeDefaults) {
+    for (const key in ColorTheme.brilliantBlack) {
       try {
         const storedValue = await AsyncStorage.getItem(`color-theme-${key}`);
         if (storedValue === null) continue;
@@ -28,7 +28,7 @@ export abstract class ThemeStore {
   }
 
   static async resetAllThemeColors() {
-    for (const key in ColorTheme.colorThemeDefaults) {
+    for (const key in ColorTheme.brilliantBlack) {
       try {
         await AsyncStorage.removeItem(`color-theme-${key}`);
       } catch (err) {
