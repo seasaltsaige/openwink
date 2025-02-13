@@ -92,7 +92,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
         let iconName: any;
 
         if (route.name === "Home") iconName = isFocused ? 'home' : 'home-outline';
-        else if (route.name === "Help") iconName = "help-outline" as const;
+        else if (route.name === "Help") iconName = isFocused ? "help-circle" : "help-circle-outline" as const;
         else iconName = isFocused ? "settings" : "settings-outline" as const;
 
         return (
@@ -117,16 +117,30 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
               style={{
                 display: "flex",
-                flexDirection: "column",
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                columnGap: 7,
                 width: 115,
                 height: 40,
-                borderRadius: 12,
+                borderRadius: 20,
                 backgroundColor: isFocused ? colorTheme.buttonTextColor : colorTheme.backgroundPrimaryColor
               }}
             >
               <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+              {
+                isFocused ? (
+                  <Text
+                    style={{
+                      color: colorTheme.buttonColor,
+                      fontWeight: "bold",
+                      fontSize: 16,
+                    }}
+                  >
+                    {route.name}
+                  </Text>
+                ) : <></>
+              }
             </View>
           </PlatformPressable>
         )

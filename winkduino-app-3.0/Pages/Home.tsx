@@ -84,7 +84,8 @@ export function Home() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
-          rowGap: 50,
+          rowGap: 35,
+          width: "100%",
         }}
       >
 
@@ -171,16 +172,28 @@ export function Home() {
           )
         }
 
-
+        {/* COMMANDS */}
         <View
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-start",
             width: "100%",
-            rowGap: 20,
+            rowGap: 15,
           }}
         >
+
+          <Text
+            style={{
+              alignSelf: "flex-start",
+              textAlign: "left",
+              color: colorTheme.headerTextColor,
+              fontWeight: "500",
+              fontSize: 20
+            }}
+          >
+            Commands
+          </Text>
 
 
           <Pressable
@@ -425,10 +438,23 @@ export function Home() {
           style={{
             display: "flex",
             alignItems: "center",
+            width: "70%",
             justifyContent: "flex-start",
-            rowGap: 40,
+            rowGap: 10
           }}
         >
+
+          <Text
+            style={{
+              alignSelf: "flex-start",
+              textAlign: "left",
+              color: colorTheme.headerTextColor,
+              fontWeight: "500",
+              fontSize: 18
+            }}
+          >
+            Updates
+          </Text>
 
           {
             // TODO: update to 'if update available for app'

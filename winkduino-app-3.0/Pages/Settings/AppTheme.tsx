@@ -151,6 +151,7 @@ export function AppTheme() {
         ))
       }
 
+      {/* TODO: add reset button (partially to even out screen weights) */}
 
     </View>
   )
