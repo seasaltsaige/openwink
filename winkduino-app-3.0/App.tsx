@@ -1,5 +1,5 @@
 import { StatusBar, View } from 'react-native';
-import { NavigationContainer, useLinkBuilder } from '@react-navigation/native';
+import { NavigationContainer, useFocusEffect, useLinkBuilder } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
@@ -20,10 +20,6 @@ import {
   StandardCommands,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
-// import AppInfo from './Pages/Settings/AppInfo';
-// import ModuleInfo from './Pages/Settings/ModuleInfo';
-// import  from './Pages/Settings/ModuleSettings';
-// import AppData from './Pages/Settings/AppData';
 
 const Tab = createBottomTabNavigator();
 
@@ -37,7 +33,17 @@ const withStatusBar = (Component: React.FC, backgroundColor: string) => {
 };
 
 const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabBarProps) => {
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, update } = useColorTheme();
+
+  useFocusEffect(() => {
+    (async () => {
+      await update();
+    })();
+
+    return () => { };
+  });
+
+
   const { buildHref } = useLinkBuilder();
 
   return <View
@@ -132,8 +138,19 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
 }
 
+
 function BottomTabs() {
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, update } = useColorTheme();
+
+  useFocusEffect(() => {
+    (async () => {
+      await update();
+    })();
+
+    return () => { };
+  });
+
+
   return (
 
     <Tab.Navigator
@@ -154,12 +171,14 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
 
+
   return (
     <Stack.Navigator screenOptions={{
       headerShown: false,
       animation: "slide_from_right",
       animationDuration: 100,
-    }}>
+    }}
+    >
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       <Stack.Screen name="Theme" component={AppTheme} />
@@ -177,7 +196,6 @@ function AppNavigator() {
 
 
 export default function App() {
-  const { colorTheme } = useColorTheme();
   return (
     <NavigationContainer>
       <AppNavigator />

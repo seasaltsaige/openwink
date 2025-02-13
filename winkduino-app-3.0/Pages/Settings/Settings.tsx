@@ -1,4 +1,4 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { Modal, Pressable, Text, View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useState } from "react";
@@ -128,13 +128,21 @@ const settingsData: Array<{
 
 export function Settings() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, update } = useColorTheme();
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupText, setPopupText] = useState("");
   const [popupHeader, setPopupHeader] = useState("");
 
   const navigate = useNavigation();
   const route = useRoute();
+
+  useFocusEffect(() => {
+    (async () => {
+      await update();
+    })();
+
+    return () => { };
+  });
 
   return (
     <>

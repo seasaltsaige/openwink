@@ -51,6 +51,15 @@ export interface Theme {
 
 export namespace ColorTheme {
 
+  export const themeNames = {
+    crystalWhite: "Crystal White",
+    brilliantBlack: "Brilliant Black",
+    classicRed: "Classic Red",
+    sunburstYellow: "Sunburst Yellow",
+    marinerBlue: "Mariner Blue",
+    britishRacingGreen: "British Racing Green",
+  }
+
 
   export const crystalWhite: Theme = {
     backgroundPrimaryColor: "#f1f1f1",

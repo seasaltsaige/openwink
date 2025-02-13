@@ -2,47 +2,33 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ColorTheme, Theme } from "../helper/Constants";
 
 export abstract class ThemeStore {
-  static async setTheme(key: keyof Theme, color: string) {
+
+  static async setTheme(key: keyof typeof ColorTheme.themeNames) {
     try {
-      await AsyncStorage.setItem(`color-theme-${key}`, color);
+      await AsyncStorage.setItem("color-theme", key);
     } catch (err) {
       console.log(err);
     }
   }
 
   static async getStoredTheme() {
-    const theme: Partial<Theme> = {};
 
-    for (const key in ColorTheme.brilliantBlack) {
-      try {
-        const storedValue = await AsyncStorage.getItem(`color-theme-${key}`);
-        if (storedValue === null) continue;
-        //@ts-ignore
-        else theme[key] = storedValue;
-      } catch (err) {
-        console.log(err, key);
-      }
-    }
-
-    return theme;
-  }
-
-  static async resetAllThemeColors() {
-    for (const key in ColorTheme.brilliantBlack) {
-      try {
-        await AsyncStorage.removeItem(`color-theme-${key}`);
-      } catch (err) {
-        console.log(err, key);
-      }
-    }
-  }
-
-  static async resetThemeColor(theme: keyof Theme) {
     try {
-      await AsyncStorage.removeItem(`color-theme-${theme}`);
+      const themeName: keyof typeof ColorTheme.themeNames = await AsyncStorage.getItem("color-theme") as any;
+      return themeName;
     } catch (err) {
-      console.log(err, theme);
+      console.log(err);
     }
+
+  }
+
+  static async reset() {
+    try {
+      await AsyncStorage.removeItem(`color-theme`);
+    } catch (err) {
+      console.log(err);
+    }
+
   }
 
 }

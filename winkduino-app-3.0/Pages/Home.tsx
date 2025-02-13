@@ -1,15 +1,16 @@
-import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { Pressable, SafeAreaView, StatusBar, Text, View } from "react-native"
 import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../hooks/useBLE";
+import { useCallback } from "react";
 
 export function Home() {
 
   const navigate = useNavigation();
   const route = useRoute();
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, update } = useColorTheme();
   const {
     device,
     disconnectFromModule,
@@ -28,9 +29,18 @@ export function Home() {
     updatingStatus
   } = useBLE();
 
+  useFocusEffect(() => {
+
+    (async () => {
+      await update();
+    })();
+
+    return () => { };
+
+  });
+
   const scanForDevice = async () => {
     const result = await requestPermissions();
-    console.log(result);
     if (result) await scanForModule();
   }
 
