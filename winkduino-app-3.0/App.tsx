@@ -37,27 +37,31 @@ function BottomTabs() {
 
     <Tab.Navigator
       initialRouteName='Home'
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: "home-outline" | "help-outline" | "settings-outline";
+      screenOptions={
+        ({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: "home-outline" | "help-outline" | "settings-outline";
 
-          if (route.name === "Home") {
-            iconName = 'home-outline'
-          } else if (route.name === "Help") iconName = "help-outline" as const;
-          else iconName = "settings-outline" as const;
+            if (route.name === "Home") iconName = 'home-outline' as const;
+            else if (route.name === "Help") iconName = "help-outline" as const;
+            else iconName = "settings-outline" as const;
 
-          return <Ionicons name={iconName} size={size} color={focused ? colorTheme.buttonTextColor : colorTheme.disabledButtonColor} />
-        },
-        tabBarLabelStyle: {
-          color: colorTheme.buttonTextColor,
-          fontSize: 13
-        },
-        headerShown: false,
-        tabBarStyle: {
-          height: 55,
-          backgroundColor: colorTheme.buttonColor
-        }
-      })}
+            return <Ionicons name={iconName} size={size} color={focused ? colorTheme.buttonTextColor : colorTheme.disabledButtonColor} />
+          },
+          tabBarLabelStyle: {
+            fontSize: 13
+          },
+          tabBarActiveTintColor: colorTheme.buttonTextColor,
+          tabBarInactiveTintColor: colorTheme.disabledButtonColor,
+          tabBarActiveBackgroundColor: colorTheme.buttonColor,
+          headerShown: false,
+          tabBarStyle: {
+            height: 55,
+            borderColor: colorTheme.backgroundPrimaryColor,
+            backgroundColor: colorTheme.backgroundPrimaryColor,
+          }
+        })
+      }
     >
       <Tab.Screen name='Home' component={withStatusBar(Home, colorTheme.backgroundPrimaryColor)} />
       <Tab.Screen name='Help' component={withStatusBar(HowToUse, colorTheme.backgroundPrimaryColor)} />
