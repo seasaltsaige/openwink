@@ -53,8 +53,8 @@ export namespace ColorTheme {
 
 
   export const crystalWhite: Theme = {
-    backgroundPrimaryColor: "#f5f5f5",
-    backgroundSecondaryColor: "#eaeaea",
+    backgroundPrimaryColor: "#f1f1f1",
+    backgroundSecondaryColor: "#ffffff",
     buttonColor: "#bd9664",
     disabledButtonColor: "#aaaaaa",
     buttonTextColor: "#ffffff",
@@ -111,10 +111,10 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     buttonColor: "#004d26", // British Racing Green
-    disabledButtonColor: "#00331a",
+    disabledButtonColor: "#eeeeee",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#004d26",
+    headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 }

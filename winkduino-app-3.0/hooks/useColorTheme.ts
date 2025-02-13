@@ -3,7 +3,7 @@ import { ThemeStore } from "../Storage";
 import { ColorTheme } from "../helper/Constants";
 
 export function useColorTheme() {
-  const [colorTheme, setColorTheme] = useState(ColorTheme.brilliantBlack);
+  const [colorTheme, setColorTheme] = useState(ColorTheme.britishRacingGreen);
 
   useEffect(() => {
     return () => { };

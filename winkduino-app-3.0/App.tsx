@@ -111,16 +111,13 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                // borderColor: "pink",
-                // borderWidth: 1,
-                width: 110,
+                width: 115,
                 height: 40,
-                borderRadius: 20,
+                borderRadius: 12,
                 backgroundColor: isFocused ? colorTheme.buttonTextColor : colorTheme.backgroundPrimaryColor
-                // width: "100%"
               }}
             >
-              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.buttonTextColor} />
+              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
             </View>
           </PlatformPressable>
         )

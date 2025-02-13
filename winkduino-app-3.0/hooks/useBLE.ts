@@ -301,8 +301,19 @@ function useBLE() {
   return {
     requestPermissions,
     scanForModule,
-
-
+    disconnectFromModule,
+    setHeadlightsBusy,
+    device,
+    headlightsBusy,
+    leftStatus,
+    rightStatus,
+    manager,
+    mac,
+    isScanning,
+    isConnecting,
+    firmwareVersion,
+    updateProgress,
+    updatingStatus
   }
 
 }

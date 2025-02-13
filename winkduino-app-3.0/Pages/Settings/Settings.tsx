@@ -142,7 +142,7 @@ export function Settings() {
         style={{
           backgroundColor: colorTheme.backgroundPrimaryColor,
           height: "100%",
-          padding: 10,
+          padding: 15,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -218,7 +218,6 @@ export function Settings() {
                       color: colorTheme.headerTextColor,
                       fontWeight: "bold",
                       fontSize: 17,
-
                     }}
                   >{c.pageName}</Text>
                 </View>
