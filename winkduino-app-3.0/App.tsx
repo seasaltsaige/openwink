@@ -1,9 +1,9 @@
-import { StatusBar, Text, View } from 'react-native';
-import { createStaticNavigation, NavigationContainer, useNavigation } from '@react-navigation/native';
+import { StatusBar, View } from 'react-native';
+import { NavigationContainer, useLinkBuilder } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { PlatformPressable, Text } from "@react-navigation/elements";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
 
 import {
   AppTheme,
@@ -31,37 +31,137 @@ const withStatusBar = (Component: React.FC, backgroundColor: string) => {
   );
 };
 
+const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabBarProps) => {
+  const { colorTheme } = useColorTheme();
+  const { buildHref } = useLinkBuilder();
+
+  return <View
+    style={{
+      flexDirection: "row",
+      backgroundColor: colorTheme.backgroundPrimaryColor,
+      height: 55,
+      alignItems: "center",
+      justifyContent: "space-around"
+    }}
+  >
+
+    {
+      state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+
+        options.tabBarIcon
+
+        const label = options.tabBarLabel !== undefined
+          ? options.tabBarLabel
+          : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        const isFocused = state.index === index;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented)
+            navigation.navigate(route.name, route.params);
+        };
+
+        const onLongPress = () => {
+          navigation.emit({
+            type: "tabLongPress",
+            target: route.key,
+          });
+        };
+
+
+        let iconName: any;
+
+        if (route.name === "Home") iconName = isFocused ? 'home' : 'home-outline';
+        else if (route.name === "Help") iconName = "help-outline" as const;
+        else iconName = isFocused ? "settings" : "settings-outline" as const;
+
+
+
+        return (
+          <PlatformPressable
+            style={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              // backgroundColor: "pink",
+              height: "100%",
+            }}
+            href={buildHref(route.name, route.params)}
+            accessibilityState={isFocused ? { selected: true } : {}}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            testID={options.tabBarButtonTestID}
+            onPress={onPress}
+            onLongPress={onLongPress}
+          >
+            <View
+
+
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                // borderColor: "pink",
+                // borderWidth: 1,
+                width: 110,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: isFocused ? colorTheme.buttonTextColor : colorTheme.backgroundPrimaryColor
+                // width: "100%"
+              }}
+            >
+              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.buttonTextColor} />
+            </View>
+          </PlatformPressable>
+        )
+      })
+    }
+
+  </View >
+
+
+}
+
+
 function BottomTabs() {
   const { colorTheme } = useColorTheme();
   return (
 
     <Tab.Navigator
       initialRouteName='Home'
-      screenOptions={
-        ({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: "home-outline" | "help-outline" | "settings-outline";
+      tabBar={(props) => <CustomBottomTabs {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
+    // screenOptions={
+    //   ({ route }) => ({
+    //     tabBarIcon: ({ focused, color, size }) => {
 
-            if (route.name === "Home") iconName = 'home-outline' as const;
-            else if (route.name === "Help") iconName = "help-outline" as const;
-            else iconName = "settings-outline" as const;
-
-            return <Ionicons name={iconName} size={size} color={focused ? colorTheme.buttonTextColor : colorTheme.disabledButtonColor} />
-          },
-          tabBarLabelStyle: {
-            fontSize: 13
-          },
-          tabBarActiveTintColor: colorTheme.buttonTextColor,
-          tabBarInactiveTintColor: colorTheme.disabledButtonColor,
-          tabBarActiveBackgroundColor: colorTheme.buttonColor,
-          headerShown: false,
-          tabBarStyle: {
-            height: 55,
-            borderColor: colorTheme.backgroundPrimaryColor,
-            backgroundColor: colorTheme.backgroundPrimaryColor,
-          }
-        })
-      }
+    //     },
+    //     tabBarLabelStyle: {
+    //       fontSize: 13
+    //     },
+    //     tabBarActiveTintColor: colorTheme.buttonTextColor,
+    //     tabBarInactiveTintColor: colorTheme.disabledButtonColor,
+    //     tabBarActiveBackgroundColor: colorTheme.buttonColor,
+    //     headerShown: false,
+    //     tabBarStyle: {
+    //       height: 55,
+    //       borderColor: colorTheme.backgroundPrimaryColor,
+    //       backgroundColor: colorTheme.backgroundPrimaryColor,
+    //     }
+    //   })
+    // }
     >
       <Tab.Screen name='Home' component={withStatusBar(Home, colorTheme.backgroundPrimaryColor)} />
       <Tab.Screen name='Help' component={withStatusBar(HowToUse, colorTheme.backgroundPrimaryColor)} />
