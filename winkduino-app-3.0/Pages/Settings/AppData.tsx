@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function AppData() {
+export function AppData() {
 
   const { colorTheme } = useColorTheme();
 

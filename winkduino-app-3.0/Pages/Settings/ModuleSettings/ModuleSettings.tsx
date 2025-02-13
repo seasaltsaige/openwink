@@ -1,10 +1,10 @@
 import { Pressable, Text, View } from "react-native";
-import { useColorTheme } from "../../hooks/useColorTheme";
+import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
-export default function ModuleSettings() {
+export function ModuleSettings() {
 
   const { colorTheme } = useColorTheme();
 

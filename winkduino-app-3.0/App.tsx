@@ -11,14 +11,19 @@ import {
   CustomCommand,
   Home,
   HowToUse,
+  AppData,
+  AppInfo,
+  ModuleInfo,
+  ModuleSettings,
   Settings,
+  TermsOfUse,
   StandardCommands,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
-import AppInfo from './Pages/Settings/AppInfo';
-import ModuleInfo from './Pages/Settings/ModuleInfo';
-import ModuleSettings from './Pages/Settings/ModuleSettings';
-import AppData from './Pages/Settings/AppData';
+// import AppInfo from './Pages/Settings/AppInfo';
+// import ModuleInfo from './Pages/Settings/ModuleInfo';
+// import  from './Pages/Settings/ModuleSettings';
+// import AppData from './Pages/Settings/AppData';
 
 const Tab = createBottomTabNavigator();
 
@@ -84,8 +89,6 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
         else if (route.name === "Help") iconName = "help-outline" as const;
         else iconName = isFocused ? "settings" : "settings-outline" as const;
 
-
-
         return (
           <PlatformPressable
             style={{
@@ -129,7 +132,6 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
 }
 
-
 function BottomTabs() {
   const { colorTheme } = useColorTheme();
   return (
@@ -140,25 +142,6 @@ function BottomTabs() {
       screenOptions={{
         headerShown: false,
       }}
-    // screenOptions={
-    //   ({ route }) => ({
-    //     tabBarIcon: ({ focused, color, size }) => {
-
-    //     },
-    //     tabBarLabelStyle: {
-    //       fontSize: 13
-    //     },
-    //     tabBarActiveTintColor: colorTheme.buttonTextColor,
-    //     tabBarInactiveTintColor: colorTheme.disabledButtonColor,
-    //     tabBarActiveBackgroundColor: colorTheme.buttonColor,
-    //     headerShown: false,
-    //     tabBarStyle: {
-    //       height: 55,
-    //       borderColor: colorTheme.backgroundPrimaryColor,
-    //       backgroundColor: colorTheme.backgroundPrimaryColor,
-    //     }
-    //   })
-    // }
     >
       <Tab.Screen name='Home' component={withStatusBar(Home, colorTheme.backgroundPrimaryColor)} />
       <Tab.Screen name='Help' component={withStatusBar(HowToUse, colorTheme.backgroundPrimaryColor)} />
@@ -192,34 +175,6 @@ function AppNavigator() {
   )
 }
 
-/**
-    {
-      pageName: "App Info",
-      navigationName: "AppInfo",
-      pageSymbol: "information-circle-outline",
-    },
-    {
-      pageName: "Module Info",
-      navigationName: "ModuleInfo",
-      pageSymbol: "information-circle-outline"
-    },
-    {
-      pageName: "App Theme",
-      navigationName: "Theme",
-      pageSymbol: "color-fill-outline"
-    },
-    {
-      pageName: "Module Settings",
-      navigationName: "ModuleSettings",
-      pageSymbol: "build-outline"
-    },
-    {
-      pageName: "App Data",
-      navigationName: "StoredData",
-      pageSymbol: "finger-print-outline"
-    }
- 
- */
 
 export default function App() {
   const { colorTheme } = useColorTheme();

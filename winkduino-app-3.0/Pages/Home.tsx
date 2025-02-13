@@ -1,5 +1,6 @@
 import { useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { Pressable, SafeAreaView, StatusBar, Text, View } from "react-native"
+import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../hooks/useBLE";
@@ -29,7 +30,8 @@ export function Home() {
 
   const scanForDevice = async () => {
     const result = await requestPermissions();
-    if (result) await scanForDevice();
+    console.log(result);
+    if (result) await scanForModule();
   }
 
   // <ion-icon name="cloud-download-outline"></ion-icon>
@@ -72,22 +74,92 @@ export function Home() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "flex-start",
-          rowGap: 60,
-          // height: "75%"
+          rowGap: 50,
         }}
       >
 
+        {
+          device ? (
 
-        <Pressable
-          style={{
+            <View
+              style={{
+                backgroundColor: colorTheme.backgroundSecondaryColor,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 15,
+                paddingVertical: 12,
+                borderRadius: 7,
+                width: "60%"
+              }}
+            >
+              <Text
+                style={{
+                  color: colorTheme.headerTextColor,
+                  fontWeight: "bold",
+                  fontSize: 15,
+                }}
+              >Connected to Wink Module</Text>
 
-          }}
-          onPress={() => { }}
-        >
-          <Text>Scan for module</Text>
-          <IonIcons name="arrow-forward" />
-        </Pressable>
+              <IonIcons name="checkmark-done-outline" size={20} color={colorTheme.headerTextColor} />
 
+            </View>
+
+
+
+          ) : (
+            isScanning || isConnecting ? (
+              <View
+                style={{
+                  backgroundColor: colorTheme.backgroundSecondaryColor,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: 15,
+                  paddingVertical: 12,
+                  borderRadius: 7,
+                  width: "60%"
+                }}
+              >
+                <Text
+                  style={{
+                    color: colorTheme.headerTextColor,
+                    fontWeight: "bold",
+                    fontSize: 15,
+                  }}
+                >{isScanning ? "Scanning for" : "Connecting to"} module</Text>
+                <ActivityIndicator color={colorTheme.buttonColor} size="small" />
+              </View>
+            ) : (
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: 15,
+                  paddingVertical: 12,
+                  borderRadius: 7,
+                  width: "60%"
+                })}
+                onPress={() => scanForDevice()}
+              >
+                <Text
+                  style={{
+                    color: colorTheme.headerTextColor,
+                    fontWeight: "bold",
+                    fontSize: 17,
+                  }}
+                >Scan for module</Text>
+
+                <IonIcons name="arrow-forward" size={20} color={colorTheme.headerTextColor} />
+              </Pressable>
+            )
+          )
+        }
 
 
         <View
@@ -95,7 +167,8 @@ export function Home() {
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-start",
-            rowGap: 25,
+            width: "100%",
+            rowGap: 20,
           }}
         >
 
@@ -169,7 +242,7 @@ export function Home() {
             >
 
               <IonIcons
-                name="construct-outline"
+                name="sparkles-outline"
                 size={25}
                 color={colorTheme.headerTextColor}
               />
@@ -211,7 +284,7 @@ export function Home() {
             >
 
               <IonIcons
-                name="sparkles-outline"
+                name="construct-outline"
                 size={25}
                 color={colorTheme.headerTextColor}
               />
@@ -228,6 +301,115 @@ export function Home() {
         </View>
 
 
+        {/* QUICK LINKS */}
+        <View
+          style={{
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            rowGap: 15,
+          }}
+        >
+
+          <Text
+            style={{
+              alignSelf: "flex-start",
+              textAlign: "left",
+              color: colorTheme.headerTextColor,
+              fontWeight: "500",
+              fontSize: 20
+            }}
+          >
+            Quick Links
+          </Text>
+
+          <Pressable
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+              width: "70%",
+              padding: 5,
+              paddingVertical: 10,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 8,
+            })}
+            //@ts-ignore
+            onPress={() => navigate.navigate("ModuleSettings", { back: route.name })}
+            key={4}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 10,
+                marginLeft: 10,
+              }}
+            >
+
+              <IonIcons
+                name="speedometer-outline"
+                size={20}
+                color={colorTheme.headerTextColor}
+              />
+              <Text
+                style={{
+                  color: colorTheme.headerTextColor,
+                  fontWeight: "bold",
+                  fontSize: 14,
+                }}
+              >Set Up Custom Wink Button</Text>
+            </View>
+            <IonIcons name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+              width: "70%",
+              padding: 5,
+              paddingVertical: 10,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 8,
+            })}
+            //@ts-ignore
+            onPress={() => navigate.navigate("Theme", { back: route.name })}
+            key={5}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 10,
+                marginLeft: 10,
+              }}
+            >
+
+              <IonIcons
+                name="color-fill-outline"
+                size={20}
+                color={colorTheme.headerTextColor}
+              />
+              <Text
+                style={{
+                  color: colorTheme.headerTextColor,
+                  fontWeight: "bold",
+                  fontSize: 14,
+                }}
+              >Change App Theme</Text>
+            </View>
+            <IonIcons name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+          </Pressable>
+
+        </View>
+
+
         {/* Status about app/module Updates + if update is available -> press = update */}
         <View
           style={{
@@ -239,8 +421,45 @@ export function Home() {
         >
 
           {
-            // TODO: update to 'if update available'
-            true ? (
+            // TODO: update to 'if update available for app'
+            false ? (
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  width: "100%",
+                  padding: 5,
+                  paddingVertical: 13,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                })}>
+
+              </Pressable>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: colorTheme.backgroundSecondaryColor,
+                  width: "100%",
+                  padding: 5,
+                  paddingVertical: 13,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                }}
+              >
+                <Text>App is up to date</Text>
+              </View>
+            )
+          }
+
+
+          {
+            // TODO: update to 'if update available for module'
+            false ? (
               <Pressable
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
@@ -271,6 +490,21 @@ export function Home() {
                 }}
               >
 
+                {!device ?
+
+                  <Text
+                  >
+                    {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
+                    Module not connected
+                  </Text>
+                  :
+                  true ?
+                    // TODO: while get request is running, display loading spinner
+                    <Text>
+                      Checking for module software update
+                    </Text>
+                    : <Text>Module is up to date</Text>
+                }
               </View>
             )
           }
