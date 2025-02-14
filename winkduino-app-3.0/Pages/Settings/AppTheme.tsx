@@ -11,6 +11,7 @@ export function AppTheme() {
     themeName,
     setTheme,
     update,
+    reset
   } = useColorTheme();
 
   const navigation = useNavigation();
@@ -152,7 +153,35 @@ export function AppTheme() {
       }
 
       {/* TODO: add reset button (partially to even out screen weights) */}
-
+      <Pressable
+        style={({ pressed }) => ({
+          backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          // width: 150,
+          marginTop: 20,
+          padding: 10,
+          borderRadius: 8,
+          columnGap: 15,
+        })}
+        onPress={async () => {
+          await reset();
+          await update();
+        }}
+      >
+        <Text
+          style={{
+            color: colorTheme.buttonTextColor,
+            fontWeight: "600",
+            fontSize: 17,
+          }}
+        >
+          Reset theme
+        </Text>
+        <IonIcons name="refresh-outline" color={colorTheme.buttonTextColor} size={18} />
+      </Pressable>
     </View>
   )
 }

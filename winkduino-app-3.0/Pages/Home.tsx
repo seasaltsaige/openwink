@@ -4,13 +4,20 @@ import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../hooks/useBLE";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export function Home() {
 
   const navigate = useNavigation();
   const route = useRoute();
   const { colorTheme, update } = useColorTheme();
+
+  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false);
+  const [appUpdateAvailable, setAppUpdateAvailable] = useState(false);
+
+  const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
+  const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+
   const {
     device,
     disconnectFromModule,
@@ -166,7 +173,7 @@ export function Home() {
                   }}
                 >Scan for module</Text>
 
-                <IonIcons name="arrow-forward" size={20} color={colorTheme.headerTextColor} />
+                <IonIcons name="wifi-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
             )
           )
@@ -438,7 +445,7 @@ export function Home() {
           style={{
             display: "flex",
             alignItems: "center",
-            width: "70%",
+            width: "65%",
             justifyContent: "flex-start",
             rowGap: 10
           }}
@@ -458,7 +465,7 @@ export function Home() {
 
           {
             // TODO: update to 'if update available for app'
-            false ? (
+            appUpdateAvailable ? (
               <Pressable
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
@@ -470,7 +477,22 @@ export function Home() {
                   alignItems: "center",
                   justifyContent: "space-between",
                   borderRadius: 8,
-                })}>
+                })}
+                onPress={() => {
+                  // Open app store
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: colorTheme.textColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  Install app update
+                </Text>
+
+                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
 
               </Pressable>
             ) : (
@@ -478,7 +500,7 @@ export function Home() {
                 style={{
                   backgroundColor: colorTheme.backgroundSecondaryColor,
                   width: "100%",
-                  padding: 5,
+                  padding: 15,
                   paddingVertical: 13,
                   display: "flex",
                   flexDirection: "row",
@@ -487,20 +509,41 @@ export function Home() {
                   borderRadius: 8,
                 }}
               >
-                <Text>App is up to date</Text>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: colorTheme.textColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  {
+                    fetchingAppUpdateInfo ?
+                      "Checking for app update"
+                      : "App is up to date"
+                  }
+                </Text>
+
+                {
+                  fetchingAppUpdateInfo ?
+                    <ActivityIndicator size={"small"} color={colorTheme.buttonColor} />
+                    : <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                }
+
               </View>
             )
           }
 
 
+
+
           {
             // TODO: update to 'if update available for module'
-            false ? (
+            moduleUpdateAvailable ? (
               <Pressable
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   width: "100%",
-                  padding: 5,
+                  padding: 15,
                   paddingVertical: 13,
                   display: "flex",
                   flexDirection: "row",
@@ -509,6 +552,17 @@ export function Home() {
                   borderRadius: 8,
                 })}>
 
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: colorTheme.textColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  Install module update
+                </Text>
+
+                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
               </Pressable>
             ) : (
               <View
@@ -516,7 +570,7 @@ export function Home() {
                 style={{
                   backgroundColor: colorTheme.backgroundSecondaryColor,
                   width: "100%",
-                  padding: 5,
+                  padding: 15,
                   paddingVertical: 13,
                   display: "flex",
                   flexDirection: "row",
@@ -526,21 +580,35 @@ export function Home() {
                 }}
               >
 
-                {!device ?
 
-                  <Text
-                  >
-                    {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
-                    Module not connected
-                  </Text>
-                  :
-                  true ?
-                    // TODO: while get request is running, display loading spinner
-                    <Text>
-                      Checking for module software update
-                    </Text>
-                    : <Text>Module is up to date</Text>
+                {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
+                <Text
+                  style={{
+                    fontSize: 15,
+                    color: colorTheme.textColor,
+                    fontWeight: "600",
+                  }}
+                >
+                  {
+                    !device ?
+                      "Module not connected"
+                      : fetchingModuleUpdateInfo ?
+                        "Checking for module software update"
+                        : "Module is up to date"
+                  }
+                </Text>
+
+
+                {
+                  !device ?
+                    <IonIcons size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                    : fetchingModuleUpdateInfo ?
+                      <ActivityIndicator size={"small"} color={colorTheme.buttonColor} />
+                      : <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
+
+                {/* <IonIcons name={!device ? "help" : true ? } /> */}
+
               </View>
             )
           }

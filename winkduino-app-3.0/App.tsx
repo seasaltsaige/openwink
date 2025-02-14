@@ -102,9 +102,9 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              // backgroundColor: "pink",
               height: "100%",
             }}
+            key={index}
             href={buildHref(route.name, route.params)}
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
