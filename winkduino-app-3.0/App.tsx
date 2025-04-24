@@ -21,6 +21,7 @@ import {
   CustomWinkButton,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
+import { BleProvider } from './Components/BleProvider';
 
 const Tab = createBottomTabNavigator();
 
@@ -214,7 +215,9 @@ function AppNavigator() {
 export default function App() {
   return (
     <NavigationContainer>
-      <AppNavigator />
+      <BleProvider>
+        <AppNavigator />
+      </BleProvider>
     </NavigationContainer>
   );
 }
