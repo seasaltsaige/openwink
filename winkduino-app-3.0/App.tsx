@@ -18,6 +18,7 @@ import {
   Settings,
   TermsOfUse,
   StandardCommands,
+  CustomWinkButton,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
 
@@ -199,6 +200,7 @@ function AppNavigator() {
       <Stack.Screen name="AppInfo" component={AppInfo} />
       <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
+      <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
       <Stack.Screen name="StoredData" component={AppData} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />

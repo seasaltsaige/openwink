@@ -1,10 +1,10 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from "@react-navigation/native";
-import { Pressable, SafeAreaView, StatusBar, Text, View } from "react-native"
+import { Pressable, SafeAreaView, StatusBar, Text, View, } from "react-native"
 import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../hooks/useBLE";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function Home() {
 
@@ -12,8 +12,8 @@ export function Home() {
   const route = useRoute();
   const { colorTheme, update } = useColorTheme();
 
-  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false);
-  const [appUpdateAvailable, setAppUpdateAvailable] = useState(false);
+  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(true as null | boolean);
+  const [appUpdateAvailable, setAppUpdateAvailable] = useState(true as null | boolean);
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
@@ -35,6 +35,37 @@ export function Home() {
     updateProgress,
     updatingStatus
   } = useBLE();
+
+  const checkAppUpdate = async () => {
+    // fetch request to get app update info
+
+  }
+
+  const installAppUpdate = async () => {
+
+  }
+
+  const fetchModuleUpdate = async () => {
+    console.log("Fetching firmware version");
+  }
+
+  const installModuleUpdate = async () => {
+
+  }
+
+  useEffect(() => {
+    (async () => {
+      const res = await checkAppUpdate();
+
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+
+    })();
+  }, [device !== null]);
+
 
   useFocusEffect(() => {
 
@@ -353,10 +384,12 @@ export function Home() {
             Quick Links
           </Text>
 
+
+          {/* CUSTOM WINK BUTTON */}
           <Pressable
             style={({ pressed }) => ({
               backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "70%",
+              width: "100%",
               padding: 5,
               paddingVertical: 10,
               display: "flex",
@@ -366,7 +399,7 @@ export function Home() {
               borderRadius: 8,
             })}
             //@ts-ignore
-            onPress={() => navigate.navigate("ModuleSettings", { back: route.name })}
+            onPress={() => navigate.navigate("CustomWinkButton", { back: route.name })}
             key={4}>
             <View
               style={{
@@ -395,10 +428,11 @@ export function Home() {
             <IonIcons name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
           </Pressable>
 
+          {/* COLOR THEME */}
           <Pressable
             style={({ pressed }) => ({
               backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "70%",
+              width: "100%",
               padding: 5,
               paddingVertical: 10,
               display: "flex",
@@ -445,7 +479,7 @@ export function Home() {
           style={{
             display: "flex",
             alignItems: "center",
-            width: "65%",
+            width: "100%",
             justifyContent: "flex-start",
             rowGap: 10
           }}
@@ -470,7 +504,7 @@ export function Home() {
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   width: "100%",
-                  padding: 5,
+                  padding: 15,
                   paddingVertical: 13,
                   display: "flex",
                   flexDirection: "row",
@@ -532,9 +566,6 @@ export function Home() {
               </View>
             )
           }
-
-
-
 
           {
             // TODO: update to 'if update available for module'

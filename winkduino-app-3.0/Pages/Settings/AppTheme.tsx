@@ -168,19 +168,19 @@ export function AppTheme() {
         })}
         onPress={async () => {
           await reset();
-          await update();
+          // await update();
         }}
       >
         <Text
           style={{
-            color: colorTheme.buttonTextColor,
+            color: colorTheme.headerTextColor,
             fontWeight: "600",
             fontSize: 17,
           }}
         >
           Reset theme
         </Text>
-        <IonIcons name="refresh-outline" color={colorTheme.buttonTextColor} size={18} />
+        <IonIcons name="refresh-outline" color={colorTheme.headerTextColor} size={18} />
       </Pressable>
     </View>
   )

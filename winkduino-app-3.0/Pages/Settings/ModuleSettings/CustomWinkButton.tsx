@@ -1,10 +1,10 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { useColorTheme } from "../hooks/useColorTheme";
+import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 
-export function StandardCommands() {
+export function CustomWinkButton() {
 
   const { colorTheme } = useColorTheme();
   const navigation = useNavigation();
@@ -65,7 +65,7 @@ export function StandardCommands() {
           width: "auto",
           marginRight: 10,
         }}
-        >Commands</Text>
+        >Customize Button</Text>
 
       </View>
 
