@@ -64,7 +64,7 @@ export function StandardCommands() {
   //@ts-ignore
   const { back } = route.params;
 
-  const { leftStatus, rightStatus, device, isConnecting } = useBLE();
+  const { leftStatus, rightStatus, device, isConnecting, isScanning } = useBLE();
 
   return (
     <View
@@ -114,9 +114,9 @@ export function StandardCommands() {
 
                 {
                   device ? (
-                    <IonIcons name="wifi-outline" color="green" />
+                    <IonIcons name="wifi-outline" color="#367024" size={23} />
                   ) : (
-                    isConnecting ?
+                    isConnecting || isScanning ?
                       <ActivityIndicator color={colorTheme.buttonColor} />
                       : (
                         <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
@@ -127,21 +127,6 @@ export function StandardCommands() {
               </>
             ))
           }
-
-
-          {/* <IonIcons
-            color={device === null ?
-              "grey" :
-              "white"
-            }
-            size={23}
-            name={device === null ?
-              "cloud-offline" :
-              isConnecting ?
-                "cloud" : "cloud-done"
-            }
-            style={{ marginLeft: 5, }}
-          /> */}
 
         </Pressable>
 
@@ -165,31 +150,6 @@ export function StandardCommands() {
         flexDirection: "column",
         rowGap: 20,
       }}>
-
-
-        {/* <View style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          display: "flex",
-          alignItems: "center",
-          columnGap: 10,
-        }}>
-          <Text style={{
-            fontSize: 17,
-            color: colorTheme.headerTextColor,
-            fontWeight: "bold",
-          }}>
-            {
-              device === null ?
-                "Not Connected" :
-                isConnecting ?
-                  "Connecting" : "Connected"
-            }
-          </Text>
-
-        </View> */}
-
-
 
         <View
           style={{
@@ -232,23 +192,24 @@ export function StandardCommands() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            columnGap: 10,
+            columnGap: 12,
             // backgroundColor: "white"
           }}>
             {
-              commands.map((row) =>
+              commands.map((row, i) =>
                 <View style={{
                   display: "flex",
                   flexDirection: "column",
                   width: "30%",
-                  rowGap: 10,
-                }}>
+                  rowGap: 12,
+                }}
+                >
                   {
-                    row.map((val) => (
+                    row.map((val, j) => (
                       <Pressable
                         style={({ pressed }) => ({
                           width: "100%",
-                          height: 50,
+                          height: 48,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -256,6 +217,7 @@ export function StandardCommands() {
                           borderRadius: 7,
 
                         })}
+                        key={val.value}
                         onPress={() => { }}
                         // text={val.name}
                         // textStyle={{}}
@@ -276,6 +238,145 @@ export function StandardCommands() {
             }
           </View>
 
+        </View>
+
+        <View style={{
+          width: "100%",
+          rowGap: 10
+        }}>
+          <Text style={{ color: colorTheme.headerTextColor, textAlign: "left", marginLeft: 10, fontSize: 28, fontWeight: "bold" }}>Winks</Text>
+
+          <View style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            columnGap: 12,
+            // backgroundColor: "white"
+          }}>
+            {
+              winks.map((row) => (
+                <Pressable
+                  style={({ pressed }) => ({
+                    width: "30%",
+                    height: 48,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    borderRadius: 7,
+
+                  })}
+                  key={row.value}
+                  onPress={() => { }}
+                  // text={val.name}
+                  // textStyle={{}}
+                  disabled={false}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      color: colorTheme.buttonTextColor,
+                      fontWeight: 500,
+                    }}
+                  >{row.name}</Text>
+                </Pressable>
+              ))
+            }
+          </View>
+        </View>
+
+
+        <View style={{
+          width: "100%",
+          rowGap: 10,
+          borderColor: "white",
+          borderWidth: 1
+        }}>
+          <Text
+            style={{
+              color: colorTheme.headerTextColor,
+              textAlign: "left",
+              marginLeft: 10,
+              fontSize: 28,
+              fontWeight: "bold"
+            }}
+          >Macros</Text>
+
+          <View style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            columnGap: 12,
+          }}>
+
+            <View
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}
+            >
+
+              <Pressable
+                style={({ pressed }) => ({
+                  width: "48%",
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  borderRadius: 7,
+
+                })}
+                key={98}
+                onPress={() => { }}
+                disabled={false}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    color: colorTheme.buttonTextColor,
+                    fontWeight: 500,
+                  }}
+                >Left Wave</Text>
+              </Pressable>
+
+
+              <Pressable
+                style={({ pressed }) => ({
+                  width: "48%",
+                  height: 48,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  borderRadius: 7,
+
+                })}
+                key={99}
+                onPress={() => { }}
+                disabled={false}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    color: colorTheme.buttonTextColor,
+                    fontWeight: 500,
+                  }}
+                >Right Wave</Text>
+              </Pressable>
+
+            </View>
+
+            <View>
+              <Text>Sleepy Eye</Text>
+
+            </View>
+          </View>
         </View>
 
       </View>
