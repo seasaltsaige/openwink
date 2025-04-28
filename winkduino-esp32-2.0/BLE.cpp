@@ -59,7 +59,6 @@ void WinkduinoBLE::init(string deviceName) {
 void WinkduinoBLE::initDeviceServer() {
   server = NimBLEDevice::createServer();
   server->setCallbacks(new ServerCallbacks());
-  server->
 }
 
 void WinkduinoBLE::initServerService() {
@@ -78,6 +77,8 @@ void WinkduinoBLE::initServiceCharacteristics() {
   rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
   
+
+
   syncChar->setValue(0);
   winkChar->setValue(0);
 
@@ -130,9 +131,10 @@ void WinkduinoBLE::initAdvertising() {
 
 void WinkduinoBLE::start() {
   if (advertising->setInstanceData(0, advertisement)) {
-    if (advertising->start(0))
+    if (advertising->start(0)) {
       printf("Started advertising\n");
-    else
+      WinkduinoBLE::updateHeadlightChars();
+    } else
       printf("Failed to start advertising\n");
   } else
     printf("Failed to register advertisment data\n");

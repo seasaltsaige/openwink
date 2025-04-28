@@ -12,8 +12,8 @@ export function Home() {
   const route = useRoute();
   const { colorTheme, update } = useColorTheme();
 
-  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(true as null | boolean);
-  const [appUpdateAvailable, setAppUpdateAvailable] = useState(true as null | boolean);
+  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false as null | boolean);
+  const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
@@ -622,7 +622,7 @@ export function Home() {
                 >
                   {
                     !device ?
-                      "Module not connected"
+                      "Connect to module for update info"
                       : fetchingModuleUpdateInfo ?
                         "Checking for module software update"
                         : "Module is up to date"

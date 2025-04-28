@@ -15,9 +15,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
 import { toProperCase } from '../helper/Functions';
 
-/* ──────  Context type  ────── */
 export type BleContextType = {
-  /*  ⤵ all the props you listed in BleProvider.tsx */
   device: Device | null;
   requestPermissions: () => Promise<boolean>;
   scanForModule: () => Promise<void>;
@@ -37,9 +35,8 @@ export type BleContextType = {
 
 export const BleContext = createContext<BleContextType | null>(null);
 
-/* ──────  Provider  ────── */
 export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  /* Singleton manager */
+
   const manager = useMemo(() => new BleManager(), []);
 
   // Connected device
@@ -309,7 +306,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await device?.cancelConnection();
   }
 
-  /* Memoise so children don’t re-render on every state change */
   const value: BleContextType = useMemo(
     () => ({
       device,

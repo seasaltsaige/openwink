@@ -1,5 +1,5 @@
 import { StatusBar, View } from 'react-native';
-import { NavigationContainer, useFocusEffect, useLinkBuilder } from '@react-navigation/native';
+import { NavigationContainer, useLinkBuilder } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
@@ -21,7 +21,8 @@ import {
   CustomWinkButton,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
-import { BleProvider } from './Components/BleProvider';
+import { BleProvider } from './Providers/BleProvider';
+import { ThemeProvider } from './Providers/ThemeProvider';
 
 const Tab = createBottomTabNavigator();
 
@@ -35,17 +36,7 @@ const withStatusBar = (Component: React.FC, backgroundColor: string) => {
 };
 
 const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabBarProps) => {
-  const { colorTheme, update } = useColorTheme();
-
-  useFocusEffect(() => {
-    (async () => {
-      await update();
-    })();
-
-    return () => { };
-  });
-
-
+  const { colorTheme } = useColorTheme();
   const { buildHref } = useLinkBuilder();
 
   return <View
@@ -156,17 +147,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
 
 function BottomTabs() {
-  const { colorTheme, update } = useColorTheme();
-
-  useFocusEffect(() => {
-    (async () => {
-      await update();
-    })();
-
-    return () => { };
-  });
-
-
+  const { colorTheme } = useColorTheme();
   return (
 
     <Tab.Navigator
@@ -216,7 +197,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <BleProvider>
-        <AppNavigator />
+        <ThemeProvider>
+          <AppNavigator />
+        </ThemeProvider>
       </BleProvider>
     </NavigationContainer>
   );

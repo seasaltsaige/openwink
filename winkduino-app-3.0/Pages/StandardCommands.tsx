@@ -4,7 +4,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import { useBLE } from "../hooks/useBLE";
-import { OpacityButton } from "../Components/Button";
+import { ActivityIndicator } from "react-native";
 
 const commands = [
   [
@@ -53,7 +53,7 @@ const winks = [{
 {
   name: "Right Wink",
   value: 9,
-}]
+}];
 
 
 export function StandardCommands() {
@@ -63,8 +63,6 @@ export function StandardCommands() {
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [isBackPressed, setIsBackPressed] = useState(false);
-  const backPressed = (bool: boolean) => setIsBackPressed(bool);
 
   const { leftStatus, rightStatus, device, isConnecting } = useBLE();
 
@@ -98,17 +96,53 @@ export function StandardCommands() {
           columnGap: 10,
           height: "100%"
         }}
-          onPressIn={() => backPressed(true)}
-          onPressOut={() => backPressed(false)}
           onPress={() => navigation.goBack()}
         >
-          <IonIcons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+          {
+            (({ pressed }) => (
+              <>
 
-          <Text style={{
-            color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-            fontWeight: "500",
-            fontSize: 22
-          }}>{back}</Text>
+                <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+
+                <Text style={{
+                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                  fontWeight: "500",
+                  fontSize: 22
+                }}>{back}</Text>
+
+
+
+                {
+                  device ? (
+                    <IonIcons name="wifi-outline" color="green" />
+                  ) : (
+                    isConnecting ?
+                      <ActivityIndicator color={colorTheme.buttonColor} />
+                      : (
+                        <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                      )
+                  )
+                }
+
+              </>
+            ))
+          }
+
+
+          {/* <IonIcons
+            color={device === null ?
+              "grey" :
+              "white"
+            }
+            size={23}
+            name={device === null ?
+              "cloud-offline" :
+              isConnecting ?
+                "cloud" : "cloud-done"
+            }
+            style={{ marginLeft: 5, }}
+          /> */}
+
         </Pressable>
 
         <View>
@@ -133,7 +167,7 @@ export function StandardCommands() {
       }}>
 
 
-        <View style={{
+        {/* <View style={{
           flexDirection: "row",
           justifyContent: "flex-end",
           display: "flex",
@@ -152,18 +186,8 @@ export function StandardCommands() {
                   "Connecting" : "Connected"
             }
           </Text>
-          <IonIcons
-            color={device === null ?
-              "grey" :
-              "white"
-            }
-            size={25}
-            name={device === null ?
-              "cloud-offline" :
-              isConnecting ?
-                "cloud" : "cloud-done"
-            } />
-        </View>
+
+        </View> */}
 
 
 

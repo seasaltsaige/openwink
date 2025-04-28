@@ -253,8 +253,8 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
         }
 
         for (int i = maxIndexNotZero; i < 9; i++) {
-          // printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
           customButtonPressArray[i] = customButtonPressArray[i + 1];
+          printf("Current: %d   -   Update: %d   -   Index: %d\n",  customButtonPressArray[i], customButtonPressArray[i + 1], i);
         }
       }
     }
