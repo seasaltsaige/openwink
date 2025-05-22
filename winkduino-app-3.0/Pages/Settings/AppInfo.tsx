@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
+import { nativeApplicationVersion } from "expo-application"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
@@ -14,6 +15,11 @@ export function AppInfo() {
   const { back } = route.params;
   const [isBackPressed, setIsBackPressed] = useState(false);
   const backPressed = (bool: boolean) => setIsBackPressed(bool);
+
+  const openGithub = async () => {
+    await Linking.openURL("https://github.com/seasaltsaige");
+    // else alert("cant");
+  }
 
   return (
     <View
@@ -68,6 +74,64 @@ export function AppInfo() {
         >App Info</Text>
 
       </View>
-    </View>
+
+      <View
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "90%",
+          justifyContent: "center",
+          alignContent: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: colorTheme.headerTextColor,
+            fontWeight: "500",
+            fontSize: 22,
+          }}
+        >
+          {
+            // TODO: Fetch update from some api...
+            true && `Application version ${nativeApplicationVersion} is up to date`
+          }
+        </Text>
+      </View>
+
+      <View
+        style={{
+          display: "flex",
+          position: "absolute",
+          bottom: 20,
+        }}>
+
+        <Text
+          style={{
+            color: colorTheme.textColor,
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          Application developed and maintained by {
+            <Pressable
+              onPress={() => openGithub()}
+            >
+              {
+                ({ pressed }) => <Text style={{
+                  color: "#99c3ff",
+                  textDecorationLine: pressed ? "underline" : "none"
+                }}>
+                  @seasaltsaige
+                </Text>
+              }
+
+            </Pressable>
+          }
+        </Text>
+      </View>
+
+    </View >
   )
 }

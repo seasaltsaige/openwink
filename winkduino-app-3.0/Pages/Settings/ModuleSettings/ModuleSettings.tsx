@@ -68,6 +68,9 @@ export function ModuleSettings() {
         >Module Settings</Text>
 
       </View>
+
+
+
     </View>
   )
 }

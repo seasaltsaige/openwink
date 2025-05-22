@@ -202,7 +202,7 @@ export function Home() {
                     fontWeight: "bold",
                     fontSize: 17,
                   }}
-                >Scan for module</Text>
+                >Scan for wink module</Text>
 
                 <IonIcons name="wifi-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
@@ -622,7 +622,7 @@ export function Home() {
                 >
                   {
                     !device ?
-                      "Connect to module for update info"
+                      "Connect to wink module for updates"
                       : fetchingModuleUpdateInfo ?
                         "Checking for module software update"
                         : "Module is up to date"
@@ -638,7 +638,6 @@ export function Home() {
                       : <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
 
-                {/* <IonIcons name={!device ? "help" : true ? } /> */}
 
               </View>
             )

@@ -8,18 +8,20 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, FIRMWARE_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
+import { BUSY_CHAR_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore, FirmwareStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
 import { toProperCase } from '../helper/Functions';
+import { ButtonBehaviors } from '../helper/Types';
 
 export type BleContextType = {
   device: Device | null;
   requestPermissions: () => Promise<boolean>;
   scanForModule: () => Promise<void>;
   disconnectFromModule: () => Promise<void>;
+  sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
@@ -306,10 +308,48 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await device?.cancelConnection();
   }
 
+
+  const sendDefaultCommand = async (command: number) => {
+    if (headlightsBusy) return;
+
+    try {
+      await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
+    } catch (err) {
+      // TODO: Handle ble command errors
+    }
+
+  }
+
+  const sendCustomCommand = async (commandSequence: string) => {
+
+  }
+
+  const sendSleepyEye = async (leftValue: number, rightValue: number) => {
+
+  }
+
+  const sendSyncCommand = async () => {
+
+  }
+
+  const updateOEMButtonPresets = async (numPresses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
+
+  }
+
+  const updateButtonDelay = async (delay: number) => {
+  }
+
+  const updateWaveDelay = async (delay: number) => {
+  }
+
+  const enterDeepSleep = async () => {
+  }
+
   const value: BleContextType = useMemo(
     () => ({
       device,
       requestPermissions,
+      sendDefaultCommand,
       scanForModule,
       disconnectFromModule,
       setHeadlightsBusy,

@@ -64,7 +64,7 @@ export function StandardCommands() {
   //@ts-ignore
   const { back } = route.params;
 
-  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy } = useBLE();
+  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy, sendDefaultCommand } = useBLE();
 
   const [disableActions, setDisableActions] = useState(false);
 
@@ -74,7 +74,7 @@ export function StandardCommands() {
       setDisableActions(true);
     else setDisableActions(false);
 
-  }, [leftStatus, rightStatus, headlightsBusy]);
+  }, [leftStatus, rightStatus, headlightsBusy, device]);
 
 
   return (
@@ -229,7 +229,7 @@ export function StandardCommands() {
 
                         })}
                         key={val.value}
-                        onPress={() => { }}
+                        onPress={() => sendDefaultCommand(val.value)}
                         // text={val.name}
                         // textStyle={{}}
                         disabled={disableActions}
@@ -298,6 +298,8 @@ export function StandardCommands() {
         </View>
 
 
+        {/* SECTION: MACROS */}
+
         <View style={{
           width: "100%",
           rowGap: 10,
@@ -326,7 +328,7 @@ export function StandardCommands() {
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "space-between"
+                justifyContent: "space-evenly",
               }}
             >
 
@@ -382,14 +384,15 @@ export function StandardCommands() {
             </View>
 
 
-            <View style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 12,
-              marginTop: 20,
-            }}>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 12,
+                marginTop: 20,
+              }}>
 
               <View
                 style={{
@@ -397,7 +400,7 @@ export function StandardCommands() {
                   display: "flex",
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-between"
+                  justifyContent: "space-evenly",
                 }}
               >
 
@@ -408,7 +411,7 @@ export function StandardCommands() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     borderRadius: 7,
 
                   })}
@@ -432,7 +435,7 @@ export function StandardCommands() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: !disableActions ?
+                    backgroundColor: !device || !disableActions ?
                       colorTheme.disabledButtonColor :
                       pressed ?
                         colorTheme.buttonColor :
@@ -442,7 +445,7 @@ export function StandardCommands() {
                   })}
                   key={106}
                   onPress={() => { }}
-                  disabled={!disableActions}
+                  disabled={!device || !disableActions}
                 >
                   <Text
                     style={{

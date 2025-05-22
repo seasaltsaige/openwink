@@ -100,6 +100,11 @@ const settingsData: Array<{
       pageSymbol: "information-circle-outline",
     },
     {
+      pageName: "Module Settings",
+      navigationName: "ModuleSettings",
+      pageSymbol: "build-outline"
+    },
+    {
       pageName: "Module Info",
       navigationName: "ModuleInfo",
       pageSymbol: "information-circle-outline"
@@ -109,11 +114,7 @@ const settingsData: Array<{
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
-    {
-      pageName: "Module Settings",
-      navigationName: "ModuleSettings",
-      pageSymbol: "build-outline"
-    },
+
     {
       pageName: "Terms Of Use",
       navigationName: "TermsOfUse",

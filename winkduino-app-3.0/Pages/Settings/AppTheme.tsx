@@ -172,7 +172,7 @@ export function AppTheme() {
         }}
       >
 
-        <IonIcons name="return-up-back-outline" color={colorTheme.headerTextColor} size={18} />
+        <IonIcons name="trash-outline" color={colorTheme.headerTextColor} size={18} />
         <Text
           style={{
             color: colorTheme.headerTextColor,

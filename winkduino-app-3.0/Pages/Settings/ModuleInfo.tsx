@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
@@ -14,6 +14,15 @@ export function ModuleInfo() {
   const { back } = route.params;
   const [isBackPressed, setIsBackPressed] = useState(false);
   const backPressed = (bool: boolean) => setIsBackPressed(bool);
+
+
+  const openGithub = async (type: "module" | "software") => {
+    if (type === "module")
+      await Linking.openURL("https://github.com/pyroxenes");
+    else if (type === "software")
+      await Linking.openURL("https://github.com/seasaltsaige");
+    // else alert("cant");
+  }
 
   return (
     <View
@@ -68,6 +77,74 @@ export function ModuleInfo() {
         >Module Info</Text>
 
       </View>
+
+
+
+
+      <View
+        style={{
+          display: "flex",
+          position: "absolute",
+          bottom: 20,
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          rowGap: 7,
+        }}>
+
+        <Text
+          style={{
+            color: colorTheme.textColor,
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          Module hardware developed and maintained by {
+            <Pressable
+              onPress={() => openGithub("module")}
+            >
+              {
+                ({ pressed }) => <Text style={{
+                  color: "#99c3ff",
+                  textDecorationLine: pressed ? "underline" : "none"
+                }}>
+                  @pyroxenes
+                </Text>
+              }
+
+            </Pressable>
+          }
+        </Text>
+
+        <Text
+          style={{
+            color: colorTheme.textColor,
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          Module software developed and maintained by {
+            <Pressable
+              onPress={() => openGithub("software")}
+            >
+              {
+                ({ pressed }) => <Text style={{
+                  color: "#99c3ff",
+                  textDecorationLine: pressed ? "underline" : "none"
+                }}>
+                  @seasaltsaige
+                </Text>
+              }
+
+            </Pressable>
+          }
+        </Text>
+      </View>
+
     </View>
   )
 }
