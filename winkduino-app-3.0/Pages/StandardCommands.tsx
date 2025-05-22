@@ -2,7 +2,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useBLE } from "../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
 
@@ -64,7 +64,18 @@ export function StandardCommands() {
   //@ts-ignore
   const { back } = route.params;
 
-  const { leftStatus, rightStatus, device, isConnecting, isScanning } = useBLE();
+  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy } = useBLE();
+
+  const [disableActions, setDisableActions] = useState(false);
+
+  useEffect(() => {
+
+    if (!device || headlightsBusy || (leftStatus > 0 && leftStatus < 1) || (rightStatus > 0 && rightStatus < 1))
+      setDisableActions(true);
+    else setDisableActions(false);
+
+  }, [leftStatus, rightStatus, headlightsBusy]);
+
 
   return (
     <View
@@ -213,7 +224,7 @@ export function StandardCommands() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                          backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                           borderRadius: 7,
 
                         })}
@@ -221,12 +232,12 @@ export function StandardCommands() {
                         onPress={() => { }}
                         // text={val.name}
                         // textStyle={{}}
-                        disabled={false}
+                        disabled={disableActions}
                       >
                         <Text
                           style={{
                             fontSize: 18,
-                            color: colorTheme.buttonTextColor,
+                            color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
                             fontWeight: 500,
                           }}
                         >{val.name}</Text>
@@ -263,7 +274,7 @@ export function StandardCommands() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     borderRadius: 7,
 
                   })}
@@ -271,12 +282,12 @@ export function StandardCommands() {
                   onPress={() => { }}
                   // text={val.name}
                   // textStyle={{}}
-                  disabled={false}
+                  disabled={disableActions}
                 >
                   <Text
                     style={{
                       fontSize: 18,
-                      color: colorTheme.buttonTextColor,
+                      color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
                       fontWeight: 500,
                     }}
                   >{row.name}</Text>
@@ -290,8 +301,6 @@ export function StandardCommands() {
         <View style={{
           width: "100%",
           rowGap: 10,
-          borderColor: "white",
-          borderWidth: 1
         }}>
           <Text
             style={{
@@ -328,18 +337,18 @@ export function StandardCommands() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   borderRadius: 7,
 
                 })}
                 key={98}
                 onPress={() => { }}
-                disabled={false}
+                disabled={disableActions}
               >
                 <Text
                   style={{
                     fontSize: 18,
-                    color: colorTheme.buttonTextColor,
+                    color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
                     fontWeight: 500,
                   }}
                 >Left Wave</Text>
@@ -353,18 +362,18 @@ export function StandardCommands() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   borderRadius: 7,
 
                 })}
                 key={99}
                 onPress={() => { }}
-                disabled={false}
+                disabled={disableActions}
               >
                 <Text
                   style={{
                     fontSize: 18,
-                    color: colorTheme.buttonTextColor,
+                    color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
                     fontWeight: 500,
                   }}
                 >Right Wave</Text>
@@ -372,8 +381,81 @@ export function StandardCommands() {
 
             </View>
 
-            <View>
-              <Text>Sleepy Eye</Text>
+
+            <View style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              columnGap: 12,
+              marginTop: 20,
+            }}>
+
+              <View
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+              >
+
+                <Pressable
+                  style={({ pressed }) => ({
+                    width: "48%",
+                    height: 48,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    borderRadius: 7,
+
+                  })}
+                  key={105}
+                  onPress={() => { }}
+                  disabled={disableActions}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      color: colorTheme.buttonTextColor,
+                      fontWeight: 500,
+                    }}
+                  >Sleepy Eye</Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => ({
+                    width: "48%",
+                    height: 48,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: !disableActions ?
+                      colorTheme.disabledButtonColor :
+                      pressed ?
+                        colorTheme.buttonColor :
+                        colorTheme.backgroundSecondaryColor,
+                    borderRadius: 7,
+
+                  })}
+                  key={106}
+                  onPress={() => { }}
+                  disabled={!disableActions}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      color: !disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
+                      fontWeight: 500,
+                    }}
+                  >Reset</Text>
+                </Pressable>
+
+
+
+              </View>
 
             </View>
           </View>

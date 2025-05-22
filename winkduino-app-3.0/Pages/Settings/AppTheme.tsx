@@ -87,7 +87,7 @@ export function AppTheme() {
       {/* Example text/items */}
       <View
         style={{
-          width: "80%",
+          width: "90%",
         }}
       >
         <Text
@@ -99,6 +99,7 @@ export function AppTheme() {
         >
           Example Text
         </Text>
+
         <Text
           style={{
             color: colorTheme.textColor,
@@ -114,19 +115,18 @@ export function AppTheme() {
 
       {
         Object.keys(ColorTheme.themeNames).map((val, i) => (
+
           <Pressable
             style={({ pressed }) => ({
               display: "flex",
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              width: "60%",
-              // borderWidth: 1,
-              // borderColor: "pink",
+              width: "90%",
               backgroundColor: (pressed || val === currentTheme) ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
               padding: 10,
-              paddingHorizontal: 25,
-              borderRadius: 8,
+              paddingHorizontal: 15,
+              borderRadius: 7,
             })}
 
             onPress={async () => {
@@ -171,6 +171,8 @@ export function AppTheme() {
           // await update();
         }}
       >
+
+        <IonIcons name="return-up-back-outline" color={colorTheme.headerTextColor} size={18} />
         <Text
           style={{
             color: colorTheme.headerTextColor,
@@ -180,7 +182,6 @@ export function AppTheme() {
         >
           Reset theme
         </Text>
-        <IonIcons name="refresh-outline" color={colorTheme.headerTextColor} size={18} />
       </Pressable>
     </View>
   )

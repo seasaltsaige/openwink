@@ -184,6 +184,7 @@ function AppNavigator() {
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
       <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
       <Stack.Screen name="StoredData" component={AppData} />
+      <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
       <Stack.Screen name="CustomCommands" component={CustomCommand} />
