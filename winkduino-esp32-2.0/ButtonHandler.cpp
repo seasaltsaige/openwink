@@ -38,9 +38,11 @@ void ButtonHandler::readOnWakeup() {
 
 void ButtonHandler::readWakeUpReason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+
+    Serial.printf("WAKEUP REASON: %d\n", wakeup_reason);
     awakeTime_ms = 5 * 1000 * 60;
-  else
+  } else
     awakeTime_ms = 0;
 }
 
@@ -152,10 +154,16 @@ void ButtonHandler::updateButtonSleep() {
     !WinkduinoBLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
-    if (buttonInput == 1)
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
-    else if (buttonInput == 0)
+    Serial.printf("Button Input: %d\n", buttonInput);
+
+    if (buttonInput == 1) {
+      Serial.println("In button Input 1");
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+    }
+    else if (buttonInput == 0) {
+      Serial.println("In button input 0");
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+    }
 
     if (!WinkduinoBLE::getDeviceConnected())
       esp_deep_sleep_start();

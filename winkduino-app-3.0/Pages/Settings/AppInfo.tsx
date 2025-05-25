@@ -1,5 +1,5 @@
 import { Linking, Pressable, Text, View } from "react-native";
-import { nativeApplicationVersion } from "expo-application"
+import { nativeApplicationVersion } from "expo-application";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
@@ -18,7 +18,6 @@ export function AppInfo() {
 
   const openGithub = async () => {
     await Linking.openURL("https://github.com/seasaltsaige");
-    // else alert("cant");
   }
 
   return (

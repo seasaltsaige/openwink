@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
 import { BUSY_CHAR_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
-import { AutoConnectStore, DeviceMACStore, FirmwareStore } from '../Storage';
+import { AutoConnectStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
@@ -23,8 +23,10 @@ export type BleContextType = {
   disconnectFromModule: () => Promise<void>;
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
+  setOEMButtonStatus: (status: "enable" | "disable") => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
+  oemCustomButtonEnabled: boolean;
   firmwareVersion: string;
   isConnecting: boolean;
   isScanning: boolean;
@@ -50,6 +52,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [rightStatus, setRightStatus] = useState(0);
 
   const [mac, setMac] = useState("");
+  const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
   const [firmwareVersion, setFirmwareVersion] = useState("");
 
   const [updateProgress, setUpdateProgress] = useState(0);
@@ -69,6 +72,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (macAddr) setMac(macAddr);
       // TODO: Error handler. Should give warnings for errors with asyncstore
       else { }
+
+      const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
+      setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
+
     })();
 
     return () => { }
@@ -332,6 +339,17 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   }
 
+  const setOEMButtonStatus = async (status: "enable" | "disable") => {
+    if (status === "enable") {
+      const res = await CustomOEMButtonStore.enable();
+      if (res !== null) setOemCustomButtonEnabled(true);
+    } else {
+      const res = await CustomOEMButtonStore.disable();
+      if (res !== null) setOemCustomButtonEnabled(false);
+    }
+  }
+
+
   const updateOEMButtonPresets = async (numPresses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
 
   }
@@ -350,10 +368,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       device,
       requestPermissions,
       sendDefaultCommand,
+      setOEMButtonStatus,
       scanForModule,
       disconnectFromModule,
       setHeadlightsBusy,
       updatingStatus,
+      oemCustomButtonEnabled,
       updateProgress,
       firmwareVersion,
       isConnecting,

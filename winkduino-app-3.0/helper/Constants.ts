@@ -41,6 +41,7 @@ type HexNumber = `#${string}`;
 export interface Theme {
   backgroundPrimaryColor: HexNumber,
   backgroundSecondaryColor: HexNumber,
+  dropdownColor: HexNumber,
   buttonColor: HexNumber,
   disabledButtonColor: HexNumber,
   buttonTextColor: HexNumber,
@@ -64,6 +65,7 @@ export namespace ColorTheme {
   export const crystalWhite: Theme = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
+    dropdownColor: "#cccccc",
     buttonColor: "#bd9664",
     disabledButtonColor: "#aaaaaa",
     buttonTextColor: "#ffffff",
@@ -74,6 +76,7 @@ export namespace ColorTheme {
 
   export const brilliantBlack: Theme = {
     backgroundPrimaryColor: "#141414",
+    dropdownColor: "#37373b",
     backgroundSecondaryColor: "#262629",
     buttonColor: "#550000", // Burgundy (default)
     disabledButtonColor: "#878787",

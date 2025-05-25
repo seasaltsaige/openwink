@@ -3,10 +3,12 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
+import { useBLE } from "../../../hooks/useBLE";
 
 export function CustomWinkButton() {
 
   const { colorTheme } = useColorTheme();
+  const { oemCustomButtonEnabled, setOEMButtonStatus } = useBLE();
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
