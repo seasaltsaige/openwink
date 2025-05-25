@@ -248,11 +248,16 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic *pCh
 {
 
   string value = pChar->getValue();
-  if (value.compare("enable") == 0) {
+  Serial.printf("%s", value);
 
+  if (value.compare("enable") == 0) {
+    customButtonStatusEnabled = true;
+    
+    Serial.println("Enabled");
     return;
   } else if (value.compare("disable") == 0) {
-
+    customButtonStatusEnabled = false;
+    Serial.println("Disabled");
     return;
   }
 

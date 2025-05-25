@@ -349,7 +349,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const newStatus = await CustomOEMButtonStore.isEnabled();
-
+    console.log(newStatus, await device?.isConnected());
     await device?.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(newStatus ? "enable" : "disable"));
 
     return newStatus;

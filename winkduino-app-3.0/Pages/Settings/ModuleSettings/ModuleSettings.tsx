@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
@@ -50,6 +50,8 @@ export function ModuleSettings() {
   const { mac } = useBLE();
   const navigate = useNavigation();
 
+  const { device, isScanning, isConnecting } = useBLE();
+
   // const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
@@ -100,11 +102,23 @@ export function ModuleSettings() {
             fontWeight: "500",
             fontSize: 22
           }}>{back}</Text>
+
+          {
+            device ? (
+              <IonIcons name="wifi-outline" color="#367024" size={23} />
+            ) : (
+              isConnecting || isScanning ?
+                <ActivityIndicator color={colorTheme.buttonColor} />
+                : (
+                  <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                )
+            )
+          }
         </Pressable>
 
 
         <Text style={{
-          fontSize: 35,
+          fontSize: 30,
           fontWeight: "600",
           color: colorTheme.headerTextColor,
           width: "auto",

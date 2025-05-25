@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -19,6 +19,8 @@ export function CustomWinkButton() {
   const backPressed = (bool: boolean) => setIsBackPressed(bool);
 
   const [isOn, setIsOn] = useState(oemCustomButtonEnabled);
+
+  const { device, isScanning, isConnecting } = useBLE();
 
   return (
     <View
@@ -59,13 +61,27 @@ export function CustomWinkButton() {
           <Text style={{
             color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
             fontWeight: "500",
-            fontSize: 22
+            fontSize: 20
           }}>{back}</Text>
+
+
+          {
+            device ? (
+              <IonIcons name="wifi-outline" color="#367024" size={21} />
+            ) : (
+              isConnecting || isScanning ?
+                <ActivityIndicator color={colorTheme.buttonColor} />
+                : (
+                  <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                )
+            )
+          }
+
         </Pressable>
 
 
         <Text style={{
-          fontSize: 30,
+          fontSize: 25,
           fontWeight: "600",
           color: colorTheme.headerTextColor,
           width: "auto",
@@ -98,11 +114,12 @@ export function CustomWinkButton() {
           }}
         >{oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button</Text>
         <ToggleSwitch
-          onColor={colorTheme.buttonColor}
+          onColor={!device ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
           offColor={colorTheme.disabledButtonColor}
           isOn={isOn}
           size="medium"
           hitSlop={10}
+          disabled={!device}
           circleColor={colorTheme.buttonTextColor}
           onToggle={async (isOn) => setIsOn(await setOEMButtonStatus(isOn ? "enable" : "disable"))}
         />
