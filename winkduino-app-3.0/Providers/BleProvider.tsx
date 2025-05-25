@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
+import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
 import { AutoConnectStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
@@ -23,7 +23,7 @@ export type BleContextType = {
   disconnectFromModule: () => Promise<void>;
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
-  setOEMButtonStatus: (status: "enable" | "disable") => Promise<void>;
+  setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
   oemCustomButtonEnabled: boolean;
@@ -347,6 +347,13 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const res = await CustomOEMButtonStore.disable();
       if (res !== null) setOemCustomButtonEnabled(false);
     }
+
+    const newStatus = await CustomOEMButtonStore.isEnabled();
+
+    await device?.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(newStatus ? "enable" : "disable"));
+
+    return newStatus;
+    // return await CustomOEMButtonStore.isEnabled();
   }
 
 

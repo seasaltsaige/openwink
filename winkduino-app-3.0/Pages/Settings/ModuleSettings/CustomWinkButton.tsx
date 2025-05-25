@@ -4,6 +4,8 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
+import ToggleSwitch from "toggle-switch-react-native";
+
 
 export function CustomWinkButton() {
 
@@ -15,6 +17,8 @@ export function CustomWinkButton() {
   const { back } = route.params;
   const [isBackPressed, setIsBackPressed] = useState(false);
   const backPressed = (bool: boolean) => setIsBackPressed(bool);
+
+  const [isOn, setIsOn] = useState(oemCustomButtonEnabled);
 
   return (
     <View
@@ -69,6 +73,39 @@ export function CustomWinkButton() {
         }}
         >Customize Button</Text>
 
+      </View>
+
+      <View
+        style={{
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          width: "100%",
+          padding: 5,
+          paddingVertical: 13,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRadius: 8,
+          paddingHorizontal: 10,
+        }}
+      >
+
+        <Text
+          style={{
+            color: colorTheme.headerTextColor,
+            fontWeight: "bold",
+            fontSize: 17,
+          }}
+        >{oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button</Text>
+        <ToggleSwitch
+          onColor={colorTheme.buttonColor}
+          offColor={colorTheme.disabledButtonColor}
+          isOn={isOn}
+          size="medium"
+          hitSlop={10}
+          circleColor={colorTheme.buttonTextColor}
+          onToggle={async (isOn) => setIsOn(await setOEMButtonStatus(isOn ? "enable" : "disable"))}
+        />
       </View>
 
 

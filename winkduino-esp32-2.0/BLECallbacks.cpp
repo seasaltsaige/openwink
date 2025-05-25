@@ -21,6 +21,7 @@ RTC_DATA_ATTR double headlightMultiplier = 1.0;
 
 RTC_DATA_ATTR int customButtonPressArray[10] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
+RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 
 WebServer server(80);
 bool wifi_enabled = false;
@@ -247,6 +248,14 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic *pCh
 {
 
   string value = pChar->getValue();
+  if (value.compare("enable") == 0) {
+
+    return;
+  } else if (value.compare("disable") == 0) {
+
+    return;
+  }
+
   // Updating maxTime
   if (value.length() > 1)
   {

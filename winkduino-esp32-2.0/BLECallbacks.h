@@ -20,6 +20,7 @@ RTC_DATA_ATTR extern double headlightMultiplier;
 **/
 RTC_DATA_ATTR extern int customButtonPressArray[10];
 RTC_DATA_ATTR extern int maxTimeBetween_ms;
+RTC_DATA_ATTR extern bool customButtonStatusEnabled;
 
 extern bool wifi_enabled;
 

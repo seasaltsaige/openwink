@@ -114,36 +114,45 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 void ButtonHandler::loopButtonHandler() {
 
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-  if (buttonPressCounter == 0 && buttonInput != initialButton) {
 
-    buttonPressCounter++;
-    initialButton = buttonInput;
-    buttonTimer = millis();
 
-  } else if (buttonPressCounter > 0) {
-    if ((millis() - buttonTimer) > maxTimeBetween_ms) {
-      // Execute button value
-      handleButtonPressesResponse(buttonPressCounter - 1);
-      buttonPressCounter = 0;
-    } else {
+  if (customButtonStatusEnabled) {
 
-      int buttonRead = digitalRead(OEM_BUTTON_INPUT);
-      if (buttonRead != initialButton) {
-        buttonPressCounter++;
-        initialButton = buttonRead;
+    if (buttonPressCounter == 0 && buttonInput != initialButton) {
 
-        if (buttonPressCounter == 11) {
-          // Execute last one (has 10 total loaded)
-          handleButtonPressesResponse(9);
-          buttonPressCounter = 0;
-        } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
-          // Execute last one (reached last loaded value)
-          handleButtonPressesResponse(buttonPressCounter - 2);
-          buttonPressCounter = 0;
+      buttonPressCounter++;
+      initialButton = buttonInput;
+      buttonTimer = millis();
+
+    } else if (buttonPressCounter > 0) {
+      if ((millis() - buttonTimer) > maxTimeBetween_ms) {
+        // Execute button value
+        handleButtonPressesResponse(buttonPressCounter - 1);
+        buttonPressCounter = 0;
+      } else {
+
+        int buttonRead = digitalRead(OEM_BUTTON_INPUT);
+        if (buttonRead != initialButton) {
+          buttonPressCounter++;
+          initialButton = buttonRead;
+
+          if (buttonPressCounter == 11) {
+            // Execute last one (has 10 total loaded)
+            handleButtonPressesResponse(9);
+            buttonPressCounter = 0;
+          } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+            // Execute last one (reached last loaded value)
+            handleButtonPressesResponse(buttonPressCounter - 2);
+            buttonPressCounter = 0;
+          }
+          buttonTimer = millis();
         }
-        buttonTimer = millis();
       }
     }
+  } else {
+
+    // TODO: logic for normal button behavior when disabled
+
   }
 }
 
@@ -159,8 +168,7 @@ void ButtonHandler::updateButtonSleep() {
     if (buttonInput == 1) {
       Serial.println("In button Input 1");
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
-    }
-    else if (buttonInput == 0) {
+    } else if (buttonInput == 0) {
       Serial.println("In button input 0");
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
     }

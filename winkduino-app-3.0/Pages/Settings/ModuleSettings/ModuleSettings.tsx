@@ -158,14 +158,14 @@ export function ModuleSettings() {
                   name={val.pageSymbol}
                   size={25}
                   color={colorTheme.headerTextColor}
-                />
-                <Text
+                />                <Text
                   style={{
                     color: colorTheme.headerTextColor,
                     fontWeight: "bold",
                     fontSize: 17,
                   }}
                 >{val.pageName}</Text>
+
               </View>
               <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
             </Pressable>
