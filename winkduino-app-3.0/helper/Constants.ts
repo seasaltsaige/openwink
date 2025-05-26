@@ -91,7 +91,7 @@ export namespace ColorTheme {
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
     buttonColor: "#c8102e", // Classic Red
-    disabledButtonColor: "#5a0015",
+    disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
     headerTextColor: "#ffffff",
@@ -103,10 +103,10 @@ export namespace ColorTheme {
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
     buttonColor: "#ffcc00", // Sunburst Yellow
-    disabledButtonColor: "#b38f00",
+    disabledButtonColor: "#878787",
     buttonTextColor: "#141414",
     disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#000000",
+    headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
@@ -115,7 +115,7 @@ export namespace ColorTheme {
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
     buttonColor: "#0033a0", // Marina Blue
-    disabledButtonColor: "#002275",
+    disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
     headerTextColor: "#ffffff",
@@ -127,7 +127,7 @@ export namespace ColorTheme {
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
     buttonColor: "#004d26", // British Racing Green
-    disabledButtonColor: "#eeeeee",
+    disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
     headerTextColor: "#ffffff",
