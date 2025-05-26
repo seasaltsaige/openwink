@@ -73,6 +73,15 @@ export abstract class CustomOEMButtonStore {
     }
   }
 
+  static async removeAll() {
+    try {
+      const keys = (await AsyncStorage.getAllKeys()).filter(v => v.startsWith(BUTTON_KEY));
+      await AsyncStorage.multiRemove(keys);
+    } catch (err) {
+      return null;
+    }
+  }
+
   static async getAll() {
     try {
       const allCustomizations: { numberPresses: Presses, behavior: ButtonBehaviors }[] = [];
