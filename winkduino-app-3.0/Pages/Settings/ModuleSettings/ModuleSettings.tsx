@@ -1,9 +1,10 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
+import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
 
 
 
@@ -34,11 +35,6 @@ const moduleSettingsData: Array<{
       navigationName: "CustomWinkButton",
       pageSymbol: "options-outline",
     },
-    {
-      pageName: "Put Module to Sleep",
-      navigationName: "LongTermSleep",
-      pageSymbol: "moon-outline"
-    }
   ]
 
 
@@ -56,533 +52,538 @@ export function ModuleSettings() {
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [isBackPressed, setIsBackPressed] = useState(false);
-  const backPressed = (bool: boolean) => setIsBackPressed(bool);
-
 
   const [accordionOpen, setAccordionOpen] = useState(false);
 
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
+  const [actionFunction, setActionFunction] = useState<() => Promise<void>>(async () => { });
+
+  const deleteStoredModuleData = async () => {
+    await AutoConnectStore.disable();
+    await CustomCommandStore.deleteAllCommands();
+    await CustomOEMButtonStore.disable();
+    await CustomOEMButtonStore.removeAll();
+    await DeviceMACStore.forgetMAC();
+    await FirmwareStore.forgetFirmwareVersion();
+    await SleepyEyeStore.reset("both");
+  }
+
+  const putModuleToSleep = async () => {
+
+  }
+
+  const forgetModulePairing = async () => {
+
+  }
+
+
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 15,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        rowGap: 40,
-      }}
-    >
+    <>
+      <View
+        style={{
+          backgroundColor: colorTheme.backgroundPrimaryColor,
+          height: "100%",
+          padding: 15,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          rowGap: 40,
+        }}
+      >
 
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-      }}>
-
-        <Pressable style={{
+        <View style={{
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
-          columnGap: 10,
-          height: "100%"
-        }}
-          onPressIn={() => backPressed(true)}
-          onPressOut={() => backPressed(false)}
-          onPress={() => navigate.goBack()}
-        >
-          <IonIcons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+          justifyContent: "space-between",
+          width: "100%",
+        }}>
+
+          <Pressable style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            columnGap: 10,
+            height: "100%"
+          }}
+            onPress={() => navigate.goBack()}
+          >
+            {
+              ({ pressed }) => (
+
+                <>
+                  <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+
+                  <Text style={{
+                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                    fontWeight: "500",
+                    fontSize: 22
+                  }}>{back}</Text>
+
+                  {
+                    device ? (
+                      <IonIcons name="wifi-outline" color="#367024" size={23} />
+                    ) : (
+                      isConnecting || isScanning ?
+                        <ActivityIndicator color={colorTheme.buttonColor} />
+                        : (
+                          <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                        )
+                    )
+                  }
+                </>
+              )
+            }
+          </Pressable>
+
 
           <Text style={{
-            color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-            fontWeight: "500",
-            fontSize: 22
-          }}>{back}</Text>
+            fontSize: 30,
+            fontWeight: "600",
+            color: colorTheme.headerTextColor,
+            width: "auto",
+            marginRight: 10,
+          }}
+          >Module Settings</Text>
+
+        </View>
+
+        <View
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            // width: "100%",
+            rowGap: 15,
+          }}
+        >
 
           {
-            device ? (
-              <IonIcons name="wifi-outline" color="#367024" size={23} />
-            ) : (
-              isConnecting || isScanning ?
-                <ActivityIndicator color={colorTheme.buttonColor} />
-                : (
-                  <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                )
-            )
-          }
-        </Pressable>
-
-
-        <Text style={{
-          fontSize: 30,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
-          width: "auto",
-          marginRight: 10,
-        }}
-        >Module Settings</Text>
-
-      </View>
-
-      <View
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          // width: "100%",
-          rowGap: 15,
-        }}
-      >
-
-        {
-          moduleSettingsData.map((val, i) => (
-            <Pressable
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                width: "100%",
-                padding: 5,
-                paddingVertical: 13,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 8,
-              })}
-              //@ts-ignore
-              onPress={() => navigate.navigate(val.navigationName, { back: route.name })}
-              key={i}>
-
-              <View
-                style={{
+            moduleSettingsData.map((val, i) => (
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  width: "100%",
+                  padding: 5,
+                  paddingVertical: 13,
                   display: "flex",
                   flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
-                  columnGap: 10,
-                  marginLeft: 10,
-                }}
-              >
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                })}
+                //@ts-ignore
+                onPress={() => navigate.navigate(val.navigationName, { back: route.name, backHumanReadable: "Module Settings" })}
+                key={i}>
 
-                <IonIcons
-                  //@ts-ignore
-                  name={val.pageSymbol}
-                  size={25}
-                  color={colorTheme.headerTextColor}
-                />                <Text
+                <View
                   style={{
-                    color: colorTheme.headerTextColor,
-                    fontWeight: "bold",
-                    fontSize: 17,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 10,
+                    marginLeft: 10,
                   }}
-                >{val.pageName}</Text>
+                >
 
-              </View>
-              <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-            </Pressable>
-          ))
-        }
+                  <IonIcons
+                    //@ts-ignore
+                    name={val.pageSymbol}
+                    size={25}
+                    color={colorTheme.headerTextColor}
+                  />
+                  <Text
+                    style={{
+                      color: colorTheme.headerTextColor,
+                      fontWeight: "bold",
+                      fontSize: 17,
+                    }}
+                  >{val.pageName}</Text>
 
-        {/* AUTO CONNECT */}
-        {/* <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => navigate.navigate("AutoConnectSettings", { back: route.name })}
-          key={1}>
+                </View>
+                <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+              </Pressable>
+            ))
+          }
 
-          <View
-            style={{
+
+          <Pressable
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+              width: "100%",
+              padding: 5,
+              paddingVertical: 13,
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
+              justifyContent: "space-between",
+              borderRadius: 8,
+            })}
+            //@ts-ignore
+            onPress={() => { setConfirmationType("sleep"); setActionFunction(putModuleToSleep); setConfirmationOpen(true); }}
+            key={110}>
+            {
+              ({ pressed }) => (
+                <>
 
-            <IonIcons
-              name="repeat-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Automatic Connection</Text>
-          </View>
-          <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
-
+                  <View
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      columnGap: 10,
+                      marginLeft: 10,
+                    }}
+                  >
 
 
+                    <IonIcons
+                      name={"moon-outline"}
+                      size={25}
+                      color={colorTheme.headerTextColor}
+                    />
+                    <Text
+                      style={{
+                        color: colorTheme.headerTextColor,
+                        fontWeight: "bold",
+                        fontSize: 17,
+                      }}
+                    >Put Module to Sleep</Text>
 
-        <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  </View>
+                  <IonIcons style={{ marginRight: 10 }} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+                </>
+              )
+            }
+          </Pressable>
+
+        </View>
+
+        {/* ADVANCED (DELETE DATA, FORGET MODULE) */}
+        <View
+          style={{
             width: "100%",
-            padding: 5,
-            paddingVertical: 13,
             display: "flex",
-            flexDirection: "row",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            rowGap: 10,
+            backgroundColor: accordionOpen ? colorTheme.dropdownColor : colorTheme.backgroundPrimaryColor,
+            paddingBottom: accordionOpen ? 10 : 0,
             borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => navigate.navigate("WaveDelaySettings", { back: route.name })}
-          key={2}>
+          }}
+        >
 
-          <View
-            style={{
+          <Pressable
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+              width: "100%",
+              padding: 5,
+              paddingVertical: 13,
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
+              justifyContent: "space-between",
+              borderRadius: 8,
+            })}
+            //@ts-ignore
+            onPress={() => setAccordionOpen(!accordionOpen)}
+            key={6}>
 
-            <IonIcons
-              name="color-wand-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
+            <View
               style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 10,
+                marginLeft: 10,
               }}
-            >Wave Delay Settings</Text>
-          </View>
-          <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
+            >
+
+              <IonIcons
+                name="alert-outline"
+                size={25}
+                color={colorTheme.headerTextColor}
+
+              />
+              <Text
+                style={{
+                  color: colorTheme.headerTextColor,
+                  fontWeight: "bold",
+                  fontSize: 17,
+                }}
+              >Danger Settings</Text>
+            </View>
+            <IonIcons style={{ marginRight: 10 }} name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
+          </Pressable>
 
 
-        <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => navigate.navigate("SleepyEyeSettings", { back: route.name })}
-          key={3}>
-
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
-
-            <IonIcons
-              name="color-wand-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Sleepy Eye Settings</Text>
-          </View>
-          <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
+          {
+            accordionOpen ? <>
 
 
+              {/* FORGET MODULE */}
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  width: "95%",
+                  padding: 5,
+                  paddingVertical: 10,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                })}
+                //@ts-ignore
+                onPress={() => { setConfirmationType("forget"); setActionFunction(forgetModulePairing); setConfirmationOpen(true); }}
+                key={7}>
 
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 10,
+                    marginLeft: 10,
+                  }}
+                >
 
-        <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => navigate.navigate("CustomWinkButton", { back: route.name })}
-          key={4}>
-
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
-
-            <IonIcons
-              name="color-wand-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Set Up Custom Wink Button</Text>
-          </View>
-          <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
+                  <IonIcons
+                    name="reload"
+                    size={25}
+                    color={colorTheme.headerTextColor}
+                  />
+                  <Text
+                    style={{
+                      color: colorTheme.headerTextColor,
+                      fontWeight: "bold",
+                      fontSize: 17,
+                    }}
+                  >Forget Module</Text>
+                </View>
+                <IonIcons style={{ marginRight: 10 }} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+              </Pressable>
 
 
 
+              {/* DELETE SETTINGS */}
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  width: "95%",
+                  padding: 5,
+                  paddingVertical: 10,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  borderRadius: 8,
+                })}
+                //@ts-ignore
+                onPress={() => { setConfirmationType("delete"); setActionFunction(deleteStoredModuleData); setConfirmationOpen(true); }}
+                key={8}>
 
-        <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => navigate.navigate("LongTermSleep", { back: route.name })}
-          key={5}>
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 10,
+                    marginLeft: 10,
+                  }}
+                >
 
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
+                  <IonIcons
+                    name="trash-outline"
+                    size={25}
+                    color={colorTheme.headerTextColor}
+                  />
+                  <Text
+                    style={{
+                      color: colorTheme.headerTextColor,
+                      fontWeight: "bold",
+                      fontSize: 17,
+                    }}
+                  >Delete Module Settings</Text>
+                </View>
+                <IonIcons style={{ marginRight: 10 }} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+              </Pressable>
+            </> : <></>
+          }
 
-            <IonIcons
-              name="color-wand-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Put Module to Sleep</Text>
-          </View>
-          <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-        </Pressable> */}
+        </View>
+
 
       </View>
 
-      {/* ADVANCED (DELETE DATA, FORGET MODULE) */}
-      {/* <Text
-        style={{
-          textAlign: "left",
-          fontSize: 30,
-          fontWeight: "500",
-          color: colorTheme.headerTextColor,
-          width: "100%",
-        }}
-      >
-        Advanced Settings
-      </Text> */}
+      <ConfirmationModal
+        visible={confirmationOpen}
+        close={() => setConfirmationOpen(false)}
+        type={confirmationType}
+        confirmationFunction={actionFunction}
+      />
+
+    </>
+  )
+}
+
+
+
+// Confirmation Modal for module sleep, module forgetting, and data deletion
+function ConfirmationModal(props: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => Promise<void> }) {
+  const { colorTheme } = useColorTheme();
+  const { device } = useBLE();
+
+  return (
+    <Modal
+      visible={props.visible}
+      onRequestClose={() => props.close()}
+      animationType="fade"
+      hardwareAccelerated
+      transparent={true}
+    >
+
       <View
         style={{
           width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          rowGap: 10,
-          backgroundColor: accordionOpen ? colorTheme.dropdownColor : colorTheme.backgroundPrimaryColor,
-          paddingBottom: accordionOpen ? 10 : 0,
-          borderRadius: 8,
         }}
       >
 
-        <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
+        <View
+          style={{
+            backgroundColor: colorTheme.backgroundPrimaryColor,
+            width: "70%",
+            // height: "45%",
+            shadowColor: "black",
+            shadowOffset: { height: 2, width: 2 },
+            shadowOpacity: 1,
+            shadowRadius: 5,
+            boxShadow: "black",
+            elevation: 10,
+            borderRadius: 10,
             display: "flex",
-            flexDirection: "row",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
-          onPress={() => setAccordionOpen(!accordionOpen)}
-          key={6}>
+            justifyContent: "center",
+            rowGap: 10,
+            padding: 15,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "bold",
+              textAlign: "center",
+              color: colorTheme.headerTextColor
+            }}
+          >
+            {
+              props.type === "sleep" ? "Are you sure you want to put your module to sleep?"
+                : props.type === "delete" ? "Are you sure you want to delete all saved data?"
+                  : "Are you sure you want to forget current pairing?"
+            }
+          </Text>
+
+          <Text
+            style={{
+              fontSize: 16,
+              textAlign: "center",
+              fontWeight: "400",
+              color: colorTheme.textColor,
+            }}
+          >
+            {
+              props.type === "sleep" ? "To wake the module, press the headlight retractor button."
+                : props.type === "delete" ? "This action is irreversible. All saved settings will be erased."
+                  : "Connection information will be forgotten, and pairing must take place again."
+            }
+          </Text>
 
           <View
             style={{
+              width: "100%",
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
+              justifyContent: "space-evenly"
             }}
           >
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: (props.type === "sleep" && !device) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                width: "40%",
+                padding: 5,
+                paddingVertical: 8,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                borderRadius: 8,
+              })}
+              disabled={props.type === "sleep" && !device}
+              onPress={() => props.confirmationFunction()}
+            >
+              <IonIcons
+                name={props.type === "sleep" ? "moon-outline" : props.type === "forget" ? "unlink-outline" : "trash-outline"}
+                color={colorTheme.buttonTextColor}
+                size={20}
+              />
+              <Text
+                style={{
+                  color: colorTheme.buttonTextColor,
+                  fontSize: 20,
+                  fontWeight: 500,
+                }}
+              >
+                {
+                  props.type === "sleep" ? "Sleep" : props.type === "forget" ? "Forget" : "Delete"
+                }
+              </Text>
+            </Pressable>
 
-            <IonIcons
-              name="construct-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Advanced Settings</Text>
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                width: "40%",
+                padding: 5,
+                paddingVertical: 8,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-evenly",
+                borderRadius: 8,
+              })}
+              onPress={() => props.close()}
+            >
+              <Text
+                style={{
+                  color: colorTheme.buttonTextColor,
+                  fontSize: 20,
+                  fontWeight: 500,
+                }}
+              >
+                Cancel
+              </Text>
+
+            </Pressable>
           </View>
-          <IonIcons name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
-
-
-        {
-          accordionOpen ? <>
-
-
-            {/* FORGET MODULE */}
-            <Pressable
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                width: "95%",
-                padding: 5,
-                paddingVertical: 10,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 8,
-              })}
-              //@ts-ignore
-              onPress={() => navigate.navigate("ForgetModule", { back: route.name })}
-              key={7}>
-
-              <View
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  columnGap: 10,
-                  marginLeft: 10,
-                }}
-              >
-
-                <IonIcons
-                  name="reload"
-                  size={25}
-                  color={colorTheme.headerTextColor}
-                />
-                <Text
-                  style={{
-                    color: colorTheme.headerTextColor,
-                    fontWeight: "bold",
-                    fontSize: 17,
-                  }}
-                >Forget Module</Text>
-              </View>
-              <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-            </Pressable>
-
-
-
-            {/* DELETE SETTINGS */}
-            <Pressable
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                width: "95%",
-                padding: 5,
-                paddingVertical: 10,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: 8,
-              })}
-              //@ts-ignore
-              onPress={() => navigate.navigate("LongTermSleep", { back: route.name })}
-              key={8}>
-
-              <View
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  columnGap: 10,
-                  marginLeft: 10,
-                }}
-              >
-
-                <IonIcons
-                  name="trash-outline"
-                  size={25}
-                  color={colorTheme.headerTextColor}
-                />
-                <Text
-                  style={{
-                    color: colorTheme.headerTextColor,
-                    fontWeight: "bold",
-                    fontSize: 17,
-                  }}
-                >Delete Module Settings</Text>
-              </View>
-              <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-            </Pressable>
-          </> : <></>
-        }
+        </View>
 
       </View>
 
-
-    </View>
+    </Modal>
   )
 }

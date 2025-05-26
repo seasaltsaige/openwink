@@ -100,14 +100,14 @@ const settingsData: Array<{
       pageSymbol: "information-circle-outline",
     },
     {
-      pageName: "Module Settings",
-      navigationName: "ModuleSettings",
-      pageSymbol: "build-outline"
-    },
-    {
       pageName: "Module Info",
       navigationName: "ModuleInfo",
       pageSymbol: "information-circle-outline"
+    },
+    {
+      pageName: "Module Settings",
+      navigationName: "ModuleSettings",
+      pageSymbol: "build-outline"
     },
     {
       pageName: "App Theme",
@@ -230,7 +230,7 @@ export function Settings() {
                     }}
                   >{c.pageName}</Text>
                 </View>
-                <Ionicons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+                <Ionicons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
             ))
           }

@@ -14,9 +14,7 @@ export function CustomWinkButton() {
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
-  const { back } = route.params;
-  const [isBackPressed, setIsBackPressed] = useState(false);
-  const backPressed = (bool: boolean) => setIsBackPressed(bool);
+  const { back, backHumanReadable } = route.params;
 
   const [isOn, setIsOn] = useState(oemCustomButtonEnabled);
 
@@ -52,31 +50,34 @@ export function CustomWinkButton() {
           columnGap: 10,
           height: "100%"
         }}
-          onPressIn={() => backPressed(true)}
-          onPressOut={() => backPressed(false)}
           onPress={() => navigation.goBack()}
         >
-          <IonIcons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-          <Text style={{
-            color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-            fontWeight: "500",
-            fontSize: 20
-          }}>{back}</Text>
-
-
           {
-            device ? (
-              <IonIcons name="wifi-outline" color="#367024" size={21} />
-            ) : (
-              isConnecting || isScanning ?
-                <ActivityIndicator color={colorTheme.buttonColor} />
-                : (
-                  <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                )
+            ({ pressed }) => (
+              <>
+                <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+
+                <Text style={{
+                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                  fontWeight: "500",
+                  fontSize: 20
+                }}>{backHumanReadable}</Text>
+
+
+                {
+                  device ? (
+                    <IonIcons name="wifi-outline" color="#367024" size={21} />
+                  ) : (
+                    isConnecting || isScanning ?
+                      <ActivityIndicator color={colorTheme.buttonColor} />
+                      : (
+                        <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                      )
+                  )
+                }
+              </>
             )
           }
-
         </Pressable>
 
 
@@ -87,7 +88,7 @@ export function CustomWinkButton() {
           width: "auto",
           marginRight: 10,
         }}
-        >Customize Button</Text>
+        >Custom Button</Text>
 
       </View>
 

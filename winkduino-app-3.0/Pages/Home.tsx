@@ -60,29 +60,11 @@ export function Home() {
     })();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-
-    })();
-  }, [device !== null]);
-
-
-  useFocusEffect(() => {
-
-    (async () => {
-      await update();
-    })();
-
-    return () => { };
-
-  });
-
   const scanForDevice = async () => {
     const result = await requestPermissions();
     if (result) await scanForModule();
   }
 
-  // <ion-icon name="cloud-download-outline"></ion-icon>
   return (
     <View
       style={{
@@ -273,7 +255,7 @@ export function Home() {
                 }}
               >Default Commands</Text>
             </View>
-            <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
 
           <Pressable
@@ -315,7 +297,7 @@ export function Home() {
                 }}
               >Custom Commands</Text>
             </View>
-            <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
 
           <Pressable
@@ -357,7 +339,7 @@ export function Home() {
                 }}
               >Create Custom Commands</Text>
             </View>
-            <IonIcons name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
         </View>
 
@@ -425,7 +407,7 @@ export function Home() {
                 }}
               >Set Up Custom Wink Button</Text>
             </View>
-            <IonIcons name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
           </Pressable>
 
           {/* COLOR THEME */}
@@ -468,7 +450,7 @@ export function Home() {
                 }}
               >Change App Theme</Text>
             </View>
-            <IonIcons name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
           </Pressable>
 
         </View>
@@ -526,7 +508,7 @@ export function Home() {
                   Install app update
                 </Text>
 
-                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
+                <IonIcons style={{ marginRight: 10 }} name="cloud-download-outline" color={colorTheme.textColor} size={18} />
 
               </Pressable>
             ) : (
@@ -593,7 +575,7 @@ export function Home() {
                   Install module update
                 </Text>
 
-                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
+                <IonIcons style={{ marginRight: 10 }} name="cloud-download-outline" color={colorTheme.textColor} size={18} />
               </Pressable>
             ) : (
               <View
