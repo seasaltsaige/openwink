@@ -19,6 +19,10 @@ import {
   TermsOfUse,
   StandardCommands,
   CustomWinkButton,
+  AutoConnectSettings,
+  WaveDelaySettings,
+  SleepyEyeSettings,
+  // LongTermSleep,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
 import { BleProvider } from './Providers/BleProvider';
@@ -181,14 +185,21 @@ function AppNavigator() {
       <Stack.Screen name="Theme" component={AppTheme} />
       <Stack.Screen name="AppInfo" component={AppInfo} />
       <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
-      <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
-      <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
       <Stack.Screen name="StoredData" component={AppData} />
       <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
       <Stack.Screen name="CustomCommands" component={CustomCommand} />
       <Stack.Screen name="StandardCommands" component={StandardCommands} />
+
+
+      <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
+      <Stack.Screen name="AutoConnectSettings" component={AutoConnectSettings} />
+      <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
+      <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
+      <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
+      {/* <Stack.Screen name="LongTermSleep" component={LongTermSleep} /> */}
+
     </Stack.Navigator>
   )
 }

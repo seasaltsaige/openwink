@@ -65,7 +65,7 @@ export namespace ColorTheme {
   export const crystalWhite: Theme = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
-    dropdownColor: "#cccccc",
+    dropdownColor: "#eeeeee",
     buttonColor: "#bd9664",
     disabledButtonColor: "#aaaaaa",
     buttonTextColor: "#ffffff",
@@ -89,39 +89,43 @@ export namespace ColorTheme {
   export const classicRed: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    dropdownColor: "#37373b",
     buttonColor: "#c8102e", // Classic Red
     disabledButtonColor: "#5a0015",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#c8102e",
+    headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
   export const sunburstYellow: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    dropdownColor: "#37373b",
     buttonColor: "#ffcc00", // Sunburst Yellow
     disabledButtonColor: "#b38f00",
     buttonTextColor: "#141414",
     disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#ffcc00",
+    headerTextColor: "#000000",
     textColor: "#ffffff",
   }
 
   export const marinerBlue: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    dropdownColor: "#37373b",
     buttonColor: "#0033a0", // Marina Blue
     disabledButtonColor: "#002275",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#bbbbbb",
-    headerTextColor: "#0033a0",
+    headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
   export const britishRacingGreen: Theme = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    dropdownColor: "#37373b",
     buttonColor: "#004d26", // British Racing Green
     disabledButtonColor: "#eeeeee",
     buttonTextColor: "#ffffff",
