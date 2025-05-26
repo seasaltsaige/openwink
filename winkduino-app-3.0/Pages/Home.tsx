@@ -215,7 +215,7 @@ export function Home() {
             Commands
           </Text>
 
-
+          {/* Standard Commands */}
           <Pressable
             style={({ pressed }) => ({
               backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
@@ -257,7 +257,7 @@ export function Home() {
             </View>
             <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
-
+          {/* Custom Commands */}
           <Pressable
             style={({ pressed }) => ({
               backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
@@ -300,6 +300,7 @@ export function Home() {
             <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
 
+          {/* Create Custom Command */}
           <Pressable
             style={({ pressed }) => ({
               backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
@@ -381,7 +382,7 @@ export function Home() {
               borderRadius: 8,
             })}
             //@ts-ignore
-            onPress={() => navigate.navigate("CustomWinkButton", { back: route.name })}
+            onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
             key={4}>
             <View
               style={{
