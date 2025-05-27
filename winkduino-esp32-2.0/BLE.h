@@ -6,8 +6,8 @@
 
 using namespace std;
 
-RTC_DATA_ATTR extern int leftStatus;
-RTC_DATA_ATTR extern int rightStatus;
+extern int leftStatus;
+extern int rightStatus;
 
 class WinkduinoBLE {
 private:

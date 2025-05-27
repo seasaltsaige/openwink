@@ -35,6 +35,8 @@ export type BleContextType = {
   rightStatus: number;
   leftStatus: number;
   headlightsBusy: boolean;
+  autoConnectEnabled: boolean;
+  setAutoConnect: (bool: boolean) => void;
 };
 
 export const BleContext = createContext<BleContextType | null>(null);
@@ -59,8 +61,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [updatingStatus, setUpdatingStatus] = useState<"Idle" | "Updating" | "Failed" | "Success">("Idle");
 
   // Home page scanning status
+  const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const setAutoConnect = (bool: boolean) => { setAutoConnectEnabled(bool) };
 
   // Delay between when headlights start moving during a wave command
   // const [waveDelay]
@@ -75,6 +80,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
       setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
+      const autoConn = await AutoConnectStore.get();
+      setAutoConnect(autoConn!);
 
     })();
 
@@ -217,6 +224,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const connection = await manager.connectToDevice(dev.id);
       await connection.discoverAllServicesAndCharacteristics();
+      console.log(await connection.services());
 
       await DeviceMACStore.setMAC(connection.id);
       setMac(connection.id);
@@ -257,7 +265,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }
 
   const scanForModule = async () => {
-    if (device !== null) return;
+    if (device !== null || isScanning || isConnecting) return;
+
 
     setIsScanning(true);
     const deviceMac = await DeviceMACStore.getStoredMAC();
@@ -267,6 +276,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(async () => {
       const autoConnectStatus = await AutoConnectStore.get();
       if (autoConnectStatus === null) { /* TODO: Handle error */ }
+      else
+        setAutoConnectEnabled(autoConnectStatus)
 
       if (!deviceFound) {
         await manager.stopDeviceScan().catch(err => console.log(err));
@@ -274,7 +285,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsConnecting(false);
         setIsScanning(false);
 
-        if (autoConnectStatus)
+        if (autoConnectEnabled)
           scanForModule();
       }
     }, SCAN_TIME_SECONDS);
@@ -350,8 +361,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newStatus = await CustomOEMButtonStore.isEnabled();
     console.log(newStatus, await device?.isConnected());
-    await device?.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(newStatus ? "enable" : "disable"));
-
+    if (device)
+      device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(status)).catch(err => console.log(err));
+    else console.log('no device');
     return newStatus;
     // return await CustomOEMButtonStore.isEnabled();
   }
@@ -385,11 +397,13 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       firmwareVersion,
       isConnecting,
       isScanning,
-      manager: manager,
+      manager,
       mac,
       rightStatus,
       leftStatus,
       headlightsBusy,
+      autoConnectEnabled,
+      setAutoConnect
     }),
     [
       device,
@@ -398,6 +412,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       firmwareVersion,
       isConnecting,
       isScanning,
+      oemCustomButtonEnabled,
+      autoConnectEnabled,
+
       mac,
       rightStatus,
       leftStatus,
@@ -411,3 +428,72 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     </BleContext.Provider>
   );
 };
+
+
+
+// [{
+//   "_manager": {
+//     "_activePromises": [Object],
+//     "_activeSubscriptions": [Object],
+//     "_errorCodesToMessagesMapping": [Object],
+//     "_eventEmitter": [NativeEventEmitter],
+//     "_scanEventSubscription": null,
+//     "_uniqueId": 7
+//   },
+//   "deviceID": "3C:84:27:DC:4B:89",
+//   "id": 1,
+//   "isPrimary": true,
+//   "uuid": "00001800-0000-1000-8000-00805f9b34fb"
+// },
+// {
+//   "_manager": {
+//     "_activePromises": [Object],
+//     "_activeSubscriptions": [Object],
+//     "_errorCodesToMessagesMapping": [Object],
+//     "_eventEmitter": [NativeEventEmitter],
+//     "_scanEventSubscription": null, "_uniqueId": 7
+//   },
+//   "deviceID": "3C:84:27:DC:4B:89", "id": 4, "isPrimary": true,
+//   "uuid": "00001801-0000-1000-8000-00805f9b34fb"
+// },
+// {
+//   "_manager": {
+//     "_activePromises": [Object],
+//     "_activeSubscriptions": [Object],
+//     "_errorCodesToMessagesMapping": [Object],
+//     "_eventEmitter": [NativeEventEmitter],
+//     "_scanEventSubscription": null,
+//     "_uniqueId": 7
+//   },
+//   "deviceID": "3C:84:27:DC:4B:89",
+//   "id": 9,
+//   "isPrimary": true,
+//   "uuid": "a144c6b0-5e1a-4460-bb92-3674b2f51520"
+// },
+// {
+//   "_manager": {
+//     "_activePromises": [Object],
+//     "_activeSubscriptions": [Object],
+//     "_errorCodesToMessagesMapping": [Object],
+//     "_eventEmitter": [NativeEventEmitter],
+//     "_scanEventSubscription": null,
+//     "_uniqueId": 7
+//   },
+//   "deviceID": "3C:84:27:DC:4B:89",
+//   "id": 20,
+//   "isPrimary": true,
+//   "uuid": "e24c13d7-d7c7-4301-903a-7750b09fc935"
+// }, {
+//   "_manager": {
+//     "_activePromises": [Object],
+//     "_activeSubscriptions": [Object],
+//     "_errorCodesToMessagesMapping": [Object],
+//     "_eventEmitter": [NativeEventEmitter],
+//     "_scanEventSubscription": null, "_uniqueId": 7
+//   },
+//   "deviceID": "3C:84:27:DC:4B:89",
+//   "id": 27,
+//   "isPrimary": true,
+//   "uuid":
+//     "cb5f7a1f-59f2-418e-b9d1-d6fc5c85a749"
+// }]

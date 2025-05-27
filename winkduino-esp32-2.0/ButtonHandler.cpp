@@ -22,17 +22,27 @@ void ButtonHandler::setupGPIO() {
   pinMode(OUT_PIN_RIGHT_DOWN, OUTPUT);
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
   // OEM Wiring inputs to detect initial state of headlights
-  pinMode(OEM_BUTTON_INPUT, INPUT_PULLUP);
+  pinMode(OEM_BUTTON_INPUT, INPUT);
 }
 
 void ButtonHandler::readOnWakeup() {
-  mainTimer = millis();
-  int wakeupValue = initialButton;
-  initialButton = digitalRead(OEM_BUTTON_INPUT);
+  if (customButtonStatusEnabled) {
+    mainTimer = millis();
+    int wakeupValue = initialButton;
+    initialButton = digitalRead(OEM_BUTTON_INPUT);
 
-  if (wakeupValue != -1 && (wakeupValue != initialButton)) {
-    buttonPressCounter++;
-    buttonTimer = millis();
+    if (wakeupValue != -1 && (wakeupValue != initialButton)) {
+      buttonPressCounter++;
+      buttonTimer = millis();
+    }
+  } else {
+    int wakeup = initialButton;
+    initialButton = digitalRead(OEM_BUTTON_INPUT);
+    if (wakeup != -1 && (wakeup != initialButton)) {
+      if (wakeup == 1) bothUp();
+      else bothDown();
+      setAllOff();
+    }
   }
 }
 
@@ -150,9 +160,30 @@ void ButtonHandler::loopButtonHandler() {
       }
     }
   } else {
+    int button = digitalRead(OEM_BUTTON_INPUT);
+    if (button != initialButton) {
+      initialButton = button;
 
+      if (button == 1) {
+        digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+        digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+
+        digitalWrite(OUT_PIN_LEFT_UP, LOW);
+        digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+
+      } else {
+        digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+        digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+
+        digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+        digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+      }
+    }
     // TODO: logic for normal button behavior when disabled
-
   }
 }
 
@@ -167,10 +198,10 @@ void ButtonHandler::updateButtonSleep() {
 
     if (buttonInput == 1) {
       Serial.println("In button Input 1");
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
     } else if (buttonInput == 0) {
       Serial.println("In button input 0");
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
     }
 
     if (!WinkduinoBLE::getDeviceConnected())

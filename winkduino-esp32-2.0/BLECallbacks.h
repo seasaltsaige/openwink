@@ -4,7 +4,7 @@
 #include <NimBLEDevice.h>
 #include <WebServer.h>
 
-RTC_DATA_ATTR extern double headlightMultiplier;
+extern double headlightMultiplier;
 
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
@@ -18,9 +18,9 @@ RTC_DATA_ATTR extern double headlightMultiplier;
   9 : Right Wave
  10 : ...
 **/
-RTC_DATA_ATTR extern int customButtonPressArray[10];
-RTC_DATA_ATTR extern int maxTimeBetween_ms;
-RTC_DATA_ATTR extern bool customButtonStatusEnabled;
+extern int customButtonPressArray[10];
+extern int maxTimeBetween_ms;
+extern bool customButtonStatusEnabled;
 
 extern bool wifi_enabled;
 

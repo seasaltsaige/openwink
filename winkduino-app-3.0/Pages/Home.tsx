@@ -5,6 +5,7 @@ import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
+import { AutoConnectStore } from "../Storage";
 
 export function Home() {
 
@@ -25,6 +26,11 @@ export function Home() {
     headlightsBusy,
     isConnecting,
     isScanning,
+    autoConnectEnabled,
+    oemCustomButtonEnabled,
+    sendDefaultCommand,
+    setAutoConnect,
+    setOEMButtonStatus,
     leftStatus,
     mac,
     manager,
@@ -55,6 +61,9 @@ export function Home() {
 
   useEffect(() => {
     (async () => {
+      const autoConn = await AutoConnectStore.get();
+      if (autoConn && !device) scanForDevice();
+
       const res = await checkAppUpdate();
 
     })();

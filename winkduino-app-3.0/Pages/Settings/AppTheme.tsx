@@ -11,7 +11,8 @@ export function AppTheme() {
     themeName,
     setTheme,
     update,
-    reset
+    reset,
+
   } = useColorTheme();
 
   const navigation = useNavigation();
@@ -123,7 +124,7 @@ export function AppTheme() {
               justifyContent: "space-between",
               alignItems: "center",
               width: "90%",
-              backgroundColor: (pressed || val === currentTheme) ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+              backgroundColor: (pressed || val === currentTheme) ? ColorTheme[val as keyof typeof ColorTheme.themeNames].buttonColor : colorTheme.backgroundSecondaryColor,
               padding: 10,
               paddingHorizontal: 15,
               borderRadius: 7,

@@ -19,7 +19,7 @@ import {
   TermsOfUse,
   StandardCommands,
   CustomWinkButton,
-  AutoConnectSettings,
+  // AutoConnectSettings,
   WaveDelaySettings,
   SleepyEyeSettings,
   // LongTermSleep,
@@ -194,7 +194,7 @@ function AppNavigator() {
 
 
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
-      <Stack.Screen name="AutoConnectSettings" component={AutoConnectSettings} />
+      {/* <Stack.Screen name="AutoConnectSettings" component={AutoConnectSettings} /> */}
       <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
       <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
       <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />

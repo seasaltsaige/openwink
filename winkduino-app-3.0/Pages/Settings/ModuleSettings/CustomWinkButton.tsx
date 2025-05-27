@@ -16,8 +16,6 @@ export function CustomWinkButton() {
   //@ts-ignore
   const { back, backHumanReadable } = route.params;
 
-  const [isOn, setIsOn] = useState(oemCustomButtonEnabled);
-
   const { device, isScanning, isConnecting } = useBLE();
 
   return (
@@ -117,12 +115,12 @@ export function CustomWinkButton() {
         <ToggleSwitch
           onColor={!device ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
           offColor={colorTheme.disabledButtonColor}
-          isOn={isOn}
+          isOn={oemCustomButtonEnabled}
           size="medium"
           hitSlop={10}
           disabled={!device}
           circleColor={colorTheme.buttonTextColor}
-          onToggle={async (isOn) => setIsOn(await setOEMButtonStatus(isOn ? "enable" : "disable"))}
+          onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
         />
       </View>
 

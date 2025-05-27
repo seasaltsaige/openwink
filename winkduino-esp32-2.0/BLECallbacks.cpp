@@ -41,7 +41,7 @@ void ServerCallbacks::onDisconnect(NimBLEServer *pServer)
 
   WinkduinoBLE::setDeviceConnected(false);
   awakeTime_ms = 0;
-
+  // WinkduinoBLE::
   WinkduinoBLE::start();
 }
 
@@ -146,6 +146,8 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic *pChar)
   std::string value = pChar->getValue();
   int valueInt = String(value.c_str()).toInt();
 
+  Serial.printf("[onWrite] %s len=%d\n", pChar->getUUID().toString().c_str(), pChar->getValue().length());
+
   WinkduinoBLE::setBusy(true);
 
   switch (valueInt)
@@ -246,9 +248,10 @@ int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic *pChar)
 {
-
+  Serial.println("Hello world");
   string value = pChar->getValue();
-  Serial.printf("%s", value);
+  
+  Serial.printf("[onWrite] %s len=%d\n", pChar->getUUID().toString().c_str(), pChar->getValue().length());
 
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;

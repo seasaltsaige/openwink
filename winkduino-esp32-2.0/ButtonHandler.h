@@ -1,7 +1,7 @@
 #pragma once
 
 
-RTC_DATA_ATTR extern int initialButton;
+extern int initialButton;
 
 class ButtonHandler {
 

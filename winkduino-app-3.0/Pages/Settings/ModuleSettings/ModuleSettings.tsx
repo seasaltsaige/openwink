@@ -5,6 +5,7 @@ import { useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
+import ToggleSwitch from "toggle-switch-react-native";
 
 
 
@@ -15,11 +16,11 @@ const moduleSettingsData: Array<{
   pageSymbol: string;
   navigationName: string;
 }> = [
-    {
-      pageName: "Automatic Connection",
-      navigationName: "AutoConnectSettings",
-      pageSymbol: "infinite-outline",
-    },
+    // {
+    //   pageName: "Automatic Connection",
+    //   navigationName: "AutoConnectSettings",
+    //   pageSymbol: "infinite-outline",
+    // },
     {
       pageName: "Wave Delay Settings",
       navigationName: "WaveDelaySettings",
@@ -43,10 +44,9 @@ const moduleSettingsData: Array<{
 export function ModuleSettings() {
 
   const { colorTheme } = useColorTheme();
-  const { mac } = useBLE();
   const navigate = useNavigation();
 
-  const { device, isScanning, isConnecting } = useBLE();
+  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect } = useBLE();
 
   // const navigation = useNavigation();
   const route = useRoute();
@@ -58,6 +58,24 @@ export function ModuleSettings() {
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
   const [actionFunction, setActionFunction] = useState<() => Promise<void>>(async () => { });
+  const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
+
+  const togglePress = async (val: boolean) => {
+
+
+    setToggleOn(val);
+
+    console.log(val);
+    if (val) {
+      await AutoConnectStore.enable();
+      setAutoConnect(true);
+      if (!device && !isConnecting && !isScanning) scanForModule();
+    } else {
+      await AutoConnectStore.disable();
+      setAutoConnect(false);
+      if (isScanning) await manager.stopDeviceScan();
+    }
+  }
 
   const deleteStoredModuleData = async () => {
     await AutoConnectStore.disable();
@@ -74,7 +92,9 @@ export function ModuleSettings() {
   }
 
   const forgetModulePairing = async () => {
-
+    if (!device) return;
+    await device.cancelConnection();
+    await DeviceMACStore.forgetMAC();
   }
 
 
@@ -159,6 +179,61 @@ export function ModuleSettings() {
             rowGap: 15,
           }}
         >
+
+          <View
+            style={{
+              backgroundColor: colorTheme.backgroundSecondaryColor,
+              width: "100%",
+              padding: 5,
+              paddingVertical: 13,
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderRadius: 8,
+            }}
+          >
+
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 10,
+                marginLeft: 10,
+              }}
+            >
+
+              <IonIcons
+                //@ts-ignore
+                name="infinite-outline"
+                size={25}
+                color={colorTheme.headerTextColor}
+              />
+              <Text
+                style={{
+                  color: colorTheme.headerTextColor,
+                  fontWeight: "bold",
+                  fontSize: 17,
+                }}
+              >Auto Connect</Text>
+
+            </View>
+            <View style={{ marginRight: 10, }}>
+              <ToggleSwitch
+
+                onColor={colorTheme.buttonColor}
+                offColor={colorTheme.disabledButtonColor}
+                isOn={toggleOn}
+                size="medium"
+                hitSlop={10}
+                circleColor={colorTheme.buttonTextColor}
+                onToggle={(isOn) => { togglePress(!!isOn) }}
+              />
+            </View>
+          </View>
+
 
           {
             moduleSettingsData.map((val, i) => (
@@ -317,7 +392,7 @@ export function ModuleSettings() {
                   fontWeight: "bold",
                   fontSize: 17,
                 }}
-              >Danger Settings</Text>
+              >Danger Zone</Text>
             </View>
             <IonIcons style={{ marginRight: 10 }} name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
           </Pressable>

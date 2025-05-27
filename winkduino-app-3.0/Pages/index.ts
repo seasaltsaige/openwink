@@ -16,7 +16,7 @@ export * from "./Settings/AppData";
 
 
 export * from "./Settings/ModuleSettings/ModuleSettings";
-export * from "./Settings/ModuleSettings/AutoConnectSettings";
+// export * from "./Settings/ModuleSettings/AutoConnectSettings";
 export * from "./Settings/ModuleSettings/CustomWinkButton";
 // export * from "./Settings/ModuleSettings/LongTermSleep";
 export * from "./Settings/ModuleSettings/SleepyEyeSettings";
