@@ -8,12 +8,12 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
-import { AutoConnectStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore } from '../Storage';
+import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
+import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, DeviceMACStore, FirmwareStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
-import { toProperCase } from '../helper/Functions';
+import { sleep, toProperCase } from '../helper/Functions';
 import { ButtonBehaviors } from '../helper/Types';
 
 export type BleContextType = {
@@ -23,7 +23,8 @@ export type BleContextType = {
   disconnectFromModule: () => Promise<void>;
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
-  setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean>;
+  setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
+  // setOEMButtonInterval: (delay: number) => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
   oemCustomButtonEnabled: boolean;
@@ -37,6 +38,8 @@ export type BleContextType = {
   headlightsBusy: boolean;
   autoConnectEnabled: boolean;
   setAutoConnect: (bool: boolean) => void;
+  updateButtonDelay: (delay: number) => Promise<void>;
+  buttonDelay: number;
 };
 
 export const BleContext = createContext<BleContextType | null>(null);
@@ -67,6 +70,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setAutoConnect = (bool: boolean) => { setAutoConnectEnabled(bool) };
 
+
+  const [buttonDelay, setButtonDelay] = useState(500);
+  const [waveDelay, setWaveDelay] = useState(200);
   // Delay between when headlights start moving during a wave command
   // const [waveDelay]
 
@@ -82,6 +88,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
       const autoConn = await AutoConnectStore.get();
       setAutoConnect(autoConn!);
+
+      const delay = await CustomOEMButtonStore.getDelay();
+      if (delay)
+        setButtonDelay(delay);
 
     })();
 
@@ -144,7 +154,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // TODO: Handle erros from these
   const initBLEMonitors = async (connection: Device) => {
-    connection.monitorCharacteristicForService(WINK_SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
+    const sub = connection.monitorCharacteristicForService(WINK_SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
       if (err) return console.log(err);
       const strVal = base64.decode(char?.value!);
       if (parseInt(strVal) === 1) setHeadlightsBusy(true);
@@ -155,6 +165,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (err) return console.log(err);
       const strVal = base64.decode(char?.value!);
       const intVal = parseInt(strVal);
+      // console.log(intVal);
       if (intVal > 1) {
         const realValDecimal = (intVal - 10) / 100;
         setLeftStatus(realValDecimal);
@@ -331,6 +342,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (headlightsBusy) return;
 
     try {
+      await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode("busy"));
       await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
     } catch (err) {
       // TODO: Handle ble command errors
@@ -351,6 +363,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }
 
   const setOEMButtonStatus = async (status: "enable" | "disable") => {
+    if (!device) return;
+
     if (status === "enable") {
       const res = await CustomOEMButtonStore.enable();
       if (res !== null) setOemCustomButtonEnabled(true);
@@ -360,20 +374,54 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const newStatus = await CustomOEMButtonStore.isEnabled();
-    console.log(newStatus, await device?.isConnected());
-    if (device)
-      device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CUSTOM_BUTTON_UPDATE_UUID, base64.encode(status)).catch(err => console.log(err));
-    else console.log('no device');
+
+    device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(status),
+    );
+
     return newStatus;
-    // return await CustomOEMButtonStore.isEnabled();
   }
 
 
-  const updateOEMButtonPresets = async (numPresses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors) => {
+  const updateOEMButtonPresets = async (numPresses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors | 0) => {
+    if (!device) return;
 
+    if (to === 0)
+      await CustomOEMButtonStore.remove(numPresses);
+    else
+      await CustomOEMButtonStore.set(numPresses, to);
+
+
+    // SET Number of Button Presses to update on ESP Side
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(numPresses.toString()),
+    );
+    // Sleep for small delay to ensure no overwrite
+    await sleep(20);
+
+    // SET # presses to given behavior 
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(to === 0 ? "0" : buttonBehaviorMap[to].toString()),
+    );
   }
 
   const updateButtonDelay = async (delay: number) => {
+    if (!device || delay < 100) return;
+
+    await CustomOEMButtonStore.setDelay(delay);
+    setButtonDelay(delay);
+
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(delay.toString()),
+    );
   }
 
   const updateWaveDelay = async (delay: number) => {
@@ -391,8 +439,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       scanForModule,
       disconnectFromModule,
       setHeadlightsBusy,
+      updateButtonDelay,
       updatingStatus,
       oemCustomButtonEnabled,
+      buttonDelay,
       updateProgress,
       firmwareVersion,
       isConnecting,
@@ -409,12 +459,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       device,
       updatingStatus,
       updateProgress,
+      buttonDelay,
       firmwareVersion,
       isConnecting,
       isScanning,
       oemCustomButtonEnabled,
       autoConnectEnabled,
-
       mac,
       rightStatus,
       leftStatus,

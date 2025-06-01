@@ -31,15 +31,15 @@ void ButtonHandler::readOnWakeup() {
     int wakeupValue = initialButton;
     initialButton = digitalRead(OEM_BUTTON_INPUT);
 
-    if (wakeupValue != -1 && (wakeupValue != initialButton)) {
+    if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
       buttonTimer = millis();
     }
   } else {
     int wakeup = initialButton;
     initialButton = digitalRead(OEM_BUTTON_INPUT);
-    if (wakeup != -1 && (wakeup != initialButton)) {
-      if (wakeup == 1) bothUp();
+    if ((wakeup != initialButton)) {
+      if (initialButton == 1) bothUp();
       else bothDown();
       setAllOff();
     }
@@ -125,7 +125,6 @@ void ButtonHandler::loopButtonHandler() {
 
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
-
   if (customButtonStatusEnabled) {
 
     if (buttonPressCounter == 0 && buttonInput != initialButton) {
@@ -162,6 +161,7 @@ void ButtonHandler::loopButtonHandler() {
   } else {
     int button = digitalRead(OEM_BUTTON_INPUT);
     if (button != initialButton) {
+      WinkduinoBLE::setBusy(true);
       initialButton = button;
 
       if (button == 1) {
@@ -182,6 +182,8 @@ void ButtonHandler::loopButtonHandler() {
         digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
         digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
       }
+
+      WinkduinoBLE::setBusy(false);
     }
     // TODO: logic for normal button behavior when disabled
   }

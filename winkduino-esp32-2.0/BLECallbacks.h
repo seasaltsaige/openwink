@@ -30,35 +30,35 @@ class ServerCallbacks : public NimBLEServerCallbacks {
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar);
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 void handleHTTPClient();

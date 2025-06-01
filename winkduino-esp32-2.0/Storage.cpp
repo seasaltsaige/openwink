@@ -27,9 +27,16 @@ void Storage::getFromStorage() {
   const char *headlightKey = "headlight-key";
   double head = storage.getDouble(headlightKey, 1.0);
   headlightMultiplier = head;
+
+  const char *customOemKey = "oem-button-key";
+  bool oem = storage.getBool(customOemKey, false);
+  customButtonStatusEnabled = oem;
 }
 
-
+void Storage::setCustomOEMButtonStatus(bool status) {
+  const char *customOemKey = "oem-button-key";
+  storage.putBool(customOemKey, status);
+}
 
 void Storage::setCustomButtonPressArrayDefaults(int defaults[10]) {
     for (int i = 0; i < 10; i++) {

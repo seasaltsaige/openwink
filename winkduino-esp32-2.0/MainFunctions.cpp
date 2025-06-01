@@ -57,8 +57,8 @@ void bothBlink() {
     rightStatus = 0;
   }
 
-  WinkduinoBLE::updateHeadlightChars();
   delay(HEADLIGHT_MOVEMENT_DELAY);
+  WinkduinoBLE::updateHeadlightChars();
 
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -79,7 +79,7 @@ void bothBlink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  WinkduinoBLE::updateHeadlightChars();
+  // WinkduinoBLE::updateHeadlightChars();
 }
 
 // Left
