@@ -541,7 +541,6 @@ function ConfirmationModal(props: { visible: boolean; close: () => void; type: "
           style={{
             backgroundColor: colorTheme.backgroundPrimaryColor,
             width: "70%",
-            // height: "45%",
             shadowColor: "black",
             shadowOffset: { height: 2, width: 2 },
             shadowOpacity: 1,
