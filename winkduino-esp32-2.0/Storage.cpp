@@ -60,3 +60,4 @@ void Storage::setHeadlightMulti(double multi) {
   const char* headlightKey = "headlight-key";
   storage.putDouble(headlightKey, multi);
 }
+

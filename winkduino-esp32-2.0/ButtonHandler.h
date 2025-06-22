@@ -24,5 +24,6 @@ public:
   static void readWakeUpReason();
 
   static void loopButtonHandler();
+  static void handleBusyInput();
   static void updateButtonSleep();
 };

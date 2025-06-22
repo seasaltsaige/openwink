@@ -342,7 +342,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (headlightsBusy) return;
 
     try {
-      await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode("busy"));
       await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
     } catch (err) {
       // TODO: Handle ble command errors
@@ -478,72 +477,3 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     </BleContext.Provider>
   );
 };
-
-
-
-// [{
-//   "_manager": {
-//     "_activePromises": [Object],
-//     "_activeSubscriptions": [Object],
-//     "_errorCodesToMessagesMapping": [Object],
-//     "_eventEmitter": [NativeEventEmitter],
-//     "_scanEventSubscription": null,
-//     "_uniqueId": 7
-//   },
-//   "deviceID": "3C:84:27:DC:4B:89",
-//   "id": 1,
-//   "isPrimary": true,
-//   "uuid": "00001800-0000-1000-8000-00805f9b34fb"
-// },
-// {
-//   "_manager": {
-//     "_activePromises": [Object],
-//     "_activeSubscriptions": [Object],
-//     "_errorCodesToMessagesMapping": [Object],
-//     "_eventEmitter": [NativeEventEmitter],
-//     "_scanEventSubscription": null, "_uniqueId": 7
-//   },
-//   "deviceID": "3C:84:27:DC:4B:89", "id": 4, "isPrimary": true,
-//   "uuid": "00001801-0000-1000-8000-00805f9b34fb"
-// },
-// {
-//   "_manager": {
-//     "_activePromises": [Object],
-//     "_activeSubscriptions": [Object],
-//     "_errorCodesToMessagesMapping": [Object],
-//     "_eventEmitter": [NativeEventEmitter],
-//     "_scanEventSubscription": null,
-//     "_uniqueId": 7
-//   },
-//   "deviceID": "3C:84:27:DC:4B:89",
-//   "id": 9,
-//   "isPrimary": true,
-//   "uuid": "a144c6b0-5e1a-4460-bb92-3674b2f51520"
-// },
-// {
-//   "_manager": {
-//     "_activePromises": [Object],
-//     "_activeSubscriptions": [Object],
-//     "_errorCodesToMessagesMapping": [Object],
-//     "_eventEmitter": [NativeEventEmitter],
-//     "_scanEventSubscription": null,
-//     "_uniqueId": 7
-//   },
-//   "deviceID": "3C:84:27:DC:4B:89",
-//   "id": 20,
-//   "isPrimary": true,
-//   "uuid": "e24c13d7-d7c7-4301-903a-7750b09fc935"
-// }, {
-//   "_manager": {
-//     "_activePromises": [Object],
-//     "_activeSubscriptions": [Object],
-//     "_errorCodesToMessagesMapping": [Object],
-//     "_eventEmitter": [NativeEventEmitter],
-//     "_scanEventSubscription": null, "_uniqueId": 7
-//   },
-//   "deviceID": "3C:84:27:DC:4B:89",
-//   "id": 27,
-//   "isPrimary": true,
-//   "uuid":
-//     "cb5f7a1f-59f2-418e-b9d1-d6fc5c85a749"
-// }]

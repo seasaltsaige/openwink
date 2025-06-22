@@ -36,6 +36,7 @@ export function CustomWinkButton() {
     behaviorHumanReadable: ButtonBehaviors;
     numPresses: number;
   });
+  const [modalType, setModalType] = useState("" as "edit" | "create");
   const [modalVisible, setModalVisible] = useState(false);
 
   const { device, isScanning, isConnecting } = useBLE();
@@ -478,12 +479,16 @@ export function CustomWinkButton() {
         </View>
 
       </View>
-      <CustomButtonActionModal
-        isEditable={actionToEdit !== null && actionToEdit.behaviorHumanReadable !== "Default Behavior"}
-        visible={modalVisible}
 
 
-      />
+      {/* <CustomButtonActionModal
+        modalType={modalType}
+        visible={modalVisible && device !== null}
+        close={() => { setModalVisible(false); }}
+        action={ }
+        humanReadable={ }
+        numPresses={ }
+      /> */}
     </>
   )
 
@@ -491,21 +496,26 @@ export function CustomWinkButton() {
 
 
 
-function CustomButtonActionModal(props: {
+function CustomButtonActionModal({ action, close, humanReadable, numPresses, modalType, visible }: {
   action: number;
   numPresses: number;
   humanReadable: ButtonBehaviors;
-  isEditable: boolean;
+  modalType: "create" | "edit";
   visible: boolean;
   close: () => void;
 }) {
   const { device, } = useBLE();
   const { colorTheme } = useColorTheme();
 
+  const onCreate = async () => { };
+  const onUpdate = async () => { };
+  const onDelete = async () => { };
+
+
   return (
     <Modal
-      visible={props.visible}
-      onRequestClose={() => props.close()}
+      visible={visible}
+      onRequestClose={() => close()}
       animationType="fade"
       hardwareAccelerated
       transparent={true}
@@ -541,7 +551,15 @@ function CustomButtonActionModal(props: {
             padding: 15,
           }}>
 
-
+          {
+            modalType === "create" ? (
+              <></>
+            )
+              : (
+                <>
+                </>
+              )
+          }
 
         </View>
 

@@ -1,3 +1,5 @@
+#include "esp_bt.h"
+#include "NimBLEDevice.h"
 #include "NimBLEServer.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
@@ -49,6 +51,8 @@ bool WinkduinoBLE::deviceConnected = false;
 void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
 
+  NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
@@ -71,7 +75,7 @@ void WinkduinoBLE::initServiceCharacteristics() {
   winkChar = winkService->createCharacteristic(HEADLIGHT_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   leftSleepChar = winkService->createCharacteristic(LEFT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
   rightSleepChar = winkService->createCharacteristic(RIGHT_SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
-  busyChar = winkService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE);
+  busyChar = winkService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
   leftStatusChar = winkService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);

@@ -2,17 +2,19 @@
 
 #include "esp_sleep.h"
 
-#define OUT_PIN_LEFT_DOWN 4
-#define OUT_PIN_LEFT_UP 5
-#define OUT_PIN_RIGHT_DOWN 6
-#define OUT_PIN_RIGHT_UP 7
+#define OUT_PIN_LEFT_DOWN 10
+#define OUT_PIN_LEFT_UP 11
+#define OUT_PIN_RIGHT_DOWN 12
+#define OUT_PIN_RIGHT_UP 13
 
 // Using Right Headlight Up Wire
 // Meaning up should be 1, down should be 0
-#define OEM_BUTTON_INPUT 15
+#define OEM_BUTTON_INPUT 9
 
-// TODO: Seperates functionality into seperate SERVICES as apposed to everything being shoved into one bloated one
-#define FIRMWARE_VERSION "0.2.0"
+// Green wire in wiring harness, indicating busy when high
+#define OEM_HEADLIGHT_STATUS 47 // UPDATE TO 46 FOR PROD
+
+#define FIRMWARE_VERSION "0.3.0"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
@@ -47,10 +49,11 @@
 
 /** ---- END BLE UUID DEFINITIONS ---- **/
 
-#define HEADLIGHT_MOVEMENT_DELAY 750
+
 
 extern const int customButtonPressArrayDefaults[10];
 extern const int maxTimeBetween_msDefault;
 extern const int sleepTime_us;
 extern const int advertiseTime_ms;
 extern int awakeTime_ms;
+extern int HEADLIGHT_MOVEMENT_DELAY;

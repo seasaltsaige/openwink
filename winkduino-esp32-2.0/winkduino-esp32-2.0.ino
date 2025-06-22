@@ -19,7 +19,7 @@ void setup() {
 
   // Variable to store the MAC address
   uint8_t baseMac[6];
-  
+
   esp_read_mac(baseMac, ESP_MAC_BT);
   Serial.print("Bluetooth MAC: ");
   for (int i = 0; i < 5; i++) {
@@ -50,6 +50,13 @@ void setup() {
   printf("Version %s\n", FIRMWARE_VERSION);
 
   WinkduinoBLE::start();
+}
+
+void motionInMonitorTask(void* params) {
+  for (;;) {
+    ButtonHandler::handleBusyInput();
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
 
 void loop() {

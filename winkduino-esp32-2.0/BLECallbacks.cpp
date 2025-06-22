@@ -130,92 +130,87 @@ void RightSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, Nim
 void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   std::string value = pChar->getValue();
 
-  if (value.length() > 2) {
-    WinkduinoBLE::setBusy(true);
-  } else {
+  int valueInt = String(value.c_str()).toInt();
 
-    int valueInt = String(value.c_str()).toInt();
+  // WinkduinoBLE::setBusy(true);
 
-    // WinkduinoBLE::setBusy(true);
+  switch (valueInt) {
+    // Both Up
+    case 1:
+      bothUp();
+      break;
 
-    switch (valueInt) {
-      // Both Up
-      case 1:
+    // Both Down
+    case 2:
+      bothDown();
+      break;
+    // Both Blink
+    case 3:
+      // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
+      bothBlink();
+      break;
+
+    // Left Up
+    case 4:
+      leftUp();
+      break;
+
+    // Left Down
+    case 5:
+      leftDown();
+      break;
+
+    // Left Blink (Wink)
+    case 6:
+      leftWink();
+      break;
+
+    // Right Up
+    case 7:
+      rightUp();
+      break;
+
+    // Right Down
+    case 8:
+      rightDown();
+      break;
+
+    // Right Blink (Wink)
+    case 9:
+      rightWink();
+      break;
+
+    // "Wave" left first
+    case 10:
+
+      if (leftStatus != rightStatus) {
         bothUp();
-        break;
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        WinkduinoBLE::updateHeadlightChars();
+      }
 
-      // Both Down
-      case 2:
-        bothDown();
-        break;
-      // Both Blink
-      case 3:
-        // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
-        bothBlink();
-        break;
+      leftWave();
+      break;
 
-      // Left Up
-      case 4:
-        leftUp();
-        break;
+    case 11:
 
-      // Left Down
-      case 5:
-        leftDown();
-        break;
+      if (leftStatus != rightStatus) {
+        bothUp();
+        delay(HEADLIGHT_MOVEMENT_DELAY);
+        setAllOff();
+        WinkduinoBLE::updateHeadlightChars();
+      }
 
-      // Left Blink (Wink)
-      case 6:
-        leftWink();
-        break;
+      rightWave();
 
-      // Right Up
-      case 7:
-        rightUp();
-        break;
-
-      // Right Down
-      case 8:
-        rightDown();
-        break;
-
-      // Right Blink (Wink)
-      case 9:
-        rightWink();
-        break;
-
-      // "Wave" left first
-      case 10:
-
-        if (leftStatus != rightStatus) {
-          bothUp();
-          delay(HEADLIGHT_MOVEMENT_DELAY);
-          setAllOff();
-          WinkduinoBLE::updateHeadlightChars();
-        }
-
-        leftWave();
-        break;
-
-      case 11:
-
-        if (leftStatus != rightStatus) {
-          bothUp();
-          delay(HEADLIGHT_MOVEMENT_DELAY);
-          setAllOff();
-          WinkduinoBLE::updateHeadlightChars();
-        }
-
-        rightWave();
-
-        break;
-    }
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-    setAllOff();
-
-    WinkduinoBLE::updateHeadlightChars();
-    WinkduinoBLE::setBusy(false);
+      break;
   }
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
+
+  WinkduinoBLE::updateHeadlightChars();
+  // WinkduinoBLE::setBusy(false);
 }
 
 void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
