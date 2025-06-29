@@ -213,6 +213,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
   // WinkduinoBLE::setBusy(false);
 }
 
+// NOTE: this is for waves.
 void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string val = pChar->getValue();
 

@@ -27,6 +27,8 @@ import {
 import { useColorTheme } from './hooks/useColorTheme';
 import { BleProvider } from './Providers/BleProvider';
 import { ThemeProvider } from './Providers/ThemeProvider';
+import { useBLE } from './hooks/useBLE';
+import { useEffect } from 'react';
 
 const Tab = createBottomTabNavigator();
 
@@ -173,6 +175,13 @@ const Stack = createNativeStackNavigator();
 function AppNavigator() {
 
 
+  const { disconnectFromModule } = useBLE();
+
+
+
+  useEffect(() => {
+    return () => { disconnectFromModule() };
+  }, []);
   return (
     <Stack.Navigator screenOptions={{
       headerShown: false,
@@ -206,6 +215,8 @@ function AppNavigator() {
 
 
 export default function App() {
+
+
   return (
     <NavigationContainer>
       <BleProvider>

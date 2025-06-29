@@ -140,7 +140,7 @@ export function Home() {
                   fontWeight: "bold",
                   fontSize: 15,
                 }}
-              >Connected to Wink Module</Text>
+              >Connected to Module</Text>
 
               <IonIcons name="checkmark-done-outline" size={20} color={colorTheme.headerTextColor} />
 
@@ -169,7 +169,7 @@ export function Home() {
                     fontWeight: "bold",
                     fontSize: 15,
                   }}
-                >{isScanning ? "Scanning for" : "Connecting to"} module</Text>
+                >{isScanning ? "Scanning for" : "Connecting to"} Module</Text>
                 <ActivityIndicator color={colorTheme.buttonColor} size="small" />
               </View>
             ) : (

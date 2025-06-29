@@ -27,6 +27,7 @@ export const SOFTWARE_STATUS_CHAR_UUID = "2d393ed3-ed78-4d57-900a-d3e46296f92d"
 export const LONG_TERM_SLEEP_UUID = "0104b643-56b0-4dd8-85c7-6bd00f9c732e"
 export const CUSTOM_BUTTON_UPDATE_UUID = "795a9433-cf23-4550-80b5-70a0c9413cac"
 export const HEADLIGHT_MOVEMENT_DELAY_UUID = "859290b7-32f5-4afd-80fd-832b95bc5a4b"
+export const HEADLIGHT_MOTION_IN_UUID = "5cdfa4ac-31f5-439b-af8d-ec09a808ce9d"
 
 
 export const SCAN_TIME_SECONDS = 30 * 1000;
@@ -35,6 +36,77 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://192.168.0.11:3000/.netlify/functions/api/update";
 
+
+export enum ButtonStatus {
+  DOWN = 0,
+  UP = 1,
+}
+
+export enum DefaultCommandValue {
+  BOTH_UP = 1,
+  BOTH_DOWN,
+  BOTH_BLINK,
+  LEFT_UP,
+  LEFT_DOWN,
+  LEFT_WINK,
+  RIGHT_UP,
+  RIGHT_DOWN,
+  RIGHT_WINK,
+  LEFT_WAVE,
+  RIGHT_WAVE
+}
+
+/**
+ * const commands = [
+  [
+    {
+      name: "Left Up",
+      value: 4,
+    },
+    {
+      name: "Left Down",
+      value: 5,
+    },
+
+  ],
+  [
+    {
+      name: "Both Up",
+      value: 1
+    },
+    {
+      name: "Both Down",
+      value: 2,
+    },
+
+  ],
+  [
+    {
+      name: "Right Up",
+      value: 7,
+    },
+    {
+      name: "Right Down",
+      value: 8,
+    },
+
+  ]
+];
+
+const winks = [{
+  name: "Left Wink",
+  value: 6,
+},
+{
+  name: "Both Blink",
+  value: 3,
+},
+{
+  name: "Right Wink",
+  value: 9,
+}];
+
+ */
 
 type HexNumber = `#${string}`;
 

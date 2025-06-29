@@ -41,6 +41,7 @@ private:
   static NimBLECharacteristic* longTermSleepChar; 
   static NimBLECharacteristic* customButtonChar;
   static NimBLECharacteristic* headlightDelayChar;
+  static NimBLECharacteristic* headlightMotionChar;
 
   static bool deviceConnected;
 
@@ -56,6 +57,7 @@ public:
   static void setBusy(bool busy);
   static void setFirmwareUpdateStatus(string status);
   static void setFirmwarePercent(string stringPercentage);
+  static void setMotionInValue(int value);
 
   static bool getDeviceConnected() {
     return deviceConnected;
