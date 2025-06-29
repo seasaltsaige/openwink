@@ -108,7 +108,7 @@ void WinkduinoBLE::initServiceCharacteristics() {
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
-  headlightDelayChar->setValue(1.0);
+  headlightDelayChar->setValue(headlightMultiplier);
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());

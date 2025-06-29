@@ -90,7 +90,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
       setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
       const autoConn = await AutoConnectStore.get();
-      setAutoConnect(autoConn!);
+      if (autoConn)
+        setAutoConnectEnabled(autoConn);
 
       const delay = await CustomOEMButtonStore.getDelay();
       if (delay)
@@ -173,7 +174,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (err) return console.log(err);
       const strVal = base64.decode(char?.value!);
       const intVal = parseInt(strVal);
-      // console.log(intVal);
       if (intVal > 1) {
         const realValDecimal = (intVal - 10) / 100;
         setLeftStatus(realValDecimal);
@@ -259,7 +259,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const connection = await manager.connectToDevice(dev.id);
       await connection.discoverAllServicesAndCharacteristics();
-      console.log(await connection.services());
 
       await DeviceMACStore.setMAC(connection.id);
       setMac(connection.id);
@@ -377,10 +376,20 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
       if (command === DefaultCommandValue.BOTH_BLINK || command === DefaultCommandValue.LEFT_WINK || command === DefaultCommandValue.RIGHT_WINK)
         setTimeout(() => setHeadlightsBusy(false), motionValue * 2);
-      else if (command === DefaultCommandValue.LEFT_WAVE || command === DefaultCommandValue.RIGHT_WAVE)
+      else if (command === DefaultCommandValue.LEFT_WAVE || command === DefaultCommandValue.RIGHT_WAVE) {
+        let additionalDelayFromDiff = 0;
 
-        console.log("TODO: account for headlight delay multi + motionValue"); // waveDelayMulti
-      else setTimeout(() => setHeadlightsBusy(false), motionValue);
+        if (leftStatus !== rightStatus) additionalDelayFromDiff = motionValue;
+
+        const toEndMulti = 1.0 - waveDelayMulti;
+
+        setTimeout(() => setHeadlightsBusy(false),
+          ((motionValue * waveDelayMulti) * 3) +
+          ((motionValue * toEndMulti) * 2) +
+          additionalDelayFromDiff
+        );
+
+      } else setTimeout(() => setHeadlightsBusy(false), motionValue);
       // setTimeout(() => setHeadlightsBusy(false), )
     } catch (err) {
       setHeadlightsBusy(false);

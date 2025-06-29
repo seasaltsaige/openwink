@@ -53,6 +53,7 @@ void ButtonHandler::readWakeUpReason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
 
+    // TODO: Read button state + set headlights to position
     Serial.printf("WAKEUP REASON: %d\n", wakeup_reason);
     awakeTime_ms = 5 * 1000 * 60;
   } else

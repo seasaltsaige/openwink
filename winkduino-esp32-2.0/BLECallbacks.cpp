@@ -184,8 +184,11 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
     case 10:
 
       if (leftStatus != rightStatus) {
-        bothUp();
+        if (leftStatus == 1) rightUp();
+        else rightDown();
+
         delay(HEADLIGHT_MOVEMENT_DELAY);
+
         setAllOff();
         WinkduinoBLE::updateHeadlightChars();
       }
@@ -196,8 +199,11 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
     case 11:
 
       if (leftStatus != rightStatus) {
-        bothUp();
+        if (rightStatus == 1) leftUp();
+        else leftDown();
+
         delay(HEADLIGHT_MOVEMENT_DELAY);
+        
         setAllOff();
         WinkduinoBLE::updateHeadlightChars();
       }
@@ -217,7 +223,8 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
 void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string val = pChar->getValue();
 
-  double multi = stod(val) / 100.0;
+  double multi = stod(val);
+  Serial.printf("MULTI VAL: %f\n", multi);
   Storage::setHeadlightMulti(multi);
   headlightMultiplier = multi;
 }

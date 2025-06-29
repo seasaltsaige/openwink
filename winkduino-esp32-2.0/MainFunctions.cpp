@@ -173,6 +173,8 @@ void rightWink() {
 void leftWave() {
   double headlightToEndMultiplier = 1.0 - headlightMultiplier;
 
+  Serial.printf("Left wave: %f, %f\n", headlightMultiplier, headlightToEndMultiplier);
+
   // Down case
   if (leftStatus == 0 && rightStatus == 0) {
     
@@ -283,6 +285,8 @@ void leftWave() {
 
 void rightWave() {
   double headlightToEndMultiplier = 1.0 - headlightMultiplier;
+
+  Serial.printf("Right wave: %f, %f\n", headlightMultiplier, headlightToEndMultiplier);
 
   // Down case
   if (leftStatus == 0 && rightStatus == 0) {

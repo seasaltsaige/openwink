@@ -69,7 +69,6 @@ export function StandardCommands() {
   const [disableActions, setDisableActions] = useState(false);
 
   useEffect(() => {
-    console.log(headlightsBusy);
     if (!device || headlightsBusy || (leftStatus > 0 && leftStatus < 1) || (rightStatus > 0 && rightStatus < 1))
       setDisableActions(true);
     else setDisableActions(false);
@@ -344,7 +343,7 @@ export function StandardCommands() {
 
                 })}
                 key={98}
-                onPress={() => { }}
+                onPress={() => sendDefaultCommand(10)}
                 disabled={disableActions}
               >
                 <Text
@@ -369,7 +368,7 @@ export function StandardCommands() {
 
                 })}
                 key={99}
-                onPress={() => { }}
+                onPress={() => sendDefaultCommand(11)}
                 disabled={disableActions}
               >
                 <Text
