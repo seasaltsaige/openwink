@@ -166,7 +166,7 @@ export function ModuleSettings() {
             width: "auto",
             marginRight: 10,
           }}
-          >Module Settings</Text>
+          >Module</Text>
 
         </View>
 
@@ -175,7 +175,6 @@ export function ModuleSettings() {
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-start",
-            // width: "100%",
             rowGap: 15,
           }}
         >

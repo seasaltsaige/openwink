@@ -14,6 +14,8 @@
 
 using namespace std;
 
+void motionInMonitorTask(void* params);
+
 void setup() {
   Serial.begin(115200);
 
@@ -50,6 +52,15 @@ void setup() {
   printf("Version %s\n", FIRMWARE_VERSION);
 
   WinkduinoBLE::start();
+
+  xTaskCreatePinnedToCore(
+    motionInMonitorTask,
+    "MotionInTask",
+    4096,
+    nullptr,
+    1,
+    nullptr,
+    1);
 }
 
 void motionInMonitorTask(void* params) {
@@ -65,6 +76,5 @@ void loop() {
     handleHTTPClient();
 
   ButtonHandler::loopButtonHandler();
-
   ButtonHandler::updateButtonSleep();
 }

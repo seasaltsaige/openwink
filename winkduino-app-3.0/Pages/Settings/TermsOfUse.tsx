@@ -59,7 +59,7 @@ export function TermsOfUse() {
 
 
         <Text style={{
-          fontSize: 35,
+          fontSize: 30,
           fontWeight: "600",
           color: colorTheme.headerTextColor,
           width: "auto",

@@ -53,6 +53,7 @@ void ButtonHandler::readWakeUpReason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
 
+    // TODO: Read button state + set headlights to position
     Serial.printf("WAKEUP REASON: %d\n", wakeup_reason);
     awakeTime_ms = 5 * 1000 * 60;
   } else
@@ -187,31 +188,22 @@ void ButtonHandler::loopButtonHandler() {
       }
 
       WinkduinoBLE::setBusy(false);
+      WinkduinoBLE::updateHeadlightChars();
     }
   }
-}
-TaskHandle_t busyTaskHandle = nullptr;
-bool statusToUpdate = false;
-
-void busyTask(void* param) {
-  vTaskDelay(pdMS_TO_TICKS(50));
-  WinkduinoBLE::setBusy(statusToUpdate);
-  vTaskDelay(pdMS_TO_TICKS(50));
-  vTaskDelete(nullptr);
 }
 
 
 void ButtonHandler::handleBusyInput() {
   
   int readStatus = digitalRead(OEM_HEADLIGHT_STATUS);
-
   if (readStatus != motionButtonStatus) {
     motionButtonStatus = readStatus;
 
     if (readStatus == 1) {
       // Start timer to measure on time
       motionTimer = millis();
-      Serial.printf("Timer started...");
+      Serial.printf("Timer started...\n");
     } else {
       unsigned long current = millis();
 
@@ -220,38 +212,13 @@ void ButtonHandler::handleBusyInput() {
       // TODO: Set in storage if different
       // Set RTC DATA ATTR var value
       // Send notification for app to update value
-      Serial.printf("Motion in status was on for '%d'ms\n", timeOn);
+      WinkduinoBLE::setMotionInValue((int)timeOn + 25);
+
     }
 
   }
 
 }
-
-// void ButtonHandler::handleBusyInput() {
-  
-//   delay(10);
-//   int readStatus = digitalRead(OEM_HEADLIGHT_STATUS);
-//   if (readStatus != busyButtonStatus) {
-//     Serial.println("Differs");
-//     busyButtonStatus = readStatus;
-//     if (readStatus == HIGH) {
-//       statusToUpdate = true;
-//     } else {
-//       statusToUpdate = false;
-//     }
-//     // attachInter
-
-//     // TODO: TRY TASK CREATION FROM CALLBACK AGAIN
-
-    
-//     // xQueueSendFromISR(xQueue, pvItemToQueue, pxHigherPriorityTaskWoken)
-//     // WinkduinoBLE::setBusy(statusToUpdate);
-
-//     Serial.printf("Status To Update: %d\n", statusToUpdate);
-
-//     xTaskCreate(busyTask, "BusyTask", 4096, nullptr, 1, &busyTaskHandle);
-//   }
-// }
 
 void ButtonHandler::updateButtonSleep() {
 

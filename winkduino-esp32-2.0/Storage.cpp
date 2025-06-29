@@ -31,6 +31,11 @@ void Storage::getFromStorage() {
   const char *customOemKey = "oem-button-key";
   bool oem = storage.getBool(customOemKey, false);
   customButtonStatusEnabled = oem;
+
+
+  // const char *motionKey = "motion-key";
+  // int motion = storage.getInt(motionKey, 750);
+  // HEADLIGHT_MOVEMENT_DELAY = motion;
 }
 
 void Storage::setCustomOEMButtonStatus(bool status) {
@@ -61,3 +66,7 @@ void Storage::setHeadlightMulti(double multi) {
   storage.putDouble(headlightKey, multi);
 }
 
+// void Storage::setMotionTiming(int time) {
+//   const char* motionKey = "motion-key";
+//   storage.putInt(motionKey, time);
+// }

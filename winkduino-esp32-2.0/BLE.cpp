@@ -1,7 +1,9 @@
+#include "nimble/nimble/include/nimble/hci_common.h"
 #include "esp_bt.h"
 #include "NimBLEDevice.h"
 #include "NimBLEServer.h"
 #include "BLE.h"
+#include "Storage.h"
 #include "BLECallbacks.h"
 #include "constants.h"
 
@@ -45,18 +47,17 @@ NimBLEService* WinkduinoBLE::settingsService;
 NimBLECharacteristic* WinkduinoBLE::longTermSleepChar;
 NimBLECharacteristic* WinkduinoBLE::customButtonChar;
 NimBLECharacteristic* WinkduinoBLE::headlightDelayChar;
+NimBLECharacteristic* WinkduinoBLE::headlightMotionChar;
 
 bool WinkduinoBLE::deviceConnected = false;
 
 void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
-
-  NimBLEDevice::setPower(ESP_PWR_LVL_P9);
-
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
   initAdvertising();
+  NimBLEDevice::setPower(ESP_PWR_LVL_P9);
 }
 
 void WinkduinoBLE::initDeviceServer() {
@@ -104,11 +105,12 @@ void WinkduinoBLE::initServiceCharacteristics() {
   longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE);
   customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
   headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
+  headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
-  headlightDelayChar->setValue(1.0);
+  headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
+  headlightDelayChar->setValue(headlightMultiplier);
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
-
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
 }
@@ -123,7 +125,7 @@ void WinkduinoBLE::initAdvertising() {
   advertisement.setConnectable(true);
   advertisement.setScannable(false);
 
-  advertisement.setPrimaryPhy(BLE_HCI_LE_PHY_CODED);
+  advertisement.setPrimaryPhy(BLE_HCI_LE_PHY_1M);
   advertisement.setSecondaryPhy(BLE_HCI_LE_PHY_CODED);
 
   advertisement.addServiceUUID(NimBLEUUID(WINK_SERVICE_UUID)); 
@@ -139,6 +141,8 @@ void WinkduinoBLE::start() {
     if (advertising->start(0)) {
       printf("Started advertising\n");
       WinkduinoBLE::updateHeadlightChars();
+      WinkduinoBLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
+      Serial.printf("Services: %s\n%s\n%s", WINK_SERVICE_UUID, OTA_SERVICE_UUID, MODULE_SETTINGS_SERVICE_UUID);
     } else
       printf("Failed to start advertising\n");
   } else
@@ -150,6 +154,16 @@ void WinkduinoBLE::updateHeadlightChars() {
   rightStatusChar->setValue(std::string(String(rightStatus).c_str()));
   leftStatusChar->notify();
   rightStatusChar->notify();
+}
+
+void WinkduinoBLE::setMotionInValue(int value) {
+  if (value < 500 || value > 800) return;
+  HEADLIGHT_MOVEMENT_DELAY = value;
+  // Storage::setMotionTiming(value);
+
+  Serial.printf("Timer Value: %d\n", value);
+  headlightMotionChar->setValue(to_string(value));
+  headlightMotionChar->notify();
 }
 
 void WinkduinoBLE::setBusy(bool busy) {

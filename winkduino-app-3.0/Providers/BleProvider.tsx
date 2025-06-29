@@ -8,8 +8,8 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID } from '../helper/Constants';
-import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, DeviceMACStore, FirmwareStore } from '../Storage';
+import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOTION_IN_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID, ButtonStatus, DefaultCommandValue } from '../helper/Constants';
+import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
@@ -24,6 +24,8 @@ export type BleContextType = {
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
+  updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
+  waveDelayMulti: number;
   // setOEMButtonInterval: (delay: number) => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
@@ -72,9 +74,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
   const [buttonDelay, setButtonDelay] = useState(500);
-  const [waveDelay, setWaveDelay] = useState(200);
+  const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
+  const [motionValue, setMotionValue] = useState(750);
   // Delay between when headlights start moving during a wave command
-  // const [waveDelay]
+
 
 
   useEffect(() => {
@@ -87,11 +90,17 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
       setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
       const autoConn = await AutoConnectStore.get();
-      setAutoConnect(autoConn!);
+      if (autoConn)
+        setAutoConnectEnabled(autoConn);
 
       const delay = await CustomOEMButtonStore.getDelay();
       if (delay)
         setButtonDelay(delay);
+
+      const waveMulti = await CustomWaveStore.getMultiplier();
+      if (waveMulti)
+        setWaveDelayMulti(waveMulti);
+
 
     })();
 
@@ -150,7 +159,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       } else return await requestAndroid31Permissions();
     } else return true;
-  }
+  };
 
   // TODO: Handle erros from these
   const initBLEMonitors = async (connection: Device) => {
@@ -165,7 +174,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (err) return console.log(err);
       const strVal = base64.decode(char?.value!);
       const intVal = parseInt(strVal);
-      // console.log(intVal);
       if (intVal > 1) {
         const realValDecimal = (intVal - 10) / 100;
         setLeftStatus(realValDecimal);
@@ -196,6 +204,14 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const statusValue = toProperCase(base64.decode(char?.value!) as "idle" | "updating" | "failed" | "success");
       setUpdatingStatus(statusValue);
     });
+
+
+    connection.monitorCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, HEADLIGHT_MOTION_IN_UUID, (err, char) => {
+      if (err) return console.log(err);
+      const val = base64.decode(char?.value!);
+      setMotionValue(parseInt(val));
+    });
+
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -227,6 +243,14 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setFirmwareVersion(base64.decode(firmware.value));
       await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
     }
+
+
+    const motion = await connection.readCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, HEADLIGHT_MOTION_IN_UUID);
+    if (motion.value) {
+      const val = base64.decode(motion.value);
+      setMotionValue(parseInt(val));
+    }
+
   }
 
 
@@ -235,7 +259,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const connection = await manager.connectToDevice(dev.id);
       await connection.discoverAllServicesAndCharacteristics();
-      console.log(await connection.services());
 
       await DeviceMACStore.setMAC(connection.id);
       setMac(connection.id);
@@ -278,7 +301,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const scanForModule = async () => {
     if (device !== null || isScanning || isConnecting) return;
 
-
     setIsScanning(true);
     const deviceMac = await DeviceMACStore.getStoredMAC();
 
@@ -305,10 +327,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       allowDuplicates: false,
       callbackType: ScanCallbackType.FirstMatch,
       legacyScan: false,
-      scanMode: ScanMode.LowLatency
+      scanMode: ScanMode.LowLatency,
     }, async (err, deviceToConnect) => {
       if (err) {
         // TODO: Handle scan error
+        console.log(err.androidErrorCode, err.attErrorCode);
         console.log(err);
       }
 
@@ -341,9 +364,35 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const sendDefaultCommand = async (command: number) => {
     if (headlightsBusy) return;
 
+    if ((leftStatus === ButtonStatus.UP && command === DefaultCommandValue.LEFT_UP) ||
+      (leftStatus === ButtonStatus.DOWN && command === DefaultCommandValue.LEFT_DOWN) ||
+      (rightStatus === ButtonStatus.UP && command === DefaultCommandValue.RIGHT_UP) ||
+      (rightStatus === ButtonStatus.DOWN && command === DefaultCommandValue.RIGHT_DOWN) ||
+      (leftStatus === ButtonStatus.UP && rightStatus === ButtonStatus.UP && command === DefaultCommandValue.BOTH_UP) ||
+      (leftStatus === ButtonStatus.DOWN && rightStatus === ButtonStatus.DOWN && command === DefaultCommandValue.BOTH_DOWN)) return;
+
     try {
+      setHeadlightsBusy(true);
       await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
+      if (command === DefaultCommandValue.BOTH_BLINK || command === DefaultCommandValue.LEFT_WINK || command === DefaultCommandValue.RIGHT_WINK)
+        setTimeout(() => setHeadlightsBusy(false), motionValue * 2);
+      else if (command === DefaultCommandValue.LEFT_WAVE || command === DefaultCommandValue.RIGHT_WAVE) {
+        let additionalDelayFromDiff = 0;
+
+        if (leftStatus !== rightStatus) additionalDelayFromDiff = motionValue;
+
+        const toEndMulti = 1.0 - waveDelayMulti;
+
+        setTimeout(() => setHeadlightsBusy(false),
+          ((motionValue * waveDelayMulti) * 3) +
+          ((motionValue * toEndMulti) * 2) +
+          additionalDelayFromDiff
+        );
+
+      } else setTimeout(() => setHeadlightsBusy(false), motionValue);
+      // setTimeout(() => setHeadlightsBusy(false), )
     } catch (err) {
+      setHeadlightsBusy(false);
       // TODO: Handle ble command errors
     }
 
@@ -412,21 +461,38 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateButtonDelay = async (delay: number) => {
     if (!device || delay < 100) return;
+    try {
+      await CustomOEMButtonStore.setDelay(delay);
+      await device.writeCharacteristicWithoutResponseForService(
+        MODULE_SETTINGS_SERVICE_UUID,
+        CUSTOM_BUTTON_UPDATE_UUID,
+        base64.encode(delay.toString()),
+      );
 
-    await CustomOEMButtonStore.setDelay(delay);
-    setButtonDelay(delay);
-
-    await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      CUSTOM_BUTTON_UPDATE_UUID,
-      base64.encode(delay.toString()),
-    );
+      setButtonDelay(delay);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
-  const updateWaveDelay = async (delay: number) => {
+  const updateWaveDelayMulti = async (delayMulti: number) => {
+    if (!device || delayMulti < 0 || delayMulti > 1) return;
+    try {
+      await CustomWaveStore.setMultiplier(delayMulti);
+      await device.writeCharacteristicWithoutResponseForService(
+        MODULE_SETTINGS_SERVICE_UUID,
+        HEADLIGHT_MOVEMENT_DELAY_UUID,
+        base64.encode(delayMulti.toString()),
+      );
+
+      setWaveDelayMulti(delayMulti);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const enterDeepSleep = async () => {
+    if (!device) return;
   }
 
   const value: BleContextType = useMemo(
@@ -439,6 +505,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       disconnectFromModule,
       setHeadlightsBusy,
       updateButtonDelay,
+      updateWaveDelayMulti,
+      waveDelayMulti,
       updatingStatus,
       oemCustomButtonEnabled,
       buttonDelay,
@@ -462,6 +530,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       firmwareVersion,
       isConnecting,
       isScanning,
+      waveDelayMulti,
       oemCustomButtonEnabled,
       autoConnectEnabled,
       mac,
