@@ -205,7 +205,7 @@ export function Home() {
                 Change App Theme
               </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
 
         </View>
@@ -221,66 +221,27 @@ export function Home() {
             // TODO: update to 'if update available for app'
             appUpdateAvailable ? (
               <Pressable
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  width: "100%",
-                  padding: 15,
-                  paddingVertical: 13,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                })}
+                style={({ pressed }) => pressed ? theme.homeUpdatesButtonPressed : theme.homeUpdatesButton}
                 onPress={() => {
                   // Open app store
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: colorTheme.textColor,
-                    fontWeight: "600",
-                  }}
-                >
+                <Text style={theme.mainLongButtonPressableText}>
                   Install app update
                 </Text>
-
-                <IonIcons style={{ marginRight: 10 }} name="cloud-download-outline" color={colorTheme.textColor} size={18} />
+                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
 
               </Pressable>
             ) : (
-              <View
-                style={{
-                  backgroundColor: colorTheme.backgroundSecondaryColor,
-                  width: "100%",
-                  padding: 15,
-                  paddingVertical: 13,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: colorTheme.textColor,
-                    fontWeight: "600",
-                  }}
-                >
-                  {
-                    fetchingAppUpdateInfo ?
-                      "Checking for app update"
-                      : "App is up to date"
-                  }
+              <View style={theme.homeUpdatesButton}>
+                <Text style={theme.homeUpdatesText}>
+                  {fetchingAppUpdateInfo ? "Checking for app update" : "App is up to date"}
                 </Text>
 
                 {
                   fetchingAppUpdateInfo ?
-                    <ActivityIndicator size={"small"} color={colorTheme.buttonColor} />
-                    : <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                    <ActivityIndicator size={"small"} color={colorTheme.buttonColor} /> :
+                    <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
 
               </View>
@@ -291,85 +252,40 @@ export function Home() {
             // TODO: update to 'if update available for module'
             moduleUpdateAvailable ? (
               <Pressable
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  width: "100%",
-                  padding: 15,
-                  paddingVertical: 13,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                })}>
-
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: colorTheme.textColor,
-                    fontWeight: "600",
-                  }}
-                >
-                  Install module update
-                </Text>
-
-                <IonIcons style={{ marginRight: 10 }} name="cloud-download-outline" color={colorTheme.textColor} size={18} />
-              </Pressable>
-            ) : (
-              <View
-
-                style={{
-                  backgroundColor: colorTheme.backgroundSecondaryColor,
-                  width: "100%",
-                  padding: 15,
-                  paddingVertical: 13,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
+                style={({ pressed }) => pressed ? theme.homeUpdatesButtonPressed : theme.homeUpdatesButton}
+                onPress={() => {
+                  // Install update to wink module
+                  // Should only become this state if connected to wink module (To check device for version)
                 }}
               >
-
-
+                <Text style={theme.homeUpdatesText}>
+                  Install module update
+                </Text>
+                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
+              </Pressable>
+            ) : (
+              <View style={theme.homeUpdatesButton}>
                 {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: colorTheme.textColor,
-                    fontWeight: "600",
-                  }}
-                >
-                  {
-                    !device ?
-                      "Connect to wink module for updates"
-                      : fetchingModuleUpdateInfo ?
-                        "Checking for module software update"
-                        : "Module is up to date"
+                <Text style={theme.homeUpdatesText}>
+                  {!device ?
+                    "Connect to wink module for updates" :
+                    fetchingModuleUpdateInfo ?
+                      "Checking for module software update" :
+                      "Module is up to date"
                   }
                 </Text>
-
-
                 {
                   !device ?
-                    <IonIcons size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
-                    : fetchingModuleUpdateInfo ?
-                      <ActivityIndicator size={"small"} color={colorTheme.buttonColor} />
-                      : <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                    <IonIcons size={18} name="cloud-offline-outline" color={colorTheme.textColor} /> :
+                    fetchingModuleUpdateInfo ?
+                      <ActivityIndicator size={"small"} color={colorTheme.buttonColor} /> :
+                      <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
-
-
               </View>
             )
           }
-
-
         </View>
-
-
       </View>
-
     </View >
-
   );
 }

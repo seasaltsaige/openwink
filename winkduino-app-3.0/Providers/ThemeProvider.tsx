@@ -22,6 +22,9 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   mainLongButtonPressableView: ViewStyle;
   mainLongButtonPressableText: TextStyle;
   mainLongButtonPressableIcon: ViewStyle;
+  homeUpdatesButton: ViewStyle;
+  homeUpdatesButtonPressed: ViewStyle;
+  homeUpdatesText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -161,7 +164,33 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         fontSize: 17,
       },
       mainLongButtonPressableIcon: { marginRight: 10 },
-
+      homeUpdatesButton: {
+        backgroundColor: colorTheme.backgroundSecondaryColor,
+        width: "100%",
+        padding: 15,
+        paddingVertical: 13,
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 8,
+      },
+      homeUpdatesButtonPressed: {
+        backgroundColor: colorTheme.buttonColor,
+        width: "100%",
+        padding: 15,
+        paddingVertical: 13,
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 8,
+      },
+      homeUpdatesText: {
+        fontSize: 15,
+        color: colorTheme.textColor,
+        fontWeight: "600",
+      }
     }))
   }
 
