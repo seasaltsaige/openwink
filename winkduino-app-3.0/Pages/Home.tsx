@@ -11,7 +11,7 @@ export function Home() {
 
   const navigate = useNavigation();
   const route = useRoute();
-  const { colorTheme, update } = useColorTheme();
+  const { colorTheme, update, theme } = useColorTheme();
 
   const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false as null | boolean);
   const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
@@ -75,125 +75,38 @@ export function Home() {
   }
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 15,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        rowGap: 25,
-      }}
-    >
-      <View
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "100%",
-        }}
-      >
+    <View style={theme.container}>
 
-        <Text
-          style={{
-            fontSize: 40,
-            fontWeight: "bold",
-            color: colorTheme.headerTextColor,
-            width: "100%",
-          }}
-        >Home</Text>
-
+      <View style={theme.headerContainer}>
+        <Text style={theme.headerText}>Home</Text>
       </View>
 
-      <View
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          rowGap: 35,
-          width: "100%",
-        }}
-      >
+      <View style={theme.contentContainer} >
 
         {
           device ? (
-
-            <View
-              style={{
-                backgroundColor: colorTheme.backgroundSecondaryColor,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: 15,
-                paddingVertical: 12,
-                borderRadius: 7,
-                width: "60%"
-              }}
-            >
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 15,
-                }}
-              >Connected to Module</Text>
-
+            <View style={theme.homeScreenConnectionButton}>
+              <Text style={theme.homeScreenConnectionButtonText}>
+                Connected to Module
+              </Text>
               <IonIcons name="checkmark-done-outline" size={20} color={colorTheme.headerTextColor} />
-
             </View>
-
-
-
           ) : (
             isScanning || isConnecting ? (
-              <View
-                style={{
-                  backgroundColor: colorTheme.backgroundSecondaryColor,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: 15,
-                  paddingVertical: 12,
-                  borderRadius: 7,
-                  width: "60%"
-                }}
-              >
-                <Text
-                  style={{
-                    color: colorTheme.headerTextColor,
-                    fontWeight: "bold",
-                    fontSize: 15,
-                  }}
-                >{isScanning ? "Scanning for" : "Connecting to"} Module</Text>
+              <View style={theme.homeScreenConnectionButton}>
+                <Text style={theme.homeScreenConnectionButtonText}>
+                  {isScanning ? "Scanning for" : "Connecting to"} Module
+                </Text>
                 <ActivityIndicator color={colorTheme.buttonColor} size="small" />
               </View>
             ) : (
               <Pressable
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: 15,
-                  paddingVertical: 12,
-                  borderRadius: 7,
-                  width: "60%"
-                })}
+                style={({ pressed }) => pressed ? theme.homeScreenConnectionButtonPressed : theme.homeScreenConnectionButton}
                 onPress={() => scanForDevice()}
               >
                 <Text
-                  style={{
-                    color: colorTheme.headerTextColor,
-                    fontWeight: "bold",
-                    fontSize: 17,
-                  }}
-                >Scan for wink module</Text>
+                  style={theme.homeScreenConnectionButtonText}
+                >Scan for Wink Module</Text>
 
                 <IonIcons name="wifi-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
@@ -202,290 +115,105 @@ export function Home() {
         }
 
         {/* COMMANDS */}
-        <View
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            width: "100%",
-            rowGap: 15,
-          }}
-        >
-
-          <Text
-            style={{
-              alignSelf: "flex-start",
-              textAlign: "left",
-              color: colorTheme.headerTextColor,
-              fontWeight: "500",
-              fontSize: 20
-            }}
-          >
+        <View style={theme.homeScreenButtonsContainer}>
+          <Text style={theme.labelHeader}>
             Commands
           </Text>
 
           {/* Standard Commands */}
           <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "100%",
-              padding: 5,
-              paddingVertical: 13,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-            })}
+            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
             //@ts-ignore
             onPress={() => navigate.navigate("StandardCommands", { back: route.name })}
-            key={1}>
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 10,
-                marginLeft: 10,
-              }}
-            >
-
-              <IonIcons
-                name="color-wand-outline"
-                size={25}
-                color={colorTheme.headerTextColor}
-              />
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 17,
-                }}
-              >Default Commands</Text>
+            key={1}
+          >
+            <View style={theme.mainLongButtonPressableView}>
+              <IonIcons name="color-wand-outline" size={25} color={colorTheme.headerTextColor} />
+              <Text style={theme.mainLongButtonPressableText}>
+                Default Commands
+              </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+
           </Pressable>
           {/* Custom Commands */}
           <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "100%",
-              padding: 5,
-              paddingVertical: 13,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-            })}
+            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
             //@ts-ignore
             onPress={() => navigate.navigate("CustomCommands", { back: route.name })}
-            key={2}>
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 10,
-                marginLeft: 10,
-              }}
-            >
+            key={2}
+          >
+            <View style={theme.mainLongButtonPressableView}>
 
-              <IonIcons
-                name="sparkles-outline"
-                size={25}
-                color={colorTheme.headerTextColor}
-              />
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 17,
-                }}
-              >Custom Commands</Text>
+              <IonIcons name="sparkles-outline" size={25} color={colorTheme.headerTextColor} />
+              <Text style={theme.mainLongButtonPressableText}>
+                Custom Commands
+              </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
-
           {/* Create Custom Command */}
           <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "100%",
-              padding: 5,
-              paddingVertical: 13,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-            })}
+            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
             //@ts-ignore
             onPress={() => navigate.navigate("CreateCustomCommands", { back: route.name })}
-            key={3}>
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 10,
-                marginLeft: 10,
-              }}
-            >
-
-              <IonIcons
-                name="construct-outline"
-                size={25}
-                color={colorTheme.headerTextColor}
-              />
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 17,
-                }}
-              >Create Custom Commands</Text>
+            key={3}
+          >
+            <View style={theme.mainLongButtonPressableView}>
+              <IonIcons name="construct-outline" size={25} color={colorTheme.headerTextColor} />
+              <Text style={theme.mainLongButtonPressableText}>
+                Create Custom Commands
+              </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
         </View>
 
 
         {/* QUICK LINKS */}
-        <View
-          style={{
-            display: "flex",
-            justifyContent: "flex-start",
-            alignItems: "center",
-            rowGap: 15,
-          }}
-        >
-
-          <Text
-            style={{
-              alignSelf: "flex-start",
-              textAlign: "left",
-              color: colorTheme.headerTextColor,
-              fontWeight: "500",
-              fontSize: 20
-            }}
-          >
+        <View style={theme.homeScreenButtonsContainer}>
+          <Text style={theme.labelHeader}>
             Quick Links
           </Text>
-
-
           {/* CUSTOM WINK BUTTON */}
           <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "100%",
-              padding: 5,
-              paddingVertical: 10,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-            })}
+            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
             //@ts-ignore
             onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
-            key={4}>
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 10,
-                marginLeft: 10,
-              }}
-            >
-
-              <IonIcons
-                name="speedometer-outline"
-                size={20}
-                color={colorTheme.headerTextColor}
-              />
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 14,
-                }}
-              >Set Up Custom Wink Button</Text>
+            key={4}
+          >
+            <View style={theme.mainLongButtonPressableView}>
+              <IonIcons name="speedometer-outline" size={20} color={colorTheme.headerTextColor} />
+              <Text style={theme.mainLongButtonPressableText}>
+                Set Up Custom Wink Button
+              </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+
           </Pressable>
 
           {/* COLOR THEME */}
           <Pressable
-            style={({ pressed }) => ({
-              backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "100%",
-              padding: 5,
-              paddingVertical: 10,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-            })}
+            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
             //@ts-ignore
             onPress={() => navigate.navigate("Theme", { back: route.name })}
-            key={5}>
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 10,
-                marginLeft: 10,
-              }}
-            >
-
-              <IonIcons
-                name="color-fill-outline"
-                size={20}
-                color={colorTheme.headerTextColor}
-              />
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "bold",
-                  fontSize: 14,
-                }}
-              >Change App Theme</Text>
+            key={5}
+          >
+            <View style={theme.mainLongButtonPressableView}>
+              <IonIcons name="color-fill-outline" size={20} color={colorTheme.headerTextColor} />
+              <Text style={theme.mainLongButtonPressableText}>
+                Change App Theme
+              </Text>
             </View>
-            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={15} color={colorTheme.headerTextColor} />
+            <IonIcons style={{ marginRight: 10 }} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
 
         </View>
 
 
         {/* Status about app/module Updates + if update is available -> press = update */}
-        <View
-          style={{
-            display: "flex",
-            alignItems: "center",
-            width: "100%",
-            justifyContent: "flex-start",
-            rowGap: 10
-          }}
-        >
-
-          <Text
-            style={{
-              alignSelf: "flex-start",
-              textAlign: "left",
-              color: colorTheme.headerTextColor,
-              fontWeight: "500",
-              fontSize: 18
-            }}
-          >
+        <View style={theme.homeScreenButtonsContainer}>
+          <Text style={theme.labelHeader}>
             Updates
           </Text>
 

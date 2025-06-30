@@ -137,14 +137,6 @@ export function Settings() {
   const navigate = useNavigation();
   const route = useRoute();
 
-  useFocusEffect(() => {
-    (async () => {
-      await update();
-    })();
-
-    return () => { };
-  });
-
   return (
     <>
       <View

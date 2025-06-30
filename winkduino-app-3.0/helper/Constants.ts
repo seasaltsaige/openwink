@@ -1,3 +1,5 @@
+import { StyleProp, StyleSheet } from "react-native"
+
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
 export const WINK_SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
@@ -56,61 +58,9 @@ export enum DefaultCommandValue {
   RIGHT_WAVE
 }
 
-/**
- * const commands = [
-  [
-    {
-      name: "Left Up",
-      value: 4,
-    },
-    {
-      name: "Left Down",
-      value: 5,
-    },
-
-  ],
-  [
-    {
-      name: "Both Up",
-      value: 1
-    },
-    {
-      name: "Both Down",
-      value: 2,
-    },
-
-  ],
-  [
-    {
-      name: "Right Up",
-      value: 7,
-    },
-    {
-      name: "Right Down",
-      value: 8,
-    },
-
-  ]
-];
-
-const winks = [{
-  name: "Left Wink",
-  value: 6,
-},
-{
-  name: "Both Blink",
-  value: 3,
-},
-{
-  name: "Right Wink",
-  value: 9,
-}];
-
- */
-
 type HexNumber = `#${string}`;
 
-export interface Theme {
+export interface ThemeColors {
   backgroundPrimaryColor: HexNumber,
   backgroundSecondaryColor: HexNumber,
   dropdownColor: HexNumber,
@@ -134,7 +84,7 @@ export namespace ColorTheme {
   }
 
 
-  export const crystalWhite: Theme = {
+  export const crystalWhite: ThemeColors = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
     dropdownColor: "#eeeeee",
@@ -146,7 +96,7 @@ export namespace ColorTheme {
     textColor: "#141414",
   }
 
-  export const brilliantBlack: Theme = {
+  export const brilliantBlack: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     dropdownColor: "#37373b",
     backgroundSecondaryColor: "#262629",
@@ -158,7 +108,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const classicRed: Theme = {
+  export const classicRed: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
@@ -170,7 +120,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const sunburstYellow: Theme = {
+  export const sunburstYellow: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
@@ -182,7 +132,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const marinerBlue: Theme = {
+  export const marinerBlue: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
@@ -194,7 +144,7 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const britishRacingGreen: Theme = {
+  export const britishRacingGreen: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     dropdownColor: "#37373b",
