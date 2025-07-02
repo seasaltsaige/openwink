@@ -1,7 +1,7 @@
 import { createContext, useEffect, useMemo, useState } from "react";
 import { ColorTheme, ThemeColors } from "../helper/Constants";
 import { ThemeStore } from "../Storage";
-import { StyleSheet, TextStyle, View, ViewStyle } from "react-native";
+import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 
 
 
@@ -45,6 +45,30 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   modalSettingsConfirmationButtonPressed: ViewStyle;
   modalSettingsConfirmationButtonDisabled: ViewStyle;
   modalSettingsConfirmationButtonText: TextStyle;
+
+  subSettingHeaderText: TextStyle;
+
+  intervalInfoContainer: ViewStyle;
+  tooltipContainer: ViewStyle;
+  tooltipContainerText: TextStyle;
+  tooltipContainerView: ViewStyle;
+  tooltipText: TextStyle;
+
+  rangeSliderContainer: ViewStyle;
+  rangeSliderStyle: ViewStyle;
+  rangeSliderLowText: TextStyle;
+  rangeSliderThumb: ViewStyle;
+  rangeSliderThumbDisabled: ViewStyle;
+  rangeSliderRailSelected: ViewStyle;
+  rangeSliderRailSelectedDisabled: ViewStyle;
+  rangeSliderRail: ViewStyle;
+  rangeSliderSubtextView: ViewStyle;
+  rangeSliderSubtext: TextStyle;
+  rangeSliderButtonsView: ViewStyle;
+  rangeSliderButtons: ViewStyle;
+  rangeSliderButtonsPressed: ViewStyle;
+  rangeSliderButtonsDisabled: ViewStyle;
+  rangeSliderButtonsText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -111,9 +135,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         headerText: {
           fontSize: 40,
-          fontWeight: "bold",
+          fontWeight: 900,
           color: themeColors.headerTextColor,
           width: "100%",
+          fontFamily: 'SpaceGrotesk',
         },
         contentContainer: {
           display: "flex",
@@ -338,6 +363,167 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         modalSettingsConfirmationButtonText: {
           color: colorTheme.buttonTextColor,
           fontSize: 20,
+          fontWeight: 500,
+        },
+        subSettingHeaderText: {
+          fontSize: 25,
+          fontWeight: "600",
+          color: colorTheme.headerTextColor,
+          width: "auto",
+          marginRight: 10,
+        },
+        intervalInfoContainer: {
+          backgroundColor: colorTheme.backgroundPrimaryColor,
+          width: "100%",
+          padding: 10,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          rowGap: 20,
+        },
+        tooltipContainer: {
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "auto",
+          width: "auto",
+          borderRadius: 7
+        },
+        tooltipContainerText: {
+          color: colorTheme.textColor,
+          textAlign: "center",
+          fontWeight: "500",
+          padding: 5,
+        },
+        tooltipContainerView: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-evenly",
+          columnGap: 10,
+        },
+        tooltipText: {
+          color: colorTheme.headerTextColor,
+          fontWeight: "600",
+          fontSize: 22,
+        },
+        rangeSliderContainer: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+          rowGap: 10,
+        },
+        rangeSliderStyle: {
+          width: "80%",
+          height: 10,
+          marginTop: 10
+        },
+        rangeSliderLowText: {
+          color: colorTheme.headerTextColor,
+          fontWeight: "bold",
+          fontSize: 15,
+          textAlign: "center",
+          marginLeft: -15,
+          width: "auto",
+        },
+        rangeSliderThumb: {
+          width: 25,
+          height: 25,
+          borderRadius: 15,
+          borderWidth: 1,
+          borderColor: "white",
+          backgroundColor: colorTheme.buttonColor
+        },
+        rangeSliderThumbDisabled: {
+          width: 25,
+          height: 25,
+          borderRadius: 15,
+          borderWidth: 1,
+          borderColor: "white",
+          backgroundColor: colorTheme.disabledButtonColor,
+        },
+        rangeSliderRailSelected: {
+          height: 5,
+          borderRadius: 3,
+          backgroundColor: colorTheme.buttonColor,
+        },
+        rangeSliderRailSelectedDisabled: {
+          height: 5,
+          borderRadius: 3,
+          backgroundColor: colorTheme.disabledButtonColor,
+        },
+        rangeSliderRail: {
+          flex: 1,
+          height: 5,
+          borderRadius: 3,
+          backgroundColor: colorTheme.disabledButtonColor
+        },
+        rangeSliderSubtextView: {
+          width: "85%",
+          marginTop: -5,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between"
+        },
+        rangeSliderSubtext: {
+          fontSize: 15,
+          fontWeight: "bold",
+          color: colorTheme.headerTextColor
+        },
+        rangeSliderButtonsView: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-evenly",
+          width: "100%"
+        },
+        rangeSliderButtons: {
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          width: "40%",
+          padding: 5,
+          paddingVertical: 10,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRadius: 8,
+          paddingHorizontal: 15,
+          paddingRight: 10
+        },
+        rangeSliderButtonsPressed: {
+          backgroundColor: colorTheme.buttonColor,
+          width: "40%",
+          padding: 5,
+          paddingVertical: 10,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRadius: 8,
+          paddingHorizontal: 15,
+          paddingRight: 10
+        },
+        rangeSliderButtonsDisabled: {
+          backgroundColor: colorTheme.disabledButtonColor,
+          width: "40%",
+          padding: 5,
+          paddingVertical: 10,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRadius: 8,
+          paddingHorizontal: 15,
+          paddingRight: 10
+        },
+        rangeSliderButtonsText: {
+          color: colorTheme.buttonTextColor,
+          fontSize: 17,
           fontWeight: 500,
         }
       })

@@ -109,6 +109,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
 
+  // TODO: If denied, should realistically lock user from using app, as it will not behave as expected (no connection)
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,

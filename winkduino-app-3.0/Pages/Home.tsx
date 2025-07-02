@@ -1,5 +1,5 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from "@react-navigation/native";
-import { Pressable, SafeAreaView, StatusBar, Text, View, } from "react-native"
+import { Pressable, SafeAreaView, ScrollView, StatusBar, Text, View, } from "react-native"
 import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -81,7 +81,7 @@ export function Home() {
         <Text style={theme.headerText}>Home</Text>
       </View>
 
-      <View style={theme.contentContainer} >
+      <ScrollView contentContainerStyle={theme.contentContainer} >
 
         {
           device ? (
@@ -285,7 +285,7 @@ export function Home() {
             )
           }
         </View>
-      </View>
+      </ScrollView>
     </View >
   );
 }

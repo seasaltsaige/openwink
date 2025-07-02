@@ -33,7 +33,8 @@
     },
     "plugins": [
       "react-native-ble-plx",
-      "react-native-wifi-reborn"
+      "react-native-wifi-reborn",
+      "expo-font"
     ],
     "extra": {
       "eas": {
