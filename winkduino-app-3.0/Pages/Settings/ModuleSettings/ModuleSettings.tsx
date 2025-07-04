@@ -44,7 +44,7 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  const [actionFunction, setActionFunction] = useState<() => Promise<void>>(async () => { });
+  const [actionFunction, setActionFunction] = useState<() => Promise<void>>();
   const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
 
   const togglePress = async (val: boolean) => {
@@ -178,7 +178,7 @@ export function ModuleSettings() {
                 Put Module to Sleep
               </Text>
             </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+            <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal" size={20} color={colorTheme.headerTextColor} />
           </Pressable>
         </View>
 
@@ -210,7 +210,7 @@ export function ModuleSettings() {
                 <Pressable
                   style={({ pressed }) => [pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer, { width: "95%" }]}
                   //@ts-ignore
-                  onPress={() => { setConfirmationType("forget"); setActionFunction(forgetModulePairing); setConfirmationOpen(true); }}
+                  onPress={() => { console.log(forgetModulePairing); setConfirmationType("forget"); setActionFunction(() => forgetModulePairing()); setConfirmationOpen(true); }}
                   key={7}
                 >
 
@@ -221,7 +221,7 @@ export function ModuleSettings() {
                       Forget Module
                     </Text>
                   </View>
-                  <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+                  <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal" size={20} color={colorTheme.headerTextColor} />
                 </Pressable>
 
 
@@ -240,7 +240,7 @@ export function ModuleSettings() {
                       Delete Module Settings
                     </Text>
                   </View>
-                  <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal-outline" size={20} color={colorTheme.headerTextColor} />
+                  <IonIcons style={theme.mainLongButtonPressableIcon} name="ellipsis-horizontal" size={20} color={colorTheme.headerTextColor} />
                 </Pressable>
               </> :
               <></>
@@ -255,7 +255,7 @@ export function ModuleSettings() {
         visible={confirmationOpen}
         close={() => setConfirmationOpen(false)}
         type={confirmationType}
-        confirmationFunction={actionFunction}
+        confirmationFunction={actionFunction!}
       />
 
     </>
@@ -273,7 +273,7 @@ function ConfirmationModal(props: { visible: boolean; close: () => void; type: "
       onRequestClose={() => props.close()}
       animationType="fade"
       hardwareAccelerated
-      transparent={true}
+      transparent
     >
 
       <View style={theme.modalBackground}>

@@ -8,6 +8,10 @@ import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 // TODO
 
 interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
+  bottomTabsBackground: ViewStyle;
+  bottomTabsPill: ViewStyle;
+  bottomTabsPillActive: ViewStyle;
+
   container: ViewStyle;
   moduleSettingsContainer: ViewStyle;
   headerContainer: ViewStyle;
@@ -102,6 +106,35 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTheme_(
       StyleSheet.create<StyleSheetInterface>({
+        bottomTabsBackground: {
+          flexDirection: "row",
+          backgroundColor: themeColors.bottomTabsBackground,
+          height: 55,
+          alignItems: "center",
+          justifyContent: "space-around",
+        },
+        bottomTabsPill: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 7,
+          width: 115,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: themeColors.bottomTabsBackground,
+        },
+        bottomTabsPillActive: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 7,
+          width: 115,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: themeColors.bottomTabsPill,
+        },
         container: {
           backgroundColor: themeColors.backgroundPrimaryColor,
           height: "100%",
@@ -112,7 +145,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           rowGap: 18,
         },
         moduleSettingsContainer: {
-          backgroundColor: colorTheme.backgroundPrimaryColor,
+          backgroundColor: themeColors.backgroundPrimaryColor,
           height: "100%",
           padding: 15,
           display: "flex",
@@ -129,16 +162,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         settingsHeaderText: {
           fontSize: 30,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
+          color: themeColors.headerTextColor,
           marginRight: 10,
+          fontFamily: "SpaceGroteskBold"
         },
         headerText: {
           fontSize: 40,
-          fontWeight: 900,
           color: themeColors.headerTextColor,
           width: "100%",
-          fontFamily: 'SpaceGrotesk',
+          fontFamily: "SpaceGroteskBold"
         },
         contentContainer: {
           display: "flex",
@@ -172,8 +204,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         homeScreenConnectionButtonText: {
           color: themeColors.headerTextColor,
-          fontWeight: "bold",
           fontSize: 15,
+          fontFamily: "SpaceGroteskMedium",
         },
         homeScreenButtonsContainer: {
           display: "flex",
@@ -186,14 +218,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           alignSelf: "flex-start",
           textAlign: "left",
           color: themeColors.headerTextColor,
-          fontWeight: "500",
-          fontSize: 20
+          fontFamily: "SpaceGroteskBold",
+          fontSize: 19
         },
         mainLongButtonPressableContainer: {
           backgroundColor: themeColors.backgroundSecondaryColor,
           width: "100%",
           padding: 5,
-          paddingVertical: 13,
+          paddingVertical: 12,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
@@ -204,7 +236,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           backgroundColor: themeColors.buttonColor,
           width: "100%",
           padding: 5,
-          paddingVertical: 13,
+          paddingVertical: 12,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
@@ -221,15 +253,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         mainLongButtonPressableText: {
           color: themeColors.headerTextColor,
-          fontWeight: "bold",
+          fontWeight: "600",
           fontSize: 17,
+          fontFamily: "SpaceGroteskMedium",
         },
         mainLongButtonPressableIcon: { marginRight: 10 },
         homeUpdatesButton: {
-          backgroundColor: colorTheme.backgroundSecondaryColor,
+          backgroundColor: themeColors.backgroundSecondaryColor,
           width: "100%",
           padding: 15,
-          paddingVertical: 13,
+          paddingVertical: 11,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
@@ -237,10 +270,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           borderRadius: 8,
         },
         homeUpdatesButtonPressed: {
-          backgroundColor: colorTheme.buttonColor,
+          backgroundColor: themeColors.buttonColor,
           width: "100%",
           padding: 15,
-          paddingVertical: 13,
+          paddingVertical: 11,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
@@ -249,8 +282,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         homeUpdatesText: {
           fontSize: 15,
-          color: colorTheme.textColor,
-          fontWeight: "600",
+          color: themeColors.textColor,
+          fontFamily: "SpaceGroteskMedium",
         },
         backButtonContainer: {
           display: "flex",
@@ -261,16 +294,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           height: "100%"
         },
         backButtonContainerText: {
-          color: colorTheme.headerTextColor,
+          color: themeColors.headerTextColor,
           fontWeight: "500",
-          fontSize: 22
+          fontSize: 22,
+          fontFamily: "SpaceGroteskMedium",
         },
         backButtonContainerTextPressed: {
-          color: colorTheme.buttonColor,
+          color: themeColors.buttonColor,
           fontWeight: "500",
           fontSize: 22
         },
-        backButtonContainerIcon: { marginTop: 3 },
+        backButtonContainerIcon: { marginTop: 4 },
         settingsDropdownContainer: {
           width: "100%",
           display: "flex",
@@ -278,7 +312,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           alignItems: "center",
           justifyContent: "center",
           rowGap: 10,
-          backgroundColor: colorTheme.dropdownColor,
+          backgroundColor: themeColors.dropdownColor,
           borderRadius: 8,
         },
 
@@ -286,20 +320,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         modalBackground: {
           width: "100%",
           height: "100%",
+          backgroundColor: "rgba(0, 0, 0, 0.3)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
         },
         modalSettingsContentContainer: {
-          backgroundColor: colorTheme.backgroundPrimaryColor,
+          backgroundColor: themeColors.backgroundPrimaryColor,
           width: "70%",
           shadowColor: "black",
           shadowOffset: { height: 2, width: 2 },
           shadowOpacity: 1,
           shadowRadius: 5,
           boxShadow: "black",
-          elevation: 10,
+          elevation: 2,
           borderRadius: 10,
           display: "flex",
           flexDirection: "column",
@@ -310,70 +345,73 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         modalSettingsConfirmationHeader: {
           fontSize: 20,
-          fontWeight: "bold",
           textAlign: "center",
-          color: colorTheme.headerTextColor
+          color: themeColors.headerTextColor,
+          fontFamily: "SpaceGroteskBold",
         },
         modalSettingsConfirmationText: {
           fontSize: 16,
           textAlign: "center",
-          fontWeight: "400",
-          color: colorTheme.textColor,
+          color: themeColors.textColor,
+          fontFamily: "SpaceGroteskMedium",
         },
         modalSettingsConfirmationButtonContainer: {
           width: "100%",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-evenly"
+          justifyContent: "space-evenly",
         },
         modalSettingsConfirmationButton: {
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          width: "40%",
-          padding: 5,
-          paddingVertical: 8,
+          backgroundColor: themeColors.backgroundSecondaryColor,
+          width: "auto",
+          padding: 15,
+          paddingVertical: 5,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
+          columnGap: 10,
           justifyContent: "space-evenly",
           borderRadius: 8,
         },
         modalSettingsConfirmationButtonDisabled: {
-          backgroundColor: colorTheme.disabledButtonColor,
-          width: "40%",
-          padding: 5,
-          paddingVertical: 8,
+          backgroundColor: themeColors.disabledButtonColor,
+          width: "auto",
+          padding: 15,
+          paddingVertical: 5,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-evenly",
+          columnGap: 10,
           borderRadius: 8,
         },
         modalSettingsConfirmationButtonPressed: {
-          backgroundColor: colorTheme.buttonColor,
-          width: "40%",
-          padding: 5,
-          paddingVertical: 8,
+          backgroundColor: themeColors.buttonColor,
+          width: "auto",
+          padding: 15,
+          paddingVertical: 5,
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-evenly",
+          columnGap: 10,
           borderRadius: 8,
         },
         modalSettingsConfirmationButtonText: {
-          color: colorTheme.buttonTextColor,
+          color: themeColors.buttonTextColor,
           fontSize: 20,
-          fontWeight: 500,
+          fontFamily: "SpaceGroteskMedium",
         },
         subSettingHeaderText: {
           fontSize: 25,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
+          fontFamily: "SpaceGroteskBold",
+          color: themeColors.headerTextColor,
           width: "auto",
           marginRight: 10,
         },
         intervalInfoContainer: {
-          backgroundColor: colorTheme.backgroundPrimaryColor,
+          backgroundColor: themeColors.backgroundPrimaryColor,
           width: "100%",
           padding: 10,
           display: "flex",
@@ -383,7 +421,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           rowGap: 20,
         },
         tooltipContainer: {
-          backgroundColor: colorTheme.backgroundSecondaryColor,
+          backgroundColor: themeColors.backgroundSecondaryColor,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -393,9 +431,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           borderRadius: 7
         },
         tooltipContainerText: {
-          color: colorTheme.textColor,
+          color: themeColors.textColor,
           textAlign: "center",
-          fontWeight: "500",
+          fontFamily: "SpaceGroteskMedium",
           padding: 5,
         },
         tooltipContainerView: {
@@ -406,8 +444,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           columnGap: 10,
         },
         tooltipText: {
-          color: colorTheme.headerTextColor,
-          fontWeight: "600",
+          color: themeColors.headerTextColor,
+          fontFamily: "SpaceGroteskBold",
           fontSize: 22,
         },
         rangeSliderContainer: {
@@ -423,8 +461,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           marginTop: 10
         },
         rangeSliderLowText: {
-          color: colorTheme.headerTextColor,
-          fontWeight: "bold",
+          color: themeColors.headerTextColor,
+          fontFamily: "SpaceGrotesk",
           fontSize: 15,
           textAlign: "center",
           marginLeft: -15,
@@ -436,7 +474,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           borderRadius: 15,
           borderWidth: 1,
           borderColor: "white",
-          backgroundColor: colorTheme.buttonColor
+          backgroundColor: themeColors.buttonColor
         },
         rangeSliderThumbDisabled: {
           width: 25,
@@ -444,23 +482,23 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           borderRadius: 15,
           borderWidth: 1,
           borderColor: "white",
-          backgroundColor: colorTheme.disabledButtonColor,
+          backgroundColor: themeColors.disabledButtonColor,
         },
         rangeSliderRailSelected: {
           height: 5,
           borderRadius: 3,
-          backgroundColor: colorTheme.buttonColor,
+          backgroundColor: themeColors.buttonColor,
         },
         rangeSliderRailSelectedDisabled: {
           height: 5,
           borderRadius: 3,
-          backgroundColor: colorTheme.disabledButtonColor,
+          backgroundColor: themeColors.disabledButtonColor,
         },
         rangeSliderRail: {
           flex: 1,
           height: 5,
           borderRadius: 3,
-          backgroundColor: colorTheme.disabledButtonColor
+          backgroundColor: themeColors.disabledButtonColor
         },
         rangeSliderSubtextView: {
           width: "85%",
@@ -468,12 +506,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between"
+          justifyContent: "space-between",
         },
         rangeSliderSubtext: {
           fontSize: 15,
-          fontWeight: "bold",
-          color: colorTheme.headerTextColor
+          fontFamily: "SpaceGroteskMedium",
+          color: themeColors.headerTextColor
         },
         rangeSliderButtonsView: {
           display: "flex",
@@ -483,9 +521,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           width: "100%"
         },
         rangeSliderButtons: {
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          width: "40%",
-          padding: 5,
+          backgroundColor: themeColors.backgroundSecondaryColor,
+          width: "auto",
           paddingVertical: 10,
           display: "flex",
           flexDirection: "row",
@@ -493,12 +530,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           justifyContent: "space-between",
           borderRadius: 8,
           paddingHorizontal: 15,
-          paddingRight: 10
+          paddingRight: 10,
+          columnGap: 10,
         },
         rangeSliderButtonsPressed: {
-          backgroundColor: colorTheme.buttonColor,
-          width: "40%",
-          padding: 5,
+          backgroundColor: themeColors.buttonColor,
+          width: "auto",
           paddingVertical: 10,
           display: "flex",
           flexDirection: "row",
@@ -506,12 +543,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           justifyContent: "space-between",
           borderRadius: 8,
           paddingHorizontal: 15,
-          paddingRight: 10
+          paddingRight: 10,
+          columnGap: 10,
         },
         rangeSliderButtonsDisabled: {
-          backgroundColor: colorTheme.disabledButtonColor,
-          width: "40%",
-          padding: 5,
+          backgroundColor: themeColors.disabledButtonColor,
+          width: "auto",
           paddingVertical: 10,
           display: "flex",
           flexDirection: "row",
@@ -519,12 +556,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           justifyContent: "space-between",
           borderRadius: 8,
           paddingHorizontal: 15,
-          paddingRight: 10
+          paddingRight: 10,
+          columnGap: 10,
         },
         rangeSliderButtonsText: {
-          color: colorTheme.buttonTextColor,
+          color: themeColors.buttonTextColor,
           fontSize: 17,
-          fontWeight: 500,
+          fontFamily: "SpaceGroteskMedium"
         }
       })
     );

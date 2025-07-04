@@ -3,6 +3,8 @@ import { NavigationContainer, useLinkBuilder } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import {
@@ -42,18 +44,10 @@ const withStatusBar = (Component: React.FC, backgroundColor: string) => {
 };
 
 const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabBarProps) => {
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const { buildHref } = useLinkBuilder();
 
-  return <View
-    style={{
-      flexDirection: "row",
-      backgroundColor: colorTheme.backgroundPrimaryColor,
-      height: 55,
-      alignItems: "center",
-      justifyContent: "space-around"
-    }}
-  >
+  return <View style={theme.bottomTabsBackground}>
 
     {
       state.routes.map((route, index) => {
@@ -111,21 +105,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             onPress={onPress}
             onLongPress={onLongPress}
           >
-            <View
-
-
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 7,
-                width: 115,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: isFocused ? colorTheme.buttonTextColor : colorTheme.backgroundPrimaryColor
-              }}
-            >
+            <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
               <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
               {
                 isFocused ? (
@@ -174,11 +154,7 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
 
-
   const { disconnectFromModule } = useBLE();
-
-
-
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);
@@ -213,9 +189,23 @@ function AppNavigator() {
   )
 }
 
+SplashScreen.preventAutoHideAsync();
 
 export default function App() {
 
+  const [loaded, error] = useFonts({
+    "SpaceGroteskBold": require("./assets/fonts/SpaceGrotesk-Bold.ttf"),
+    "SpaceGroteskMedium": require("./assets/fonts/SpaceGrotesk-Medium.ttf"),
+    "SpaceGrotesk": require("./assets/fonts/SpaceGrotesk-Regular.ttf"),
+    "SpaceGroteskLight": require("./assets/fonts/SpaceGrotesk-Light.ttf"),
+    "InterMedium": require("./assets/fonts/Inter_18pt-Medium.ttf"),
+  });
+
+
+  useEffect(() => {
+    if (loaded || error)
+      SplashScreen.hide();
+  }, [loaded, error]);
 
   return (
     <NavigationContainer>

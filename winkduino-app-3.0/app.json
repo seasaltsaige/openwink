@@ -34,7 +34,18 @@
     "plugins": [
       "react-native-ble-plx",
       "react-native-wifi-reborn",
-      "expo-font"
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/SpaceGrotesk-Bold.ttf",
+            "./assets/fonts/SpaceGrotesk-Medium.ttf",
+            "./assets/fonts/SpaceGrotesk-Regular.ttf",
+            "./assets/fonts/SpaceGrotesk-Light.ttf",
+            "./assets/fonts/Inter_18pt-Medium.ttf"
+          ]
+        }
+      ]
     ],
     "extra": {
       "eas": {

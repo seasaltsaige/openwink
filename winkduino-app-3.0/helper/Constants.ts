@@ -61,15 +61,17 @@ export enum DefaultCommandValue {
 type HexNumber = `#${string}`;
 
 export interface ThemeColors {
-  backgroundPrimaryColor: HexNumber,
-  backgroundSecondaryColor: HexNumber,
-  dropdownColor: HexNumber,
-  buttonColor: HexNumber,
-  disabledButtonColor: HexNumber,
-  buttonTextColor: HexNumber,
-  disabledButtonTextColor: HexNumber,
-  headerTextColor: HexNumber,
-  textColor: HexNumber,
+  backgroundPrimaryColor: HexNumber;
+  backgroundSecondaryColor: HexNumber;
+  dropdownColor: HexNumber;
+  buttonColor: HexNumber;
+  disabledButtonColor: HexNumber;
+  buttonTextColor: HexNumber;
+  disabledButtonTextColor: HexNumber;
+  headerTextColor: HexNumber;
+  bottomTabsBackground: HexNumber;
+  bottomTabsPill: HexNumber;
+  textColor: HexNumber;
 }
 
 export namespace ColorTheme {
@@ -87,6 +89,8 @@ export namespace ColorTheme {
   export const crystalWhite: ThemeColors = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#eeeeee",
     buttonColor: "#bd9664",
     disabledButtonColor: "#aaaaaa",
@@ -98,8 +102,10 @@ export namespace ColorTheme {
 
   export const brilliantBlack: ThemeColors = {
     backgroundPrimaryColor: "#141414",
-    dropdownColor: "#37373b",
     backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#550000", // Burgundy (default)
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
@@ -111,6 +117,8 @@ export namespace ColorTheme {
   export const classicRed: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#c8102e", // Classic Red
     disabledButtonColor: "#878787",
@@ -123,6 +131,8 @@ export namespace ColorTheme {
   export const sunburstYellow: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#ffcc00", // Sunburst Yellow
     disabledButtonColor: "#878787",
@@ -135,6 +145,8 @@ export namespace ColorTheme {
   export const marinerBlue: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#0033a0", // Marina Blue
     disabledButtonColor: "#878787",
@@ -147,6 +159,8 @@ export namespace ColorTheme {
   export const britishRacingGreen: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#004d26", // British Racing Green
     disabledButtonColor: "#878787",

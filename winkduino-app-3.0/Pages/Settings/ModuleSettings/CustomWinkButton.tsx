@@ -270,7 +270,7 @@ export function CustomWinkButton() {
               <Text style={theme.rangeSliderButtonsText}>
                 Single Press
               </Text>
-              <IonIcons size={22} name="ellipsis-horizontal-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="ellipsis-horizontal" color={colorTheme.buttonTextColor} />
             </Pressable>
 
             <Pressable

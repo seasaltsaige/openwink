@@ -104,9 +104,9 @@ export function Home() {
                 style={({ pressed }) => pressed ? theme.homeScreenConnectionButtonPressed : theme.homeScreenConnectionButton}
                 onPress={() => scanForDevice()}
               >
-                <Text
-                  style={theme.homeScreenConnectionButtonText}
-                >Scan for Wink Module</Text>
+                <Text style={theme.homeScreenConnectionButtonText}>
+                  Scan for Wink Module
+                </Text>
 
                 <IonIcons name="wifi-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
@@ -268,9 +268,9 @@ export function Home() {
                 {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
                 <Text style={theme.homeUpdatesText}>
                   {!device ?
-                    "Connect to wink module for updates" :
+                    "Connect to Wink Module for updates" :
                     fetchingModuleUpdateInfo ?
-                      "Checking for module software update" :
+                      "Checking for Module software update" :
                       "Module is up to date"
                   }
                 </Text>
