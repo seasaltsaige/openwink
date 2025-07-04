@@ -52,15 +52,6 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
     {
       state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-
-        options.tabBarIcon
-
-        const label = options.tabBarLabel !== undefined
-          ? options.tabBarLabel
-          : options.title !== undefined
-            ? options.title
-            : route.name;
-
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -79,6 +70,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             type: "tabLongPress",
             target: route.key,
           });
+
         };
 
 
@@ -90,13 +82,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
         return (
           <PlatformPressable
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-            }}
+            style={theme.platformPressableView}
             key={index}
             href={buildHref(route.name, route.params)}
             accessibilityState={isFocused ? { selected: true } : {}}
@@ -109,13 +95,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
               <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
               {
                 isFocused ? (
-                  <Text
-                    style={{
-                      color: colorTheme.buttonColor,
-                      fontWeight: "bold",
-                      fontSize: 16,
-                    }}
-                  >
+                  <Text style={theme.bottomTabsPillFocusedText}>
                     {route.name}
                   </Text>
                 ) : <></>
@@ -137,7 +117,7 @@ function BottomTabs() {
   return (
 
     <Tab.Navigator
-      initialRouteName='Home'
+      initialRouteName="Home"
       tabBar={(props) => <CustomBottomTabs {...props} />}
       screenOptions={{
         headerShown: false,

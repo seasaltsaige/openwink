@@ -8,9 +8,7 @@ import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 // TODO
 
 interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
-  bottomTabsBackground: ViewStyle;
-  bottomTabsPill: ViewStyle;
-  bottomTabsPillActive: ViewStyle;
+
 
   container: ViewStyle;
   moduleSettingsContainer: ViewStyle;
@@ -73,6 +71,12 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   rangeSliderButtonsPressed: ViewStyle;
   rangeSliderButtonsDisabled: ViewStyle;
   rangeSliderButtonsText: TextStyle;
+
+  platformPressableView: ViewStyle;
+  bottomTabsBackground: ViewStyle;
+  bottomTabsPill: ViewStyle;
+  bottomTabsPillActive: ViewStyle;
+  bottomTabsPillFocusedText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -106,35 +110,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTheme_(
       StyleSheet.create<StyleSheetInterface>({
-        bottomTabsBackground: {
-          flexDirection: "row",
-          backgroundColor: themeColors.bottomTabsBackground,
-          height: 55,
-          alignItems: "center",
-          justifyContent: "space-around",
-        },
-        bottomTabsPill: {
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 7,
-          width: 115,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: themeColors.bottomTabsBackground,
-        },
-        bottomTabsPillActive: {
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 7,
-          width: 115,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: themeColors.bottomTabsPill,
-        },
+
         container: {
           backgroundColor: themeColors.backgroundPrimaryColor,
           height: "100%",
@@ -563,6 +539,47 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.buttonTextColor,
           fontSize: 17,
           fontFamily: "SpaceGroteskMedium"
+        },
+        platformPressableView: {
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        },
+        bottomTabsBackground: {
+          flexDirection: "row",
+          backgroundColor: themeColors.bottomTabsBackground,
+          height: 55,
+          alignItems: "center",
+          justifyContent: "space-around",
+        },
+        bottomTabsPill: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 7,
+          width: 115,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: themeColors.bottomTabsBackground,
+        },
+        bottomTabsPillActive: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 7,
+          width: 115,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: themeColors.bottomTabsPill,
+        },
+        bottomTabsPillFocusedText: {
+          color: themeColors.buttonColor,
+          fontFamily: "SpaceGroteskBold",
+          fontSize: 16,
         }
       })
     );
