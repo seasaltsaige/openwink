@@ -300,7 +300,7 @@ function ConfirmationModal(props: { visible: boolean; close: () => void; type: "
               disabled={(props.type === "sleep" || props.type === "delete") && !device}
               onPress={() => props.confirmationFunction()}
             >
-              <IonIcons name={props.type === "sleep" ? "moon-outline" : props.type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.buttonTextColor} size={20} />
+              <IonIcons name={props.type === "sleep" ? "moon-outline" : props.type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
               <Text style={theme.modalSettingsConfirmationButtonText}>
                 {props.type === "sleep" ? "Sleep" : props.type === "forget" ? "Forget" : "Delete"}
               </Text>

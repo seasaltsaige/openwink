@@ -80,6 +80,7 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   bottomTabsPillFocusedText: TextStyle;
 
   waveTextEntry: ViewStyle | TextStyle;
+  text: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -102,9 +103,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [themeName, setThemeName] = useState<keyof typeof ColorTheme.themeNames>(defaultName);
 
   useEffect(() => {
-    update(themeName);
+    getFromStorage();
     return () => { };
   }, []);
+
+  const getFromStorage = async () => {
+    const theme = await ThemeStore.getStoredTheme();
+    if (theme) {
+      setThemeName(theme);
+      update(theme);
+    }
+  }
 
   function update(name: keyof typeof ColorTheme.themeNames) {
     const themeColors = ColorTheme[name];
@@ -113,7 +122,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTheme_(
       StyleSheet.create<StyleSheetInterface>({
-
         container: {
           backgroundColor: themeColors.backgroundPrimaryColor,
           height: "100%",
@@ -122,6 +130,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           flexDirection: "column",
           alignItems: "center",
           rowGap: 18,
+        },
+        text: {
+          color: themeColors.textColor,
+          fontFamily: "SpaceGroteskLight",
+          fontSize: 16,
+          textAlign: "center",
         },
         moduleSettingsContainer: {
           backgroundColor: themeColors.backgroundPrimaryColor,
@@ -378,7 +392,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           borderRadius: 8,
         },
         modalSettingsConfirmationButtonText: {
-          color: themeColors.buttonTextColor,
+          color: themeColors.textColor,
           fontSize: 20,
           fontFamily: "SpaceGroteskMedium",
           marginBottom: 2,
@@ -541,7 +555,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           columnGap: 10,
         },
         rangeSliderButtonsText: {
-          color: themeColors.buttonTextColor,
+          color: themeColors.textColor,
           fontSize: 17,
           fontFamily: "SpaceGroteskMedium"
         },

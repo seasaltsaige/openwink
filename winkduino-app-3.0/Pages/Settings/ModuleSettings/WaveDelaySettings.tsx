@@ -160,7 +160,7 @@ export function WaveDelaySettings() {
           <Text style={theme.rangeSliderButtonsText}>
             Reset Delay
           </Text>
-          <IonIcons size={22} name="reload-outline" color={colorTheme.buttonTextColor} />
+          <IonIcons size={22} name="reload-outline" color={colorTheme.textColor} />
         </Pressable>
 
 
@@ -172,7 +172,7 @@ export function WaveDelaySettings() {
           <Text style={theme.rangeSliderButtonsText}>
             Save Delay
           </Text>
-          <IonIcons size={22} name="download-outline" color={colorTheme.buttonTextColor} />
+          <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
         </Pressable>
       </View>
 
@@ -231,7 +231,7 @@ export function WaveDelaySettings() {
               <Text style={theme.rangeSliderButtonsText}>
                 {obj.name}
               </Text>
-              <IonIcons size={20} name={obj.icon as any} color={colorTheme.buttonTextColor} />
+              <IonIcons size={20} name={obj.icon as any} color={colorTheme.textColor} />
             </Pressable>
           ))
         }
@@ -285,7 +285,7 @@ export function WaveDelaySettings() {
                 >
                   Set Value
                 </Text>
-                <IonIcons size={22} name={"arrow-forward-outline"} color={colorTheme.buttonTextColor} />
+                <IonIcons size={22} name={"arrow-forward-outline"} color={colorTheme.textColor} />
               </Pressable>
             </View>
           ) : <></>

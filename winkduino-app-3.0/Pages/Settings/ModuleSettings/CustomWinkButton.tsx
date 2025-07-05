@@ -210,7 +210,7 @@ export function CustomWinkButton() {
               <Text style={theme.rangeSliderButtonsText}>
                 Reset Value
               </Text>
-              <IonIcons size={22} name="reload-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="reload-outline" color={colorTheme.textColor} />
             </Pressable>
 
             {/* SAVE */}
@@ -222,7 +222,7 @@ export function CustomWinkButton() {
               <Text style={theme.rangeSliderButtonsText}>
                 Save Value
               </Text>
-              <IonIcons size={22} name="download-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
             </Pressable>
           </View>
 
@@ -270,7 +270,7 @@ export function CustomWinkButton() {
               <Text style={theme.rangeSliderButtonsText}>
                 Single Press
               </Text>
-              <IonIcons size={22} name="ellipsis-horizontal" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="ellipsis-horizontal" color={colorTheme.textColor} />
             </Pressable>
 
             <Pressable
@@ -280,7 +280,7 @@ export function CustomWinkButton() {
               <Text style={theme.rangeSliderButtonsText}>
                 Create New
               </Text>
-              <IonIcons size={22} name="create-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="create-outline" color={colorTheme.textColor} />
             </Pressable>
 
           </View>
