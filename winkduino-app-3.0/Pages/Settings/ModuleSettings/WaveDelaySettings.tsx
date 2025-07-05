@@ -12,7 +12,7 @@ const MAX = 100;
 
 export function WaveDelaySettings() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
 
   const { waveDelayMulti, device, isScanning, isConnecting, updateWaveDelayMulti } = useBLE();
 
@@ -47,57 +47,32 @@ export function WaveDelaySettings() {
   }, [waveDelayMulti])
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 10,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        rowGap: 25,
-      }}
-    >
+    <View style={theme.container}>
 
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-      }}>
+      <View style={theme.headerContainer}>
 
-        <Pressable style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 10,
-          height: "100%"
-        }}
+        <Pressable
+          style={theme.backButtonContainer}
           onPress={() => navigation.goBack()}
         >
           {
             ({ pressed }) => (
               <>
-                <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
 
-                <Text style={{
-                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                  fontWeight: "500",
-                  fontSize: 20
-                }}>{backHumanReadable}</Text>
+                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
+                  {backHumanReadable}
+                </Text>
 
 
                 {
                   device ? (
-                    <IonIcons name="wifi-outline" color="#367024" size={21} />
+                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} />
                   ) : (
                     isConnecting || isScanning ?
-                      <ActivityIndicator color={colorTheme.buttonColor} />
+                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} />
                       : (
-                        <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
                       )
                   )
                 }
@@ -107,153 +82,82 @@ export function WaveDelaySettings() {
         </Pressable>
 
 
-        <Text style={{
-          fontSize: 25,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
-          width: "auto",
-          marginRight: 10,
-        }}
-        >Wave Delay</Text>
+        <Text style={theme.subSettingHeaderText}>
+          Waves
+        </Text>
 
       </View>
 
-      <View
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          width: "100%",
-          rowGap: 10,
-        }}
+
+      <Tooltip
+        isVisible={delayMultiTooltipVisible}
+        closeOnBackgroundInteraction
+        closeOnContentInteraction
+        placement="bottom"
+        onClose={() => setDelayMultiTooltipVisible(false)}
+        contentStyle={theme.tooltipContainer}
+        content={
+          <Text style={theme.tooltipContainerText}>
+            Delay between when each headlight actuates in a wave animation. At 100% the animation waits for the first headlight to move completely before activating the second one, and at 0%, it does not wait. (Acting similar to a “blink”)
+          </Text>
+        }
       >
-        {/* 
-        <Text>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Earum assumenda reiciendis a quo placeat officiis accusantium autem explicabo, consequuntur dolorum eaque aliquid, qui error harum aliquam cum magni veniam rem!</Text> */}
 
-        <Tooltip
-          isVisible={delayMultiTooltipVisible}
-          closeOnBackgroundInteraction
-          closeOnContentInteraction
-          placement="bottom"
-          onClose={() => setDelayMultiTooltipVisible(false)}
-          contentStyle={{
-            backgroundColor: colorTheme.backgroundSecondaryColor,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "auto",
-            width: "auto",
-            borderRadius: 7,
-            // marginTop: 10
-          }}
-          content={
-            <Text style={{
-              color: colorTheme.textColor,
-              textAlign: "center",
-              fontWeight: "500",
-              padding: 5,
-            }}>
-              Delay between when each headlight actuates in a wave animation. At 100% the animation waits for the first headlight to move completely before activating the second one, and at 0%, it does not wait. {"\n"}(Acting similar to 'blink')
-            </Text>
-          }
-        >
-
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-evenly",
-              columnGap: 10,
-              marginTop: 10,
-            }}
+        <View style={theme.tooltipContainerView}>
+          <Text
+            style={theme.tooltipText}
           >
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "600",
-                fontSize: 22,
-              }}
-            >
-              Delay Percentage
-            </Text>
-            <Pressable
-              hitSlop={20}
-              onPress={() => setDelayMultiTooltipVisible(true)}
-            >
-              {
-                ({ pressed }) => (
-                  <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-                )
-              }
-            </Pressable>
-          </View>
-        </Tooltip>
-
-
-
-        <RangeSlider
-          style={{ width: "80%", height: 10, marginTop: 10, }}
-          min={MIN}
-          max={MAX}
-          step={1}
-          // minRange={5}
-          low={min}
-          high={max}
-          onValueChanged={handleValueChange}
-          renderLowValue={(value) => <Text style={{ color: colorTheme.headerTextColor, fontWeight: "bold", fontSize: 15, width: 50, }}>{value}%</Text>}
-          renderThumb={() => <View
-            style={{ width: 25, height: 25, borderRadius: 15, borderWidth: 1, borderColor: "white", backgroundColor: !device ? colorTheme.disabledButtonColor : colorTheme.buttonColor }}
-          />}
-
-          renderRailSelected={() => <View
-            style={{ height: 5, borderRadius: 3, backgroundColor: !device ? colorTheme.disabledButtonColor : colorTheme.buttonColor }}
-          />
-          }
-          renderRail={() => <View
-            style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: colorTheme.disabledButtonColor }}
-          />
-          }
-          disableRange
-          disabled={!device}
-        />
-
-      </View>
-
-      <View style={{ width: "85%", marginTop: -5, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 15, fontWeight: "bold", color: colorTheme.headerTextColor }}>Faster</Text>
-        <Text style={{ fontSize: 15, fontWeight: "bold", color: colorTheme.headerTextColor }}>Slower</Text>
-      </View>
-
-
-      <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
-        <Pressable
-          style={({ pressed }) => (
+            Delay Percentage
+          </Text>
+          <Pressable
+            hitSlop={20}
+            onPress={() => setDelayMultiTooltipVisible(true)}
+          >
             {
-              backgroundColor: !device ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "40%",
-              padding: 5,
-              paddingVertical: 10,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-              paddingHorizontal: 15,
-              paddingRight: 10
+              ({ pressed }) => (
+                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+              )
             }
-          )}
+          </Pressable>
+        </View>
+      </Tooltip>
+
+
+
+      <RangeSlider
+        style={theme.rangeSliderStyle}
+        min={MIN}
+        max={MAX}
+        step={1}
+        low={min}
+        high={max}
+        onValueChanged={handleValueChange}
+        renderLowValue={(value) => (
+          <Text style={theme.rangeSliderLowText}>
+            {value}%
+          </Text>
+        )}
+        renderThumb={() => <View style={!device ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
+        renderRailSelected={() => <View style={!device ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
+        renderRail={() => <View style={theme.rangeSliderRail} />}
+        disableRange
+        disabled={!device}
+      />
+
+
+      <View style={theme.rangeSliderSubtextView}>
+        <Text style={theme.rangeSliderSubtext}>Faster</Text>
+        <Text style={theme.rangeSliderSubtext}>Slower</Text>
+      </View>
+
+
+      <View style={theme.rangeSliderButtonsView}>
+        <Pressable
+          style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
           disabled={!device}
           onPress={() => updateWaveDelayMulti(1.0)}
         >
-          <Text
-            style={{
-              color: colorTheme.buttonTextColor,
-              fontSize: 17,
-              fontWeight: 500,
-            }}
-          >
+          <Text style={theme.rangeSliderButtonsText}>
             Reset Delay
           </Text>
           <IonIcons size={22} name="reload-outline" color={colorTheme.buttonTextColor} />
@@ -261,31 +165,11 @@ export function WaveDelaySettings() {
 
 
         <Pressable
-          style={({ pressed }) => (
-            {
-              backgroundColor: !device ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-              width: "40%",
-              padding: 5,
-              paddingVertical: 10,
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderRadius: 8,
-              paddingHorizontal: 15,
-              paddingRight: 10
-            }
-          )}
+          style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
           disabled={!device}
           onPress={() => updateWaveDelayMulti(min / 100)}
         >
-          <Text
-            style={{
-              color: colorTheme.buttonTextColor,
-              fontSize: 17,
-              fontWeight: 500,
-            }}
-          >
+          <Text style={theme.rangeSliderButtonsText}>
             Save Delay
           </Text>
           <IonIcons size={22} name="download-outline" color={colorTheme.buttonTextColor} />
@@ -293,200 +177,93 @@ export function WaveDelaySettings() {
       </View>
 
 
-      <View style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", rowGap: 8 }} >
 
-        <Tooltip
-          isVisible={delayPresetTooltipVisible}
-          closeOnBackgroundInteraction
-          closeOnContentInteraction
-          placement="bottom"
-          onClose={() => setDelayPresetTooltipVisible(false)}
-          contentStyle={{
-            backgroundColor: colorTheme.backgroundSecondaryColor,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "auto",
-            width: "auto",
-            borderRadius: 7,
-            // marginTop: 10
-          }}
-          content={
-            <Text style={{
-              color: colorTheme.textColor,
-              textAlign: "center",
-              fontWeight: "500",
-              padding: 5,
-            }}>
-              Choose from pre-defined quick presets.{"\n"}Fast: 25%{"\n"}Medium: 50%{"\n"}Slow: 75%{"\n"}Slowest: 100%
-            </Text>
-          }
-        >
+      <Tooltip
+        isVisible={delayPresetTooltipVisible}
+        closeOnBackgroundInteraction
+        closeOnContentInteraction
+        placement="bottom"
+        onClose={() => setDelayPresetTooltipVisible(false)}
+        contentStyle={theme.tooltipContainer}
+        content={
+          <Text style={theme.tooltipContainerText}>
+            Choose from pre-defined quick presets.{"\n"}Fast = 25%{"\n"}Medium = 50%{"\n"}Slow = 75%{"\n"}Slowest = 100%
+          </Text>
+        }
+      >
 
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-evenly",
-              columnGap: 10,
-              marginTop: 10,
-            }}
+        <View style={theme.tooltipContainerView}>
+          <Text style={theme.tooltipText}>
+            Delay Presets
+          </Text>
+          <Pressable
+            hitSlop={20}
+            onPress={() => setDelayPresetTooltipVisible(true)}
           >
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "600",
-                fontSize: 22,
-              }}
-            >
-              Delay Presets
-            </Text>
-            <Pressable
-              hitSlop={20}
-              onPress={() => setDelayPresetTooltipVisible(true)}
-            >
-              {
-                ({ pressed }) => (
-                  <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-                )
-              }
-            </Pressable>
-          </View>
-        </Tooltip>
-
-        <View style={{ display: "flex", flexDirection: "row", columnGap: 20, flexWrap: "wrap", alignItems: "center", justifyContent: "center", rowGap: 10, }}>
-          {
-            [
-              { value: 0.25, name: "Fast", icon: "flash-outline" },
-              { value: 0.5, name: "Medium", icon: "speedometer-outline" },
-              { value: 0.75, name: "Slow", icon: "hourglass-outline" },
-              { value: 1.0, name: "Slowest", icon: "time-outline" },
-            ].map((obj, key) => (
-              <Pressable
-                style={({ pressed }) => (
-                  {
-                    backgroundColor: !device ? colorTheme.disabledButtonColor : (
-                      obj.value === min / 100 ?
-                        colorTheme.buttonColor
-                        :
-                        pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor
-                    ),
-                    // width: "40%",
-                    padding: 5,
-                    paddingVertical: 10,
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderRadius: 8,
-                    paddingHorizontal: 15,
-                    paddingRight: 10,
-                    columnGap: 8,
-                  }
-                )}
-                key={key}
-                disabled={!device}
-                onPress={() => updateWaveDelayMulti(obj.value)}
-              >
-                <Text
-                  style={{
-                    color: colorTheme.buttonTextColor,
-                    fontSize: 17,
-                    fontWeight: 500,
-                  }}
-                >
-                  {obj.name}
-                </Text>
-                <IonIcons size={22} name={obj.icon as any} color={colorTheme.buttonTextColor} />
-              </Pressable>
-            ))
-          }
+            {
+              ({ pressed }) => (
+                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+              )
+            }
+          </Pressable>
         </View>
+      </Tooltip>
 
+      <View style={{ display: "flex", flexDirection: "row", columnGap: 20, flexWrap: "wrap", alignItems: "center", justifyContent: "center", rowGap: 10, }}>
+        {
+          [
+            { value: 0.25, name: "Fast", icon: "flash-outline" },
+            { value: 0.5, name: "Medium", icon: "speedometer-outline" },
+            { value: 0.75, name: "Slow", icon: "hourglass-outline" },
+            { value: 1.0, name: "Slowest", icon: "time-outline" },
+          ].map((obj, key) => (
+            <Pressable
+              style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : (
+                obj.value === min / 100 ?
+                  theme.rangeSliderButtonsPressed
+                  :
+                  pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons
+              )}
+              key={key}
+              disabled={!device}
+              onPress={() => updateWaveDelayMulti(obj.value)}
+            >
+              <Text style={theme.rangeSliderButtonsText}>
+                {obj.name}
+              </Text>
+              <IonIcons size={20} name={obj.icon as any} color={colorTheme.buttonTextColor} />
+            </Pressable>
+          ))
+        }
       </View>
 
 
-      <View
-        style={{
-          width: "85%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          rowGap: 10,
-          backgroundColor: accordionOpen ? colorTheme.dropdownColor : colorTheme.backgroundPrimaryColor,
-          paddingBottom: accordionOpen ? 10 : 0,
-          borderRadius: 8,
-        }}
-      >
+      <View style={[theme.settingsDropdownContainer, { paddingBottom: accordionOpen ? 10 : 0 }]}>
 
         <Pressable
-          style={({ pressed }) => ({
-            backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-          })}
-          //@ts-ignore
+          style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
           onPress={() => setAccordionOpen(!accordionOpen)}
-          key={6}>
-
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 10,
-              marginLeft: 10,
-            }}
-          >
-
-            <IonIcons
-              name="flask-outline"
-              size={25}
-              color={colorTheme.headerTextColor}
-
-            />
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "bold",
-                fontSize: 17,
-              }}
-            >Fine Control</Text>
+          key={6}
+        >
+          <View style={theme.mainLongButtonPressableView}>
+            <IonIcons name="flask-outline" size={25} color={colorTheme.headerTextColor} />
+            <Text style={theme.mainLongButtonPressableText}>
+              Fine Control
+            </Text>
           </View>
-          <IonIcons style={{ marginRight: 10 }} name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
+          <IonIcons style={theme.mainLongButtonPressableIcon} name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
         </Pressable>
 
         {
           accordionOpen ? (
             <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
               <TextInput
-                style={{
-                  backgroundColor: colorTheme.backgroundPrimaryColor,
-                  borderColor: colorTheme.backgroundSecondaryColor,
-                  borderWidth: 2,
-                  borderRadius: 4,
-                  height: 40,
-                  width: "40%",
-                  color: colorTheme.textColor,
-                  fontWeight: "400",
-                  fontSize: 16
-                  // textAlign: "center",
-
-                }}
+                style={[theme.waveTextEntry, { backgroundColor: !device ? colorTheme.disabledButtonColor : colorTheme.backgroundPrimaryColor }]}
                 textAlign="center"
                 placeholderTextColor={colorTheme.textColor}
-                placeholder="Enter percentage"
+                placeholder={!!device ? "Enter percentage" : "Connect to module"}
                 value={fineControlValue}
+                editable={!!device}
                 onChangeText={(text) => {
                   const oldText = fineControlValue;
                   setFineControlValue(text);
@@ -498,30 +275,13 @@ export function WaveDelaySettings() {
                 }}
               />
               <Pressable
-                style={({ pressed }) => (
-                  {
-                    backgroundColor: !device ? colorTheme.disabledButtonColor :
-                      pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                    paddingVertical: 6,
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    borderRadius: 8,
-                    paddingHorizontal: 10,
-                    paddingRight: 10,
-                    columnGap: 8,
-                  }
-                )}
+                style={({ pressed }) => !device ? theme.modalSettingsConfirmationButtonDisabled :
+                  pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
                 disabled={!device}
                 onPress={() => { updateWaveDelayMulti(parseFloat(fineControlValue) / 100); setFineControlValue("") }}
               >
                 <Text
-                  style={{
-                    color: colorTheme.buttonTextColor,
-                    fontSize: 17,
-                    fontWeight: 500,
-                  }}
+                  style={[theme.modalSettingsConfirmationButtonText, { fontSize: 16 }]}
                 >
                   Set Value
                 </Text>

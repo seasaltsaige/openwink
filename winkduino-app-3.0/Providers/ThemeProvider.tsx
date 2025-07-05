@@ -55,6 +55,7 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   tooltipContainerText: TextStyle;
   tooltipContainerView: ViewStyle;
   tooltipText: TextStyle;
+  tooltipIcon: ViewStyle;
 
   rangeSliderContainer: ViewStyle;
   rangeSliderStyle: ViewStyle;
@@ -77,6 +78,8 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   bottomTabsPill: ViewStyle;
   bottomTabsPillActive: ViewStyle;
   bottomTabsPillFocusedText: TextStyle;
+
+  waveTextEntry: ViewStyle | TextStyle;
 }
 
 export type ThemeContextType = {
@@ -277,8 +280,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         backButtonContainerTextPressed: {
           color: themeColors.buttonColor,
-          fontWeight: "500",
-          fontSize: 22
+          fontSize: 22,
+          fontFamily: "SpaceGroteskMedium",
         },
         backButtonContainerIcon: { marginTop: 4 },
         settingsDropdownContainer: {
@@ -347,7 +350,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           flexDirection: "row",
           alignItems: "center",
           columnGap: 10,
-          justifyContent: "space-evenly",
+          justifyContent: "center",
           borderRadius: 8,
         },
         modalSettingsConfirmationButtonDisabled: {
@@ -378,6 +381,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.buttonTextColor,
           fontSize: 20,
           fontFamily: "SpaceGroteskMedium",
+          marginBottom: 2,
         },
         subSettingHeaderText: {
           fontSize: 25,
@@ -424,6 +428,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           fontFamily: "SpaceGroteskBold",
           fontSize: 22,
         },
+        tooltipIcon: { marginTop: 6 },
         rangeSliderContainer: {
           display: "flex",
           alignItems: "center",
@@ -580,6 +585,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.buttonColor,
           fontFamily: "SpaceGroteskBold",
           fontSize: 16,
+        },
+        waveTextEntry: {
+          backgroundColor: themeColors.backgroundPrimaryColor,
+          borderColor: themeColors.backgroundSecondaryColor,
+          borderWidth: 2,
+          borderRadius: 4,
+          height: 40,
+          width: "40%",
+          color: themeColors.textColor,
+          fontWeight: "400",
+          fontSize: 16
         }
       })
     );

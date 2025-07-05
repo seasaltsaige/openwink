@@ -167,7 +167,7 @@ export function CustomWinkButton() {
                 >
                   {
                     ({ pressed }) => (
-                      <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+                      <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
                     )
                   }
                 </Pressable>
@@ -254,7 +254,7 @@ export function CustomWinkButton() {
               >
                 {
                   ({ pressed }) => (
-                    <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+                    <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
                   )
                 }
               </Pressable>
