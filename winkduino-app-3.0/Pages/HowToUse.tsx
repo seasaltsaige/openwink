@@ -4,15 +4,13 @@ import { useColorTheme } from "../hooks/useColorTheme";
 
 export function HowToUse() {
 
-  const { colorTheme } = useColorTheme();
+  const { theme } = useColorTheme();
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-      }}
-    >
+    <View style={theme.container}>
+      <View style={theme.headerContainer}>
+        <Text style={theme.headerText}>Help</Text>
+      </View>
     </View>
   );
 }
