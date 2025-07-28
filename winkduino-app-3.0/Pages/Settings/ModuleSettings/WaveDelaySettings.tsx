@@ -98,7 +98,7 @@ export function WaveDelaySettings() {
         contentStyle={theme.tooltipContainer}
         content={
           <Text style={theme.tooltipContainerText}>
-            Delay between when each headlight actuates in a wave animation. At 100% the animation waits for the first headlight to move completely before activating the second one, and at 0%, it does not wait. (Acting similar to a “blink”)
+            Delay between when each headlight actuates in a wave animation. At 100% the animation waits for the first headlight to move completely before activating the second one. At 0%, it does not wait. (Acting similar to a “blink”)
           </Text>
         }
       >
