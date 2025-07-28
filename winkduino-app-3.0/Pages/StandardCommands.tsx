@@ -58,7 +58,7 @@ const winks = [{
 
 export function StandardCommands() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
@@ -77,61 +77,32 @@ export function StandardCommands() {
 
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 15,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        rowGap: 25,
-      }}
-    >
+    <View style={theme.container}>
 
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-      }}>
+      <View style={theme.headerContainer}>
 
-        <Pressable style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 10,
-          height: "100%"
-        }}
+        <Pressable
+          style={theme.backButtonContainer}
           onPress={() => navigation.goBack()}
         >
           {
             (({ pressed }) => (
               <>
 
-                <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
 
-                <Text style={{
-                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                  fontWeight: "500",
-                  fontSize: 22
-                }}>{back}</Text>
-
-
+                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
+                  {back}
+                </Text>
 
                 {
-                  device ? (
-                    <IonIcons name="wifi-outline" color="#367024" size={23} />
-                  ) : (
-                    isConnecting || isScanning ?
-                      <ActivityIndicator color={colorTheme.buttonColor} />
-                      : (
-                        <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                      )
-                  )
+                  device ?
+                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={23} /> :
+                    (isConnecting || isScanning) ?
+                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
+                      <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
+
+
                 }
 
               </>
@@ -141,331 +112,191 @@ export function StandardCommands() {
         </Pressable>
 
         <View>
-          <Text style={{
-            fontSize: 30,
-            fontWeight: "600",
-            color: colorTheme.headerTextColor,
-            width: "auto",
-            marginRight: 10,
-          }}
-          >Commands</Text>
+          <Text style={theme.settingsHeaderText}>
+            Commands
+          </Text>
         </View>
       </View>
 
+      <View style={theme.contentContainer}>
 
+        <View style={theme.headlightStatusContainer}>
+          {
+            [
+              ["Left", leftStatus],
+              ["Right", rightStatus]
+            ].map(([label, status], i) => (
+              <View
+                key={i}
+                style={theme.headlightStatusSideContainer}
+              >
+                {/* HEADLIGHT STATUS TEXT */}
+                <Text style={theme.headlightStatusText}>
+                  {label}: {status === 0 ? "Down" : status === 1 ? "Up" : `${(status as number * 100).toFixed(0)}%`}
+                </Text>
 
-      <View style={{
-        width: "95%",
-        display: "flex",
-        flexDirection: "column",
-        rowGap: 20,
-      }}>
-
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            columnGap: 40,
-          }}>
-          <Text
-            style={{
-              color: colorTheme.textColor,
-              fontSize: 18,
-              fontWeight: "bold",
-            }}>
-            Left: {leftStatus === 0 ? "Down" : leftStatus === 1 ? "Up" : `${leftStatus * 100}%`}
-          </Text>
-
-          <Text
-            style={{
-              color: colorTheme.textColor,
-              fontSize: 18,
-              fontWeight: "bold",
-            }}>
-            Right: {rightStatus === 0 ? "Down" : rightStatus === 1 ? "Up" : `${rightStatus * 100}%`}
-          </Text>
+                {/* HEADLIGHT STATUS BAR */}
+                <View style={theme.headlightStatusBarUnderlay}>
+                  <View style={[theme.headlightStatusBarOverlay, { width: `${status as number * 100}%`, }]} />
+                </View>
+              </View>
+            ))}
         </View>
 
 
-        {/* TODO: send commands to reciever. */}
-        <View style={{
-          width: "100%",
-          rowGap: 10
-        }}>
-          <Text style={{ color: colorTheme.headerTextColor, textAlign: "left", marginLeft: 10, fontSize: 28, fontWeight: "bold" }}>Manual</Text>
 
-          <View style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            columnGap: 12,
-            // backgroundColor: "white"
-          }}>
-            {
-              commands.map((row, i) =>
-                <View style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  width: "30%",
-                  rowGap: 12,
-                }}
-                >
-                  {
-                    row.map((val, j) => (
-                      <Pressable
-                        style={({ pressed }) => ({
-                          width: "100%",
-                          height: 48,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                          borderRadius: 7,
+        <View style={theme.defaultCommandSectionContainer}>
+          <Text style={theme.commandSectionHeader}>
+            Manual
+          </Text>
 
-                        })}
-                        key={val.value}
-                        onPress={() => sendDefaultCommand(val.value)}
-                        // text={val.name}
-                        // textStyle={{}}
-                        disabled={disableActions}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 18,
-                            color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
-                            fontWeight: 500,
-                          }}
-                        >{val.name}</Text>
+          <View style={theme.commandRowContainer}>
+            {commands.map((row, i) =>
+              <View
+                style={theme.commandColContainer}
+                key={i}
+              >
+                {row.map((val, j) => (
+                  <Pressable
+                    style={({ pressed }) => (
+                      [theme.commandButton, {
+                        backgroundColor: disableActions ? colorTheme.disabledButtonColor
+                          : pressed ? colorTheme.buttonColor
+                            : colorTheme.backgroundSecondaryColor,
+                      }]
+                    )}
+                    key={val.value}
+                    onPress={() => sendDefaultCommand(val.value)}
+                    disabled={disableActions}
+                  >
+                    <Text style={theme.commandButtonText}>
+                      {val.name}
+                    </Text>
 
-                      </Pressable>
-                    ))
-                  }
-                </View>)
-            }
+                  </Pressable>
+                ))}
+              </View>)}
           </View>
 
         </View>
 
-        <View style={{
-          width: "100%",
-          rowGap: 10
-        }}>
-          <Text style={{ color: colorTheme.headerTextColor, textAlign: "left", marginLeft: 10, fontSize: 28, fontWeight: "bold" }}>Winks</Text>
+        <View style={theme.defaultCommandSectionContainer}>
+          <Text style={theme.commandSectionHeader}>
+            Winks
+          </Text>
 
-          <View style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            columnGap: 12,
-            // backgroundColor: "white"
-          }}>
-            {
-              winks.map((row) => (
-                <Pressable
-                  style={({ pressed }) => ({
+          <View style={theme.commandRowContainer}>
+            {winks.map((row) => (
+              <Pressable
+                style={({ pressed }) => ([
+                  theme.commandButton,
+                  {
                     width: "30%",
-                    height: 48,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                    borderRadius: 7,
-
-                  })}
-                  key={row.value}
-                  onPress={() => sendDefaultCommand(row.value)}
-                  // text={val.name}
-                  // textStyle={{}}
-                  disabled={disableActions}
-                >
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
-                      fontWeight: 500,
-                    }}
-                  >{row.name}</Text>
-                </Pressable>
-              ))
-            }
+                  }
+                ])}
+                key={row.value}
+                onPress={() => sendDefaultCommand(row.value)}
+                disabled={disableActions}
+              >
+                <Text style={theme.commandButtonText}>
+                  {row.name}
+                </Text>
+              </Pressable>
+            ))}
           </View>
         </View>
 
 
         {/* SECTION: MACROS */}
 
-        <View style={{
-          width: "100%",
-          rowGap: 10,
-        }}>
-          <Text
-            style={{
-              color: colorTheme.headerTextColor,
-              textAlign: "left",
-              marginLeft: 10,
-              fontSize: 28,
-              fontWeight: "bold"
-            }}
-          >Macros</Text>
+        <View style={theme.defaultCommandSectionContainer}>
+          <Text style={theme.commandSectionHeader}>
+            Macros
+          </Text>
 
-          <View style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            columnGap: 12,
-          }}>
+          <View style={[theme.commandRowContainer, { flexDirection: "column" }]}>
 
-            <View
-              style={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-evenly",
-              }}
-            >
+            <View style={[theme.commandRowContainer, { width: "100%", columnGap: 0, justifyContent: "space-evenly" }]}>
 
               <Pressable
-                style={({ pressed }) => ({
-                  width: "48%",
-                  height: 48,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  borderRadius: 7,
-
-                })}
+                style={({ pressed }) => ([
+                  theme.commandButton,
+                  {
+                    width: "48%",
+                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  }
+                ])}
                 key={98}
                 onPress={() => sendDefaultCommand(10)}
                 disabled={disableActions}
               >
-                <Text
-                  style={{
-                    fontSize: 18,
-                    color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
-                    fontWeight: 500,
-                  }}
-                >Left Wave</Text>
+                <Text style={theme.commandButtonText}>
+                  Left Wave
+                </Text>
               </Pressable>
 
 
               <Pressable
-                style={({ pressed }) => ({
-                  width: "48%",
-                  height: 48,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  borderRadius: 7,
-
-                })}
+                style={({ pressed }) => ([
+                  theme.commandButton,
+                  {
+                    width: "48%",
+                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                  }
+                ])}
                 key={99}
                 onPress={() => sendDefaultCommand(11)}
                 disabled={disableActions}
               >
-                <Text
-                  style={{
-                    fontSize: 18,
-                    color: disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
-                    fontWeight: 500,
-                  }}
-                >Right Wave</Text>
+                <Text style={theme.commandButtonText}>
+                  Right Wave
+                </Text>
               </Pressable>
 
             </View>
 
 
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 12,
-                marginTop: 20,
-              }}>
-
-              <View
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-evenly",
-                }}
-              >
-
+            <View style={[theme.commandRowContainer, { flexDirection: "column", marginTop: 20 }]}>
+              <View style={[theme.commandRowContainer, { width: "100%", justifyContent: "space-evenly", columnGap: 0 }]}>
                 <Pressable
-                  style={({ pressed }) => ({
-                    width: "48%",
-                    height: 48,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                    borderRadius: 7,
-
-                  })}
+                  style={({ pressed }) => ([
+                    theme.commandButton,
+                    {
+                      width: "48%",
+                      backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    }
+                  ])}
                   key={105}
                   onPress={() => { }}
                   disabled={disableActions}
                 >
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: colorTheme.buttonTextColor,
-                      fontWeight: 500,
-                    }}
-                  >Sleepy Eye</Text>
+                  <Text style={theme.commandButtonText}>
+                    Sleepy Eye
+                  </Text>
                 </Pressable>
 
                 <Pressable
-                  style={({ pressed }) => ({
-                    width: "48%",
-                    height: 48,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: !device || !disableActions ?
-                      colorTheme.disabledButtonColor :
-                      pressed ?
-                        colorTheme.buttonColor :
-                        colorTheme.backgroundSecondaryColor,
-                    borderRadius: 7,
-
-                  })}
+                  style={({ pressed }) => ([
+                    theme.commandButton,
+                    {
+                      width: "48%",
+                      backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    }
+                  ])}
                   key={106}
                   onPress={() => { }}
                   disabled={!device || !disableActions}
                 >
-                  <Text
-                    style={{
-                      fontSize: 18,
-                      color: !disableActions ? colorTheme.disabledButtonTextColor : colorTheme.buttonTextColor,
-                      fontWeight: 500,
-                    }}
-                  >Reset</Text>
+                  <Text style={theme.commandButtonText}>
+                    Reset
+                  </Text>
                 </Pressable>
-
-
-
               </View>
-
             </View>
           </View>
         </View>
-
       </View>
-
     </View>
   )
-
 }

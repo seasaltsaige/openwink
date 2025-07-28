@@ -8,9 +8,15 @@ import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 // TODO
 
 interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
-
-
   container: ViewStyle;
+
+  headlightStatusContainer: ViewStyle;
+  headlightStatusSideContainer: ViewStyle;
+  headlightStatusText: TextStyle;
+
+  headlightStatusBarUnderlay: ViewStyle;
+  headlightStatusBarOverlay: ViewStyle;
+
   moduleSettingsContainer: ViewStyle;
   headerContainer: ViewStyle;
   settingsHeaderText: TextStyle;
@@ -81,6 +87,13 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
 
   waveTextEntry: ViewStyle | TextStyle;
   text: TextStyle;
+
+  defaultCommandSectionContainer: ViewStyle;
+  commandSectionHeader: ViewStyle | TextStyle;
+  commandRowContainer: ViewStyle;
+  commandColContainer: ViewStyle;
+  commandButton: ViewStyle;
+  commandButtonText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -131,6 +144,39 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           alignItems: "center",
           rowGap: 18,
         },
+
+        headlightStatusContainer: {
+          width: "100%",
+          flexDirection: "row",
+          justifyContent: "space-around",
+          alignItems: "center",
+        },
+        headlightStatusSideContainer: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 10,
+          width: "40%"
+        },
+        headlightStatusText: {
+          color: themeColors.textColor,
+          fontSize: 18,
+          fontFamily: "SpaceGrotesk",
+          marginBottom: 4,
+        },
+        headlightStatusBarUnderlay: {
+          height: 8,
+          width: "100%",
+          backgroundColor: themeColors.disabledButtonColor,
+          borderRadius: 4,
+          overflow: "hidden",
+        },
+        headlightStatusBarOverlay: {
+          height: "100%",
+          backgroundColor: themeColors.buttonColor,
+        },
+
         text: {
           color: themeColors.textColor,
           fontFamily: "SpaceGroteskLight",
@@ -610,6 +656,49 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.textColor,
           fontWeight: "400",
           fontSize: 16
+        },
+        defaultCommandSectionContainer: {
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          rowGap: 10
+        },
+        commandSectionHeader: {
+          color: themeColors.headerTextColor,
+          textAlign: "left",
+          width: "100%",
+          marginLeft: 15,
+          fontSize: 25,
+          fontFamily: "SpaceGroteskBold"
+        },
+        commandRowContainer: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 12,
+        },
+        commandColContainer: {
+          display: "flex",
+          flexDirection: "column",
+          width: "30%",
+          rowGap: 12,
+        },
+        commandButton: {
+          width: "100%",
+          height: 48,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 7,
+        },
+        commandButtonText: {
+          fontSize: 18,
+          color: themeColors.buttonTextColor,
+          fontFamily: "SpaceGroteskMedium"
+          // fontWeight: 500,
         }
       })
     );

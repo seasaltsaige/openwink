@@ -4,7 +4,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
 import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import {
@@ -21,10 +20,8 @@ import {
   TermsOfUse,
   StandardCommands,
   CustomWinkButton,
-  // AutoConnectSettings,
   WaveDelaySettings,
   SleepyEyeSettings,
-  // LongTermSleep,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
 import { BleProvider } from './Providers/BleProvider';
@@ -157,19 +154,15 @@ function AppNavigator() {
       <Stack.Screen name="CustomCommands" component={CustomCommand} />
       <Stack.Screen name="StandardCommands" component={StandardCommands} />
 
-
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
-      {/* <Stack.Screen name="AutoConnectSettings" component={AutoConnectSettings} /> */}
       <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
       <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
       <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
-      {/* <Stack.Screen name="LongTermSleep" component={LongTermSleep} /> */}
 
     </Stack.Navigator>
   )
 }
 
-SplashScreen.preventAutoHideAsync();
 
 export default function App() {
 
@@ -180,12 +173,6 @@ export default function App() {
     "SpaceGroteskLight": require("./assets/fonts/SpaceGrotesk-Light.ttf"),
     "InterMedium": require("./assets/fonts/Inter_18pt-Medium.ttf"),
   });
-
-
-  useEffect(() => {
-    if (loaded || error)
-      SplashScreen.hide();
-  }, [loaded, error]);
 
   return (
     <NavigationContainer>
