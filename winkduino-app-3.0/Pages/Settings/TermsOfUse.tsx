@@ -1,73 +1,44 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import IonIcons from "@expo/vector-icons/Ionicons";
 
 export function TermsOfUse() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
 
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [isBackPressed, setIsBackPressed] = useState(false);
-  const backPressed = (bool: boolean) => setIsBackPressed(bool);
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 10,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        rowGap: 25,
-      }}
-    >
+    <View style={theme.container}>
 
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-      }}>
+      <View style={theme.headerContainer}>
 
-        <Pressable style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 10,
-          height: "100%"
-        }}
-          onPressIn={() => backPressed(true)}
-          onPressOut={() => backPressed(false)}
+        <Pressable
+          style={theme.backButtonContainer}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="chevron-back-outline" color={isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-          <Text style={{
-            color: isBackPressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-            fontWeight: "500",
-            fontSize: 22
-          }}>{back}</Text>
+          {
+            ({ pressed }) => (
+              <>
+                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>{back}</Text>
+              </>
+            )}
         </Pressable>
-
-
-        <Text style={{
-          fontSize: 30,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
-          width: "auto",
-          marginRight: 10,
-        }}
-        >Terms Of Use</Text>
-
+        <Text style={theme.settingsHeaderText}>
+          Terms Of Use
+        </Text>
       </View>
+
+      <ScrollView contentContainerStyle={theme.contentContainer}>
+
+      </ScrollView>
+
     </View>
   )
 }

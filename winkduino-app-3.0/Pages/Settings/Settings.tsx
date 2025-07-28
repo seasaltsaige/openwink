@@ -31,16 +31,10 @@ const settingsData: Array<{
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
-
     {
       pageName: "Terms Of Use",
       navigationName: "TermsOfUse",
       pageSymbol: "document-text-outline",
-    },
-    {
-      pageName: "App Data",
-      navigationName: "StoredData",
-      pageSymbol: "finger-print-outline"
     }
   ]
 
