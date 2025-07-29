@@ -19,8 +19,6 @@ export function AppTheme() {
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [isBackPressed, setIsBackPressed] = useState(false);
-
   const [currentTheme, setCurrentTheme] = useState("brilliantBlack" as keyof typeof ColorTheme.themeNames);
 
   useFocusEffect(() => {
