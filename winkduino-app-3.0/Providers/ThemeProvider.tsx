@@ -94,6 +94,10 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   commandColContainer: ViewStyle;
   commandButton: ViewStyle;
   commandButtonText: TextStyle;
+
+
+  infoFooterContainer: ViewStyle;
+  infoFooterText: TextStyle
 }
 
 export type ThemeContextType = {
@@ -699,6 +703,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.buttonTextColor,
           fontFamily: "SpaceGroteskMedium"
           // fontWeight: 500,
+        },
+        infoFooterContainer: {
+          width: "100%",
+          height: 30,
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: themeColors.backgroundPrimaryColor,
+          position: "absolute",
+          columnGap: 4,
+          bottom: 0,
+        },
+        infoFooterText: {
+          color: themeColors.textColor,
+          fontSize: 12,
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          fontFamily: "SpaceGrotesk",
         }
       })
     );
