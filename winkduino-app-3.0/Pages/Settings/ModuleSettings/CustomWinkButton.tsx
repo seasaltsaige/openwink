@@ -9,6 +9,11 @@ import Tooltip from "react-native-walkthrough-tooltip";
 import { CustomOEMButtonStore } from "../../../Storage";
 import DisabledConnection from "../../../Components/DisabledConnection";
 import { ButtonBehaviors } from "../../../helper/Types";
+import RangeSlider from "react-native-sticky-range-slider";
+
+
+const MIN = 100;
+const MAX = 750;
 
 type CustomButtonAction = {
   behavior: number;
@@ -17,7 +22,7 @@ type CustomButtonAction = {
 
 export function CustomWinkButton() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const { oemCustomButtonEnabled, setOEMButtonStatus, buttonDelay, updateButtonDelay } = useBLE();
   const navigation = useNavigation();
   const route = useRoute();
@@ -38,6 +43,8 @@ export function CustomWinkButton() {
   });
   const [modalType, setModalType] = useState("" as "edit" | "create");
   const [modalVisible, setModalVisible] = useState(false);
+  const [min, setMin] = useState(buttonDelay);
+  const [max, setMax] = useState(MAX);
 
   const { device, isScanning, isConnecting } = useBLE();
 
@@ -50,6 +57,11 @@ export function CustomWinkButton() {
 
   }
 
+  const handleValueChange = useCallback((newLow: number, newHigh: number) => {
+    setMin(newLow);
+    setMax(newHigh);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       (async () => {
@@ -57,65 +69,33 @@ export function CustomWinkButton() {
         if (setValue !== null)
           setIntervalValue(setValue);
       })();
+
+
     }, []),
   );
 
   return (
     <>
-      <View
-        style={{
-          backgroundColor: colorTheme.backgroundPrimaryColor,
-          height: "100%",
-          padding: 10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          rowGap: 15,
-        }}
-      >
+      <View style={theme.container}>
 
-        <View
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-          }}>
+        <View style={theme.headerContainer}>
 
-          <Pressable style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            columnGap: 10,
-            height: "100%"
-          }}
-            onPress={() => navigation.goBack()}
-          >
+          <Pressable style={theme.backButtonContainer} onPress={() => navigation.goBack()}>
             {
               ({ pressed }) => (
                 <>
-                  <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+                  <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
 
-                  <Text style={{
-                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                    fontWeight: "500",
-                    fontSize: 20
-                  }}>{backHumanReadable}</Text>
-
+                  <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
+                    {backHumanReadable}
+                  </Text>
 
                   {
-                    device ? (
-                      <IonIcons name="wifi-outline" color="#367024" size={21} />
-                    ) : (
-                      isConnecting || isScanning ?
-                        <ActivityIndicator color={colorTheme.buttonColor} />
-                        : (
-                          <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                        )
-                    )
+                    device ?
+                      <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} /> :
+                      (isConnecting || isScanning) ?
+                        <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
+                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
                   }
                 </>
               )
@@ -123,209 +103,129 @@ export function CustomWinkButton() {
           </Pressable>
 
 
-          <Text style={{
-            fontSize: 25,
-            fontWeight: "600",
-            color: colorTheme.headerTextColor,
-            width: "auto",
-            marginRight: 10,
-          }}
-          >Custom Button</Text>
+          <Text style={theme.subSettingHeaderText}>
+            Button
+          </Text>
 
         </View>
 
-        <View
-          style={{
-            backgroundColor: colorTheme.backgroundSecondaryColor,
-            width: "100%",
-            padding: 5,
-            paddingVertical: 13,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: 8,
-            paddingHorizontal: 20,
-          }}
-        >
+        {/* MAIN Custom Retractor Button Toggle */}
+        <View style={theme.mainLongButtonPressableContainer}>
 
-          <Text
-            style={{
-              color: colorTheme.headerTextColor,
-              fontWeight: "bold",
-              fontSize: 17,
-            }}
-          >{oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button</Text>
-          <ToggleSwitch
-            onColor={!device ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
-            offColor={colorTheme.disabledButtonColor}
-            isOn={oemCustomButtonEnabled}
-            size="medium"
-            hitSlop={10}
-            disabled={!device}
-            circleColor={colorTheme.buttonTextColor}
-            onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
-          />
+          <View style={theme.mainLongButtonPressableView}>
+            <Text style={theme.mainLongButtonPressableText}>
+              {oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button
+            </Text>
+          </View>
+
+          <View style={theme.mainLongButtonPressableIcon}>
+            <ToggleSwitch
+              onColor={!device ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+              offColor={colorTheme.disabledButtonColor}
+              isOn={oemCustomButtonEnabled}
+              size="medium"
+              hitSlop={10}
+              disabled={!device}
+              circleColor={colorTheme.buttonTextColor}
+              onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
+              labelStyle={theme.mainLongButtonPressableIcon}
+            />
+          </View>
         </View>
 
-        <View
-          style={{
-            backgroundColor: colorTheme.backgroundPrimaryColor,
-            // height: "100%",
-            width: "100%",
-            padding: 10,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            rowGap: 15,
-            // borderColor: "pink",
-            // borderWidth: 1,
-          }}
-        >
+        <View style={theme.intervalInfoContainer}>
 
 
 
           {/* Press Interval */}
-          <Tooltip
-            isVisible={intervalTooltipVisible}
-            closeOnBackgroundInteraction
-            closeOnContentInteraction
-            placement="bottom"
-            onClose={() => setIntervalTooltipVisible(false)}
-            contentStyle={{
-              backgroundColor: colorTheme.backgroundSecondaryColor,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "auto",
-              width: "auto",
-              borderRadius: 7
-            }}
-            content={
-              <Text style={{
-                color: colorTheme.textColor,
-                textAlign: "center",
-                fontWeight: "500",
-                padding: 5,
-              }}>
-                Maximum time allowed between retractor button presses
-                before a sequence takes effect. Between 250ms and 500ms
-                is recommended.
-              </Text>
-            }
-          >
+          <View style={theme.rangeSliderContainer}>
 
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-evenly",
-                columnGap: 10,
-              }}
-            >
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "600",
-                  fontSize: 22,
-                }}
-              >
-                Press Interval
-              </Text>
-              <Pressable
-                hitSlop={20}
-                onPress={() => setIntervalTooltipVisible(true)}
-              >
-                {
-                  ({ pressed }) => (
-                    <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-                  )
-                }
-              </Pressable>
-            </View>
-          </Tooltip>
-
-          {/* Button Interval */}
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              rowGap: 12,
-              width: "90%",
-            }}
-          >
-            <Text
-              style={{
-                color: colorTheme.headerTextColor,
-                fontWeight: "500",
-                fontSize: 19,
-              }}
-            >
-              Current Maximum: {buttonDelay}ms
-            </Text>
-
-            <View style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 20,
-            }}>
-              <TextInput
-                // defaultValue={intervalValue.toString()}
-                keyboardType="numeric"
-                placeholder="Interval in ms"
-                placeholderTextColor="grey"
-                editable={device !== null}
-                onChangeText={(text) => {
-                  const num = parseInt(text);
-                  if (isNaN(num)) return;
-                  else setIntervalValue(num);
-                }}
-                style={{
-                  backgroundColor: colorTheme.backgroundSecondaryColor,
-                  // padding: 15,
-                  height: 40,
-                  borderRadius: 3,
-                  width: "33%",
-                  color: colorTheme.textColor,
-                  textAlign: "center",
-                  // margin: 15,
-                }}
-              />
-
-              <Pressable
-                onPress={() => saveInterval()}
-                style={({ pressed }) => ({
-                  backgroundColor: !device ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  height: 40,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 80,
-                  borderRadius: 7,
-                })}
-                disabled={!device}
-              >
-                <Text
-                  style={{
-                    color: colorTheme.buttonTextColor,
-                    fontSize: 18,
-                    fontWeight: "500",
-                  }}
-                >
-                  Save
+            {/* Press Interval */}
+            <Tooltip
+              isVisible={intervalTooltipVisible}
+              closeOnBackgroundInteraction
+              closeOnContentInteraction
+              placement="bottom"
+              onClose={() => setIntervalTooltipVisible(false)}
+              contentStyle={theme.tooltipContainer}
+              content={
+                <Text style={theme.tooltipContainerText}>
+                  Maximum time allowed between retractor button presses
+                  before a sequence takes effect. Between 250ms and 500ms
+                  is recommended.
                 </Text>
-              </Pressable>
-            </View>
+              }
+            >
+              <View style={theme.tooltipContainerView}>
+                <Text style={theme.tooltipText}>
+                  Press Interval
+                </Text>
 
+                <Pressable
+                  hitSlop={20}
+                  onPress={() => setIntervalTooltipVisible(true)}
+                >
+                  {
+                    ({ pressed }) => (
+                      <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+                    )
+                  }
+                </Pressable>
+              </View>
+            </Tooltip>
+
+            <RangeSlider
+              style={theme.rangeSliderStyle}
+              min={MIN}
+              max={MAX}
+              step={1}
+              low={min}
+              high={max}
+              onValueChanged={handleValueChange}
+              renderLowValue={(value) => (
+                <Text style={theme.rangeSliderLowText}>
+                  {value} ms
+                </Text>
+              )}
+              renderThumb={() => <View style={(!device || !oemCustomButtonEnabled) ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
+              renderRailSelected={() => <View style={(!device || !oemCustomButtonEnabled) ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
+              renderRail={() => <View style={theme.rangeSliderRail} />}
+              disableRange
+              disabled={(!device || !oemCustomButtonEnabled)}
+            />
           </View>
+
+          <View style={theme.rangeSliderSubtextView}>
+            <Text style={theme.rangeSliderSubtext}>Shorter</Text>
+            <Text style={theme.rangeSliderSubtext}>Longer</Text>
+          </View>
+
+          <View style={theme.rangeSliderButtonsView}>
+            {/* RESET */}
+            <Pressable
+              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!device || !oemCustomButtonEnabled)}
+              onPress={() => { updateButtonDelay(500); setMin(500); }}
+            >
+              <Text style={theme.rangeSliderButtonsText}>
+                Reset Value
+              </Text>
+              <IonIcons size={22} name="reload-outline" color={colorTheme.textColor} />
+            </Pressable>
+
+            {/* SAVE */}
+            <Pressable
+              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!device || !oemCustomButtonEnabled)}
+              onPress={() => updateButtonDelay(min)}
+            >
+              <Text style={theme.rangeSliderButtonsText}>
+                Save Value
+              </Text>
+              <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
+            </Pressable>
+          </View>
+
 
           {/* Button Actions Tooltip */}
           <Tooltip
@@ -334,56 +234,27 @@ export function CustomWinkButton() {
             closeOnContentInteraction
             placement="bottom"
             onClose={() => setActionsTooltipVisible(false)}
-            contentStyle={{
-              backgroundColor: colorTheme.backgroundSecondaryColor,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "auto",
-              width: "auto",
-              borderRadius: 7,
-              // marginTop: 10
-            }}
+            contentStyle={theme.tooltipContainer}
             content={
-              <Text style={{
-                color: colorTheme.textColor,
-                textAlign: "center",
-                fontWeight: "500",
-                padding: 5,
-              }}>
+              <Text style={theme.tooltipContainerText}>
                 List of actions certain sequences of button presses will activate.
                 The default single button press is unable to be adjusted due to saftey reasons.
               </Text>
             }
           >
 
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-evenly",
-                columnGap: 10,
-                marginTop: 10,
-              }}
-            >
-              <Text
-                style={{
-                  color: colorTheme.headerTextColor,
-                  fontWeight: "600",
-                  fontSize: 22,
-                }}
-              >
+            <View style={theme.tooltipContainerView}>
+              <Text style={theme.tooltipText}>
                 Button Actions
               </Text>
+
               <Pressable
                 hitSlop={20}
                 onPress={() => setActionsTooltipVisible(true)}
               >
                 {
                   ({ pressed }) => (
-                    <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+                    <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
                   )
                 }
               </Pressable>
@@ -391,94 +262,34 @@ export function CustomWinkButton() {
           </Tooltip>
 
           {/* SINGLE PRESS INFO + Create New */}
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              width: "100%",
-              justifyContent: "space-evenly",
-              // marginTop: 10,
-              // borderWidth: 1,
-              // borderColor: "pink",
-            }}
-          >
+          <View style={theme.rangeSliderButtonsView}>
 
             <Pressable
-              style={({ pressed }) => (
-                {
-                  backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  width: "40%",
-                  padding: 5,
-                  paddingVertical: 10,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                  paddingHorizontal: 15,
-                  paddingRight: 10
-                }
-              )}
+              style={({ pressed }) => [pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
             >
-              <Text
-                style={{
-                  color: colorTheme.buttonTextColor,
-                  fontSize: 17,
-                  fontWeight: 500,
-                }}
-              >
+              <Text style={theme.rangeSliderButtonsText}>
                 Single Press
               </Text>
-              <IonIcons size={22} name="ellipsis-horizontal-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="ellipsis-horizontal" color={colorTheme.textColor} />
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => (
-                {
-                  backgroundColor: !device ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
-                  width: "40%",
-                  padding: 5,
-                  paddingVertical: 10,
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderRadius: 8,
-                  paddingHorizontal: 15,
-                  paddingRight: 10
-                }
-              )}
-              disabled={!device}
+              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!device || !oemCustomButtonEnabled)}
             >
-              <Text
-                style={{
-                  color: colorTheme.buttonTextColor,
-                  fontSize: 17,
-                  fontWeight: 500,
-                }}
-              >
+              <Text style={theme.rangeSliderButtonsText}>
                 Create New
               </Text>
-              <IonIcons size={22} name="create-outline" color={colorTheme.buttonTextColor} />
+              <IonIcons size={22} name="create-outline" color={colorTheme.textColor} />
             </Pressable>
 
           </View>
 
           <ScrollView>
-
-
-
             {/* TODO: Add list view of custom actions (1-10), along with button to add new action, (each action has edit/remove option) */}
           </ScrollView>
-
-
-          {/* <DisabledConnection
-          name="Custom Button"
-        /> */}
         </View>
-
-      </View>
+      </View >
 
 
       {/* <CustomButtonActionModal
@@ -505,7 +316,7 @@ function CustomButtonActionModal({ action, close, humanReadable, numPresses, mod
   close: () => void;
 }) {
   const { device, } = useBLE();
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
 
   const onCreate = async () => { };
   const onUpdate = async () => { };
@@ -521,16 +332,7 @@ function CustomButtonActionModal({ action, close, humanReadable, numPresses, mod
       transparent={true}
     >
 
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <View style={theme.modalBackground}>
 
         <View
           style={{

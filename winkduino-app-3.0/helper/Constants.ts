@@ -1,3 +1,5 @@
+import { StyleProp, StyleSheet } from "react-native"
+
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
 export const WINK_SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520"
@@ -56,70 +58,20 @@ export enum DefaultCommandValue {
   RIGHT_WAVE
 }
 
-/**
- * const commands = [
-  [
-    {
-      name: "Left Up",
-      value: 4,
-    },
-    {
-      name: "Left Down",
-      value: 5,
-    },
-
-  ],
-  [
-    {
-      name: "Both Up",
-      value: 1
-    },
-    {
-      name: "Both Down",
-      value: 2,
-    },
-
-  ],
-  [
-    {
-      name: "Right Up",
-      value: 7,
-    },
-    {
-      name: "Right Down",
-      value: 8,
-    },
-
-  ]
-];
-
-const winks = [{
-  name: "Left Wink",
-  value: 6,
-},
-{
-  name: "Both Blink",
-  value: 3,
-},
-{
-  name: "Right Wink",
-  value: 9,
-}];
-
- */
-
 type HexNumber = `#${string}`;
 
-export interface Theme {
-  backgroundPrimaryColor: HexNumber,
-  backgroundSecondaryColor: HexNumber,
-  dropdownColor: HexNumber,
-  buttonColor: HexNumber,
-  disabledButtonColor: HexNumber,
-  buttonTextColor: HexNumber,
-  disabledButtonTextColor: HexNumber,
-  headerTextColor: HexNumber,
-  textColor: HexNumber,
+export interface ThemeColors {
+  backgroundPrimaryColor: HexNumber;
+  backgroundSecondaryColor: HexNumber;
+  dropdownColor: HexNumber;
+  buttonColor: HexNumber;
+  disabledButtonColor: HexNumber;
+  buttonTextColor: HexNumber;
+  disabledButtonTextColor: HexNumber;
+  headerTextColor: HexNumber;
+  bottomTabsBackground: HexNumber;
+  bottomTabsPill: HexNumber;
+  textColor: HexNumber;
 }
 
 export namespace ColorTheme {
@@ -134,22 +86,26 @@ export namespace ColorTheme {
   }
 
 
-  export const crystalWhite: Theme = {
+  export const crystalWhite: ThemeColors = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
-    dropdownColor: "#eeeeee",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#f5ebdf",
+    dropdownColor: "#e8e8e8",
     buttonColor: "#bd9664",
-    disabledButtonColor: "#aaaaaa",
+    disabledButtonColor: "#dbdbdb",
     buttonTextColor: "#ffffff",
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#000000",
     textColor: "#141414",
   }
 
-  export const brilliantBlack: Theme = {
+  export const brilliantBlack: ThemeColors = {
     backgroundPrimaryColor: "#141414",
-    dropdownColor: "#37373b",
     backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#550000", // Burgundy (default)
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
@@ -158,9 +114,11 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const classicRed: Theme = {
+  export const classicRed: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#c8102e", // Classic Red
     disabledButtonColor: "#878787",
@@ -170,9 +128,11 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const sunburstYellow: Theme = {
+  export const sunburstYellow: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#ffcc00", // Sunburst Yellow
     disabledButtonColor: "#878787",
@@ -182,9 +142,11 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const marinerBlue: Theme = {
+  export const marinerBlue: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#0033a0", // Marina Blue
     disabledButtonColor: "#878787",
@@ -194,9 +156,11 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 
-  export const britishRacingGreen: Theme = {
+  export const britishRacingGreen: ThemeColors = {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
+    bottomTabsBackground: "#ffffff",
+    bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#004d26", // British Racing Green
     disabledButtonColor: "#878787",

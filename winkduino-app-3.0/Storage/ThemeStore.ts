@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ColorTheme, Theme } from "../helper/Constants";
+import { ColorTheme } from "../helper/Constants";
 
 export abstract class ThemeStore {
 

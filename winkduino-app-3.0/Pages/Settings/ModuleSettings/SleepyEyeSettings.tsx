@@ -9,7 +9,7 @@ import ToggleSwitch from "toggle-switch-react-native";
 
 export function SleepyEyeSettings() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
@@ -18,57 +18,31 @@ export function SleepyEyeSettings() {
   const { device, isScanning, isConnecting } = useBLE();
 
   return (
-    <View
-      style={{
-        backgroundColor: colorTheme.backgroundPrimaryColor,
-        height: "100%",
-        padding: 10,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        rowGap: 25,
-      }}
-    >
+    <View style={theme.container}>
+      <View style={theme.headerContainer}>
 
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-      }}>
-
-        <Pressable style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          columnGap: 10,
-          height: "100%"
-        }}
+        <Pressable
+          style={theme.backButtonContainer}
           onPress={() => navigation.goBack()}
         >
           {
             ({ pressed }) => (
               <>
-                <IonIcons name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
+                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
 
-                <Text style={{
-                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                  fontWeight: "500",
-                  fontSize: 20
-                }}>{backHumanReadable}</Text>
+                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
+                  {backHumanReadable}
+                </Text>
 
 
                 {
                   device ? (
-                    <IonIcons name="wifi-outline" color="#367024" size={21} />
+                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} />
                   ) : (
                     isConnecting || isScanning ?
-                      <ActivityIndicator color={colorTheme.buttonColor} />
+                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} />
                       : (
-                        <IonIcons name="cloud-offline-outline" color="#b3b3b3" size={23} />
+                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
                       )
                   )
                 }
@@ -78,22 +52,14 @@ export function SleepyEyeSettings() {
         </Pressable>
 
 
-        <Text style={{
-          fontSize: 25,
-          fontWeight: "600",
-          color: colorTheme.headerTextColor,
-          width: "auto",
-          marginRight: 10,
-        }}
-        >Sleepy Eye</Text>
+        <Text style={theme.subSettingHeaderText}>
+          Sleepy
+        </Text>
 
       </View>
 
       <View>
-
       </View>
-
-
     </View>
   )
 

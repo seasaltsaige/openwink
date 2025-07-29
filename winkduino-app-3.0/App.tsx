@@ -3,6 +3,7 @@ import { NavigationContainer, useLinkBuilder } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
+import { useFonts } from "expo-font";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import {
@@ -11,7 +12,6 @@ import {
   CustomCommand,
   Home,
   HowToUse,
-  AppData,
   AppInfo,
   ModuleInfo,
   ModuleSettings,
@@ -19,10 +19,8 @@ import {
   TermsOfUse,
   StandardCommands,
   CustomWinkButton,
-  // AutoConnectSettings,
   WaveDelaySettings,
   SleepyEyeSettings,
-  // LongTermSleep,
 } from "./Pages";
 import { useColorTheme } from './hooks/useColorTheme';
 import { BleProvider } from './Providers/BleProvider';
@@ -42,31 +40,14 @@ const withStatusBar = (Component: React.FC, backgroundColor: string) => {
 };
 
 const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabBarProps) => {
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const { buildHref } = useLinkBuilder();
 
-  return <View
-    style={{
-      flexDirection: "row",
-      backgroundColor: colorTheme.backgroundPrimaryColor,
-      height: 55,
-      alignItems: "center",
-      justifyContent: "space-around"
-    }}
-  >
+  return <View style={theme.bottomTabsBackground}>
 
     {
       state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
-
-        options.tabBarIcon
-
-        const label = options.tabBarLabel !== undefined
-          ? options.tabBarLabel
-          : options.title !== undefined
-            ? options.title
-            : route.name;
-
         const isFocused = state.index === index;
 
         const onPress = () => {
@@ -85,6 +66,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             type: "tabLongPress",
             target: route.key,
           });
+
         };
 
 
@@ -96,13 +78,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
 
         return (
           <PlatformPressable
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-            }}
+            style={theme.platformPressableView}
             key={index}
             href={buildHref(route.name, route.params)}
             accessibilityState={isFocused ? { selected: true } : {}}
@@ -111,31 +87,11 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             onPress={onPress}
             onLongPress={onLongPress}
           >
-            <View
-
-
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                columnGap: 7,
-                width: 115,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: isFocused ? colorTheme.buttonTextColor : colorTheme.backgroundPrimaryColor
-              }}
-            >
+            <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
               <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
               {
                 isFocused ? (
-                  <Text
-                    style={{
-                      color: colorTheme.buttonColor,
-                      fontWeight: "bold",
-                      fontSize: 16,
-                    }}
-                  >
+                  <Text style={theme.bottomTabsPillFocusedText}>
                     {route.name}
                   </Text>
                 ) : <></>
@@ -157,7 +113,7 @@ function BottomTabs() {
   return (
 
     <Tab.Navigator
-      initialRouteName='Home'
+      initialRouteName="Home"
       tabBar={(props) => <CustomBottomTabs {...props} />}
       screenOptions={{
         headerShown: false,
@@ -174,11 +130,7 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
 
-
   const { disconnectFromModule } = useBLE();
-
-
-
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);
@@ -194,20 +146,16 @@ function AppNavigator() {
       <Stack.Screen name="Theme" component={AppTheme} />
       <Stack.Screen name="AppInfo" component={AppInfo} />
       <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
-      <Stack.Screen name="StoredData" component={AppData} />
       <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
       <Stack.Screen name="CustomCommands" component={CustomCommand} />
       <Stack.Screen name="StandardCommands" component={StandardCommands} />
 
-
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
-      {/* <Stack.Screen name="AutoConnectSettings" component={AutoConnectSettings} /> */}
       <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
       <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
       <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
-      {/* <Stack.Screen name="LongTermSleep" component={LongTermSleep} /> */}
 
     </Stack.Navigator>
   )
@@ -216,6 +164,13 @@ function AppNavigator() {
 
 export default function App() {
 
+  const [loaded, error] = useFonts({
+    "SpaceGroteskBold": require("./assets/fonts/SpaceGrotesk-Bold.ttf"),
+    "SpaceGroteskMedium": require("./assets/fonts/SpaceGrotesk-Medium.ttf"),
+    "SpaceGrotesk": require("./assets/fonts/SpaceGrotesk-Regular.ttf"),
+    "SpaceGroteskLight": require("./assets/fonts/SpaceGrotesk-Light.ttf"),
+    "InterMedium": require("./assets/fonts/Inter_18pt-Medium.ttf"),
+  });
 
   return (
     <NavigationContainer>
