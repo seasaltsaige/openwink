@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
 import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOTION_IN_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID, ButtonStatus, DefaultCommandValue } from '../helper/Constants';
-import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore } from '../Storage';
+import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
@@ -51,7 +51,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const manager = useMemo(() => new BleManager(), []);
 
   // Connected device
-  const [device, setDevice] = useState<Device | null>(null);
+  const [device, setDevice] = useState<Device | null>({} as Device);
 
   // Monitored characteristic values
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
@@ -434,7 +434,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }
 
 
-  const updateOEMButtonPresets = async (numPresses: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10, to: ButtonBehaviors | 0) => {
+  const updateOEMButtonPresets = async (numPresses: Presses, to: ButtonBehaviors | 0) => {
     if (!device) return;
 
     if (to === 0)

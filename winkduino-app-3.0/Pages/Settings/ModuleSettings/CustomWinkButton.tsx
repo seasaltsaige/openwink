@@ -6,18 +6,20 @@ import { useCallback, useEffect, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
-import { CustomOEMButtonStore } from "../../../Storage";
+import { buttonBehaviorMap, buttonBehaviorMapReversed, CustomOEMButtonStore, Presses } from "../../../Storage";
 import DisabledConnection from "../../../Components/DisabledConnection";
 import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
+import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
 
 
 const MIN = 100;
 const MAX = 750;
 
 type CustomButtonAction = {
-  behavior: number;
-  behaviorHumanReadable: ButtonBehaviors;
+  behavior: BehaviorEnum | null;
+  behaviorHumanReadable: ButtonBehaviors | null;
+  presses: Presses;
 };
 
 export function CustomWinkButton() {
@@ -35,26 +37,27 @@ export function CustomWinkButton() {
 
 
   // Note: Should only include actions for 2 presses to 10 presses. 1 press can NOT be changed.
-  const [actions, setActions] = useState([] as CustomButtonAction[]);
-  const [actionToEdit, setActionToEdit] = useState(null as null | {
-    behavior: number;
-    behaviorHumanReadable: ButtonBehaviors;
-    numPresses: number;
-  });
-  const [modalType, setModalType] = useState("" as "edit" | "create");
+
+  const [modalType, setModalType] = useState("" as "edit" | "create" | "view");
   const [modalVisible, setModalVisible] = useState(false);
+
+  const [actions, setActions] = useState([] as CustomButtonAction[]);
+  const [action, setAction] = useState({} as CustomButtonAction);
+
   const [min, setMin] = useState(buttonDelay);
   const [max, setMax] = useState(MAX);
 
   const { device, isScanning, isConnecting } = useBLE();
 
-  const saveInterval = async () => {
-    await updateButtonDelay(intervalValue);
-  }
-
   const fetchActionsFromStorage = async () => {
     const storedActions = await CustomOEMButtonStore.getAll();
-
+    if (storedActions !== null && storedActions.length > 0) {
+      setActions(storedActions.map(action => ({
+        behaviorHumanReadable: action.behavior,
+        presses: action.numberPresses,
+        behavior: buttonBehaviorMap[action.behavior],
+      })).sort((a, b) => a.presses - b.presses));
+    }
   }
 
   const handleValueChange = useCallback((newLow: number, newHigh: number) => {
@@ -68,9 +71,9 @@ export function CustomWinkButton() {
         const setValue = await CustomOEMButtonStore.getDelay();
         if (setValue !== null)
           setIntervalValue(setValue);
+
+        await fetchActionsFromStorage();
       })();
-
-
     }, []),
   );
 
@@ -134,9 +137,6 @@ export function CustomWinkButton() {
         </View>
 
         <View style={theme.intervalInfoContainer}>
-
-
-
           {/* Press Interval */}
           <View style={theme.rangeSliderContainer}>
 
@@ -226,7 +226,9 @@ export function CustomWinkButton() {
             </Pressable>
           </View>
 
+        </View>
 
+        <View style={theme.intervalInfoContainer}>
           {/* Button Actions Tooltip */}
           <Tooltip
             isVisible={actionsTooltipVisible}
@@ -266,6 +268,15 @@ export function CustomWinkButton() {
 
             <Pressable
               style={({ pressed }) => [pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
+              onPress={() => {
+                setAction({
+                  behavior: BehaviorEnum.DEFAULT,
+                  behaviorHumanReadable: "Default Behavior",
+                  presses: 1,
+                });
+                setModalType("view");
+                setModalVisible(true);
+              }}
             >
               <Text style={theme.rangeSliderButtonsText}>
                 Single Press
@@ -274,8 +285,17 @@ export function CustomWinkButton() {
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-              disabled={(!device || !oemCustomButtonEnabled)}
+              style={({ pressed }) => (!device || !oemCustomButtonEnabled || actions.length > 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!device || !oemCustomButtonEnabled || actions.length > 8)}
+              onPress={() => {
+                setAction({
+                  behavior: null,
+                  behaviorHumanReadable: null,
+                  presses: (actions.length > 0 ? actions[actions.length - 1].presses + 1 : 2) as Presses,
+                });
+                setModalType("create");
+                setModalVisible(true);
+              }}
             >
               <Text style={theme.rangeSliderButtonsText}>
                 Create New
@@ -288,85 +308,121 @@ export function CustomWinkButton() {
           <ScrollView>
             {/* TODO: Add list view of custom actions (1-10), along with button to add new action, (each action has edit/remove option) */}
           </ScrollView>
+
         </View>
       </View >
 
 
-      {/* <CustomButtonActionModal
+      <CustomButtonActionModal
+        visible={modalVisible}
+        close={() => setModalVisible(false)}
+        // createAction={() => { }}
         modalType={modalType}
-        visible={modalVisible && device !== null}
-        close={() => { setModalVisible(false); }}
-        action={ }
-        humanReadable={ }
-        numPresses={ }
-      /> */}
+        saveAction={() => { }}
+        action={action}
+      />
     </>
   )
 
 }
 
 
-
-function CustomButtonActionModal({ action, close, humanReadable, numPresses, modalType, visible }: {
-  action: number;
-  numPresses: number;
-  humanReadable: ButtonBehaviors;
-  modalType: "create" | "edit";
+type CustomButtonActionModalProps = {
   visible: boolean;
+  action: CustomButtonAction;
+  modalType: "edit" | "create" | "view";
   close: () => void;
-}) {
-  const { device, } = useBLE();
-  const { colorTheme, theme } = useColorTheme();
+  saveAction: () => void;
+}
 
-  const onCreate = async () => { };
-  const onUpdate = async () => { };
-  const onDelete = async () => { };
+function CustomButtonActionModal(props: CustomButtonActionModalProps) {
+  const { theme, colorTheme } = useColorTheme();
 
+  const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior">);
+
+  useEffect(() => {
+    if (props.action.behaviorHumanReadable !== "Default Behavior")
+      setSelectedAction(props.action.behaviorHumanReadable);
+  }, [props.action.behaviorHumanReadable])
 
   return (
     <Modal
-      visible={visible}
-      onRequestClose={() => close()}
+      onRequestClose={() => props.close()}
+      transparent
       animationType="fade"
       hardwareAccelerated
-      transparent={true}
+      visible={props.visible}
     >
-
       <View style={theme.modalBackground}>
 
-        <View
-          style={{
-            backgroundColor: colorTheme.backgroundPrimaryColor,
-            width: "70%",
-            shadowColor: "black",
-            shadowOffset: { height: 2, width: 2 },
-            shadowOpacity: 1,
-            shadowRadius: 5,
-            boxShadow: "black",
-            elevation: 10,
-            borderRadius: 10,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            rowGap: 10,
-            padding: 15,
-          }}>
+        <View style={theme.modalContentContainer}>
+
+          <View style={theme.modalHeaderContainer}>
+            <Pressable style={theme.modalHeaderClose} onPress={() => props.close()}>
+              {
+                ({ pressed }) => (
+                  <>
+                    <IonIcons style={{ marginTop: 2, }} name="close-sharp" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={18} />
+
+                    <Text style={[pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText, { fontSize: 15 }]}>
+                      Close
+                    </Text>
+                  </>
+                )
+              }
+            </Pressable>
+
+            <Text style={theme.modalHeaderText}>
+              {
+                props.modalType === "create" ?
+                  "Creating action for" :
+                  props.modalType === "edit" ?
+                    "Editing action for" :
+                    "Viewing action for"}
+              {" "}
+              {countToEnglish[props.action.presses - 1]
+              }
+            </Text>
+          </View>
+
 
           {
-            modalType === "create" ? (
-              <></>
+            props.modalType === "view" ? (
+              <Text style={{
+
+              }}>
+
+              </Text>
+            ) : (
+              <View style={{ rowGap: 8, display: "flex", flexDirection: "column", alignItems: 'center', justifyContent: "center", width: "100%", }}>
+                {
+                  Object.keys(buttonBehaviorMap)
+                    .slice(1, Object.keys(buttonBehaviorMap).length).map((behavior) => (
+                      <Pressable
+                        style={({ pressed }) => (pressed || behavior === selectedAction) ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+                        onPress={() => setSelectedAction(behavior as Exclude<ButtonBehaviors, "Default Behavior">)}
+                      >
+
+                        <View style={theme.mainLongButtonPressableView}>
+                          <Text style={[theme.mainLongButtonPressableText, { fontSize: 13 }]}>
+                            {behavior}
+                          </Text>
+                        </View>
+                        <IonIcons size={18} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
+
+
+
+                      </Pressable>
+                    ))
+                }
+              </View>
             )
-              : (
-                <>
-                </>
-              )
           }
+
 
         </View>
 
       </View>
-
     </Modal>
   )
 }

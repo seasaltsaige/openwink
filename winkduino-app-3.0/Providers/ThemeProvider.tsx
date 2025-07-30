@@ -98,6 +98,10 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
 
   infoFooterContainer: ViewStyle;
   infoFooterText: TextStyle
+  modalContentContainer: ViewStyle;
+  modalHeaderContainer: ViewStyle;
+  modalHeaderClose: ViewStyle;
+  modalHeaderText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -724,6 +728,43 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           justifyContent: "center",
           alignItems: "center",
           fontFamily: "SpaceGrotesk",
+        },
+        modalContentContainer: {
+          backgroundColor: themeColors.backgroundPrimaryColor,
+          width: "90%",
+          shadowColor: "black",
+          shadowOffset: { height: 2, width: 2 },
+          shadowOpacity: 1,
+          shadowRadius: 5,
+          boxShadow: "black",
+          elevation: 2,
+          borderRadius: 10,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          rowGap: 20,
+          padding: 15,
+        },
+        modalHeaderContainer: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          columnGap: 10,
+          width: "100%"
+        },
+        modalHeaderClose: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          columnGap: 6,
+          // width: "100%"
+        },
+        modalHeaderText: {
+          color: themeColors.headerTextColor,
+          fontSize: 16.5,
+          fontFamily: "SpaceGroteskBold",
         }
       })
     );
