@@ -102,6 +102,11 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   modalHeaderContainer: ViewStyle;
   modalHeaderClose: ViewStyle;
   modalHeaderText: TextStyle;
+  modalViewText: TextStyle;
+
+  buttonActionPressable: ViewStyle;
+  buttonActionPressableView: ViewStyle;
+  buttonActionPressableText: TextStyle;
 }
 
 export type ThemeContextType = {
@@ -736,6 +741,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           shadowOffset: { height: 2, width: 2 },
           shadowOpacity: 1,
           shadowRadius: 5,
+          // minHeight: 200,
           boxShadow: "black",
           elevation: 2,
           borderRadius: 10,
@@ -765,6 +771,36 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.headerTextColor,
           fontSize: 16.5,
           fontFamily: "SpaceGroteskBold",
+        },
+        modalViewText: {
+          fontFamily: "SpaceGroteskMedium",
+          fontSize: 15,
+          color: themeColors.textColor,
+          textAlign: "center",
+          // display: "flex",
+          // alignItems: 'center',
+          // justifyContent: "center",
+          marginVertical: 15,
+          // textAlign: "center"
+        },
+        buttonActionPressable: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-evenly",
+          columnGap: 15,
+          marginRight: 8
+        },
+        buttonActionPressableView: {
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-evenly",
+          columnGap: 8
+        },
+        buttonActionPressableText: {
+          fontFamily: "SpaceGrotesk",
+          fontSize: 14.5
         }
       })
     );

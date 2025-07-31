@@ -25,6 +25,7 @@ export type BleContextType = {
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
   waveDelayMulti: number;
   // setOEMButtonInterval: (delay: number) => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -51,7 +52,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const manager = useMemo(() => new BleManager(), []);
 
   // Connected device
-  const [device, setDevice] = useState<Device | null>({} as Device);
+  const [device, setDevice] = useState<Device | null>(null);
 
   // Monitored characteristic values
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
@@ -458,6 +459,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       CUSTOM_BUTTON_UPDATE_UUID,
       base64.encode(to === 0 ? "0" : buttonBehaviorMap[to].toString()),
     );
+
   }
 
   const updateButtonDelay = async (delay: number) => {
@@ -507,6 +509,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHeadlightsBusy,
       updateButtonDelay,
       updateWaveDelayMulti,
+      updateOEMButtonPresets,
       waveDelayMulti,
       updatingStatus,
       oemCustomButtonEnabled,
