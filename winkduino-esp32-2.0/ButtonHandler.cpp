@@ -29,21 +29,21 @@ void ButtonHandler::setupGPIO() {
 }
 
 void ButtonHandler::readOnWakeup() {
+
+  int wakeupValue = initialButton;
+  initialButton = digitalRead(OEM_BUTTON_INPUT);
+
   if (customButtonStatusEnabled) {
     mainTimer = millis();
-    int wakeupValue = initialButton;
-    initialButton = digitalRead(OEM_BUTTON_INPUT);
-
     if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
       buttonTimer = millis();
     }
   } else {
-    int wakeup = initialButton;
-    initialButton = digitalRead(OEM_BUTTON_INPUT);
-    if ((wakeup != initialButton)) {
+    if ((wakeupValue != initialButton)) {
       if (initialButton == 1) bothUp();
       else bothDown();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
     }
   }
@@ -51,12 +51,9 @@ void ButtonHandler::readOnWakeup() {
 
 void ButtonHandler::readWakeUpReason() {
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
-
-    // TODO: Read button state + set headlights to position
-    Serial.printf("WAKEUP REASON: %d\n", wakeup_reason);
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0)
     awakeTime_ms = 5 * 1000 * 60;
-  } else
+  else
     awakeTime_ms = 0;
 }
 
@@ -129,6 +126,9 @@ void ButtonHandler::loopButtonHandler() {
 
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
+  if (buttonInput != initialButton && awakeTime_ms == 0)
+    awakeTime_ms = 5 * 1000 * 60;
+
   if (customButtonStatusEnabled) {
 
     if (buttonPressCounter == 0 && buttonInput != initialButton) {
@@ -195,7 +195,7 @@ void ButtonHandler::loopButtonHandler() {
 
 
 void ButtonHandler::handleBusyInput() {
-  
+
   int readStatus = digitalRead(OEM_HEADLIGHT_STATUS);
   if (readStatus != motionButtonStatus) {
     motionButtonStatus = readStatus;
@@ -213,11 +213,8 @@ void ButtonHandler::handleBusyInput() {
       // Set RTC DATA ATTR var value
       // Send notification for app to update value
       WinkduinoBLE::setMotionInValue((int)timeOn + 25);
-
     }
-
   }
-
 }
 
 void ButtonHandler::updateButtonSleep() {
@@ -226,15 +223,12 @@ void ButtonHandler::updateButtonSleep() {
     !WinkduinoBLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
-    Serial.printf("Button Input: %d\n", buttonInput);
-
-    if (buttonInput == 1) {
-      Serial.println("In button Input 1");
+    if (buttonInput == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
-    } else if (buttonInput == 0) {
-      Serial.println("In button input 0");
+    else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
-    }
+
+    Serial.println("Entering deep sleep...");
 
     if (!WinkduinoBLE::getDeviceConnected())
       esp_deep_sleep_start();

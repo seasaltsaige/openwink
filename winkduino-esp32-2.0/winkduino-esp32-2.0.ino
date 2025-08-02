@@ -31,8 +31,6 @@ void setup() {
 
   ButtonHandler::init();
 
-  ButtonHandler::readWakeUpReason();
-
   Storage::begin("oem-store");
   Storage::getFromStorage();
 
@@ -40,14 +38,14 @@ void setup() {
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
   ButtonHandler::setupGPIO();
+  ButtonHandler::readWakeUpReason();
+  ButtonHandler::readOnWakeup();
 
   setCpuFrequencyMhz(80);
 
   WinkduinoBLE::init("Winkduino");
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
-
-  ButtonHandler::readOnWakeup();
 
   printf("Version %s\n", FIRMWARE_VERSION);
 
@@ -61,6 +59,7 @@ void setup() {
     1,
     nullptr,
     1);
+
 }
 
 void motionInMonitorTask(void* params) {

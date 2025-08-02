@@ -58,6 +58,19 @@ export enum DefaultCommandValue {
   RIGHT_WAVE
 }
 
+export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
+export enum BehaviorEnum {
+  DEFAULT = 1,
+  LEFT_WINK,
+  LEFT_WINK_X2,
+  RIGHT_WINK,
+  RIGHT_WINK_X2,
+  BOTH_BLINK,
+  BOTH_BLINK_X2,
+  LEFT_WAVE,
+  RIGHT_WAVE,
+}
+
 type HexNumber = `#${string}`;
 
 export interface ThemeColors {

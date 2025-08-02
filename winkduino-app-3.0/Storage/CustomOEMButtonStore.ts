@@ -3,10 +3,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Maps english to actual value
 export const buttonBehaviorMap = {
   "Default Behavior": 1,
-  "Left Blink": 2,
-  "Left Blink x2": 3,
-  "Right Blink": 4,
-  "Right Blink x2": 5,
+  "Left Wink": 2,
+  "Left Wink x2": 3,
+  "Right Wink": 4,
+  "Right Wink x2": 5,
   "Both Blink": 6,
   "Both Blink x2": 7,
   "Left Wave": 8,
@@ -15,18 +15,18 @@ export const buttonBehaviorMap = {
 
 export const buttonBehaviorMapReversed = {
   1: "Default Behavior",
-  2: "Left Blink",
-  3: "Left Blink x2",
-  4: "Right Blink",
-  5: "Right Blink x2",
+  2: "Left Wink",
+  3: "Left Wink x2",
+  4: "Right Wink",
+  5: "Right Wink x2",
   6: "Both Blink",
   7: "Both Blink x2",
   8: "Left Wave",
   9: "Right Wave",
 } as const;
 
-export type ButtonBehaviors = "Default Behavior" | "Left Blink" | "Left Blink x2" | "Right Blink" | "Right Blink x2" | "Both Blink" | "Both Blink x2" | "Left Wave" | "Right Wave";
-export type Presses = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type ButtonBehaviors = "Default Behavior" | "Left Wink" | "Left Wink x2" | "Right Wink" | "Right Wink x2" | "Both Blink" | "Both Blink x2" | "Left Wave" | "Right Wave";
+export type Presses = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
 const BUTTON_KEY = "oem-button-values";

@@ -43,14 +43,11 @@ void Storage::setCustomOEMButtonStatus(bool status) {
   storage.putBool(customOemKey, status);
 }
 
-void Storage::setCustomButtonPressArrayDefaults(int defaults[10]) {
-    for (int i = 0; i < 10; i++) {
-    string key = "presses-";
-    key = key + to_string(i);
-    int val = storage.getUInt(key.c_str(), customButtonPressArrayDefaults[i]);
-    if (val != defaults[i])
-      storage.putUInt(key.c_str(), defaults[i]);
-  }
+void Storage::setCustomButtonPressArray(int index, int value) {
+  string key = "presses-" + to_string(index); 
+  int storedVal = storage.getUInt(key.c_str(), customButtonPressArrayDefaults[index]);
+  if (storedVal != value) 
+    storage.putUInt(key.c_str(), value);
 }
 
 void Storage::setDelay(int delay) {
