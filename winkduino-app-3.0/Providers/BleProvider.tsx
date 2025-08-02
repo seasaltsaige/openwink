@@ -444,9 +444,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     else
       await CustomOEMButtonStore.set(numPresses, to);
 
-    console.log(numPresses, to);
-    // console.log(numPresses, to, (buttonBehaviorMap[to as ButtonBehaviors]).toString());
-
     // SET Number of Button Presses to update on ESP Side
     await device.writeCharacteristicWithoutResponseForService(
       MODULE_SETTINGS_SERVICE_UUID,

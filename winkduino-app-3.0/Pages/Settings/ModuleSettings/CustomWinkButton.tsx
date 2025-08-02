@@ -86,11 +86,9 @@ export function CustomWinkButton() {
 
   const deleteButtonAction = async (action: CustomButtonAction) => {
     const index = actions.findIndex(v => v.presses === action.presses);
-    console.log(index, actions.length, action);
     await updateOEMButtonPresets(action.presses, 0);
     // Loop from presses array location to end of array
     for (let i = index + 1; i < actions.length; i++) {
-      console.log("loop", i);
       const actionToUpdateFromDelete = actions[i];
       //   // Move action down 1 press location
       await updateOEMButtonPresets((actionToUpdateFromDelete.presses - 1) as Presses, actionToUpdateFromDelete.behaviorHumanReadable!);
