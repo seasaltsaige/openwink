@@ -256,8 +256,10 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
       customButtonPressUpdateState = 1;
 
     } else {
-      customButtonPressArray[indexToUpdate] = parsedValue;
       customButtonPressUpdateState = 0;
+      if (indexToUpdate == 0) return;
+
+      customButtonPressArray[indexToUpdate] = parsedValue;
 
       Storage::setCustomButtonPressArray(indexToUpdate, parsedValue);
 
