@@ -87,7 +87,7 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
 }
 
 void LeftSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  std::string value = pChar->getValue();
+  string value = pChar->getValue();
   int headlightValue = String(value.c_str()).toInt();
   double percentage = ((double)headlightValue) / 100;
 
@@ -108,7 +108,7 @@ void LeftSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 }
 
 void RightSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  std::string value = pChar->getValue();
+  string value = pChar->getValue();
   int headlightValue = String(value.c_str()).toInt();
   double percentage = ((double)headlightValue) / 100;
 
@@ -128,7 +128,7 @@ void RightSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, Nim
 }
 
 void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  std::string value = pChar->getValue();
+  string value = pChar->getValue();
 
   int valueInt = String(value.c_str()).toInt();
 
@@ -203,7 +203,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
         else leftDown();
 
         delay(HEADLIGHT_MOVEMENT_DELAY);
-        
+
         setAllOff();
         WinkduinoBLE::updateHeadlightChars();
       }
@@ -236,6 +236,7 @@ int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
+  Serial.printf("Value: %s\n", value);
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;
@@ -247,24 +248,28 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     return;
   }
 
+  int parsedValue = stoi(value);
   // Updating maxTime
   if (value.length() > 1) {
-    int newVal = stoi(value);
-    Serial.printf("newVal: %d\n", newVal);
-    maxTimeBetween_ms = newVal;
+    // int newVal = stoi(value);
+    Serial.printf("newVal: %d\n", parsedValue);
+    maxTimeBetween_ms = parsedValue;
   } else {
     if (customButtonPressUpdateState == 0) {
-      int index = stoi(value);
-      if (index > 9)
+      // int index = stoi(value);
+      Serial.printf("INDEX: %d\n", parsedValue);
+      if (parsedValue > 9)
         return;
-      indexToUpdate = index;
+      indexToUpdate = parsedValue;
       customButtonPressUpdateState = 1;
+
     } else {
-      int updateValue = stoi(value);
-      customButtonPressArray[indexToUpdate] = updateValue;
+      // int updateValue = stoi(value);
+      Serial.printf("UPDATEVAL: %d\n", parsedValue);
+      customButtonPressArray[indexToUpdate] = parsedValue;
       customButtonPressUpdateState = 0;
 
-      if (updateValue == 0) {
+      if (parsedValue == 0) {
         int maxIndexNotZero = 0;
         for (int i = 0; i < 10; i++) {
           if (customButtonPressArray[i] == 0) {
@@ -278,6 +283,11 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
           customButtonPressArray[i] = customButtonPressArray[i + 1];
           printf("Current: %d   -   Update: %d   -   Index: %d\n", customButtonPressArray[i], customButtonPressArray[i + 1], i);
         }
+      }
+
+
+      for (int i = 0; i < 10; i++) {
+        Serial.printf("Current: %d   -   Index: %d\n", customButtonPressArray[i], i);
       }
     }
   }

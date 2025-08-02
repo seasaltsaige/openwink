@@ -736,7 +736,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         modalContentContainer: {
           backgroundColor: themeColors.backgroundPrimaryColor,
-          width: "90%",
+          width: "95%",
           shadowColor: "black",
           shadowOffset: { height: 2, width: 2 },
           shadowOpacity: 1,
@@ -773,23 +773,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           fontFamily: "SpaceGroteskBold",
         },
         modalViewText: {
-          fontFamily: "SpaceGroteskMedium",
-          fontSize: 15,
+          fontFamily: "SpaceGrotesk",
+          fontSize: 17,
           color: themeColors.textColor,
           textAlign: "center",
-          // display: "flex",
-          // alignItems: 'center',
-          // justifyContent: "center",
           marginVertical: 15,
-          // textAlign: "center"
         },
         buttonActionPressable: {
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-evenly",
-          columnGap: 15,
-          marginRight: 8
+          columnGap: 10,
+          marginRight: 12
         },
         buttonActionPressableView: {
           display: "flex",
@@ -799,8 +795,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           columnGap: 8
         },
         buttonActionPressableText: {
-          fontFamily: "SpaceGrotesk",
-          fontSize: 14.5
+          fontFamily: "SpaceGroteskMedium",
+          fontSize: 14,
         }
       })
     );

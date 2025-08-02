@@ -58,7 +58,7 @@ export enum DefaultCommandValue {
   RIGHT_WAVE
 }
 
-export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press", "Decuple Press"];
+export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {
   DEFAULT = 1,
   LEFT_WINK,

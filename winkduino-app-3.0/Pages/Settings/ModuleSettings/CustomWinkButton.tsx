@@ -1,4 +1,4 @@
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -11,6 +11,7 @@ import DisabledConnection from "../../../Components/DisabledConnection";
 import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
 import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
+import { sleep } from "../../../helper/Functions";
 
 
 const MIN = 100;
@@ -53,12 +54,12 @@ export function CustomWinkButton() {
   const fetchActionsFromStorage = async () => {
     const storedActions = await CustomOEMButtonStore.getAll();
     if (storedActions !== null && storedActions.length > 0) {
-      // setActions(storedActions.map(action => ({
-      //   behaviorHumanReadable: action.behavior,
-      //   presses: action.numberPresses,
-      //   behavior: buttonBehaviorMap[action.behavior],
-      // })).sort((a, b) => a.presses - b.presses));
-    }
+      setActions(storedActions.map(action => ({
+        behaviorHumanReadable: action.behavior,
+        presses: action.numberPresses,
+        behavior: buttonBehaviorMap[action.behavior],
+      })).sort((a, b) => a.presses - b.presses));
+    } else setActions([]);
   }
 
   const handleValueChange = useCallback((newLow: number, newHigh: number) => {
@@ -83,8 +84,23 @@ export function CustomWinkButton() {
     await fetchActionsFromStorage();
   }
 
-  const deleteButtonAction = async (action: Presses) => {
+  const deleteButtonAction = async (action: CustomButtonAction) => {
+    const index = actions.findIndex(v => v.presses === action.presses);
+    console.log(index, actions.length, action);
+    await updateOEMButtonPresets(action.presses, 0);
+    // Loop from presses array location to end of array
+    for (let i = index + 1; i < actions.length; i++) {
+      console.log("loop", i);
+      const actionToUpdateFromDelete = actions[i];
+      //   // Move action down 1 press location
+      await updateOEMButtonPresets((actionToUpdateFromDelete.presses - 1) as Presses, actionToUpdateFromDelete.behaviorHumanReadable!);
+      //   // Delete old location
+      await updateOEMButtonPresets(actionToUpdateFromDelete.presses, 0);
+      await sleep(50);
+    }
 
+    // Fetch from storate again
+    await fetchActionsFromStorage();
   }
 
   return (
@@ -277,8 +293,8 @@ export function CustomWinkButton() {
           <View style={theme.rangeSliderButtonsView}>
 
             <Pressable
-              style={({ pressed }) => [(!device || !oemCustomButtonEnabled || actions.length > 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
-              disabled={(!device || !oemCustomButtonEnabled || actions.length > 8)}
+              style={({ pressed }) => [(!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
+              disabled={(!device || !oemCustomButtonEnabled)}
               onPress={() => {
                 setAction({
                   behavior: BehaviorEnum.DEFAULT,
@@ -296,13 +312,13 @@ export function CustomWinkButton() {
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => (!device || !oemCustomButtonEnabled || actions.length > 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-              disabled={(!device || !oemCustomButtonEnabled || actions.length > 8)}
+              style={({ pressed }) => (!device || !oemCustomButtonEnabled || actions.length >= 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!device || !oemCustomButtonEnabled || actions.length >= 8)}
               onPress={() => {
                 setAction({
                   behavior: null,
                   behaviorHumanReadable: null,
-                  presses: (actions.length > 0 ? actions[actions.length - 1].presses + 1 : 2) as Presses,
+                  presses: (actions.length > 0 ? actions[actions.length - 1].presses + 1 : 1) as Presses,
                 });
                 setModalType("create");
                 setModalVisible(true);
@@ -321,20 +337,22 @@ export function CustomWinkButton() {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              rowGap: 12
-            }}
-            style={{
-              width: "90%",
+              justifyContent: "flex-start",
+              rowGap: 12,
+              overflow: "scroll",
+              width: "100%",
+              height: "111%",
+              maxHeight: "111%",
+              marginBottom: 10,
             }}
           >
 
             {
               actions.map((action) => (
-                <View style={theme.mainLongButtonPressableContainer}>
+                <View style={theme.mainLongButtonPressableContainer} key={action.presses}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={[theme.mainLongButtonPressableText, { fontSize: 16 }]}>
-                      {countToEnglish[action.presses - 1]}
+                      {countToEnglish[action.presses]}
                     </Text>
                   </View>
                   <View style={theme.buttonActionPressable}>
@@ -346,6 +364,7 @@ export function CustomWinkButton() {
                         setModalVisible(true);
                       }}
                       hitSlop={5}
+                    // key={action.behavior}
                     >
                       {
                         ({ pressed }) => (
@@ -366,39 +385,10 @@ export function CustomWinkButton() {
                         )
                       }
                     </Pressable>
-                    <Pressable
-                      disabled={(!device || !oemCustomButtonEnabled)}
-                      onPress={() => {
-                        setModalType("view");
-                        setAction(action);
-                        setModalVisible(true);
-                      }}
-                      hitSlop={5}
-                    >
-                      {
-                        ({ pressed }) => (
-                          <View style={theme.buttonActionPressableView}>
-                            <Text style={[
-                              theme.buttonActionPressableText,
-                              {
-                                color: (!device || !oemCustomButtonEnabled) ?
-                                  colorTheme.disabledButtonColor :
-                                  pressed ? colorTheme.buttonColor :
-                                    colorTheme.textColor
-                              }]}>
-                              View
-                            </Text>
-                            <IonIcons color={(!device || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="eye-outline" size={16} />
-
-                          </View>
-                        )
-                      }
-                    </Pressable>
                   </View>
                 </View>
               ))
             }
-            {/* TODO: Add list view of custom actions (1-10), along with button to add new action, (each action has edit/remove option) */}
           </ScrollView>
 
         </View>
@@ -411,6 +401,7 @@ export function CustomWinkButton() {
         // createAction={() => { }}
         modalType={modalType}
         update={updateButtonAction}
+        delete={deleteButtonAction}
         action={action}
       />
     </>
@@ -424,7 +415,8 @@ type CustomButtonActionModalProps = {
   action: CustomButtonAction;
   modalType: "edit" | "create" | "view";
   close: () => void;
-  update: (action: CustomButtonAction) => Promise<void>
+  update: (action: CustomButtonAction) => Promise<void>;
+  delete: (action: CustomButtonAction) => Promise<void>;
 }
 
 function CustomButtonActionModal(props: CustomButtonActionModalProps) {
@@ -472,7 +464,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                     "Editing action for" :
                     "Viewing action for"}
               {" "}
-              {countToEnglish[props.action.presses - 1]
+              {countToEnglish[props.action.presses]
               }
             </Text>
           </View>
@@ -483,7 +475,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
               <Text style={theme.modalViewText}>
                 Retractor Button
                 <Text style={{ fontFamily: "SpaceGroteskBold", }}>
-                  {" "}{countToEnglish[props.action.presses - 1]}{" "}
+                  {" "}{countToEnglish[props.action.presses]}{" "}
                 </Text>
                 is set to
                 {"\n"}
@@ -503,11 +495,11 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                       >
 
                         <View style={theme.mainLongButtonPressableView}>
-                          <Text style={[theme.mainLongButtonPressableText, { fontSize: 14 }]}>
+                          <Text style={[theme.mainLongButtonPressableText, { fontSize: 15 }]}>
                             {behavior}
                           </Text>
                         </View>
-                        <IonIcons size={18} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
+                        <IonIcons size={20} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
 
 
 
@@ -515,7 +507,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                     ))
                 }
 
-                <View style={[theme.modalSettingsConfirmationButtonContainer, { marginTop: 10 }]}>
+                <View style={[theme.modalSettingsConfirmationButtonContainer, { marginTop: 15 }]}>
                   <Pressable
                     style={({ pressed }) => selectedAction === null ? theme.modalSettingsConfirmationButtonDisabled : (pressed) ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
                     onPress={() => {
@@ -541,6 +533,27 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                     </Text>
                   </Pressable>
                 </View>
+                {
+                  props.modalType === "edit" ? (
+                    <Pressable
+                      style={({ pressed }) => [(pressed) ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton, { marginVertical: 8 }]}
+                      onPress={() => {
+                        props.delete({
+                          presses: props.action.presses,
+                          behavior: buttonBehaviorMap[selectedAction!] as BehaviorEnum,
+                          behaviorHumanReadable: selectedAction
+                        });
+                        props.close();
+                      }}
+                    >
+                      <IonIcons name={"trash-outline"} color={colorTheme.headerTextColor} size={17} />
+                      <Text style={[theme.modalSettingsConfirmationButtonText, { fontSize: 17 }]}>
+                        Delete Action
+                      </Text>
+                    </Pressable>
+                  ) : <></>
+
+                }
               </View>
             )
           }
