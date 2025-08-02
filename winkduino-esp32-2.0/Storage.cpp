@@ -17,7 +17,6 @@ void Storage::getFromStorage() {
   for (int i = 0; i < 10; i++) {
     snprintf(key, sizeof(key), "presses-%d", i); 
     int val = storage.getUInt(key, customButtonPressArrayDefaults[i]);
-    Serial.printf("Value Arr Storage @ %d: %d\n", i, val);
     customButtonPressArray[i] = val;
   }
 
