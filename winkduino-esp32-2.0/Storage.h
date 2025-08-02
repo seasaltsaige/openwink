@@ -12,7 +12,7 @@ public:
 
   static void setCustomOEMButtonStatus(bool status);
   static void setHeadlightMulti(double multi);
-  static void setCustomButtonPressArrayDefaults(int defaults[10]);
   static void setDelay(int delay);
   static void setMotionTiming(int time);
+  static void setCustomButtonPressArray(int index, int value);
 };

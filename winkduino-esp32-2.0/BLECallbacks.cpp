@@ -33,13 +33,8 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer) {
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
-
-  Storage::setCustomButtonPressArrayDefaults(customButtonPressArray);
-  Storage::setDelay(maxTimeBetween_ms);
-
   WinkduinoBLE::setDeviceConnected(false);
   awakeTime_ms = 0;
-  // WinkduinoBLE::
   WinkduinoBLE::start();
 }
 
@@ -251,43 +246,34 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   int parsedValue = stoi(value);
   // Updating maxTime
   if (value.length() > 1) {
-    // int newVal = stoi(value);
-    Serial.printf("newVal: %d\n", parsedValue);
     maxTimeBetween_ms = parsedValue;
+    Storage::setDelay(maxTimeBetween_ms);
   } else {
     if (customButtonPressUpdateState == 0) {
-      // int index = stoi(value);
-      Serial.printf("INDEX: %d\n", parsedValue);
       if (parsedValue > 9)
         return;
       indexToUpdate = parsedValue;
       customButtonPressUpdateState = 1;
 
     } else {
-      // int updateValue = stoi(value);
-      Serial.printf("UPDATEVAL: %d\n", parsedValue);
       customButtonPressArray[indexToUpdate] = parsedValue;
       customButtonPressUpdateState = 0;
+
+      Storage::setCustomButtonPressArray(indexToUpdate, parsedValue);
 
       if (parsedValue == 0) {
         int maxIndexNotZero = 0;
         for (int i = 0; i < 10; i++) {
           if (customButtonPressArray[i] == 0) {
             maxIndexNotZero = i;
-            // printf("REACHED 0 VALUE: %d\n", i);
             break;
           }
         }
 
         for (int i = maxIndexNotZero; i < 9; i++) {
           customButtonPressArray[i] = customButtonPressArray[i + 1];
-          printf("Current: %d   -   Update: %d   -   Index: %d\n", customButtonPressArray[i], customButtonPressArray[i + 1], i);
+          Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
         }
-      }
-
-
-      for (int i = 0; i < 10; i++) {
-        Serial.printf("Current: %d   -   Index: %d\n", customButtonPressArray[i], i);
       }
     }
   }

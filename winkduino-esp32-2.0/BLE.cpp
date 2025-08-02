@@ -142,7 +142,6 @@ void WinkduinoBLE::start() {
       printf("Started advertising\n");
       WinkduinoBLE::updateHeadlightChars();
       WinkduinoBLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
-      Serial.printf("Services: %s\n%s\n%s", WINK_SERVICE_UUID, OTA_SERVICE_UUID, MODULE_SETTINGS_SERVICE_UUID);
     } else
       printf("Failed to start advertising\n");
   } else
