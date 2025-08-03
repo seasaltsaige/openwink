@@ -58,15 +58,17 @@ export function ModuleInfo() {
   })).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   // TEMP: for testing until actual custom commands are implemented
-  // const [customCommands, setCustomCommands] = useState([
-  //   { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  //   { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  //   { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  // ] as CommandOutput[]);
-  const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
+  const [customCommands, setCustomCommands] = useState([
+    { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+    { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+    { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+  ] as CommandOutput[]);
+  // const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
+
+
   const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
     ...state,
     [action.name]: !state[action.name],
@@ -83,10 +85,10 @@ export function ModuleInfo() {
         setRawButtonActions(actions);
       else setRawButtonActions([]);
 
-      const commands = await CustomCommandStore.getAll();
-      if (commands)
-        setCustomCommands(commands);
-      else setCustomCommands([]);
+      // const commands = await CustomCommandStore.getAll();
+      // if (commands)
+      //   setCustomCommands(commands);
+      // else setCustomCommands([]);
     })();
   });
 
@@ -131,78 +133,36 @@ export function ModuleInfo() {
       </View>
 
 
-      <ScrollView contentContainerStyle={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        width: "100%",
-        rowGap: 15,
-        // height: "%",
-      }}>
-
+      <ScrollView contentContainerStyle={theme.infoContainer}>
 
         {
           ([
             ["Device Info", deviceInfo],
             ["Device Settings", deviceSettings],
-            // ["Button Quick Actions"]
           ] as const).map(val => (
-            <View style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "flex-start",
 
-              // backgroundColor: "pink",
-              rowGap: 5
-            }}
+            <View
+              style={theme.infoBoxOuter}
               key={val[0]}
             >
-              <Text style={{
-                color: colorTheme.headerTextColor,
-                fontFamily: "IBMPlexSans_700Bold",
-                fontSize: 19,
-                textAlign: "left",
-                minWidth: "100%",
-              }}>
+              <Text style={theme.infoBoxOuterText}>
                 {val[0]}
               </Text>
 
-              <View style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                width: "100%",
-                backgroundColor: colorTheme.backgroundSecondaryColor,
-                borderRadius: 5,
-                padding: 15,
-                paddingVertical: 8,
-                rowGap: 4
-              }}>
-
-
-
+              <View style={theme.infoBoxInner}>
                 {
                   Object.keys(val[1]).map((key) => (
-                    <View style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignContent: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}
+                    <View
+                      style={theme.infoBoxInnerContentView}
                       key={key}
                     >
 
 
-                      <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
                         {key}
                       </Text>
 
-                      <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+                      <Text style={theme.infoBoxInnerContentText}>
                         {
                           //@ts-ignore
                           val[1][key]
@@ -217,76 +177,42 @@ export function ModuleInfo() {
           ))
         }
 
-        <View style={{
-          display: "flex",
-          flexDirection: "column",
-          width: "100%",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          rowGap: 5
-        }}
+        <View
+          style={theme.infoBoxOuter}
           key={"Button Quick Actions"}
         >
 
-          <Text style={{
-            color: colorTheme.headerTextColor,
-            fontFamily: "IBMPlexSans_700Bold",
-            fontSize: 19,
-            textAlign: "left",
-            minWidth: "100%",
-          }}>
+          <Text
+            style={theme.infoBoxOuterText}>
             Button Quick Actions
           </Text>
 
-          <View style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            width: "100%",
-            backgroundColor: colorTheme.backgroundSecondaryColor,
-            borderRadius: 5,
-            padding: 15,
-            paddingVertical: 8,
-            rowGap: 4
-          }}>
-            <View style={{
-              display: "flex",
-              flexDirection: "row",
-              alignContent: "center",
-              justifyContent: "space-between",
-              width: "100%",
-            }}
+          <View style={theme.infoBoxInner}>
+            <View
+              style={theme.infoBoxInnerContentView}
               key={"Single Press"}
             >
-              <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+              <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
                 Single Press
               </Text>
 
-              <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+              <Text style={theme.infoBoxInnerContentText}>
                 Default Behavior
               </Text>
             </View>
 
             {
               buttonActions.map(action => (
-                <View style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignContent: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
+                <View
+                  style={theme.infoBoxInnerContentView}
                   key={countToEnglish[action.presses]}
                 >
-                  <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+                  <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
                     {countToEnglish[action.presses]}
                   </Text>
 
-                  <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
-                    {
-                      action.behaviorHumanReadable
-                    }
+                  <Text style={theme.infoBoxInnerContentText}>
+                    {action.behaviorHumanReadable}
                   </Text>
                 </View>
               ))
@@ -296,58 +222,30 @@ export function ModuleInfo() {
 
         {
           customCommands.length > 0 ?
-            <View style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              rowGap: 5
-            }}
+            <View
+              style={theme.infoBoxOuter}
               key={"Custom Command Presets"}
             >
 
-              <Text style={{
-                color: colorTheme.headerTextColor,
-                fontFamily: "IBMPlexSans_700Bold",
-                fontSize: 19,
-                textAlign: "left",
-                minWidth: "100%",
-              }}>
+              <Text style={theme.infoBoxOuterText}>
                 Custom Command Presets
               </Text>
 
-              <View style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                width: "100%",
-                backgroundColor: colorTheme.backgroundSecondaryColor,
-                borderRadius: 5,
-                padding: 15,
-                paddingVertical: 8,
-                rowGap: 4
-              }}>
+              <View style={theme.infoBoxInner}>
 
                 {
                   customCommands.map(command => (
-                    <View style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignContent: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                    }}
+                    <View
+                      style={theme.infoBoxInnerContentView}
                       key={command.name}
                     >
-                      <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "40%", height: "auto" }}>
+                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6, width: "40%", height: "auto", }]}>
                         {command.name}
                       </Text>
 
 
                       <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 8, }}>
-                        <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "85%" }}>
+                        <Text style={[theme.infoBoxInnerContentText, { width: "85%" }]}>
                           {
                             command.command ? (
                               customCommandsExpandedState[command.name] ? (

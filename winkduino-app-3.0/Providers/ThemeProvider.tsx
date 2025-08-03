@@ -9,6 +9,12 @@ import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 
 interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   container: ViewStyle;
+  infoContainer: ViewStyle;
+  infoBoxOuter: ViewStyle;
+  infoBoxOuterText: TextStyle;
+  infoBoxInner: ViewStyle;
+  infoBoxInnerContentView: ViewStyle;
+  infoBoxInnerContentText: TextStyle;
 
   headlightStatusContainer: ViewStyle;
   headlightStatusSideContainer: ViewStyle;
@@ -158,6 +164,54 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           rowGap: 18,
         },
 
+        infoContainer: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+          rowGap: 15,
+        },
+        infoBoxOuter: {
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          rowGap: 5
+        },
+        infoBoxOuterText: {
+          color: colorTheme.headerTextColor,
+          fontFamily: "IBMPlexSans_700Bold",
+          fontSize: 19,
+          textAlign: "left",
+          minWidth: "100%",
+        },
+        infoBoxInner: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          width: "100%",
+          backgroundColor: themeColors.backgroundSecondaryColor,
+          borderRadius: 5,
+          padding: 15,
+          paddingVertical: 8,
+          rowGap: 4
+        },
+        infoBoxInnerContentView: {
+          display: "flex",
+          flexDirection: "row",
+          alignContent: "center",
+          justifyContent: "space-between",
+          width: "100%",
+        },
+        infoBoxInnerContentText: {
+          color: themeColors.textColor,
+          opacity: 1,
+          fontFamily: "IBMPlexSans_500Medium",
+          fontSize: 17
+        },
         headlightStatusContainer: {
           width: "100%",
           flexDirection: "row",
