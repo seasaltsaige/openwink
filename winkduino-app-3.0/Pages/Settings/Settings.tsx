@@ -78,6 +78,9 @@ export function Settings() {
 
         </View>
 
+
+        {/* TODO: Credits footer */}
+
       </View >
     </>
   );
