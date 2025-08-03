@@ -1,7 +1,7 @@
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { BehaviorEnum, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
@@ -40,14 +40,19 @@ export function ModuleInfo() {
   const [buttonActions, setButtonActions] = useState([] as CustomButtonAction[]);
 
   const [customCommands, setCustomCommands] = useState([
-    { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
     { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
     { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
     { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
     { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
     { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-
   ] as CommandOutput[]);
+
+  const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => {
+    state[action.name] = !state[action.name];
+    return state;
+  }, Object.assign({}, ...customCommands.map(command => ({ [command.name]: false }))));
+
 
   useEffect(() => {
     setDeviceInfo({
@@ -155,7 +160,6 @@ export function ModuleInfo() {
                 fontSize: 19,
                 textAlign: "left",
                 minWidth: "100%",
-                // backgroundColor: "orange",
               }}>
                 {val[0]}
               </Text>
@@ -317,7 +321,7 @@ export function ModuleInfo() {
                 borderRadius: 5,
                 padding: 15,
                 paddingVertical: 8,
-                rowGap: 10
+                rowGap: 4
               }}>
 
                 {
@@ -335,11 +339,42 @@ export function ModuleInfo() {
                         {command.name}
                       </Text>
 
-                      <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "55%", height: "auto" }}>
+
+                      <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 8, }}>
+                        <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "85%" }}>
+                          {
+                            command.command ? (
+                              customCommandsExpandedState[command.name] ? (
+                                command.command.map(c => (
+                                  c.delay ?
+                                    `${c.delay} ms Delay` :
+                                    DefaultCommandValueEnglish[c.transmitValue! - 1]
+                                )).join(" → ")
+                              ) : (
+                                command.command.map(c => (
+                                  c.delay ?
+                                    `${c.delay} ms Delay` :
+                                    DefaultCommandValueEnglish[c.transmitValue! - 1]
+                                )).slice(0, 2).join(" → ").slice(0, 16) + "..."
+                              )
+                            ) : "Unknown Error Getting Command"
+                          }
+                        </Text>
                         {
-                          command.command ? command.command.map(c => c.delay ? `${c.delay} ms Delay` : DefaultCommandValueEnglish[c.transmitValue! - 1]).join(" → ") : "Unknown Error Getting Command"
+                          command.command ? (
+                            <Pressable
+                              style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
+                              onPress={() => dispatchCustomCommands({ name: command.name })}
+                              hitSlop={5}
+                            >
+                              {
+                                ({ pressed }) =>
+                                  <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} name={customCommandsExpandedState[command.name] ? "chevron-up" : "chevron-down"} />
+                              }
+                            </Pressable>
+                          ) : <></>
                         }
-                      </Text>
+                      </View>
                     </View>
                   ))
                 }

@@ -15,17 +15,17 @@ const moduleSettingsData: Array<{
     {
       pageName: "Wave Delay Settings",
       navigationName: "WaveDelaySettings",
-      pageSymbol: "settings-outline",
+      pageSymbol: "radio-outline",
     },
     {
       pageName: "Sleepy Eye Settings",
       navigationName: "SleepyEyeSettings",
-      pageSymbol: "settings-outline"
+      pageSymbol: "eye-outline"
     },
     {
       pageName: "Set Up Custom Wink Buton",
       navigationName: "CustomWinkButton",
-      pageSymbol: "options-outline",
+      pageSymbol: "speedometer-outline",
     },
   ]
 
