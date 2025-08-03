@@ -71,7 +71,7 @@ export function AppInfo() {
         </Text>
       </View> */}
 
-      <View style={theme.infoFooterContainer}>
+      {/* <View style={theme.infoFooterContainer}>
 
         <Text style={theme.infoFooterText}>
           Application developed and maintained by
@@ -92,7 +92,7 @@ export function AppInfo() {
           }
 
         </Pressable>
-      </View>
+      </View> */}
 
     </View >
   )
