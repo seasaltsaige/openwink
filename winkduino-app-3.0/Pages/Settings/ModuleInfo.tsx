@@ -4,8 +4,8 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
-import { BehaviorEnum, countToEnglish } from "../../helper/Constants";
-import { buttonBehaviorMap, ButtonBehaviors, CustomOEMButtonStore, Presses } from "../../Storage";
+import { BehaviorEnum, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
+import { buttonBehaviorMap, ButtonBehaviors, CommandOutput, CustomOEMButtonStore, Presses } from "../../Storage";
 
 
 
@@ -39,8 +39,15 @@ export function ModuleInfo() {
 
   const [buttonActions, setButtonActions] = useState([] as CustomButtonAction[]);
 
-  const [customCommands, setCustomCommands] = useState([]);
+  const [customCommands, setCustomCommands] = useState([
+    { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+    { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+    { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+    { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
 
+  ] as CommandOutput[]);
 
   useEffect(() => {
     setDeviceInfo({
@@ -120,6 +127,7 @@ export function ModuleInfo() {
         justifyContent: "flex-start",
         width: "100%",
         rowGap: 15,
+        // height: "%",
       }}>
 
 
@@ -309,11 +317,11 @@ export function ModuleInfo() {
                 borderRadius: 5,
                 padding: 15,
                 paddingVertical: 8,
-                rowGap: 4
+                rowGap: 10
               }}>
 
                 {
-                  buttonActions.map(action => (
+                  customCommands.map(command => (
                     <View style={{
                       display: "flex",
                       flexDirection: "row",
@@ -321,15 +329,15 @@ export function ModuleInfo() {
                       justifyContent: "space-between",
                       width: "100%",
                     }}
-                      key={countToEnglish[action.presses]}
+                      key={command.name}
                     >
-                      <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
-                        {countToEnglish[action.presses]}
+                      <Text style={{ color: colorTheme.textColor, opacity: 0.6, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "40%", height: "auto" }}>
+                        {command.name}
                       </Text>
 
-                      <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17 }}>
+                      <Text style={{ color: colorTheme.textColor, opacity: 1, fontFamily: "IBMPlexSans_500Medium", fontSize: 17, width: "55%", height: "auto" }}>
                         {
-                          action.behaviorHumanReadable
+                          command.command ? command.command.map(c => c.delay ? `${c.delay} ms Delay` : DefaultCommandValueEnglish[c.transmitValue! - 1]).join(" → ") : "Unknown Error Getting Command"
                         }
                       </Text>
                     </View>
@@ -349,7 +357,7 @@ export function ModuleInfo() {
 
 
 
-      <View style={[theme.infoFooterContainer, { height: 60, flexDirection: "column", rowGap: 5 }]}>
+      {/* <View style={[theme.infoFooterContainer, { height: 60, flexDirection: "column", rowGap: 5 }]}>
         <Pressable
           style={({ pressed }) => [pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer, { marginBottom: 8 }]}
           onPress={() => {
@@ -364,9 +372,9 @@ export function ModuleInfo() {
           </View>
 
           <IonIcons name="cloud-download-outline" style={theme.mainLongButtonPressableIcon} size={20} color={colorTheme.textColor} />
-        </Pressable>
+        </Pressable> */}
 
-        {/* <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
+      {/* <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
           <Text style={theme.infoFooterText}>
             Module hardware developed and maintained by
           </Text>
@@ -405,7 +413,7 @@ export function ModuleInfo() {
 
           </Pressable>
         </View> */}
-      </View>
+      {/* </View> */}
 
     </View >
   )
