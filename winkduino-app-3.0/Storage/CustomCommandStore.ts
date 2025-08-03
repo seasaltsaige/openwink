@@ -27,7 +27,6 @@ export abstract class CustomCommandStore {
     }
   }
 
-
   static async getAll() {
     try {
       const commandKeys = (await AsyncStorage.getAllKeys()).filter(key => key.startsWith(COMMAND_STORE_KEY));
@@ -59,6 +58,7 @@ export abstract class CustomCommandStore {
       return null;
     }
   }
+
   static async deleteCommand(name: string) {
     try {
       await AsyncStorage.removeItem(`${COMMAND_STORE_KEY}_${name}`);
@@ -66,6 +66,13 @@ export abstract class CustomCommandStore {
       return null;
     }
   }
-  static async deleteAll() { }
 
+  static async deleteAll() {
+    try {
+      const allCommandKeys = (await AsyncStorage.getAllKeys()).filter(key => key.startsWith(COMMAND_STORE_KEY));
+      await AsyncStorage.multiRemove(allCommandKeys);
+    } catch (err) {
+      return null;
+    }
+  }
 }
