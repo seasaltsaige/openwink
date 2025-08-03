@@ -62,7 +62,7 @@ export function ModuleSettings() {
 
   const deleteStoredModuleData = async () => {
     await AutoConnectStore.disable();
-    await CustomCommandStore.deleteAllCommands();
+    await CustomCommandStore.deleteAll();
     await CustomOEMButtonStore.disable();
     await CustomOEMButtonStore.removeAll();
     await DeviceMACStore.forgetMAC();
