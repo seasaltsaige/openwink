@@ -39,6 +39,8 @@ export function ModuleInfo() {
 
   const [buttonActions, setButtonActions] = useState([] as CustomButtonAction[]);
 
+
+  // TEMP: until actual custom commands are implemented
   const [customCommands, setCustomCommands] = useState([
     { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
     { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
@@ -48,10 +50,13 @@ export function ModuleInfo() {
     { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
   ] as CommandOutput[]);
 
-  const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => {
-    state[action.name] = !state[action.name];
-    return state;
-  }, Object.assign({}, ...customCommands.map(command => ({ [command.name]: false }))));
+  const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
+    ...state,
+    [action.name]: !state[action.name],
+  }), customCommands.reduce((accum, curr) => {
+    accum[curr.name] = false
+    return accum;
+  }, {} as { [key: string]: boolean }));
 
 
   useEffect(() => {

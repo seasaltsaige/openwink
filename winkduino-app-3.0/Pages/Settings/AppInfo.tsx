@@ -4,6 +4,7 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import * as Application from "expo-application";
 
 export function AppInfo() {
 
