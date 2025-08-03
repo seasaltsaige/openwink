@@ -175,7 +175,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         headlightStatusText: {
           color: themeColors.textColor,
           fontSize: 18,
-          fontFamily: "SpaceGrotesk",
+          fontFamily: "IBMPlexSans_400Regular",
           marginBottom: 4,
         },
         headlightStatusBarUnderlay: {
@@ -192,7 +192,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         text: {
           color: themeColors.textColor,
-          fontFamily: "SpaceGroteskLight",
+          fontFamily: "IBMPlexSans_300Light",
           fontSize: 16,
           textAlign: "center",
         },
@@ -216,13 +216,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           fontSize: 30,
           color: themeColors.headerTextColor,
           marginRight: 10,
-          fontFamily: "SpaceGroteskBold"
+          fontFamily: "IBMPlexSans_700Bold"
         },
         headerText: {
           fontSize: 40,
           color: themeColors.headerTextColor,
           width: "100%",
-          fontFamily: "SpaceGroteskBold"
+          fontFamily: "IBMPlexSans_700Bold"
         },
         contentContainer: {
           display: "flex",
@@ -257,7 +257,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         homeScreenConnectionButtonText: {
           color: themeColors.headerTextColor,
           fontSize: 15,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         homeScreenButtonsContainer: {
           display: "flex",
@@ -270,7 +270,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           alignSelf: "flex-start",
           textAlign: "left",
           color: themeColors.headerTextColor,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
           fontSize: 19
         },
         mainLongButtonPressableContainer: {
@@ -307,7 +307,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.headerTextColor,
           fontWeight: "600",
           fontSize: 17,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         mainLongButtonPressableIcon: { marginRight: 10 },
         homeUpdatesButton: {
@@ -335,7 +335,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         homeUpdatesText: {
           fontSize: 15,
           color: themeColors.textColor,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         backButtonContainer: {
           display: "flex",
@@ -349,12 +349,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           color: themeColors.headerTextColor,
           fontWeight: "500",
           fontSize: 22,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         backButtonContainerTextPressed: {
           color: themeColors.buttonColor,
           fontSize: 22,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         backButtonContainerIcon: { marginTop: 4 },
         settingsDropdownContainer: {
@@ -399,13 +399,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           fontSize: 20,
           textAlign: "center",
           color: themeColors.headerTextColor,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
         },
         modalSettingsConfirmationText: {
           fontSize: 16,
           textAlign: "center",
           color: themeColors.textColor,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
         },
         modalSettingsConfirmationButtonContainer: {
           width: "100%",
@@ -453,12 +453,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         modalSettingsConfirmationButtonText: {
           color: themeColors.textColor,
           fontSize: 20,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
           marginBottom: 2,
         },
         subSettingHeaderText: {
           fontSize: 25,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
           color: themeColors.headerTextColor,
           width: "auto",
           marginRight: 10,
@@ -486,7 +486,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         tooltipContainerText: {
           color: themeColors.textColor,
           textAlign: "center",
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
           padding: 5,
         },
         tooltipContainerView: {
@@ -498,7 +498,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         tooltipText: {
           color: themeColors.headerTextColor,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
           fontSize: 22,
         },
         tooltipIcon: { marginTop: 6 },
@@ -516,7 +516,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         rangeSliderLowText: {
           color: themeColors.headerTextColor,
-          fontFamily: "SpaceGrotesk",
+          fontFamily: "IBMPlexSans_700Bold",
           fontSize: 15,
           textAlign: "center",
           marginLeft: -15,
@@ -564,7 +564,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         rangeSliderSubtext: {
           fontSize: 15,
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
           color: themeColors.headerTextColor
         },
         rangeSliderButtonsView: {
@@ -616,7 +616,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         rangeSliderButtonsText: {
           color: themeColors.textColor,
           fontSize: 17,
-          fontFamily: "SpaceGroteskMedium"
+          fontFamily: "IBMPlexSans_500Medium"
         },
         platformPressableView: {
           flex: 1,
@@ -656,7 +656,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         },
         bottomTabsPillFocusedText: {
           color: themeColors.buttonColor,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
           fontSize: 16,
         },
         waveTextEntry: {
@@ -684,7 +684,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           width: "100%",
           marginLeft: 15,
           fontSize: 25,
-          fontFamily: "SpaceGroteskBold"
+          fontFamily: "IBMPlexSans_700Bold"
         },
         commandRowContainer: {
           display: "flex",
@@ -710,7 +710,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         commandButtonText: {
           fontSize: 18,
           color: themeColors.buttonTextColor,
-          fontFamily: "SpaceGroteskMedium"
+          fontFamily: "IBMPlexSans_500Medium"
           // fontWeight: 500,
         },
         infoFooterContainer: {
@@ -732,7 +732,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          fontFamily: "SpaceGrotesk",
+          fontFamily: "IBMPlexSans_700Bold",
         },
         modalContentContainer: {
           backgroundColor: themeColors.backgroundPrimaryColor,
@@ -770,10 +770,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         modalHeaderText: {
           color: themeColors.headerTextColor,
           fontSize: 16.5,
-          fontFamily: "SpaceGroteskBold",
+          fontFamily: "IBMPlexSans_700Bold",
         },
         modalViewText: {
-          fontFamily: "SpaceGrotesk",
+          fontFamily: "IBMPlexSans_700Bold",
           fontSize: 17,
           color: themeColors.textColor,
           textAlign: "center",
@@ -795,7 +795,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           columnGap: 8
         },
         buttonActionPressableText: {
-          fontFamily: "SpaceGroteskMedium",
+          fontFamily: "IBMPlexSans_500Medium",
           fontSize: 14,
         }
       })

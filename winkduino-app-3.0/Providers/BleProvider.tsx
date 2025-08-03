@@ -103,6 +103,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (waveMulti)
         setWaveDelayMulti(waveMulti);
 
+      const firmwareVer = await FirmwareStore.getFirmwareVersion();
+      if (firmwareVer)
+        setFirmwareVersion(firmwareVer);
+
 
     })();
 
@@ -242,6 +246,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const firmware = await connection?.readCharacteristicForService(OTA_SERVICE_UUID, FIRMWARE_UUID);
+    console.log(firmware)
     if (firmware.value) {
       setFirmwareVersion(base64.decode(firmware.value));
       await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
