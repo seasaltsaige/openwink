@@ -12,13 +12,8 @@ const settingsData: Array<{
   navigationName: string;
 }> = [
     {
-      pageName: "App Info",
-      navigationName: "AppInfo",
-      pageSymbol: "information-circle-outline",
-    },
-    {
-      pageName: "Module Info",
-      navigationName: "ModuleInfo",
+      pageName: "Information",
+      navigationName: "Info",
       pageSymbol: "information-circle-outline"
     },
     {

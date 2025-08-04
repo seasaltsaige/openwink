@@ -8,8 +8,7 @@ export * from "./HowToUse";
 
 
 export * from "./Settings/Settings";
-export * from "./Settings/AppInfo";
-export * from "./Settings/ModuleInfo";
+export * from "./Settings/Information";
 export * from "./Settings/AppTheme";
 export * from "./Settings/TermsOfUse";
 

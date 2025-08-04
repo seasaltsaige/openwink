@@ -6,6 +6,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { BehaviorEnum, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
 import { buttonBehaviorMap, ButtonBehaviors, CommandOutput, CustomCommandStore, CustomOEMButtonStore, Presses } from "../../Storage";
+import * as Application from "expo-application";
 
 
 
@@ -16,7 +17,7 @@ type CustomButtonAction = {
 };
 
 
-export function ModuleInfo() {
+export function Information() {
 
   const { colorTheme, theme } = useColorTheme();
   const { mac, firmwareVersion, device, isScanning, isConnecting, leftStatus, rightStatus, waveDelayMulti, oemCustomButtonEnabled, autoConnectEnabled, buttonDelay } = useBLE();
@@ -38,6 +39,7 @@ export function ModuleInfo() {
   const deviceInfo = useMemo(() => ({
     "Module ID": mac,
     "Firmware Version": `v${firmwareVersion}`,
+    "App Version": `v${Application.nativeApplicationVersion}`,
     "Connection Status": connectionStatus(isScanning, isConnecting, !!device),
     "Left Headlight Status": headlightStatus(!!device, leftStatus),
     "Right Headlight Status": headlightStatus(!!device, rightStatus),
@@ -48,7 +50,7 @@ export function ModuleInfo() {
     "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
     "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(2)} ms`,
     "Press Interval": `${buttonDelay} ms`,
-  }), [autoConnectEnabled, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
+  }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
 
   const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors; }[]);
   const buttonActions = useMemo(() => rawButtonActions.map(action => ({
@@ -58,15 +60,15 @@ export function ModuleInfo() {
   })).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   // TEMP: for testing until actual custom commands are implemented
-  const [customCommands, setCustomCommands] = useState([
-    { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-    { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-    { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-    { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-    { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-    { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  ] as CommandOutput[]);
-  // const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
+  // const [customCommands, setCustomCommands] = useState([
+  //   { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+  //   { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+  //   { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+  //   { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+  //   { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
+  //   { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
+  // ] as CommandOutput[]);
+  const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
 
   const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
@@ -85,10 +87,10 @@ export function ModuleInfo() {
         setRawButtonActions(actions);
       else setRawButtonActions([]);
 
-      // const commands = await CustomCommandStore.getAll();
-      // if (commands)
-      //   setCustomCommands(commands);
-      // else setCustomCommands([]);
+      const commands = await CustomCommandStore.getAll();
+      if (commands)
+        setCustomCommands(commands);
+      else setCustomCommands([]);
     })();
   });
 
@@ -127,7 +129,7 @@ export function ModuleInfo() {
 
 
         <Text style={theme.subSettingHeaderText}>
-          Module Info
+          Information
         </Text>
 
       </View>

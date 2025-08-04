@@ -14,8 +14,7 @@ import {
   CustomCommand,
   Home,
   HowToUse,
-  AppInfo,
-  ModuleInfo,
+  Information,
   ModuleSettings,
   Settings,
   TermsOfUse,
@@ -146,8 +145,7 @@ function AppNavigator() {
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       <Stack.Screen name="Theme" component={AppTheme} />
-      <Stack.Screen name="AppInfo" component={AppInfo} />
-      <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
+      <Stack.Screen name="Info" component={Information} />
       <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
