@@ -145,8 +145,8 @@ export function Information() {
         {
           ([
             ["App Info", appInfo],
-            ["Device Info", deviceInfo],
-            ["Device Settings", deviceSettings],
+            ["Module Info", deviceInfo],
+            ["Module Settings", deviceSettings],
           ] as const).map(val => (
 
             <View
