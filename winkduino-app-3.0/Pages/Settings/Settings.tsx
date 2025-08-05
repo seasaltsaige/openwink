@@ -12,13 +12,8 @@ const settingsData: Array<{
   navigationName: string;
 }> = [
     {
-      pageName: "App Info",
-      navigationName: "AppInfo",
-      pageSymbol: "information-circle-outline",
-    },
-    {
-      pageName: "Module Info",
-      navigationName: "ModuleInfo",
+      pageName: "System Information",
+      navigationName: "Info",
       pageSymbol: "information-circle-outline"
     },
     {
@@ -27,12 +22,12 @@ const settingsData: Array<{
       pageSymbol: "build-outline"
     },
     {
-      pageName: "App Theme",
+      pageName: "Application Theme",
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
     {
-      pageName: "Terms Of Use",
+      pageName: "System Terms Of Use",
       navigationName: "TermsOfUse",
       pageSymbol: "document-text-outline",
     }
@@ -77,6 +72,9 @@ export function Settings() {
           }
 
         </View>
+
+
+        {/* TODO: Credits footer */}
 
       </View >
     </>

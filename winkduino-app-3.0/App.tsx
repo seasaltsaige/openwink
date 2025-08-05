@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
 import { useFonts } from "expo-font";
+import { IBMPlexSans_700Bold, IBMPlexSans_500Medium, IBMPlexSans_400Regular, IBMPlexSans_300Light } from "@expo-google-fonts/ibm-plex-sans";
+
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import {
@@ -12,8 +14,7 @@ import {
   CustomCommand,
   Home,
   HowToUse,
-  AppInfo,
-  ModuleInfo,
+  Information,
   ModuleSettings,
   Settings,
   TermsOfUse,
@@ -144,8 +145,7 @@ function AppNavigator() {
 
       <Stack.Screen name="MainTabs" component={BottomTabs} />
       <Stack.Screen name="Theme" component={AppTheme} />
-      <Stack.Screen name="AppInfo" component={AppInfo} />
-      <Stack.Screen name="ModuleInfo" component={ModuleInfo} />
+      <Stack.Screen name="Info" component={Information} />
       <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
@@ -165,12 +165,13 @@ function AppNavigator() {
 export default function App() {
 
   const [loaded, error] = useFonts({
-    "SpaceGroteskBold": require("./assets/fonts/SpaceGrotesk-Bold.ttf"),
-    "SpaceGroteskMedium": require("./assets/fonts/SpaceGrotesk-Medium.ttf"),
-    "SpaceGrotesk": require("./assets/fonts/SpaceGrotesk-Regular.ttf"),
-    "SpaceGroteskLight": require("./assets/fonts/SpaceGrotesk-Light.ttf"),
-    "InterMedium": require("./assets/fonts/Inter_18pt-Medium.ttf"),
+    IBMPlexSans_300Light,
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_700Bold,
   });
+
+  if (!loaded) return null;
 
   return (
     <NavigationContainer>

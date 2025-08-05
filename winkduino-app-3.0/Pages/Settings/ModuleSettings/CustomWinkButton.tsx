@@ -330,65 +330,61 @@ export function CustomWinkButton() {
 
           </View>
 
-          <ScrollView
-            contentContainerStyle={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              rowGap: 12,
-              overflow: "scroll",
-              width: "100%",
-              height: "111%",
-              maxHeight: "111%",
-              marginBottom: 10,
-            }}
-          >
+          <View style={{ height: "60%" }}>
+            <ScrollView
+              contentContainerStyle={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                rowGap: 12,
+              }}
+            >
 
-            {
-              actions.map((action) => (
-                <View style={theme.mainLongButtonPressableContainer} key={action.presses}>
-                  <View style={theme.mainLongButtonPressableView}>
-                    <Text style={[theme.mainLongButtonPressableText, { fontSize: 16 }]}>
-                      {countToEnglish[action.presses]}
-                    </Text>
+              {
+                actions.map((action) => (
+                  <View style={theme.mainLongButtonPressableContainer} key={action.presses}>
+                    <View style={theme.mainLongButtonPressableView}>
+                      <Text style={[theme.mainLongButtonPressableText, { fontSize: 16 }]}>
+                        {countToEnglish[action.presses]}
+                      </Text>
+                    </View>
+                    <View style={theme.buttonActionPressable}>
+                      <Pressable
+                        disabled={(!device || !oemCustomButtonEnabled)}
+                        onPress={() => {
+                          setModalType("edit");
+                          setAction(action);
+                          setModalVisible(true);
+                        }}
+                        hitSlop={5}
+                      // key={action.behavior}
+                      >
+                        {
+                          ({ pressed }) => (
+                            <View style={theme.buttonActionPressableView}>
+                              <Text style={[
+                                theme.buttonActionPressableText,
+                                {
+                                  color: (!device || !oemCustomButtonEnabled) ?
+                                    colorTheme.disabledButtonColor :
+                                    pressed ? colorTheme.buttonColor :
+                                      colorTheme.textColor
+                                }]}>
+                                Edit
+                              </Text>
+                              <IonIcons color={(!device || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
+
+                            </View>
+                          )
+                        }
+                      </Pressable>
+                    </View>
                   </View>
-                  <View style={theme.buttonActionPressable}>
-                    <Pressable
-                      disabled={(!device || !oemCustomButtonEnabled)}
-                      onPress={() => {
-                        setModalType("edit");
-                        setAction(action);
-                        setModalVisible(true);
-                      }}
-                      hitSlop={5}
-                    // key={action.behavior}
-                    >
-                      {
-                        ({ pressed }) => (
-                          <View style={theme.buttonActionPressableView}>
-                            <Text style={[
-                              theme.buttonActionPressableText,
-                              {
-                                color: (!device || !oemCustomButtonEnabled) ?
-                                  colorTheme.disabledButtonColor :
-                                  pressed ? colorTheme.buttonColor :
-                                    colorTheme.textColor
-                              }]}>
-                              Edit
-                            </Text>
-                            <IonIcons color={(!device || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
-
-                          </View>
-                        )
-                      }
-                    </Pressable>
-                  </View>
-                </View>
-              ))
-            }
-          </ScrollView>
-
+                ))
+              }
+            </ScrollView>
+          </View>
         </View>
       </View >
 
@@ -396,7 +392,6 @@ export function CustomWinkButton() {
       <CustomButtonActionModal
         visible={modalVisible}
         close={() => setModalVisible(false)}
-        // createAction={() => { }}
         modalType={modalType}
         update={updateButtonAction}
         delete={deleteButtonAction}

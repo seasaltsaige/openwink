@@ -58,6 +58,8 @@ export enum DefaultCommandValue {
   RIGHT_WAVE
 }
 
+export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", "Left Up", "Left Down", "Left Wink", "Right Up", "Right Down", "Right Wink", "Left Wave", "Right Wave"] as const;
+
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {
   DEFAULT = 1,

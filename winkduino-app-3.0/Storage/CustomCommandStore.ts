@@ -1,67 +1,78 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DefaultCommandValue } from "../helper/Constants";
 
 export interface CommandInput {
-  isDelay: boolean;
   delay?: number;
-  transmitValue: number;
+  transmitValue?: DefaultCommandValue;
 }
 
 export interface CommandOutput {
   name: string;
-  command: string;
+  command?: CommandInput[];
 }
 
-export class CustomCommandStore {
+const COMMAND_STORE_KEY = "CUSTOM_COMMANDS_";
 
-  static async saveCommand(commandName: string, commandSequence: CommandInput[]) {
-    const existingCommand = await AsyncStorage.getItem(commandName);
-    if (existingCommand !== null) return false;
+export abstract class CustomCommandStore {
 
-    let commandString = "";
-    for (const part of commandSequence) {
-      if (part.isDelay)
-        commandString += `d${part.delay}-`;
-      else commandString += `${part.transmitValue}-`;
-    }
-    commandString = commandString.slice(0, commandString.length - 1);
+  static async saveCommand(name: string, command: CommandInput[]) {
     try {
-      await AsyncStorage.setItem(`cmd_${commandName}`, commandString)
-      return true;
+      const doesCommandExist = await AsyncStorage.getItem(`${COMMAND_STORE_KEY}_${name}`);
+      if (doesCommandExist) return false;
+
+      const commandString = command.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+      await AsyncStorage.setItem(`${COMMAND_STORE_KEY}_${name}`, commandString);
     } catch (err) {
-      return err;
+      return null;
     }
   }
 
-  static async getAllCommands() {
-    const allKeys = (await AsyncStorage.getAllKeys()).filter((v) => v.startsWith("cmd_"));
-    const commands: CommandOutput[] = [];
-    for (const key of allKeys) {
-      if (!key.startsWith("cmd_")) continue;
-      try {
-        const cmdVal = await AsyncStorage.getItem(key);
-        commands.push({ command: cmdVal!, name: key.slice(4, key.length) });
-      } catch (e) { };
-    }
-
-    return commands;
-  }
-
-  static async deleteCommand(commandName: string) {
+  static async getAll() {
     try {
-      await AsyncStorage.removeItem(`cmd_${commandName}`);
-      return true;
+      const commandKeys = (await AsyncStorage.getAllKeys()).filter(key => key.startsWith(COMMAND_STORE_KEY));
+      const allCommands: CommandOutput[] = [];
+      for (const commandName of commandKeys) {
+        const commandNameParts = commandName.split("_");
+        allCommands.push({ name: commandNameParts.slice(2, commandNameParts.length - 1).join(" "), command: [] });
+
+        const commandFromStorage = await AsyncStorage.getItem(commandName);
+        const index = allCommands.length - 1;
+        if (!commandFromStorage) {
+          allCommands[index].command = undefined;
+          continue;
+        } else {
+          const commandParts = commandFromStorage.split("-");
+          for (const cmdSection of commandParts) {
+            if (cmdSection.startsWith("d"))
+              allCommands[index].command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
+            else
+              allCommands[index].command?.push({ transmitValue: parseInt(cmdSection) });
+          }
+        }
+
+      }
+
+      return allCommands;
+
     } catch (err) {
-      return err;
+      return null;
     }
   }
 
-  static async deleteAllCommands() {
+  static async deleteCommand(name: string) {
     try {
-      const allCmdKeys = (await AsyncStorage.getAllKeys()).filter((v) => v.startsWith("cmd_"));
-      await AsyncStorage.multiRemove(allCmdKeys);
+      await AsyncStorage.removeItem(`${COMMAND_STORE_KEY}_${name}`);
     } catch (err) {
-      return err;
+      return null;
     }
   }
 
+  static async deleteAll() {
+    try {
+      const allCommandKeys = (await AsyncStorage.getAllKeys()).filter(key => key.startsWith(COMMAND_STORE_KEY));
+      await AsyncStorage.multiRemove(allCommandKeys);
+    } catch (err) {
+      return null;
+    }
+  }
 }

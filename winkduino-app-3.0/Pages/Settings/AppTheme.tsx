@@ -65,30 +65,32 @@ export function AppTheme() {
       </View>
 
 
-      {
-        Object.keys(ColorTheme.themeNames).map((val, i) => (
+      <View style={theme.homeScreenButtonsContainer}>
+        {
+          Object.keys(ColorTheme.themeNames).map((val, i) => (
 
-          <Pressable
-            style={({ pressed }) => [(pressed || val === currentTheme) ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer, { backgroundColor: (pressed || val === currentTheme) ? ColorTheme[val as keyof typeof ColorTheme.themeNames].buttonColor : colorTheme.backgroundSecondaryColor }]}
-            key={i}
-            onPress={async () => {
-              setCurrentTheme(val as keyof typeof ColorTheme.themeNames);
-              await setTheme(val as keyof typeof ColorTheme.themeNames);
-            }}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <Text style={theme.mainLongButtonPressableText}>
-                {
-                  ColorTheme.themeNames[val as keyof typeof ColorTheme.themeNames]
-                }
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name={val === currentTheme ? "checkmark-circle" : "ellipse-outline"} size={20} color={colorTheme.headerTextColor} />
+            <Pressable
+              style={({ pressed }) => [(pressed || val === currentTheme) ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer, { backgroundColor: (pressed || val === currentTheme) ? ColorTheme[val as keyof typeof ColorTheme.themeNames].buttonColor : colorTheme.backgroundSecondaryColor }]}
+              key={i}
+              onPress={async () => {
+                setCurrentTheme(val as keyof typeof ColorTheme.themeNames);
+                await setTheme(val as keyof typeof ColorTheme.themeNames);
+              }}
+            >
+              <View style={theme.mainLongButtonPressableView}>
+                <Text style={theme.mainLongButtonPressableText}>
+                  {
+                    ColorTheme.themeNames[val as keyof typeof ColorTheme.themeNames]
+                  }
+                </Text>
+              </View>
+              <IonIcons style={theme.mainLongButtonPressableIcon} name={val === currentTheme ? "checkmark-circle" : "ellipse-outline"} size={20} color={colorTheme.headerTextColor} />
 
-          </Pressable>
-        ))
-      }
+            </Pressable>
+          ))
+        }
 
+      </View>
       <Pressable
         style={({ pressed }) => [{ marginTop: 25 }, pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons]}
         onPress={() => reset()}
