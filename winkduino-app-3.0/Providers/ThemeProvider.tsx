@@ -207,7 +207,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           width: "100%",
         },
         infoBoxInnerContentText: {
-          color: themeColors.textColor,
+          color: themeColors.headerTextColor,
           opacity: 1,
           fontFamily: "IBMPlexSans_500Medium",
           fontSize: 17
