@@ -12,7 +12,7 @@ const settingsData: Array<{
   navigationName: string;
 }> = [
     {
-      pageName: "Information",
+      pageName: "System Information",
       navigationName: "Info",
       pageSymbol: "information-circle-outline"
     },
@@ -22,12 +22,12 @@ const settingsData: Array<{
       pageSymbol: "build-outline"
     },
     {
-      pageName: "App Theme",
+      pageName: "Application Theme",
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
     {
-      pageName: "Terms Of Use",
+      pageName: "System Terms Of Use",
       navigationName: "TermsOfUse",
       pageSymbol: "document-text-outline",
     }

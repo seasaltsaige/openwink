@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { useEffect, useMemo, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
-import { BehaviorEnum, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
+import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
 import { buttonBehaviorMap, ButtonBehaviors, CommandOutput, CustomCommandStore, CustomOEMButtonStore, Presses } from "../../Storage";
 import * as Application from "expo-application";
 
@@ -19,7 +19,7 @@ type CustomButtonAction = {
 
 export function Information() {
 
-  const { colorTheme, theme } = useColorTheme();
+  const { colorTheme, theme, themeName } = useColorTheme();
   const { mac, firmwareVersion, device, isScanning, isConnecting, leftStatus, rightStatus, waveDelayMulti, oemCustomButtonEnabled, autoConnectEnabled, buttonDelay } = useBLE();
 
 
@@ -36,10 +36,15 @@ export function Information() {
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
+  const appInfo = useMemo(() => ({
+    "App Version": `v${Application.nativeApplicationVersion}`,
+    "App Theme": ColorTheme.themeNames[themeName],
+  }), [Application.nativeApplicationVersion, themeName])
+
   const deviceInfo = useMemo(() => ({
     "Module ID": mac,
     "Firmware Version": `v${firmwareVersion}`,
-    "App Version": `v${Application.nativeApplicationVersion}`,
+
     "Connection Status": connectionStatus(isScanning, isConnecting, !!device),
     "Left Headlight Status": headlightStatus(!!device, leftStatus),
     "Right Headlight Status": headlightStatus(!!device, rightStatus),
@@ -129,7 +134,7 @@ export function Information() {
 
 
         <Text style={theme.subSettingHeaderText}>
-          Information
+          System Info
         </Text>
 
       </View>
@@ -139,6 +144,7 @@ export function Information() {
 
         {
           ([
+            ["App Info", appInfo],
             ["Device Info", deviceInfo],
             ["Device Settings", deviceSettings],
           ] as const).map(val => (
