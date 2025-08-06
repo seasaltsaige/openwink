@@ -2,20 +2,39 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useCallback, useMemo, useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
+import Tooltip from "react-native-walkthrough-tooltip";
+import VerticalSlider from "rn-vertical-slider-matyno";
 
 
 export function SleepyEyeSettings() {
 
   const { colorTheme, theme } = useColorTheme();
+  const { device, leftStatus, rightStatus, isScanning, isConnecting, setSleepyEyeValues } = useBLE();
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back, backHumanReadable } = route.params;
 
-  const { device, isScanning, isConnecting } = useBLE();
+  const [headlightToolTipVisible, setHeadlightToolTipVisible] = useState(false);
+
+  const [headlightPosition, dispatchHeadlightPosition] = useReducer((state: { left: number; right: number }, action: { side: "left" | "right"; percentage: number }) => {
+    if (action.side === "left")
+      return {
+        ...state,
+        left: action.percentage,
+      }
+    else
+      return {
+        ...state,
+        right: action.percentage,
+      }
+  }, { left: 50, right: 50 });
+
+  const disabledStatus =
+    (!device || ((leftStatus !== 1 && leftStatus !== 0) || (rightStatus !== 1 && rightStatus !== 0)));
 
   return (
     <View style={theme.container}>
@@ -58,7 +77,77 @@ export function SleepyEyeSettings() {
 
       </View>
 
-      <View>
+
+
+      <Tooltip
+        isVisible={headlightToolTipVisible}
+        closeOnBackgroundInteraction
+        closeOnContentInteraction
+        placement="bottom"
+        onClose={() => setHeadlightToolTipVisible(false)}
+        contentStyle={theme.tooltipContainer}
+        content={
+          <Text style={theme.tooltipContainerText}>
+
+            Position of the headlights when module is in Sleepy Eye Mode, based from the headlight lowered state.{"\n"}
+            25% = ~25% raised{"\n"}
+            75% = ~75% raised
+
+          </Text>
+        }
+      >
+
+        <View style={theme.tooltipContainerView}>
+          <Text
+            style={theme.tooltipText}
+          >
+            Headlight Position
+          </Text>
+          <Pressable
+            hitSlop={20}
+            onPress={() => setHeadlightToolTipVisible(true)}
+          >
+            {
+              ({ pressed }) => (
+                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+              )
+            }
+          </Pressable>
+        </View>
+      </Tooltip>
+
+      <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+
+        {
+          (["left", "right"] as const).map(side => (
+            <View key={side} style={{ rowGap: 7, width: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start" }}>
+              <VerticalSlider
+                value={headlightPosition[side]}
+                max={100}
+                min={0}
+                width={35}
+                height={90}
+                onChange={(val) => dispatchHeadlightPosition({ side, percentage: val })}
+                onComplete={(val) => {
+                  dispatchHeadlightPosition({ side, percentage: val });
+                  setSleepyEyeValues(headlightPosition.left, headlightPosition.right);
+                  console.log(headlightPosition);
+                }}
+                step={1}
+                borderRadius={2}
+                minimumTrackTintColor={disabledStatus ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                disabled={disabledStatus}
+                maximumTrackTintColor={colorTheme.disabledButtonColor}
+              />
+
+              <Text style={[theme.labelHeader, { width: "100%", fontFamily: "IBMPlexSans_500Medium", textAlign: "center", fontSize: 16 }]}>
+                {side === "left" ? "Left" : "Right"}: {headlightPosition[side]}%
+              </Text>
+
+            </View>
+          ))
+        }
+
       </View>
     </View>
   )
