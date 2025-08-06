@@ -8,8 +8,29 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOTION_IN_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID, ButtonStatus, DefaultCommandValue } from '../helper/Constants';
-import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses } from '../Storage';
+import {
+  BUSY_CHAR_UUID,
+  CUSTOM_BUTTON_UPDATE_UUID,
+  FIRMWARE_UUID,
+  HEADLIGHT_CHAR_UUID,
+  HEADLIGHT_MOTION_IN_UUID,
+  HEADLIGHT_MOVEMENT_DELAY_UUID,
+  LEFT_STATUS_UUID,
+  MODULE_SETTINGS_SERVICE_UUID,
+  OTA_SERVICE_UUID,
+  RIGHT_STATUS_UUID,
+  SCAN_TIME_SECONDS,
+  SOFTWARE_STATUS_CHAR_UUID,
+  SOFTWARE_UPDATING_CHAR_UUID,
+  WINK_SERVICE_UUID,
+  ButtonStatus,
+  DefaultCommandValue,
+  SLEEPY_EYE_UUID,
+  SLEEPY_SETTINGS_UUID,
+  LONG_TERM_SLEEP_UUID,
+  SYNC_UUID,
+} from '../helper/Constants';
+import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses, SleepyEyeStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
@@ -26,6 +47,10 @@ export type BleContextType = {
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
   updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
+  setSleepyEyeValues: (left: number, right: number) => Promise<void>;
+  sendSleepyEye: () => Promise<void>;
+  sendSyncCommand: () => Promise<void>;
+  enterDeepSleep: () => Promise<void>;
   waveDelayMulti: number;
   // setOEMButtonInterval: (delay: number) => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -78,6 +103,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [buttonDelay, setButtonDelay] = useState(500);
   const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
   const [motionValue, setMotionValue] = useState(750);
+
+  const [leftSleepyEye, setLeftSleepyEye] = useState(50);
+  const [rightSleepyEye, setRightSleepyEye] = useState(50);
   // Delay between when headlights start moving during a wave command
 
 
@@ -406,15 +434,29 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   }
 
-  const sendCustomCommand = async (commandSequence: string) => {
+  const setSleepyEyeValues = async (left: number, right: number) => {
+    if (left < 0 || left > 100 || right < 0 || right > 100 || !device) return;
 
+    await SleepyEyeStore.set("left", left);
+    await SleepyEyeStore.set("right", right);
+
+    // TODO: Write to sleepy settings char ("left-right")
+
+    const data = `${left}-${right}`;
+    await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, SLEEPY_SETTINGS_UUID, base64.encode(data));
   }
 
-  const sendSleepyEye = async (leftValue: number, rightValue: number) => {
-
+  const sendSleepyEye = async () => {
+    if (!device || (leftStatus !== 0 && leftStatus !== 1) || (rightStatus !== 0 && rightStatus !== 1)) return;
+    await device.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode("1"));
   }
 
   const sendSyncCommand = async () => {
+    if (!device || (leftStatus === 0 || leftStatus == 1) && (rightStatus == 0 || rightStatus == 1)) return;
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, SYNC_UUID, base64.encode("1"));
+  }
+
+  const sendCustomCommand = async (commandSequence: string) => {
 
   }
 
@@ -515,6 +557,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateButtonDelay,
       updateWaveDelayMulti,
       updateOEMButtonPresets,
+      sendSyncCommand,
+      sendSleepyEye,
+      setSleepyEyeValues,
+      enterDeepSleep,
       waveDelayMulti,
       updatingStatus,
       oemCustomButtonEnabled,
