@@ -42,13 +42,6 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 }
-// class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-//   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-// };
-
-// class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
-//   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-// };
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;

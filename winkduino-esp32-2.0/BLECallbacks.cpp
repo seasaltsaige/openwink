@@ -56,32 +56,34 @@ void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
   esp_deep_sleep_start();
 }
 
-// TODO: UPDATE TO SYNC BOTH HEADLIGHTS AT ONCE
 void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  if (leftStatus > 1) {
-    double valFromTop = (double)(leftStatus - 10) / 100;
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-    delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-  } else if (leftStatus == 0) {
-    leftUp();
+  // if headlights are fully up or down, ignore command
+  if ((lefStatus == 1 || leftStatus == 0) && (rightStatus == 1 || rightStatus == 0)) return;
+
+  double percentageToUpLeft = 1 - (leftSleepyValue / 100);
+  double percentageToUpRight = 1 - (rightSleepyValue / 100);
+
+  unsigned long initialTime = millis();
+  bothUp();
+
+  bool leftStatusReached = false;
+  bool rightStatusReached = false;
+
+  while (!leftStatusReached && !rightStatusReached) {
+    unsigned long timeElapsed = millis();
+    if (timeElapsed >= (percentageToUpLeft * HEADLIGHT_MOVEMENT_DELAY)) {
+      leftStatusReached = true;
+      digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    }
+    if (timeElapsed >= (percentageToUpRight * HEADLIGHT_MOVEMENT_DELAY)) {
+      rightStatusReached = true;
+      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    }
   }
 
   leftStatus = 1;
-  setAllOff();
-  WinkduinoBLE::updateHeadlightChars();
-
-  if (rightStatus > 1) {
-    double valFromTop = (double)(rightStatus - 10) / 100;
-    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-    delay(HEADLIGHT_MOVEMENT_DELAY * valFromTop);
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-  } else if (rightStatus == 0) {
-    rightUp();
-  }
-
   rightStatus = 1;
-  setAllOff();
+
   WinkduinoBLE::updateHeadlightChars();
 }
 
@@ -103,7 +105,7 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   unsigned long initialTime = millis();
 
   bothUp();
-  
+
   bool leftStatusReached = false;
   bool rightStatusReached = false;
 
@@ -114,17 +116,23 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
       leftStatusReached = true;
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
     }
-    if (timeElapsed >= (right * HEADLIGHT_MOVEMENT_DELAY))
+    if (timeElapsed >= (right * HEADLIGHT_MOVEMENT_DELAY)) {
       rightStatusReached = true;
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    }
   }
+
+  leftStatus = leftSleepyValue + 10;
+  rightStatus = rightSleepyValue + 10;
+
+  WinkduinoBLE::updateHeadlightChars();
 }
 
 // Updates headlight status
 void SleepSettingsCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
   char* charCVal = value.c_str();
-  
+
   char* left = strtok(charCVal, "-");
   char* right = strtok(NULL, "-");
 
@@ -133,7 +141,6 @@ void SleepSettingsCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo
 
   Storage::setSleepyValues(0, leftSleepyValue);
   Storage::setSleepyValues(1, rightSleepyValue);
-
 }
 
 // void LeftSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
