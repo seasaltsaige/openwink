@@ -128,14 +128,9 @@ export function SleepyEyeSettings() {
                 width={35}
                 height={90}
                 onChange={(val) => dispatchHeadlightPosition({ side, percentage: val })}
-                onComplete={(val) => {
-                  dispatchHeadlightPosition({ side, percentage: val });
-                  setSleepyEyeValues(headlightPosition.left, headlightPosition.right);
-                  console.log(headlightPosition);
-                }}
                 step={1}
                 borderRadius={2}
-                minimumTrackTintColor={disabledStatus ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                minimumTrackTintColor={disabledStatus ? `${colorTheme.buttonColor}80` : colorTheme.buttonColor}
                 disabled={disabledStatus}
                 maximumTrackTintColor={colorTheme.disabledButtonColor}
               />
@@ -148,6 +143,38 @@ export function SleepyEyeSettings() {
           ))
         }
 
+      </View>
+
+      <View style={theme.rangeSliderButtonsView}>
+        {/* RESET */}
+        <Pressable
+          style={({ pressed }) => disabledStatus ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+          disabled={disabledStatus}
+          onPress={() => {
+            setSleepyEyeValues(50, 50);
+            dispatchHeadlightPosition({ side: "left", percentage: 50 });
+            dispatchHeadlightPosition({ side: "right", percentage: 50 });
+          }}
+        // onPress={() => { updateButtonDelay(500); setMin(500); }}
+        >
+          <Text style={theme.rangeSliderButtonsText}>
+            Reset Value
+          </Text>
+          <IonIcons size={22} name="reload-outline" color={colorTheme.textColor} />
+        </Pressable>
+
+        {/* SAVE */}
+        <Pressable
+          style={({ pressed }) => disabledStatus ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+          disabled={disabledStatus}
+          onPress={() => setSleepyEyeValues(headlightPosition.left, headlightPosition.right)}
+        // onPress={() => updateButtonDelay(min)}
+        >
+          <Text style={theme.rangeSliderButtonsText}>
+            Save Value
+          </Text>
+          <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
+        </Pressable>
       </View>
     </View>
   )
