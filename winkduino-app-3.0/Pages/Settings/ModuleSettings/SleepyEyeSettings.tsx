@@ -4,11 +4,8 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useCallback, useMemo, useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
-import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
-import RangeSlider from "react-native-sticky-range-slider";
-import MultiSlider from "@ptomasroos/react-native-multi-slider";
 
 export function SleepyEyeSettings() {
 
