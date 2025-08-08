@@ -7,12 +7,13 @@ import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
-
+import RangeSlider from "react-native-sticky-range-slider";
+import MultiSlider from "@ptomasroos/react-native-multi-slider";
 
 export function SleepyEyeSettings() {
 
   const { colorTheme, theme } = useColorTheme();
-  const { device, leftStatus, rightStatus, isScanning, isConnecting, setSleepyEyeValues } = useBLE();
+  const { device, leftStatus, rightStatus, isScanning, isConnecting, leftSleepyEye, rightSleepyEye, setSleepyEyeValues } = useBLE();
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
@@ -31,7 +32,7 @@ export function SleepyEyeSettings() {
         ...state,
         right: action.percentage,
       }
-  }, { left: 50, right: 50 });
+  }, { left: leftSleepyEye, right: rightSleepyEye });
 
   const disabledStatus =
     (!device || ((leftStatus !== 1 && leftStatus !== 0) || (rightStatus !== 1 && rightStatus !== 0)));
@@ -116,24 +117,35 @@ export function SleepyEyeSettings() {
         </View>
       </Tooltip>
 
-      <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%" }}>
+      <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%", height: "auto" }}>
 
         {
           (["left", "right"] as const).map(side => (
-            <View key={side} style={{ rowGap: 7, width: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start" }}>
-              <VerticalSlider
-                value={headlightPosition[side]}
-                max={100}
-                min={0}
-                width={35}
-                height={90}
-                onChange={(val) => dispatchHeadlightPosition({ side, percentage: val })}
-                step={1}
-                borderRadius={2}
-                minimumTrackTintColor={disabledStatus ? `${colorTheme.buttonColor}80` : colorTheme.buttonColor}
-                disabled={disabledStatus}
-                maximumTrackTintColor={colorTheme.disabledButtonColor}
-              />
+            <View key={side} style={{ /**rowGap: 30, marginTop: 15,**/ rowGap: 5, width: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", }}>
+              <View style={{ position: "relative", width: "auto", height: "auto", alignItems: "center" }}>
+                <IonIcons style={{ position: "absolute", top: 3, zIndex: 2 }} name={"add-outline"} size={22} color={colorTheme.headerTextColor} />
+                <VerticalSlider
+                  value={headlightPosition[side]}
+                  max={100}
+                  min={0}
+                  width={33}
+                  height={125}
+                  onChange={(val) => dispatchHeadlightPosition({ side, percentage: val })}
+                  step={1}
+                  borderRadius={6}
+                  // minimumTrackTintColor={disabledStatus ? `${colorTheme.buttonColor}80` : colorTheme.buttonColor}
+
+                  minimumTrackTintColor={disabledStatus ? colorTheme.disabledButtonColor : `${colorTheme.backgroundSecondaryColor}FF`}
+                  shadowProps={{
+                    elevation: 4,
+
+
+                  }}
+                  disabled={disabledStatus}
+                  maximumTrackTintColor={colorTheme.disabledButtonColor}
+                />
+                <IonIcons style={{ position: "absolute", bottom: 0 }} name={"remove-outline"} size={22} color={colorTheme.headerTextColor} />
+              </View>
 
               <Text style={[theme.labelHeader, { width: "100%", fontFamily: "IBMPlexSans_500Medium", textAlign: "center", fontSize: 16 }]}>
                 {side === "left" ? "Left" : "Right"}: {headlightPosition[side]}%
