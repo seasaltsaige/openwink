@@ -64,11 +64,17 @@ export function StandardCommands() {
   //@ts-ignore
   const { back } = route.params;
 
-  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy, sendDefaultCommand, sendSleepyEye, sendSyncCommand } = useBLE();
+  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy, sendDefaultCommand } = useBLE();
 
-  // const [disableActions, setDisableActions] = useState(false);
-  const disableActions = (!device || headlightsBusy || (leftStatus > 0 && leftStatus < 1) || (rightStatus > 0 && rightStatus < 1));
-  const disableReset = (!device || headlightsBusy || !(leftStatus > 0 && leftStatus < 1) || !(rightStatus > 0 && rightStatus < 1));
+  const [disableActions, setDisableActions] = useState(false);
+
+  useEffect(() => {
+    if (!device || headlightsBusy || (leftStatus > 0 && leftStatus < 1) || (rightStatus > 0 && rightStatus < 1))
+      setDisableActions(true);
+    else setDisableActions(false);
+
+  }, [leftStatus, rightStatus, headlightsBusy, device]);
+
 
   return (
     <View style={theme.container}>
@@ -262,7 +268,7 @@ export function StandardCommands() {
                     }
                   ])}
                   key={105}
-                  onPress={() => sendSleepyEye()}
+                  onPress={() => { }}
                   disabled={disableActions}
                 >
                   <Text style={theme.commandButtonText}>
@@ -275,12 +281,12 @@ export function StandardCommands() {
                     theme.commandButton,
                     {
                       width: "48%",
-                      backgroundColor: disableReset ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                      backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     }
                   ])}
                   key={106}
-                  onPress={() => sendSyncCommand()}
-                  disabled={disableReset}
+                  onPress={() => { }}
+                  disabled={!device || !disableActions}
                 >
                   <Text style={theme.commandButtonText}>
                     Reset
