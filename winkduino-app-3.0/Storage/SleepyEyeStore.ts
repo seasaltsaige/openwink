@@ -15,7 +15,7 @@ export abstract class SleepyEyeStore {
 
   static async get(side: "left" | "right") {
     try {
-      const stored = await AsyncStorage.getItem(side);
+      const stored = await AsyncStorage.getItem(`${key}_${side}`);
       if (!stored) return 50;
       else return parseInt(stored);
     } catch (err) {

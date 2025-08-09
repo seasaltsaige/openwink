@@ -33,6 +33,13 @@ void Storage::getFromStorage() {
   customButtonStatusEnabled = oem;
 
 
+  const char *leftSleepyHeadlightKey = "sleepy-left";
+  const char *rightSleepyHeadligthKey = "sleepy-right";
+  double left = storage.getDouble(leftSleepyHeadlightKey, 50);
+  double right = storage.getDouble(rightSleepyHeadligthKey, 50);
+  leftSleepyValue = left;
+  rightSleepyValue = right;
+
   // const char *motionKey = "motion-key";
   // int motion = storage.getInt(motionKey, 750);
   // HEADLIGHT_MOVEMENT_DELAY = motion;
@@ -61,6 +68,18 @@ void Storage::setDelay(int delay) {
 void Storage::setHeadlightMulti(double multi) {
   const char* headlightKey = "headlight-key";
   storage.putDouble(headlightKey, multi);
+}
+
+// side = 0 -> left ::: side = 1 -> right
+void Storage::setSleepyValues(int side, double value) {
+  const char *leftSleepyHeadlightKey = "sleepy-left";
+  const char *rightSleepyHeadligthKey = "sleepy-right";
+
+  if (side == 0) {
+    storage.putDouble(leftSleepyHeadlightKey, value);
+  } else if (side == 1) {
+    storage.putDouble(rightSleepyHeadligthKey, value);
+  }
 }
 
 // void Storage::setMotionTiming(int time) {

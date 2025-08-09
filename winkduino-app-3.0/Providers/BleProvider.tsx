@@ -8,8 +8,29 @@ import React, {
   useState,
 } from 'react';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
-import { BUSY_CHAR_UUID, CUSTOM_BUTTON_UPDATE_UUID, FIRMWARE_UUID, HEADLIGHT_CHAR_UUID, HEADLIGHT_MOTION_IN_UUID, HEADLIGHT_MOVEMENT_DELAY_UUID, LEFT_STATUS_UUID, MODULE_SETTINGS_SERVICE_UUID, OTA_SERVICE_UUID, RIGHT_STATUS_UUID, SCAN_TIME_SECONDS, SOFTWARE_STATUS_CHAR_UUID, SOFTWARE_UPDATING_CHAR_UUID, WINK_SERVICE_UUID, ButtonStatus, DefaultCommandValue } from '../helper/Constants';
-import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses } from '../Storage';
+import {
+  BUSY_CHAR_UUID,
+  CUSTOM_BUTTON_UPDATE_UUID,
+  FIRMWARE_UUID,
+  HEADLIGHT_CHAR_UUID,
+  HEADLIGHT_MOTION_IN_UUID,
+  HEADLIGHT_MOVEMENT_DELAY_UUID,
+  LEFT_STATUS_UUID,
+  MODULE_SETTINGS_SERVICE_UUID,
+  OTA_SERVICE_UUID,
+  RIGHT_STATUS_UUID,
+  SCAN_TIME_SECONDS,
+  SOFTWARE_STATUS_CHAR_UUID,
+  SOFTWARE_UPDATING_CHAR_UUID,
+  WINK_SERVICE_UUID,
+  ButtonStatus,
+  DefaultCommandValue,
+  SLEEPY_EYE_UUID,
+  SLEEPY_SETTINGS_UUID,
+  LONG_TERM_SLEEP_UUID,
+  SYNC_UUID,
+} from '../helper/Constants';
+import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses, SleepyEyeStore } from '../Storage';
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
@@ -26,6 +47,10 @@ export type BleContextType = {
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
   updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
+  setSleepyEyeValues: (left: number, right: number) => Promise<void>;
+  sendSleepyEye: () => Promise<void>;
+  sendSyncCommand: () => Promise<void>;
+  enterDeepSleep: () => Promise<void>;
   waveDelayMulti: number;
   // setOEMButtonInterval: (delay: number) => Promise<void>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -38,6 +63,8 @@ export type BleContextType = {
   mac: string;
   rightStatus: number;
   leftStatus: number;
+  leftSleepyEye: number;
+  rightSleepyEye: number;
   headlightsBusy: boolean;
   autoConnectEnabled: boolean;
   setAutoConnect: (bool: boolean) => void;
@@ -78,6 +105,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [buttonDelay, setButtonDelay] = useState(500);
   const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
   const [motionValue, setMotionValue] = useState(750);
+
+  const [leftSleepyEye, setLeftSleepyEye] = useState(50);
+  const [rightSleepyEye, setRightSleepyEye] = useState(50);
   // Delay between when headlights start moving during a wave command
 
 
@@ -86,8 +116,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     (async () => {
       const macAddr = await DeviceMACStore.getStoredMAC();
       if (macAddr) setMac(macAddr);
-      // TODO: Error handler. Should give warnings for errors with asyncstore
-      else { }
 
       const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
       setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
@@ -96,18 +124,18 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAutoConnectEnabled(autoConn);
 
       const delay = await CustomOEMButtonStore.getDelay();
-      if (delay)
-        setButtonDelay(delay);
+      if (delay) setButtonDelay(delay);
 
       const waveMulti = await CustomWaveStore.getMultiplier();
-      if (waveMulti)
-        setWaveDelayMulti(waveMulti);
+      if (waveMulti) setWaveDelayMulti(waveMulti);
 
       const firmwareVer = await FirmwareStore.getFirmwareVersion();
-      if (firmwareVer)
-        setFirmwareVersion(firmwareVer);
+      if (firmwareVer) setFirmwareVersion(firmwareVer);
 
-
+      const left = await SleepyEyeStore.get("left");
+      const right = await SleepyEyeStore.get("right");
+      if (left) setLeftSleepyEye(left);
+      if (right) setRightSleepyEye(right);
     })();
 
     return () => { }
@@ -170,7 +198,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // TODO: Handle erros from these
   const initBLEMonitors = async (connection: Device) => {
-    const sub = connection.monitorCharacteristicForService(WINK_SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
+    connection.monitorCharacteristicForService(WINK_SERVICE_UUID, BUSY_CHAR_UUID, (err, char) => {
       if (err) return console.log(err);
       const strVal = base64.decode(char?.value!);
       if (parseInt(strVal) === 1) setHeadlightsBusy(true);
@@ -205,13 +233,10 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     })
 
     connection.monitorCharacteristicForService(OTA_SERVICE_UUID, SOFTWARE_STATUS_CHAR_UUID, (err, char) => {
-      if (err)
-        return console.log(err);
-
+      if (err) return console.log(err);
       const statusValue = toProperCase(base64.decode(char?.value!) as "idle" | "updating" | "failed" | "success");
       setUpdatingStatus(statusValue);
     });
-
 
     connection.monitorCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, HEADLIGHT_MOTION_IN_UUID, (err, char) => {
       if (err) return console.log(err);
@@ -246,7 +271,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const firmware = await connection?.readCharacteristicForService(OTA_SERVICE_UUID, FIRMWARE_UUID);
-    console.log(firmware)
     if (firmware.value) {
       setFirmwareVersion(base64.decode(firmware.value));
       await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
@@ -270,7 +294,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       await DeviceMACStore.setMAC(connection.id);
       setMac(connection.id);
-
       setDevice(connection);
       setIsConnecting(false);
 
@@ -292,7 +315,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       // TODO: Handle error
       // (alert user)
-
+      console.log(err);
       setDevice(null);
       setIsConnecting(false);
       setIsScanning(false);
@@ -406,15 +429,31 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   }
 
-  const sendCustomCommand = async (commandSequence: string) => {
+  const setSleepyEyeValues = async (left: number, right: number) => {
+    if (left < 0 || left > 100 || right < 0 || right > 100 || !device) return;
 
+    await SleepyEyeStore.set("left", left);
+    await SleepyEyeStore.set("right", right);
+
+    setLeftSleepyEye(left);
+    setRightSleepyEye(right);
+
+
+    const data = `${left}-${right}`;
+    await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, SLEEPY_SETTINGS_UUID, base64.encode(data));
   }
 
-  const sendSleepyEye = async (leftValue: number, rightValue: number) => {
-
+  const sendSleepyEye = async () => {
+    if (!device || (leftStatus !== 0 && leftStatus !== 1) || (rightStatus !== 0 && rightStatus !== 1)) return;
+    await device.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, SLEEPY_EYE_UUID, base64.encode("1"));
   }
 
   const sendSyncCommand = async () => {
+    if (!device || (leftStatus === 0 || leftStatus == 1) && (rightStatus == 0 || rightStatus == 1)) return;
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, SYNC_UUID, base64.encode("1"));
+  }
+
+  const sendCustomCommand = async (commandSequence: string) => {
 
   }
 
@@ -515,7 +554,13 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateButtonDelay,
       updateWaveDelayMulti,
       updateOEMButtonPresets,
+      sendSyncCommand,
+      sendSleepyEye,
+      setSleepyEyeValues,
+      enterDeepSleep,
       waveDelayMulti,
+      leftSleepyEye,
+      rightSleepyEye,
       updatingStatus,
       oemCustomButtonEnabled,
       buttonDelay,
@@ -538,6 +583,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       buttonDelay,
       firmwareVersion,
       isConnecting,
+      leftSleepyEye,
+      rightSleepyEye,
       isScanning,
       waveDelayMulti,
       oemCustomButtonEnabled,

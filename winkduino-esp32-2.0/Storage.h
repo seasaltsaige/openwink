@@ -15,4 +15,5 @@ public:
   static void setDelay(int delay);
   static void setMotionTiming(int time);
   static void setCustomButtonPressArray(int index, int value);
+  static void setSleepyValues(int side, double value);
 };
