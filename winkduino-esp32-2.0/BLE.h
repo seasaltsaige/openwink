@@ -1,4 +1,3 @@
-#include "NimBLECharacteristic.h"
 #pragma once
 
 #include <string.h>
@@ -24,9 +23,8 @@ private:
   static NimBLECharacteristic* busyChar;
   static NimBLECharacteristic* leftStatusChar;
   static NimBLECharacteristic* rightStatusChar;
-  static NimBLECharacteristic* sleepChar;
-  // static NimBLECharacteristic* leftSleepChar;
-  // static NimBLECharacteristic* rightSleepChar;
+  static NimBLECharacteristic* leftSleepChar;
+  static NimBLECharacteristic* rightSleepChar;
   static NimBLECharacteristic* syncChar;
 
 
@@ -44,7 +42,6 @@ private:
   static NimBLECharacteristic* customButtonChar;
   static NimBLECharacteristic* headlightDelayChar;
   static NimBLECharacteristic* headlightMotionChar;
-  static NimBLECharacteristic* sleepSettingsChar;
 
   static bool deviceConnected;
 

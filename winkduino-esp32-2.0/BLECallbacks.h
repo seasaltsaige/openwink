@@ -1,5 +1,3 @@
-#include "NimBLEConnInfo.h"
-#include "NimBLECharacteristic.h"
 #pragma once
 
 #include "NimBLEServer.h"
@@ -39,9 +37,13 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+class LeftSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-}
+};
+
+class RightSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
@@ -58,10 +60,6 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
-
-class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
-  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-}
 
 void handleHTTPClient();
 

@@ -29,7 +29,8 @@
 #define BUSY_CHAR_UUID "8d2b7b9f-c6a3-4f56-9f4f-2dc7d7873c18"
 #define LEFT_STATUS_UUID "c4907f4a-fb0c-440c-bbf1-4836b0636478"
 #define RIGHT_STATUS_UUID "784dd553-d837-4027-9143-280cb035163a"
-#define SLEEPY_EYE_UUID "a8237fed-e0a4-4ecd-9881-9b5dbb3f5902"
+#define LEFT_SLEEPY_EYE_UUID "a8237fed-e0a4-4ecd-9881-9b5dbb3f5902"
+#define RIGHT_SLEEPY_EYE_UUID "bf133860-e47e-43e3-b1ed-cd87a1d9cb63"
 #define SYNC_UUID "eceed349-998f-46a2-9835-4f2db7552381"
 // END WINK CHARACTERISTICS
 
@@ -45,10 +46,11 @@
 #define CUSTOM_BUTTON_UPDATE_UUID "795a9433-cf23-4550-80b5-70a0c9413cac"
 #define HEADLIGHT_MOVEMENT_DELAY_UUID "859290b7-32f5-4afd-80fd-832b95bc5a4b"
 #define HEADLIGHT_MOTION_IN_UUID "5cdfa4ac-31f5-439b-af8d-ec09a808ce9d"
-#define SLEEPY_SETTINGS_UUID "bf133860-e47e-43e3-b1ed-cd87a1d9cb63"
 // END SETTINGS CHARACTERISTICS //
 
 /** ---- END BLE UUID DEFINITIONS ---- **/
+
+
 
 extern const int customButtonPressArrayDefaults[10];
 extern const int maxTimeBetween_msDefault;
@@ -56,5 +58,3 @@ extern const int sleepTime_us;
 extern const int advertiseTime_ms;
 extern int awakeTime_ms;
 extern int HEADLIGHT_MOVEMENT_DELAY;
-extern double leftSleepyValue;
-extern double rightSleepyValue;
