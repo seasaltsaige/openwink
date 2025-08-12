@@ -41,7 +41,7 @@ class SyncCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 class SleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-}
+};
 
 class RequestCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
@@ -61,7 +61,7 @@ class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
-}
+};
 
 void handleHTTPClient();
 
