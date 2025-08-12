@@ -1,14 +1,11 @@
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useMemo, useReducer, useState } from "react";
+import { useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
-import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
-import RangeSlider from "react-native-sticky-range-slider";
-import MultiSlider from "@ptomasroos/react-native-multi-slider";
 
 export function SleepyEyeSettings() {
 
@@ -20,6 +17,7 @@ export function SleepyEyeSettings() {
   const { back, backHumanReadable } = route.params;
 
   const [headlightToolTipVisible, setHeadlightToolTipVisible] = useState(false);
+  const [quickPresetToolTipVisible, setQuickPresetToolTipVisible] = useState(false);
 
   const [headlightPosition, dispatchHeadlightPosition] = useReducer((state: { left: number; right: number }, action: { side: "left" | "right"; percentage: number }) => {
     if (action.side === "left")
@@ -39,6 +37,7 @@ export function SleepyEyeSettings() {
 
   return (
     <View style={theme.container}>
+
       <View style={theme.headerContainer}>
 
         <Pressable
@@ -77,8 +76,6 @@ export function SleepyEyeSettings() {
         </Text>
 
       </View>
-
-
 
       <Tooltip
         isVisible={headlightToolTipVisible}
@@ -121,25 +118,21 @@ export function SleepyEyeSettings() {
 
         {
           (["left", "right"] as const).map(side => (
-            <View key={side} style={{ /**rowGap: 30, marginTop: 15,**/ rowGap: 5, width: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", }}>
+            <View key={side} style={{ rowGap: 5, width: "50%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", }}>
               <View style={{ position: "relative", width: "auto", height: "auto", alignItems: "center" }}>
                 <IonIcons style={{ position: "absolute", top: 3, zIndex: 2 }} name={"add-outline"} size={22} color={colorTheme.headerTextColor} />
                 <VerticalSlider
                   value={headlightPosition[side]}
                   max={100}
                   min={0}
-                  width={33}
+                  width={38}
                   height={125}
                   onChange={(val) => dispatchHeadlightPosition({ side, percentage: val })}
                   step={1}
-                  borderRadius={6}
-                  // minimumTrackTintColor={disabledStatus ? `${colorTheme.buttonColor}80` : colorTheme.buttonColor}
-
-                  minimumTrackTintColor={disabledStatus ? colorTheme.disabledButtonColor : `${colorTheme.backgroundSecondaryColor}FF`}
+                  borderRadius={9}
+                  minimumTrackTintColor={disabledStatus ? `${colorTheme.buttonColor}80` : `${colorTheme.buttonColor}CC`}
                   shadowProps={{
                     elevation: 4,
-
-
                   }}
                   disabled={disabledStatus}
                   maximumTrackTintColor={colorTheme.disabledButtonColor}
@@ -188,6 +181,93 @@ export function SleepyEyeSettings() {
           <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
         </Pressable>
       </View>
+
+
+
+      <Tooltip
+        isVisible={quickPresetToolTipVisible}
+        closeOnBackgroundInteraction
+        closeOnContentInteraction
+        placement="bottom"
+        onClose={() => setQuickPresetToolTipVisible(false)}
+        contentStyle={theme.tooltipContainer}
+        content={
+          <Text style={theme.tooltipContainerText}>
+            Quick presets for each headlight side when{"\n"}Sleepy Eye Mode is active.{"\n"}
+            High = 75%{"\n"}
+            Middle = 50%{"\n"}
+            Low = 25%
+          </Text>
+        }
+      >
+
+        <View style={theme.tooltipContainerView}>
+          <Text
+            style={theme.tooltipText}
+          >
+            Quick Presets
+          </Text>
+          <Pressable
+            hitSlop={20}
+            onPress={() => setQuickPresetToolTipVisible(true)}
+          >
+            {
+              ({ pressed }) => (
+                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+              )
+            }
+          </Pressable>
+        </View>
+      </Tooltip>
+
+
+      <View style={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-evenly",
+        width: "100%",
+      }}>
+
+        {
+          (["left_preset", "right_preset"] as const).map((preset) => (
+            <View key={preset} style={{ display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "flex-start", rowGap: 10, width: "43%" }}>
+              <Text style={{
+                fontFamily: "IBMPlexSans_500Medium",
+                fontSize: 18,
+                color: colorTheme.headerTextColor,
+                textAlign: "center",
+              }}>
+                {preset === "left_preset" ? "Left Headlight" : "Right Headlight"}
+              </Text>
+
+              {
+                [{ type: "High", value: 75 }, { type: "Middle", value: 50 }, { type: "Low", value: 25 }].map(quickButton => (
+                  <Pressable
+                    style={({ pressed }) => [
+                      disabledStatus ?
+                        theme.rangeSliderButtonsDisabled :
+                        (pressed || (headlightPosition[(preset === "left_preset" ? "left" : "right")] === quickButton.value)) ?
+                          theme.rangeSliderButtonsPressed :
+                          theme.rangeSliderButtons,
+                      { alignContent: "center", justifyContent: "center" }
+                    ]}
+                    disabled={disabledStatus}
+                    key={quickButton.type}
+                    onPress={() => { dispatchHeadlightPosition({ side: preset === "left_preset" ? "left" : "right", percentage: quickButton.value }); setSleepyEyeValues(preset === "left_preset" ? quickButton.value : headlightPosition.left, preset === "right_preset" ? quickButton.value : headlightPosition.right) }}
+                  >
+                    <Text style={theme.rangeSliderButtonsText}>
+                      {quickButton.type}
+                    </Text>
+                  </Pressable>
+                ))
+              }
+            </View>
+          ))
+        }
+
+      </View>
+
     </View>
   )
 

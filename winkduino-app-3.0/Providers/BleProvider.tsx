@@ -101,14 +101,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setAutoConnect = (bool: boolean) => { setAutoConnectEnabled(bool) };
 
-
   const [buttonDelay, setButtonDelay] = useState(500);
   const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
   const [motionValue, setMotionValue] = useState(750);
 
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
-  // Delay between when headlights start moving during a wave command
 
 
 
