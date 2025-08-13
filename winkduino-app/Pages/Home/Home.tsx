@@ -1,11 +1,11 @@
 import { useFocusEffect, useNavigation, useRoute, useTheme } from "@react-navigation/native";
 import { Pressable, SafeAreaView, ScrollView, StatusBar, Text, View, } from "react-native"
 import { ActivityIndicator } from "react-native";
-import { useColorTheme } from "../hooks/useColorTheme";
+import { useColorTheme } from "../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useBLE } from "../hooks/useBLE";
+import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
-import { AutoConnectStore } from "../Storage";
+import { AutoConnectStore } from "../../Storage";
 
 export function Home() {
 

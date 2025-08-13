@@ -7,7 +7,6 @@ import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import { buttonBehaviorMap, buttonBehaviorMapReversed, CustomOEMButtonStore, Presses } from "../../../Storage";
-import DisabledConnection from "../../../Components/DisabledConnection";
 import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
 import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";

@@ -1,7 +1,7 @@
 import { View } from "react-native";
 
 
-export function StatusHandler() {
+export function StatusBanner() {
   return (
     <View
       style={{

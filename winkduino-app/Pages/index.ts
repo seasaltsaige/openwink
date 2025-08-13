@@ -1,8 +1,8 @@
 
-export * from "./CreateCustomCommand";
-export * from "./CustomCommands";
-export * from "./Home";
-export * from "./StandardCommands";
+export * from "./Home/CreateCustomCommand";
+export * from "./Home/CustomCommands";
+export * from "./Home/Home";
+export * from "./Home/StandardCommands";
 export * from "./HowToUse";
 
 
