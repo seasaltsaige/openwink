@@ -144,7 +144,7 @@ winkduino-app
 │   └── index.ts
 ├── Providers # Used in conjunction with `hooks` to provide said data
 │   ├── BleProvider.tsx
-│   └── ThemeProvider.tsx
+│   └── ThemeProvider.tsx # See issue #21
 ├── Storage # Helper class functions that interface with AsyncStorage (see issue #7)
 │   ├── AutoConnectStore.ts
 │   ├── CustomCommandStore.ts
