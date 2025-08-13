@@ -39,7 +39,7 @@ This project serves as an open source (though purchasable) alternative to the po
 - The Update Server, used to push OTA updates to the Module, allowing for quick bug fixes if issues arise.
 - The App, a React Native application that can be built to both Android and iOS. 
   - For more information on pre-built application installation, visit [here](./docs/build/BUILD.md#pre-built-application).
-  - For more information on building your own app, visit [here](./docs/build/BUILD.md#custom-build)
+  - For more information on building your own app, visit [here](./docs/build/BUILD.md#custom-build-artifact)
 - The Module, code which compiles and gets flashed to the module board itself, allowing interaction with the cars' headlights.
   - See [Issue #14](https://github.com/seasaltsaige/winkduino-long-range/issues/14) for ESP-IDF refactor
   - For more information on module flashing, visit [here](./docs/build/FLASHING.md).
@@ -52,7 +52,7 @@ This project serves as an open source (though purchasable) alternative to the po
 - Lightweight and built with Express, ensuring reliable delivery of software.
 - Versioning in updates, preventing accidental downgrades of firmware version.
 ### Controller Application 
-- Mobile application built with React Native and Expo, allowing for cross platform build for both Android and iOS. (Pre-built app currently available only for Android. See [Custom Build Guide](./docs/build/BUILD.md#custom-build) for more information)
+- Mobile application built with React Native and Expo, allowing for cross platform build for both Android and iOS. (Pre-built app currently available only for Android. See [Custom Build Guide](./docs/build/BUILD.md#custom-build-artifact) for more information)
 - Controller based on Bluetooth Low Energy (BLE), allowing for long range communication and control.
 - **Default Commands**: Left/Right/Both Up, Down, Blink/Wink and Wave
 - Sleepy Eye: Allows for precise, per-headlight setup for a custom look.
