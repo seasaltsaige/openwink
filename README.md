@@ -47,11 +47,27 @@ This project serves as an open source (though purchasable) alternative to the po
 
 ## Project Features
 ### Update Server
-- 
+- Manages over the air (OTA) firmware updates for the Wink Module.
+- Allows for quick bug fixes and feature pushes without removal from your Miata.
+- Lightweight and built with Express, ensuring reliable delivery of software.
+- Versioning in updates, preventing accidental downgrades of firmware version.
 ### Controller Application 
-- 
+- Mobile application built with React Native and Expo, allowing for cross platform build for both Android and iOS. (Pre-built app currently available only for Android. See [Custom Build Guide](./docs/BUILD.md#custom-build) for more information)
+- Controller based on Bluetooth Low Energy (BLE), allowing for long range communication and control.
+- **Default Commands**: Left/Right/Both Up, Down, Blink/Wink and Wave
+- Sleepy Eye: Allows for precise, per-headlight setup for a custom look.
+- **Wave Delay**: Customization of delay between headlight actuation, for precise, desired wave style.
+- **Custom Commands**: Create, save, and run a collection of commands,allowing for unique, custom headlight animations.
+- **App Theme**: Minimal UI with additional theme customization to match NA Miata color themes.
+- **Transparent Storage**: All data and settings stored on the app can be easily accessed and deleted in the App Settings.
+- **OEM Button**: Assign custom actions for the OEM Retractor Button (from 2-10 sequential presses), executing pre-defined actions with configurable timing between presses, allowing for app-like actions without relying on the app. 
+- Built in firmware updates for Wink Module, utilizing the Update Server and a local WiFi AP.
+
 ### Wink Module
--
+- Custom PCB designed by [pyroxenes](https://github.com/pyroxenes) allowing for clean integration into the Miatas headlight circuitry.
+- Powered by an ESP32-S3 MCU allowing for Coded Phy BLE communications.
+- Plug and Play installation with no wire splicing required.
+- Open source firmware developed in C++, allowing for custom modification and community contributions.
 
 ## Purchasing
 For more information about purchasing a pre-made module, please visit [miatawink.tech](https://miatawink.tech/).
@@ -60,7 +76,7 @@ For more information about purchasing a pre-made module, please visit [miatawink
 ### Support the Project [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/seasaltsaige)
 If you would rather support the open source initiative for the project, feel free to [donate](https://buymeacoffee.com/seasaltsaige) to keep the project alive.
 
-## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-green.svg?style=for-the-badge)](https://github.com/seasaltsaige/winkduino-long-range/issues)
+## Contributing [![contributions welcome](https://img.shields.io/badge/contributions-welcome-darkred.svg?style=for-the-badge)](https://github.com/seasaltsaige/winkduino-long-range/issues)
 
 ## Development Roadmap
 For a detailed overview of the planned and in progress features for the project, see the open [issues](https://github.com/seasaltsaige/winkduino-long-range/issues) and [project board](https://github.com/users/seasaltsaige/projects/1).
