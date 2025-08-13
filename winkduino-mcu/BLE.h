@@ -33,7 +33,7 @@ private:
   static NimBLEService* otaService;
   // OTA CHARACTERISTICS
   static NimBLECharacteristic* otaUpdateChar;
-  static NimBLECharacteristic* firmareUpdateNotifier;
+  static NimBLECharacteristic* firmwareUpdateNotifier;
   static NimBLECharacteristic* firmwareStatus;
   static NimBLECharacteristic* firmwareChar;
 

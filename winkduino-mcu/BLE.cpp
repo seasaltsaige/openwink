@@ -41,7 +41,7 @@ NimBLECharacteristic* WinkduinoBLE::syncChar;
 NimBLEService* WinkduinoBLE::otaService;
 // OTA CHARACTERISTICS
 NimBLECharacteristic* WinkduinoBLE::otaUpdateChar;
-NimBLECharacteristic* WinkduinoBLE::firmareUpdateNotifier;
+NimBLECharacteristic* WinkduinoBLE::firmwareUpdateNotifier;
 NimBLECharacteristic* WinkduinoBLE::firmwareStatus;
 NimBLECharacteristic* WinkduinoBLE::firmwareChar;
 
@@ -95,7 +95,7 @@ void WinkduinoBLE::initServiceCharacteristics() {
 
   otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
   firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
-  firmareUpdateNotifier = otaService->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  firmwareUpdateNotifier = otaService->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
   firmwareChar->setValue(FIRMWARE_VERSION);
@@ -152,7 +152,7 @@ void WinkduinoBLE::start() {
     } else
       printf("Failed to start advertising\n");
   } else
-    printf("Failed to register advertisment data\n");
+    printf("Failed to register advertisement data\n");
 }
 
 void WinkduinoBLE::updateHeadlightChars() {
@@ -187,6 +187,6 @@ void WinkduinoBLE::setFirmwareUpdateStatus(string status) {
 }
 
 void WinkduinoBLE::setFirmwarePercent(string stringPercentage) {
-  firmareUpdateNotifier->setValue(stringPercentage);
-  firmareUpdateNotifier->notify();
+  firmwareUpdateNotifier->setValue(stringPercentage);
+  firmwareUpdateNotifier->notify();
 }

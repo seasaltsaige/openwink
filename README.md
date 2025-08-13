@@ -88,7 +88,7 @@ Contributions are always welcome!
 ## License [![License](https://img.shields.io/github/license/seasaltsaige/winkduino-long-range?style=for-the-badge)](./LICENSE)
 The [Winkduino Wink Mod](https://github.com/seasaltsaige/winkduino-long-range) is free and open-source collection of software and hardware licensed under the [GPL v3 License](./LICENSE). 
 
-## Credits
+## Acknowledgements
 The Winkduino project codebase was created and is maintained by [seasaltsaige](https://github.com/seasaltsaige).
 
 - Special thanks to [pyroxenes](https://github.com/pyroxenes) for creating and iterating on the PCB design and assembly. 

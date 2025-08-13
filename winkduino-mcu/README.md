@@ -20,8 +20,29 @@ Download and install the latest version of the [Arduino IDE](https://www.arduino
     // #define CONFIG_BT_NIMBLE_EXT_ADV 1
     ```
     The module utilizes the Coded Phy advertising protocol to try for a long and stable connection range. Though this can be hard to guarantee due to interference caused by the hood of the car.
-- In the Board Manager, search for an install **esp32**@latest.
+- In the Board Manager, search for and install **esp32**@latest.
 - Open the project in the IDE.
 - Connect and Program the ESP Module.
 
 ## About the Code
+
+This code base is split up into multiple files to split functionality up to be reused through the project as needed.
+
+`winkduino-mcu.ino` is the main entry point of the program, initializing and starting components of program that work together.
+
+`constants.cpp/h` contains constants and definitions that get used throughout the project files.
+
+`BLE.cpp/h`
+
+`BLECallbacks.cpp/h`
+
+`ButtonHandler.cpp/h`
+
+`MainFunctions.cpp/h`
+
+`Storage.cpp/h`
+
+## Acknowledgements
+
+- Project originally inspired by [MX-5 Tech Wink Mod](https://mx5tech.co.uk/wink-sleepy-eye-mod) and [instructables tutorial](https://www.instructables.com/Popup-headlight-wink-with-arduino-and-relay-board-/).
+- Special thanks to [pyroxenes](https://github.com/pyroxenes/) for creating and assembling the custom circuit board this project utilizes.
