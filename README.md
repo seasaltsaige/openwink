@@ -24,7 +24,7 @@ An open sourced alternative to the popular Mazda Miata MX-5 [Wink/Sleepy Eye Mod
   - [Controller Application](#controller-application)
   - [Wink Module](#wink-module)
 - [Purchasing](#purchasing)
-  - [Support the Project](#supp ort-the-project-)
+  - [Support the Project](#support-the-project-)
 - [Contributing](#contributing-)
 - [Development Roadmap](#development-roadmap)
 - [License](#license-)
