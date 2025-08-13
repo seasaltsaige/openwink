@@ -19,7 +19,7 @@ Download and install the latest version of the [Arduino IDE](https://www.arduino
     /** @brief Un-comment to enable extended advertising */
     // #define CONFIG_BT_NIMBLE_EXT_ADV 1
     ```
-    The module utilizes the Coded Phy advertising protocol to ensure a long and stable connection range. Though this can be hard to guarantee due to interference caused by the hood of the car.
+    The module utilizes the Coded Phy advertising protocol to try for a long and stable connection range. Though this can be hard to guarantee due to interference caused by the hood of the car.
 - In the Board Manager, search for an install **esp32**@latest.
 - Open the project in the IDE.
 - Connect and Program the ESP Module.
