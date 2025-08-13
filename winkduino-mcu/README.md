@@ -32,15 +32,15 @@ This code base is split up into multiple files to split functionality up to be r
 
 `constants.cpp/h` contains constants and definitions that get used throughout the project files.
 
-`BLE.cpp/h`
+`BLE.cpp/h` contains code which initializes and starts corresponding BLE services and characteristics. 
 
-`BLECallbacks.cpp/h`
+`BLECallbacks.cpp/h` contains callback functions which are called when Characteristics are written to.
 
-`ButtonHandler.cpp/h`
+`ButtonHandler.cpp/h` contains code which handles interactions with the OEM retractor button, whether or not the customization functionality is enabled or not.
 
-`MainFunctions.cpp/h`
+`MainFunctions.cpp/h` contains main headlight action functions which get reused throughout the code base. These are functions which define specific headlight movement actions.
 
-`Storage.cpp/h`
+`Storage.cpp/h` contains code which initiates and provides storage options to save settings in the case the module loses power completely.
 
 ## Acknowledgements
 
