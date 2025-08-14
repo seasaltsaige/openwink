@@ -248,6 +248,7 @@ export function Home() {
             )
           }
         </View>
+
       </ScrollView>
     </View >
   );

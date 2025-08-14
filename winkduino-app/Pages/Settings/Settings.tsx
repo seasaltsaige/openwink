@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { LongButton } from "../../Components/LongButton";
 
 // ["App Info", "Module Info", "App Theme", "Module Customization", "Stored Data"]
 
@@ -54,20 +55,16 @@ export function Settings() {
 
           {
             settingsData.map((c, i) => (
-              <Pressable
-                style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+              <LongButton
                 //@ts-ignore
                 onPress={() => navigate.navigate(c.navigationName, { back: route.name })}
-                key={i}
-              >
-                <View style={theme.mainLongButtonPressableView}>
-                  <Ionicons name={c.pageSymbol as any} size={25} color={colorTheme.headerTextColor} />
-                  <Text style={theme.mainLongButtonPressableText}>
-                    {c.pageName}
-                  </Text>
-                </View>
-                <Ionicons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-              </Pressable>
+                icons={{
+                  names: [c.pageSymbol as any, "chevron-forward-outline"],
+                  size: [25, 20],
+                }}
+                text={c.pageName}
+                key={c.pageName}
+              />
             ))
           }
 
