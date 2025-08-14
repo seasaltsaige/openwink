@@ -11,6 +11,7 @@ import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
 import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
+import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
 
 
 const MIN = 100;
@@ -103,37 +104,10 @@ export function CustomWinkButton() {
   return (
     <>
       <View style={theme.container}>
-
-        <View style={theme.headerContainer}>
-
-          <Pressable style={theme.backButtonContainer} onPress={() => navigation.goBack()}>
-            {
-              ({ pressed }) => (
-                <>
-                  <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                  <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                    {backHumanReadable}
-                  </Text>
-
-                  {
-                    device ?
-                      <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} /> :
-                      (isConnecting || isScanning) ?
-                        <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
-                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                  }
-                </>
-              )
-            }
-          </Pressable>
-
-
-          <Text style={theme.subSettingHeaderText}>
-            Button
-          </Text>
-
-        </View>
+        <HeaderWithBackButton
+          backText={backHumanReadable}
+          headerText="Button"
+        />
 
         {/* MAIN Custom Retractor Button Toggle */}
         <View style={theme.mainLongButtonPressableContainer}>
