@@ -7,6 +7,7 @@ import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore } from "../../Storage";
 import { LongButton } from "../../Components/LongButton";
+import { MainHeader } from "../../Components/MainHeader";
 
 export function Home() {
 
@@ -77,10 +78,7 @@ export function Home() {
 
   return (
     <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-        <Text style={theme.headerText}>Home</Text>
-      </View>
+      <MainHeader text="Home" />
 
       <ScrollView contentContainerStyle={theme.contentContainer} >
 

@@ -4,6 +4,7 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { LongButton } from "../../Components/LongButton";
+import { MainHeader } from "../../Components/MainHeader";
 
 // ["App Info", "Module Info", "App Theme", "Module Customization", "Stored Data"]
 
@@ -44,12 +45,7 @@ export function Settings() {
   return (
     <>
       <View style={theme.container}>
-
-        <View style={theme.headerContainer}>
-          <Text style={theme.headerText}>
-            Settings
-          </Text>
-        </View>
+        <MainHeader text="Settings" />
 
         <View style={theme.homeScreenButtonsContainer}>
 
