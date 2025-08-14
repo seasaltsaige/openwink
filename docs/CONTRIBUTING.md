@@ -21,7 +21,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 - [Suggesting Enhancements](#suggesting-enhancements)
 - [Your First Code Contribution](#your-first-code-contribution)
 - [Improving The Documentation](#improving-the-documentation)
-- [Styleguides](#styleguides)
+- [Style Guides](#style-guides)
 - [Commit Messages](#commit-messages)
 
 
@@ -131,7 +131,7 @@ You can help improve the documentation in many ways:
 
 If you'd like to contribute to the docs, feel free to open a pull request with your changes. If you're not sure, open an issue first to discuss the improvement.
 
-## Styleguides
+## Style Guides
 
 ### Git Style Guide
 - Commit more often than not. Small, to the point, and focused commits are easier to understand and read through.
