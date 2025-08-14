@@ -5,56 +5,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
-
-const commands = [
-  [
-    {
-      name: "Left Up",
-      value: 4,
-    },
-    {
-      name: "Left Down",
-      value: 5,
-    },
-
-  ],
-  [
-    {
-      name: "Both Up",
-      value: 1
-    },
-    {
-      name: "Both Down",
-      value: 2,
-    },
-
-  ],
-  [
-    {
-      name: "Right Up",
-      value: 7,
-    },
-    {
-      name: "Right Down",
-      value: 8,
-    },
-
-  ]
-];
-
-const winks = [{
-  name: "Left Wink",
-  value: 6,
-},
-{
-  name: "Both Blink",
-  value: 3,
-},
-{
-  name: "Right Wink",
-  value: 9,
-}];
-
+import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
 
 export function StandardCommands() {
 
@@ -151,7 +102,7 @@ export function StandardCommands() {
           </Text>
 
           <View style={theme.commandRowContainer}>
-            {commands.map((row, i) =>
+            {DEFAULT_COMMAND_DATA.map((row, i) =>
               <View
                 style={theme.commandColContainer}
                 key={i}
@@ -186,7 +137,7 @@ export function StandardCommands() {
           </Text>
 
           <View style={theme.commandRowContainer}>
-            {winks.map((row) => (
+            {DEFAULT_WINK_DATA.map((row) => (
               <Pressable
                 style={({ pressed }) => ([
                   theme.commandButton,
