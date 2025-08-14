@@ -1,7 +1,7 @@
 import { useTheme } from "@react-navigation/native";
 import { SafeAreaView, Text, View } from "react-native"
 import { useColorTheme } from "../hooks/useColorTheme";
-import { MainHeader } from "../Components/MainHeader";
+import { MainHeader } from "../Components";
 
 export function HowToUse() {
 

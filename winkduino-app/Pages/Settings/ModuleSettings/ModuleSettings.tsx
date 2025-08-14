@@ -6,8 +6,8 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
-import { LongButton } from "../../../Components/LongButton";
-import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
+import { LongButton } from "../../../Components";
+import { HeaderWithBackButton } from "../../../Components";
 
 const moduleSettingsData: Array<{
   pageName: string;

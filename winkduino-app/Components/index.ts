@@ -1,3 +1,4 @@
 export * from "./HeaderWithBackButton";
 export * from "./LongButton";
-export * from "./StatusBanner";
+export * from "./MainHeader";
+export * from "./TooltipHeader";

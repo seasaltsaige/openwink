@@ -6,8 +6,8 @@ import { useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
-import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
-import { TooltipHeader } from "../../../Components/TooltipHeader";
+import { HeaderWithBackButton } from "../../../Components";
+import { TooltipHeader } from "../../../Components";
 
 export function SleepyEyeSettings() {
 

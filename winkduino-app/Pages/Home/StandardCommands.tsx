@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
 import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
-import { HeaderWithBackButton } from "../../Components/HeaderWithBackButton";
+import { HeaderWithBackButton } from "../../Components";
 
 export function StandardCommands() {
 

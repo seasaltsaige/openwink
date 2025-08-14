@@ -6,8 +6,8 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore } from "../../Storage";
-import { LongButton } from "../../Components/LongButton";
-import { MainHeader } from "../../Components/MainHeader";
+import { LongButton } from "../../Components";
+import { MainHeader } from "../../Components";
 
 export function Home() {
 

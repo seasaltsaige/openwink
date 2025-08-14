@@ -5,7 +5,7 @@ import { useFocusEffect, useNavigation, useNavigationState, useRoute } from "@re
 import { useEffect, useState } from "react";
 import { ColorTheme } from "../../helper/Constants";
 import { LongButton } from "../../Components/LongButton";
-import { HeaderWithBackButton } from "../../Components/HeaderWithBackButton";
+import { HeaderWithBackButton } from "../../Components";
 
 export function AppTheme() {
   const {

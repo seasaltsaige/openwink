@@ -3,8 +3,8 @@ import { Pressable, Text, View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useState } from "react";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { LongButton } from "../../Components/LongButton";
-import { MainHeader } from "../../Components/MainHeader";
+import { LongButton } from "../../Components";
+import { MainHeader } from "../../Components";
 
 // ["App Info", "Module Info", "App Theme", "Module Customization", "Stored Data"]
 

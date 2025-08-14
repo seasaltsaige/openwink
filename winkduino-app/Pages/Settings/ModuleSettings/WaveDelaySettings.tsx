@@ -7,7 +7,7 @@ import { useBLE } from "../../../hooks/useBLE";
 import RangeSlider from "react-native-sticky-range-slider";
 import Tooltip from "react-native-walkthrough-tooltip";
 import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
-import { TooltipHeader } from "../../../Components/TooltipHeader";
+import { TooltipHeader } from "../../../Components";
 const MIN = 0;
 const MAX = 100;
 

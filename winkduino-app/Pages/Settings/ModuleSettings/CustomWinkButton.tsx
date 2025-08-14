@@ -11,8 +11,8 @@ import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
 import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
-import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
-import { TooltipHeader } from "../../../Components/TooltipHeader";
+import { HeaderWithBackButton } from "../../../Components";
+import { TooltipHeader } from "../../../Components";
 
 
 const MIN = 100;
