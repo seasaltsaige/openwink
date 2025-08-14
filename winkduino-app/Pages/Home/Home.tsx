@@ -6,6 +6,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore } from "../../Storage";
+import { LongButton } from "../../Components/LongButton";
 
 export function Home() {
 
@@ -121,52 +122,40 @@ export function Home() {
           </Text>
 
           {/* Standard Commands */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("StandardCommands", { back: route.name })}
-            key={1}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="color-wand-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Default Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            key={"StandardCommands"}
+            icons={{
+              names: ["color-wand-outline", "chevron-forward-outline"],
+              size: [25, 20],
+            }}
+            text="Default Commands"
+          />
 
-          </Pressable>
           {/* Custom Commands */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CustomCommands", { back: route.name })}
-            key={2}
-          >
-            <View style={theme.mainLongButtonPressableView}>
+            key={"CustomCommands"}
+            icons={{
+              names: ["sparkles-outline", "chevron-forward-outline"],
+              size: [25, 20],
+            }}
+            text="Custom Commands"
+          />
 
-              <IonIcons name="sparkles-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Custom Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
           {/* Create Custom Command */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
-            onPress={() => navigate.navigate("CreateCustomCommands", { back: route.name })}
-            key={3}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="construct-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Create Custom Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
+            onPress={() => navigate.navigate("CreateCustomCommands"), { back: route.name }}
+            key={"CreateCustomCommands"}
+            icons={{
+              names: ["construct-outline", "chevron-forward-outline"],
+              size: [25, 20],
+            }}
+            text="Create Custom Commands"
+          />
         </View>
 
 
