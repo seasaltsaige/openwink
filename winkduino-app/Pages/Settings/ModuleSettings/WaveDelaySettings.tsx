@@ -7,6 +7,7 @@ import { useBLE } from "../../../hooks/useBLE";
 import RangeSlider from "react-native-sticky-range-slider";
 import Tooltip from "react-native-walkthrough-tooltip";
 import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
+import { TooltipHeader } from "../../../Components/TooltipHeader";
 const MIN = 0;
 const MAX = 100;
 
@@ -54,38 +55,14 @@ export function WaveDelaySettings() {
         headerText="Waves"
       />
 
-      <Tooltip
-        isVisible={delayMultiTooltipVisible}
-        closeOnBackgroundInteraction
-        closeOnContentInteraction
-        placement="bottom"
-        onClose={() => setDelayMultiTooltipVisible(false)}
-        contentStyle={theme.tooltipContainer}
-        content={
+      <TooltipHeader
+        tooltipContent={
           <Text style={theme.tooltipContainerText}>
             Delay between when each headlight actuates in a wave animation. At 100% the animation waits for the first headlight to move completely before activating the second one. At 0%, it does not wait. (Acting similar to a “blink”)
           </Text>
         }
-      >
-
-        <View style={theme.tooltipContainerView}>
-          <Text
-            style={theme.tooltipText}
-          >
-            Delay Percentage
-          </Text>
-          <Pressable
-            hitSlop={20}
-            onPress={() => setDelayMultiTooltipVisible(true)}
-          >
-            {
-              ({ pressed }) => (
-                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-              )
-            }
-          </Pressable>
-        </View>
-      </Tooltip>
+        tooltipTitle="Delay Percentage"
+      />
 
 
 
@@ -141,38 +118,14 @@ export function WaveDelaySettings() {
         </Pressable>
       </View>
 
-
-
-      <Tooltip
-        isVisible={delayPresetTooltipVisible}
-        closeOnBackgroundInteraction
-        closeOnContentInteraction
-        placement="bottom"
-        onClose={() => setDelayPresetTooltipVisible(false)}
-        contentStyle={theme.tooltipContainer}
-        content={
+      <TooltipHeader
+        tooltipContent={
           <Text style={theme.tooltipContainerText}>
             Choose from pre-defined quick presets.{"\n"}Fast = 25%{"\n"}Medium = 50%{"\n"}Slow = 75%{"\n"}Slowest = 100%
           </Text>
         }
-      >
-
-        <View style={theme.tooltipContainerView}>
-          <Text style={theme.tooltipText}>
-            Delay Presets
-          </Text>
-          <Pressable
-            hitSlop={20}
-            onPress={() => setDelayPresetTooltipVisible(true)}
-          >
-            {
-              ({ pressed }) => (
-                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-              )
-            }
-          </Pressable>
-        </View>
-      </Tooltip>
+        tooltipTitle="Delay Presets"
+      />
 
       <View style={{ display: "flex", flexDirection: "row", columnGap: 20, flexWrap: "wrap", alignItems: "center", justifyContent: "center", rowGap: 10, }}>
         {
