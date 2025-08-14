@@ -6,6 +6,7 @@ import { useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
+import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
 
 export function SleepyEyeSettings() {
 
@@ -37,45 +38,10 @@ export function SleepyEyeSettings() {
 
   return (
     <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            ({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {backHumanReadable}
-                </Text>
-
-
-                {
-                  device ? (
-                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} />
-                  ) : (
-                    isConnecting || isScanning ?
-                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} />
-                      : (
-                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                      )
-                  )
-                }
-              </>
-            )
-          }
-        </Pressable>
-
-
-        <Text style={theme.subSettingHeaderText}>
-          Sleepy
-        </Text>
-
-      </View>
+      <HeaderWithBackButton
+        backText={backHumanReadable}
+        headerText="Sleepy"
+      />
 
       <Tooltip
         isVisible={headlightToolTipVisible}
