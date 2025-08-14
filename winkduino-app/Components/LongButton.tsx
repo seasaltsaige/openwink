@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, ViewStyle } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
@@ -10,13 +10,15 @@ interface ILongButtonProps {
     size: [number | null, number | null];
   },
   text: string;
+  pressableStyle?: ViewStyle;
 };
 
 export function LongButton({
   disabled,
   onPress,
   icons,
-  text
+  text,
+  pressableStyle
 }: ILongButtonProps) {
 
   const { theme, colorTheme } = useColorTheme();
@@ -28,6 +30,9 @@ export function LongButton({
         {
           backgroundColor: pressed ? colorTheme.buttonColor :
             disabled ? colorTheme.disabledButtonColor : colorTheme.backgroundSecondaryColor
+        },
+        {
+          ...pressableStyle
         }
       ])}
       onPress={onPress}
