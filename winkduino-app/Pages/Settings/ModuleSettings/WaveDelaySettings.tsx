@@ -156,6 +156,9 @@ export function WaveDelaySettings() {
       </View>
 
 
+
+
+      {/* TODO: Likely will remove fine controls here. It just feels out of place. The other two forms of modification feel like more than enough as well. */}
       <View style={[theme.settingsDropdownContainer, { paddingBottom: accordionOpen ? 10 : 0 }]}>
 
         <Pressable
