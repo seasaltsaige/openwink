@@ -7,6 +7,7 @@ import { useBLE } from "../../../hooks/useBLE";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
 import { LongButton } from "../../../Components/LongButton";
+import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -85,38 +86,10 @@ export function ModuleSettings() {
   return (
     <>
       <View style={theme.moduleSettingsContainer}>
-
-        <View style={theme.headerContainer}>
-
-          <Pressable
-            style={theme.backButtonContainer}
-            onPress={() => navigate.goBack()}
-          >
-            {({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>{back}</Text>
-
-                {
-                  device ? (
-                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={23} />
-                  ) : (
-                    isConnecting || isScanning ?
-                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} />
-                      : (
-                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                      )
-                  )
-                }
-              </>
-            )}
-          </Pressable>
-
-          <Text style={theme.settingsHeaderText}>
-            Module
-          </Text>
-
-        </View>
+        <HeaderWithBackButton
+          backText={back}
+          headerText="Module"
+        />
 
         <View style={[theme.homeScreenButtonsContainer, { rowGap: 15 }]}>
 
