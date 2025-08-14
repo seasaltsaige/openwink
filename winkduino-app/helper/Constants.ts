@@ -86,6 +86,32 @@ export const DEFAULT_WINK_DATA = [{
   value: 9,
 }];
 
+export const SETTINGS_DATA: Array<{
+  pageName: string;
+  pageSymbol: string;
+  navigationName: string;
+}> = [
+    {
+      pageName: "System Information",
+      navigationName: "Info",
+      pageSymbol: "information-circle-outline"
+    },
+    {
+      pageName: "Module Settings",
+      navigationName: "ModuleSettings",
+      pageSymbol: "build-outline"
+    },
+    {
+      pageName: "Application Theme",
+      navigationName: "Theme",
+      pageSymbol: "color-fill-outline"
+    },
+    {
+      pageName: "System Terms Of Use",
+      navigationName: "TermsOfUse",
+      pageSymbol: "document-text-outline",
+    }
+  ]
 
 export enum ButtonStatus {
   DOWN = 0,
