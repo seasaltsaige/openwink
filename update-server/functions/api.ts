@@ -61,7 +61,7 @@ const handler = serverless(app, {
   binary: ['application/octet-stream'],
 });
 
-//@ts-ignore
+// @ts-ignore
 module.exports.handler = async (event, context) => {
   const res = await handler(event, context);
   return res;
