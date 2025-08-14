@@ -5,6 +5,7 @@ import { useFocusEffect, useNavigation, useNavigationState, useRoute } from "@re
 import { useEffect, useState } from "react";
 import { ColorTheme } from "../../helper/Constants";
 import { LongButton } from "../../Components/LongButton";
+import { HeaderWithBackButton } from "../../Components/HeaderWithBackButton";
 
 export function AppTheme() {
   const {
@@ -28,30 +29,11 @@ export function AppTheme() {
 
   return (
     <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            ({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {back}
-                </Text>
-              </>
-            )}
-        </Pressable>
-
-
-        <Text style={theme.settingsHeaderText}>
-          App Theme
-        </Text>
-
-      </View>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="App Theme"
+        headerTextStyle={theme.settingsHeaderText}
+      />
 
 
       {/* Example text/items */}
