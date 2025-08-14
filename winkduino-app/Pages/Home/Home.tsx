@@ -126,10 +126,7 @@ export function Home() {
             //@ts-ignore
             onPress={() => navigate.navigate("StandardCommands", { back: route.name })}
             key={"StandardCommands"}
-            icons={{
-              names: ["color-wand-outline", "chevron-forward-outline"],
-              size: [25, 20],
-            }}
+            icons={{ names: ["color-wand-outline", "chevron-forward-outline"], size: [25, 20] }}
             text="Default Commands"
           />
 
@@ -138,22 +135,16 @@ export function Home() {
             //@ts-ignore
             onPress={() => navigate.navigate("CustomCommands", { back: route.name })}
             key={"CustomCommands"}
-            icons={{
-              names: ["sparkles-outline", "chevron-forward-outline"],
-              size: [25, 20],
-            }}
+            icons={{ names: ["sparkles-outline", "chevron-forward-outline"], size: [25, 20] }}
             text="Custom Commands"
           />
 
           {/* Create Custom Command */}
           <LongButton
             //@ts-ignore
-            onPress={() => navigate.navigate("CreateCustomCommands"), { back: route.name }}
+            onPress={() => navigate.navigate("CreateCustomCommands", { back: route.name })}
             key={"CreateCustomCommands"}
-            icons={{
-              names: ["construct-outline", "chevron-forward-outline"],
-              size: [25, 20],
-            }}
+            icons={{ names: ["construct-outline", "chevron-forward-outline"], size: [25, 20] }}
             text="Create Custom Commands"
           />
         </View>
@@ -165,38 +156,21 @@ export function Home() {
             Quick Links
           </Text>
           {/* CUSTOM WINK BUTTON */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
-            key={4}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="speedometer-outline" size={20} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Set Up Custom Wink Button
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-
-          </Pressable>
-
+            key={"CustomWinkButton"}
+            icons={{ names: ["speedometer-outline", "chevron-forward-outline"], size: [20, 20] }}
+            text="Set Up Custom Wink Button"
+          />
           {/* COLOR THEME */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("Theme", { back: route.name })}
-            key={5}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="color-fill-outline" size={20} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Change App Theme
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
-
+            key={"Theme"}
+            icons={{ names: ["color-fill-outline", "chevron-forward-outline"], size: [20, 20] }}
+            text="Change App Theme"
+          />
         </View>
 
 
