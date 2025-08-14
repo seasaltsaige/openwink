@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, TextStyle, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useNavigation } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -7,9 +7,10 @@ import { useBLE } from "../hooks/useBLE";
 interface IHeaderWithBackButtonProps {
   backText: string;
   headerText: string;
+  headerTextStyle?: TextStyle;
 }
 
-export function HeaderWithBackButton({ backText, headerText }: IHeaderWithBackButtonProps) {
+export function HeaderWithBackButton({ backText, headerText, headerTextStyle }: IHeaderWithBackButtonProps) {
   const { theme, colorTheme } = useColorTheme();
   const { device, isConnecting, isScanning } = useBLE();
   const navigation = useNavigation();
@@ -44,7 +45,7 @@ export function HeaderWithBackButton({ backText, headerText }: IHeaderWithBackBu
         }
       </Pressable>
 
-      <Text style={theme.subSettingHeaderText}>
+      <Text style={headerTextStyle ? headerTextStyle : theme.subSettingHeaderText}>
         {headerText}
       </Text>
     </View>
