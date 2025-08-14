@@ -5,6 +5,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
+import { HeaderWithBackButton } from "../../Components";
 
 export function CreateCustomCommand() {
   const { theme, colorTheme } = useColorTheme();
@@ -17,42 +18,11 @@ export function CreateCustomCommand() {
   return (
     <View style={theme.container}>
 
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            (({ pressed }) => (
-              <>
-
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {back}
-                </Text>
-
-                {
-                  device ?
-                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={23} /> :
-                    (isConnecting || isScanning) ?
-                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
-                      <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                }
-
-              </>
-            ))
-          }
-
-        </Pressable>
-
-        <View>
-          <Text style={theme.settingsHeaderText}>
-            Create Custom
-          </Text>
-        </View>
-      </View>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="Create Custom"
+        headerTextStyle={theme.settingsHeaderText}
+      />
 
       <View style={theme.contentContainer}>
       </View>

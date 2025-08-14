@@ -1,6 +1,7 @@
 import { useTheme } from "@react-navigation/native";
 import { SafeAreaView, Text, View } from "react-native"
 import { useColorTheme } from "../hooks/useColorTheme";
+import { MainHeader } from "../Components";
 
 export function HowToUse() {
 
@@ -8,9 +9,7 @@ export function HowToUse() {
 
   return (
     <View style={theme.container}>
-      <View style={theme.headerContainer}>
-        <Text style={theme.headerText}>Help</Text>
-      </View>
+      <MainHeader text="Help" />
     </View>
   );
 }

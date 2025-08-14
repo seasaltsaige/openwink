@@ -6,6 +6,8 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore } from "../../Storage";
+import { LongButton } from "../../Components";
+import { MainHeader } from "../../Components";
 
 export function Home() {
 
@@ -76,10 +78,7 @@ export function Home() {
 
   return (
     <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-        <Text style={theme.headerText}>Home</Text>
-      </View>
+      <MainHeader text="Home" />
 
       <ScrollView contentContainerStyle={theme.contentContainer} >
 
@@ -121,52 +120,31 @@ export function Home() {
           </Text>
 
           {/* Standard Commands */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("StandardCommands", { back: route.name })}
-            key={1}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="color-wand-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Default Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
+            key={"StandardCommands"}
+            icons={{ names: ["color-wand-outline", "chevron-forward-outline"], size: [25, 20] }}
+            text="Default Commands"
+          />
 
-          </Pressable>
           {/* Custom Commands */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CustomCommands", { back: route.name })}
-            key={2}
-          >
-            <View style={theme.mainLongButtonPressableView}>
+            key={"CustomCommands"}
+            icons={{ names: ["sparkles-outline", "chevron-forward-outline"], size: [25, 20] }}
+            text="Custom Commands"
+          />
 
-              <IonIcons name="sparkles-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Custom Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
           {/* Create Custom Command */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CreateCustomCommands", { back: route.name })}
-            key={3}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="construct-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Create Custom Commands
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
+            key={"CreateCustomCommands"}
+            icons={{ names: ["construct-outline", "chevron-forward-outline"], size: [25, 20] }}
+            text="Create Custom Commands"
+          />
         </View>
 
 
@@ -176,38 +154,21 @@ export function Home() {
             Quick Links
           </Text>
           {/* CUSTOM WINK BUTTON */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
-            key={4}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="speedometer-outline" size={20} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Set Up Custom Wink Button
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-
-          </Pressable>
-
+            key={"CustomWinkButton"}
+            icons={{ names: ["speedometer-outline", "chevron-forward-outline"], size: [20, 20] }}
+            text="Set Up Custom Wink Button"
+          />
           {/* COLOR THEME */}
-          <Pressable
-            style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
+          <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("Theme", { back: route.name })}
-            key={5}
-          >
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="color-fill-outline" size={20} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Change App Theme
-              </Text>
-            </View>
-            <IonIcons style={theme.mainLongButtonPressableIcon} name="chevron-forward-outline" size={20} color={colorTheme.headerTextColor} />
-          </Pressable>
-
+            key={"Theme"}
+            icons={{ names: ["color-fill-outline", "chevron-forward-outline"], size: [20, 20] }}
+            text="Change App Theme"
+          />
         </View>
 
 
@@ -220,28 +181,24 @@ export function Home() {
           {
             // TODO: update to 'if update available for app'
             appUpdateAvailable ? (
-              <Pressable
-                style={({ pressed }) => pressed ? theme.homeUpdatesButtonPressed : theme.homeUpdatesButton}
+              <LongButton
                 onPress={() => {
                   // Open app store
                 }}
-              >
-                <Text style={theme.mainLongButtonPressableText}>
-                  Install app update
-                </Text>
-                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
-
-              </Pressable>
+                icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
+                text="Install App Update"
+              />
             ) : (
-              <View style={theme.homeUpdatesButton}>
-                <Text style={theme.homeUpdatesText}>
-                  {fetchingAppUpdateInfo ? "Checking for app update" : "App is up to date"}
-                </Text>
-
+              <View style={theme.mainLongButtonPressableContainer}>
+                <View style={theme.mainLongButtonPressableView}>
+                  <Text style={theme.mainLongButtonPressableText}>
+                    {fetchingAppUpdateInfo ? "Checking for app update" : "App is up to date"}
+                  </Text>
+                </View>
                 {
                   fetchingAppUpdateInfo ?
-                    <ActivityIndicator size={"small"} color={colorTheme.buttonColor} /> :
-                    <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                    <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :
+                    <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
 
               </View>
@@ -251,40 +208,39 @@ export function Home() {
           {
             // TODO: update to 'if update available for module'
             moduleUpdateAvailable ? (
-              <Pressable
-                style={({ pressed }) => pressed ? theme.homeUpdatesButtonPressed : theme.homeUpdatesButton}
+              <LongButton
                 onPress={() => {
                   // Install update to wink module
                   // Should only become this state if connected to wink module (To check device for version)
                 }}
-              >
-                <Text style={theme.homeUpdatesText}>
-                  Install module update
-                </Text>
-                <IonIcons name="cloud-download-outline" color={colorTheme.textColor} size={18} />
-              </Pressable>
+                icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
+                text="Install Module Update"
+              />
+
             ) : (
-              <View style={theme.homeUpdatesButton}>
-                {/* TODO: maybe once ble stuff is set up, store last version number and compare on start... but also might be too complex, (too many layers), just search when connected... */}
-                <Text style={theme.homeUpdatesText}>
-                  {!device ?
-                    "Connect to Wink Module for updates" :
-                    fetchingModuleUpdateInfo ?
-                      "Checking for Module software update" :
-                      "Module is up to date"
-                  }
-                </Text>
+              <View style={theme.mainLongButtonPressableContainer}>
+                <View style={theme.mainLongButtonPressableView}>
+                  <Text style={theme.mainLongButtonPressableText}>
+                    {!device ?
+                      "Connect to Wink Module for updates" :
+                      fetchingModuleUpdateInfo ?
+                        "Checking for Module software update" :
+                        "Module is up to date"
+                    }
+                  </Text>
+                </View>
                 {
                   !device ?
-                    <IonIcons size={18} name="cloud-offline-outline" color={colorTheme.textColor} /> :
+                    <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} /> :
                     fetchingModuleUpdateInfo ?
-                      <ActivityIndicator size={"small"} color={colorTheme.buttonColor} /> :
-                      <IonIcons size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                      <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :
+                      <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 }
               </View>
             )
           }
         </View>
+
       </ScrollView>
     </View >
   );

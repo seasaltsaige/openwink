@@ -11,6 +11,8 @@ import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
 import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
+import { HeaderWithBackButton } from "../../../Components";
+import { TooltipHeader } from "../../../Components";
 
 
 const MIN = 100;
@@ -103,37 +105,10 @@ export function CustomWinkButton() {
   return (
     <>
       <View style={theme.container}>
-
-        <View style={theme.headerContainer}>
-
-          <Pressable style={theme.backButtonContainer} onPress={() => navigation.goBack()}>
-            {
-              ({ pressed }) => (
-                <>
-                  <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                  <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                    {backHumanReadable}
-                  </Text>
-
-                  {
-                    device ?
-                      <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} /> :
-                      (isConnecting || isScanning) ?
-                        <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
-                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                  }
-                </>
-              )
-            }
-          </Pressable>
-
-
-          <Text style={theme.subSettingHeaderText}>
-            Button
-          </Text>
-
-        </View>
+        <HeaderWithBackButton
+          backText={backHumanReadable}
+          headerText="Button"
+        />
 
         {/* MAIN Custom Retractor Button Toggle */}
         <View style={theme.mainLongButtonPressableContainer}>
@@ -164,38 +139,16 @@ export function CustomWinkButton() {
           <View style={theme.rangeSliderContainer}>
 
             {/* Press Interval */}
-            <Tooltip
-              isVisible={intervalTooltipVisible}
-              closeOnBackgroundInteraction
-              closeOnContentInteraction
-              placement="bottom"
-              onClose={() => setIntervalTooltipVisible(false)}
-              contentStyle={theme.tooltipContainer}
-              content={
+            <TooltipHeader
+              tooltipContent={
                 <Text style={theme.tooltipContainerText}>
                   Maximum time allowed between retractor button presses
                   before a sequence takes effect. Between 250ms and 500ms
                   is recommended.
                 </Text>
               }
-            >
-              <View style={theme.tooltipContainerView}>
-                <Text style={theme.tooltipText}>
-                  Press Interval
-                </Text>
-
-                <Pressable
-                  hitSlop={20}
-                  onPress={() => setIntervalTooltipVisible(true)}
-                >
-                  {
-                    ({ pressed }) => (
-                      <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-                    )
-                  }
-                </Pressable>
-              </View>
-            </Tooltip>
+              tooltipTitle="Press Interval"
+            />
 
             <RangeSlider
               style={theme.rangeSliderStyle}
@@ -253,38 +206,15 @@ export function CustomWinkButton() {
 
         <View style={theme.intervalInfoContainer}>
           {/* Button Actions Tooltip */}
-          <Tooltip
-            isVisible={actionsTooltipVisible}
-            closeOnBackgroundInteraction
-            closeOnContentInteraction
-            placement="bottom"
-            onClose={() => setActionsTooltipVisible(false)}
-            contentStyle={theme.tooltipContainer}
-            content={
+          <TooltipHeader
+            tooltipContent={
               <Text style={theme.tooltipContainerText}>
                 List of actions certain sequences of button presses will activate.
                 The default single button press is unable to be adjusted due to saftey reasons.
               </Text>
             }
-          >
-
-            <View style={theme.tooltipContainerView}>
-              <Text style={theme.tooltipText}>
-                Button Actions
-              </Text>
-
-              <Pressable
-                hitSlop={20}
-                onPress={() => setActionsTooltipVisible(true)}
-              >
-                {
-                  ({ pressed }) => (
-                    <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-                  )
-                }
-              </Pressable>
-            </View>
-          </Tooltip>
+            tooltipTitle="Button Actions"
+          />
 
           {/* SINGLE PRESS INFO + Create New */}
           <View style={theme.rangeSliderButtonsView}>

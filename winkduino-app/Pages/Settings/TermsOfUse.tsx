@@ -3,6 +3,7 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import { HeaderWithBackButton } from "../../Components";
 
 export function TermsOfUse() {
 
@@ -15,25 +16,10 @@ export function TermsOfUse() {
 
   return (
     <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            ({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>{back}</Text>
-              </>
-            )}
-        </Pressable>
-        <Text style={theme.settingsHeaderText}>
-          Terms Of Use
-        </Text>
-      </View>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="Terms of Use"
+      />
 
       <ScrollView contentContainerStyle={theme.contentContainer}>
 

@@ -37,6 +37,81 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://192.168.0.11:3000/.netlify/functions/api/update";
 
+export const DEFAULT_COMMAND_DATA = [
+  [
+    {
+      name: "Left Up",
+      value: 4,
+    },
+    {
+      name: "Left Down",
+      value: 5,
+    },
+
+  ],
+  [
+    {
+      name: "Both Up",
+      value: 1
+    },
+    {
+      name: "Both Down",
+      value: 2,
+    },
+
+  ],
+  [
+    {
+      name: "Right Up",
+      value: 7,
+    },
+    {
+      name: "Right Down",
+      value: 8,
+    },
+
+  ]
+];
+
+export const DEFAULT_WINK_DATA = [{
+  name: "Left Wink",
+  value: 6,
+},
+{
+  name: "Both Blink",
+  value: 3,
+},
+{
+  name: "Right Wink",
+  value: 9,
+}];
+
+export const SETTINGS_DATA: Array<{
+  pageName: string;
+  pageSymbol: string;
+  navigationName: string;
+}> = [
+    {
+      pageName: "System Information",
+      navigationName: "Info",
+      pageSymbol: "information-circle-outline"
+    },
+    {
+      pageName: "Module Settings",
+      navigationName: "ModuleSettings",
+      pageSymbol: "build-outline"
+    },
+    {
+      pageName: "Application Theme",
+      navigationName: "Theme",
+      pageSymbol: "color-fill-outline"
+    },
+    {
+      pageName: "System Terms Of Use",
+      navigationName: "TermsOfUse",
+      pageSymbol: "document-text-outline",
+    }
+  ]
 
 export enum ButtonStatus {
   DOWN = 0,

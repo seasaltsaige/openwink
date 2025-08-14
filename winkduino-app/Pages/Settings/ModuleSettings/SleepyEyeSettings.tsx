@@ -6,6 +6,8 @@ import { useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
+import { HeaderWithBackButton } from "../../../Components";
+import { TooltipHeader } from "../../../Components";
 
 export function SleepyEyeSettings() {
 
@@ -37,82 +39,21 @@ export function SleepyEyeSettings() {
 
   return (
     <View style={theme.container}>
+      <HeaderWithBackButton
+        backText={backHumanReadable}
+        headerText="Sleepy"
+      />
 
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            ({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {backHumanReadable}
-                </Text>
-
-
-                {
-                  device ? (
-                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} />
-                  ) : (
-                    isConnecting || isScanning ?
-                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} />
-                      : (
-                        <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-                      )
-                  )
-                }
-              </>
-            )
-          }
-        </Pressable>
-
-
-        <Text style={theme.subSettingHeaderText}>
-          Sleepy
-        </Text>
-
-      </View>
-
-      <Tooltip
-        isVisible={headlightToolTipVisible}
-        closeOnBackgroundInteraction
-        closeOnContentInteraction
-        placement="bottom"
-        onClose={() => setHeadlightToolTipVisible(false)}
-        contentStyle={theme.tooltipContainer}
-        content={
+      <TooltipHeader
+        tooltipContent={
           <Text style={theme.tooltipContainerText}>
-
             Position of the headlights when module is in Sleepy Eye Mode, based from the headlight lowered state.{"\n"}
             25% = ~25% raised{"\n"}
             75% = ~75% raised
-
           </Text>
         }
-      >
-
-        <View style={theme.tooltipContainerView}>
-          <Text
-            style={theme.tooltipText}
-          >
-            Headlight Position
-          </Text>
-          <Pressable
-            hitSlop={20}
-            onPress={() => setHeadlightToolTipVisible(true)}
-          >
-            {
-              ({ pressed }) => (
-                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-              )
-            }
-          </Pressable>
-        </View>
-      </Tooltip>
+        tooltipTitle="Headlight Position"
+      />
 
       <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", width: "100%", height: "auto" }}>
 
@@ -183,15 +124,8 @@ export function SleepyEyeSettings() {
       </View>
 
 
-
-      <Tooltip
-        isVisible={quickPresetToolTipVisible}
-        closeOnBackgroundInteraction
-        closeOnContentInteraction
-        placement="bottom"
-        onClose={() => setQuickPresetToolTipVisible(false)}
-        contentStyle={theme.tooltipContainer}
-        content={
+      <TooltipHeader
+        tooltipContent={
           <Text style={theme.tooltipContainerText}>
             Quick presets for each headlight side when{"\n"}Sleepy Eye Mode is active.{"\n"}
             High = 75%{"\n"}
@@ -199,26 +133,8 @@ export function SleepyEyeSettings() {
             Low = 25%
           </Text>
         }
-      >
-
-        <View style={theme.tooltipContainerView}>
-          <Text
-            style={theme.tooltipText}
-          >
-            Quick Presets
-          </Text>
-          <Pressable
-            hitSlop={20}
-            onPress={() => setQuickPresetToolTipVisible(true)}
-          >
-            {
-              ({ pressed }) => (
-                <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
-              )
-            }
-          </Pressable>
-        </View>
-      </Tooltip>
+        tooltipTitle="Quick Presets"
+      />
 
 
       <View style={{

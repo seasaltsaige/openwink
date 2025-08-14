@@ -5,56 +5,8 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
-
-const commands = [
-  [
-    {
-      name: "Left Up",
-      value: 4,
-    },
-    {
-      name: "Left Down",
-      value: 5,
-    },
-
-  ],
-  [
-    {
-      name: "Both Up",
-      value: 1
-    },
-    {
-      name: "Both Down",
-      value: 2,
-    },
-
-  ],
-  [
-    {
-      name: "Right Up",
-      value: 7,
-    },
-    {
-      name: "Right Down",
-      value: 8,
-    },
-
-  ]
-];
-
-const winks = [{
-  name: "Left Wink",
-  value: 6,
-},
-{
-  name: "Both Blink",
-  value: 3,
-},
-{
-  name: "Right Wink",
-  value: 9,
-}];
-
+import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
+import { HeaderWithBackButton } from "../../Components";
 
 export function StandardCommands() {
 
@@ -79,44 +31,11 @@ export function StandardCommands() {
   return (
     <View style={theme.container}>
 
-      <View style={theme.headerContainer}>
-
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            (({ pressed }) => (
-              <>
-
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {back}
-                </Text>
-
-                {
-                  device ?
-                    <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={23} /> :
-                    (isConnecting || isScanning) ?
-                      <ActivityIndicator style={theme.backButtonContainerIcon} color={colorTheme.buttonColor} /> :
-                      <IonIcons style={theme.backButtonContainerIcon} name="cloud-offline-outline" color="#b3b3b3" size={23} />
-
-
-                }
-
-              </>
-            ))
-          }
-
-        </Pressable>
-
-        <View>
-          <Text style={theme.settingsHeaderText}>
-            Commands
-          </Text>
-        </View>
-      </View>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="Commands"
+        headerTextStyle={theme.settingsHeaderText}
+      />
 
       <View style={theme.contentContainer}>
 
@@ -151,7 +70,7 @@ export function StandardCommands() {
           </Text>
 
           <View style={theme.commandRowContainer}>
-            {commands.map((row, i) =>
+            {DEFAULT_COMMAND_DATA.map((row, i) =>
               <View
                 style={theme.commandColContainer}
                 key={i}
@@ -186,7 +105,7 @@ export function StandardCommands() {
           </Text>
 
           <View style={theme.commandRowContainer}>
-            {winks.map((row) => (
+            {DEFAULT_WINK_DATA.map((row) => (
               <Pressable
                 style={({ pressed }) => ([
                   theme.commandButton,

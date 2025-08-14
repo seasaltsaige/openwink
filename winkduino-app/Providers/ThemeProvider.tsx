@@ -38,9 +38,6 @@ interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
   mainLongButtonPressableView: ViewStyle;
   mainLongButtonPressableText: TextStyle;
   mainLongButtonPressableIcon: ViewStyle;
-  homeUpdatesButton: ViewStyle;
-  homeUpdatesButtonPressed: ViewStyle;
-  homeUpdatesText: TextStyle;
 
   backButtonContainer: ViewStyle;
   backButtonContainerText: TextStyle;
@@ -364,33 +361,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           fontFamily: "IBMPlexSans_500Medium",
         },
         mainLongButtonPressableIcon: { marginRight: 10 },
-        homeUpdatesButton: {
-          backgroundColor: themeColors.backgroundSecondaryColor,
-          width: "100%",
-          padding: 15,
-          paddingVertical: 11,
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderRadius: 8,
-        },
-        homeUpdatesButtonPressed: {
-          backgroundColor: themeColors.buttonColor,
-          width: "100%",
-          padding: 15,
-          paddingVertical: 11,
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderRadius: 8,
-        },
-        homeUpdatesText: {
-          fontSize: 15,
-          color: themeColors.textColor,
-          fontFamily: "IBMPlexSans_500Medium",
-        },
         backButtonContainer: {
           display: "flex",
           flexDirection: "row",

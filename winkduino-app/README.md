@@ -115,7 +115,11 @@ winkduino-app
 │   ├── icon.png
 │   └── splash-icon.png # All icons need updating: See issue #20
 ├── Components # Contains components used throughout the app
-│   └── StatusBanner.tsx # Banner dropdown that displays error/success statuses throughout app
+│   ├── HeaderWithBackButton.tsx
+│   ├── index.ts
+│   ├── LongButton.tsx
+│   ├── MainHeader.tsx
+│   └── TooltipHeader.tsx
 ├── helper # Contains helper functions and constants
 │   ├── Constants.ts
 │   ├── Functions.ts
@@ -159,6 +163,7 @@ winkduino-app
 ├── App.tsx # Root view
 ├── eas.json 
 ├── index.ts # App entry point
+├── Navigation.tsx # Contains all navigation core functionality
 ├── package-lock.json
 ├── package.json
 ├── README.md # You're here!
