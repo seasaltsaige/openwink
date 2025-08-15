@@ -62,10 +62,10 @@ export function Home() {
   }
 
   useEffect(() => {
-    (async () => {
-      const autoConn = await AutoConnectStore.get();
-      if (autoConn && !device) scanForDevice();
+    const autoConn = AutoConnectStore.get();
+    if (autoConn && !device) scanForDevice();
 
+    (async () => {
       const res = await checkAppUpdate();
 
     })();

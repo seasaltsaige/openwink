@@ -77,6 +77,7 @@ export function Information() {
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
 
+  // TODO refactor useFocusEffect, as it is no longer async
   const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
     ...state,
     [action.name]: !state[action.name],
@@ -87,17 +88,15 @@ export function Information() {
 
 
   useFocusEffect(() => {
-    (async () => {
-      const actions = await CustomOEMButtonStore.getAll();
-      if (actions)
-        setRawButtonActions(actions);
-      else setRawButtonActions([]);
+    const actions = CustomOEMButtonStore.getAll();
+    if (actions)
+      setRawButtonActions(actions);
+    else setRawButtonActions([]);
 
-      const commands = await CustomCommandStore.getAll();
-      if (commands)
-        setCustomCommands(commands);
-      else setCustomCommands([]);
-    })();
+    const commands = CustomCommandStore.getAll();
+    if (commands)
+      setCustomCommands(commands);
+    else setCustomCommands([]);
   });
 
   const navigation = useNavigation();

@@ -53,8 +53,8 @@ export function CustomWinkButton() {
 
   const { device, isScanning, isConnecting } = useBLE();
 
-  const fetchActionsFromStorage = async () => {
-    const storedActions = await CustomOEMButtonStore.getAll();
+  const fetchActionsFromStorage = () => {
+    const storedActions = CustomOEMButtonStore.getAll();
     if (storedActions !== null && storedActions.length > 0) {
       setActions(storedActions.map(action => ({
         behaviorHumanReadable: action.behavior,
@@ -69,17 +69,13 @@ export function CustomWinkButton() {
     setMax(newHigh);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const setValue = await CustomOEMButtonStore.getDelay();
-        if (setValue !== null)
-          setIntervalValue(setValue);
+  useFocusEffect(() => {
+    const setValue = CustomOEMButtonStore.getDelay();
+    if (setValue !== null)
+      setIntervalValue(setValue);
 
-        await fetchActionsFromStorage();
-      })();
-    }, []),
-  );
+    fetchActionsFromStorage();
+  });
 
   const updateButtonAction = async (action: CustomButtonAction) => {
     await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!);
