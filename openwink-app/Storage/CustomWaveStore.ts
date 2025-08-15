@@ -1,33 +1,21 @@
-
+import Storage from ".";
 const key = "HEADLIGHT_MULTI";
 export abstract class CustomWaveStore {
 
-  static async setMultiplier(multiplier: number) {
-    if (multiplier < 0 || multiplier > 1) return null;
-    try {
-      await AsyncStorage.setItem(key, multiplier.toString());
-    } catch (err) {
-      return null;
-    }
+  static setMultiplier(multiplier: number): void {
+    if (multiplier < 0 || multiplier > 1) return;
+    Storage.set(key, multiplier);
   }
 
-  static async getMultiplier() {
-    try {
-      const stored = await AsyncStorage.getItem(key);
-      if (stored)
-        return parseFloat(stored);
-      else return 1;
-    } catch (err) {
-      return null;
-    }
+  static getMultiplier() {
+    const stored = Storage.getNumber(key);
+    if (stored)
+      return stored;
+    else return 1;
   }
 
-  static async reset() {
-    try {
-      await AsyncStorage.removeItem(key);
-    } catch (err) {
-      return null;
-    }
+  static reset() {
+    Storage.delete(key);
   }
 
 }
