@@ -30,12 +30,14 @@ import {
   LONG_TERM_SLEEP_UUID,
   SYNC_UUID,
 } from '../helper/Constants';
-import { AutoConnectStore, buttonBehaviorMap, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, Presses, SleepyEyeStore } from '../Storage';
+import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
+
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
 import { sleep, toProperCase } from '../helper/Functions';
-import { ButtonBehaviors } from '../helper/Types';
+import { ButtonBehaviors, Presses } from '../helper/Types';
+import { buttonBehaviorMap } from "../helper/Constants";
 
 export type BleContextType = {
   device: Device | null;

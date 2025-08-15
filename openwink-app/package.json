@@ -1,5 +1,5 @@
 {
-  "name": "winkduino-app-3.0",
+  "name": "openwink-app",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -11,7 +11,6 @@
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
-    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.1.14",
@@ -28,6 +27,7 @@
     "react-native-ble-plx": "^3.2.1",
     "react-native-bouncy-checkbox": "^4.1.2",
     "react-native-dropdown-picker": "^5.4.6",
+    "react-native-mmkv": "^3.3.0",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.1.0",
     "react-native-sticky-range-slider": "^0.1.7",

@@ -6,10 +6,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
-import { buttonBehaviorMap, buttonBehaviorMapReversed, CustomOEMButtonStore, Presses } from "../../../Storage";
+import { CustomOEMButtonStore } from "../../../Storage";
+import { Presses } from "../../../helper/Types";
 import { ButtonBehaviors } from "../../../helper/Types";
 import RangeSlider from "react-native-sticky-range-slider";
-import { BehaviorEnum, countToEnglish } from "../../../helper/Constants";
+import { BehaviorEnum, countToEnglish, buttonBehaviorMap } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
 import { HeaderWithBackButton } from "../../../Components";
 import { TooltipHeader } from "../../../Components";
@@ -52,8 +53,8 @@ export function CustomWinkButton() {
 
   const { device, isScanning, isConnecting } = useBLE();
 
-  const fetchActionsFromStorage = async () => {
-    const storedActions = await CustomOEMButtonStore.getAll();
+  const fetchActionsFromStorage = () => {
+    const storedActions = CustomOEMButtonStore.getAll();
     if (storedActions !== null && storedActions.length > 0) {
       setActions(storedActions.map(action => ({
         behaviorHumanReadable: action.behavior,
@@ -68,17 +69,13 @@ export function CustomWinkButton() {
     setMax(newHigh);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      (async () => {
-        const setValue = await CustomOEMButtonStore.getDelay();
-        if (setValue !== null)
-          setIntervalValue(setValue);
+  useFocusEffect(() => {
+    const setValue = CustomOEMButtonStore.getDelay();
+    if (setValue !== null)
+      setIntervalValue(setValue);
 
-        await fetchActionsFromStorage();
-      })();
-    }, []),
-  );
+    fetchActionsFromStorage();
+  });
 
   const updateButtonAction = async (action: CustomButtonAction) => {
     await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!);

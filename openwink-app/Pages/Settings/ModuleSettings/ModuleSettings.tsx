@@ -46,30 +46,30 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  const [actionFunction, setActionFunction] = useState<() => Promise<void>>();
+  const [actionFunction, setActionFunction] = useState<() => void>();
   const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
 
   const togglePress = async (val: boolean) => {
     setToggleOn(val);
     if (val) {
-      await AutoConnectStore.enable();
+      AutoConnectStore.enable();
       setAutoConnect(true);
       if (!device && !isConnecting && !isScanning) scanForModule();
     } else {
-      await AutoConnectStore.disable();
+      AutoConnectStore.disable();
       setAutoConnect(false);
       if (isScanning) await manager.stopDeviceScan();
     }
   }
 
-  const deleteStoredModuleData = async () => {
-    await AutoConnectStore.disable();
-    await CustomCommandStore.deleteAll();
-    await CustomOEMButtonStore.disable();
-    await CustomOEMButtonStore.removeAll();
-    await DeviceMACStore.forgetMAC();
-    await FirmwareStore.forgetFirmwareVersion();
-    await SleepyEyeStore.reset("both");
+  const deleteStoredModuleData = () => {
+    AutoConnectStore.disable();
+    CustomCommandStore.deleteAll();
+    CustomOEMButtonStore.disable();
+    CustomOEMButtonStore.removeAll();
+    DeviceMACStore.forgetMAC();
+    FirmwareStore.forgetFirmwareVersion();
+    SleepyEyeStore.reset("both");
   }
 
   const putModuleToSleep = async () => {
@@ -79,7 +79,7 @@ export function ModuleSettings() {
   const forgetModulePairing = async () => {
     if (!device) return;
     await device.cancelConnection();
-    await DeviceMACStore.forgetMAC();
+    DeviceMACStore.forgetMAC();
   }
 
 
@@ -189,7 +189,7 @@ export function ModuleSettings() {
 }
 
 // Confirmation Modal for module sleep, module forgetting, and data deletion
-function ConfirmationModal(props: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => Promise<void> }) {
+function ConfirmationModal(props: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => void }) {
   const { colorTheme, theme } = useColorTheme();
   const { device } = useBLE();
 

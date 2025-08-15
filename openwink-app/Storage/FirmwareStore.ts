@@ -1,31 +1,18 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import Storage from ".";
 const VERSION_KEY = "firmware-version";
 
 export abstract class FirmwareStore {
-  static async setFirmwareVersion(firmware: string): Promise<void | null> {
-    try {
-      await AsyncStorage.setItem(VERSION_KEY, firmware);
-    } catch (err) {
-      return null;
-    }
+  static setFirmwareVersion(firmware: string): void {
+    Storage.set(VERSION_KEY, firmware);
   }
 
-  static async forgetFirmwareVersion(): Promise<void | null> {
-    try {
-      await AsyncStorage.removeItem(VERSION_KEY);
-    } catch (err) {
-      return null;
-    }
+  static forgetFirmwareVersion(): void {
+    Storage.delete(VERSION_KEY);
   }
 
-  static async getFirmwareVersion(): Promise<string | null> {
-    try {
-      const version = await AsyncStorage.getItem(VERSION_KEY);
-      if (!version) return "";
-      else return version;
-    } catch (err) {
-      return null;
-    }
+  static getFirmwareVersion(): string | null {
+    const version = Storage.getString(VERSION_KEY);
+    if (!version) return null;
+    else return version; 
   }
 }

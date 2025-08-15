@@ -1,30 +1,19 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import Storage from ".";
 const MAC_ADDR_KEY = "mac-addr";
 
 export abstract class DeviceMACStore {
-    static async getStoredMAC(): Promise<string | null> {
-        try {
-            const mac = await AsyncStorage.getItem(MAC_ADDR_KEY);
-            if (!mac) return "";
-            else return mac;
-        } catch (err) {
-            return null;
-        }
-    }
+  static getStoredMAC(): string | null {
+    const mac = Storage.getString(MAC_ADDR_KEY);
+    if (!mac) return null;
+    else return mac;
 
-    static async setMAC(mac: string): Promise<void | null> {
-        try {
-            await AsyncStorage.setItem(MAC_ADDR_KEY, mac);
-        } catch (err) {
-            return null;
-        }
-    }
+  }
 
-    static async forgetMAC(): Promise<void | null> {
-        try {
-            await AsyncStorage.removeItem(MAC_ADDR_KEY);
-        } catch (err) {
-            return null;
-        }
-    }
+  static setMAC(mac: string): void {
+    Storage.set(MAC_ADDR_KEY, mac);
+  }
+
+  static forgetMAC(): void {
+    Storage.delete(MAC_ADDR_KEY);
+  }
 }

@@ -4,8 +4,9 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { useEffect, useMemo, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
-import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
-import { buttonBehaviorMap, ButtonBehaviors, CommandOutput, CustomCommandStore, CustomOEMButtonStore, Presses } from "../../Storage";
+import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
+import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { ButtonBehaviors, Presses } from "../../helper/Types";
 import * as Application from "expo-application";
 
 
@@ -76,6 +77,7 @@ export function Information() {
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
 
+  // TODO refactor useFocusEffect, as it is no longer async
   const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
     ...state,
     [action.name]: !state[action.name],
@@ -86,17 +88,15 @@ export function Information() {
 
 
   useFocusEffect(() => {
-    (async () => {
-      const actions = await CustomOEMButtonStore.getAll();
-      if (actions)
-        setRawButtonActions(actions);
-      else setRawButtonActions([]);
+    const actions = CustomOEMButtonStore.getAll();
+    if (actions)
+      setRawButtonActions(actions);
+    else setRawButtonActions([]);
 
-      const commands = await CustomCommandStore.getAll();
-      if (commands)
-        setCustomCommands(commands);
-      else setCustomCommands([]);
-    })();
+    const commands = CustomCommandStore.getAll();
+    if (commands)
+      setCustomCommands(commands);
+    else setCustomCommands([]);
   });
 
   const navigation = useNavigation();

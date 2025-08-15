@@ -1,3 +1,8 @@
+import { MMKV } from "react-native-mmkv";
+
+export default new MMKV();
+
+
 export * from "./AutoConnectStore";
 export * from "./CustomCommandStore";
 export * from "./CustomOEMButtonStore";

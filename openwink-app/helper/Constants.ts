@@ -1,5 +1,3 @@
-import { StyleProp, StyleSheet } from "react-native"
-
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
 export const WINK_SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -112,6 +110,31 @@ export const SETTINGS_DATA: Array<{
       pageSymbol: "document-text-outline",
     }
   ]
+
+// Maps english to actual value
+export const buttonBehaviorMap = {
+  "Default Behavior": 1,
+  "Left Wink": 2,
+  "Left Wink x2": 3,
+  "Right Wink": 4,
+  "Right Wink x2": 5,
+  "Both Blink": 6,
+  "Both Blink x2": 7,
+  "Left Wave": 8,
+  "Right Wave": 9,
+} as const;
+
+export const buttonBehaviorMapReversed = {
+  1: "Default Behavior",
+  2: "Left Wink",
+  3: "Left Wink x2",
+  4: "Right Wink",
+  5: "Right Wink x2",
+  6: "Both Blink",
+  7: "Both Blink x2",
+  8: "Left Wave",
+  9: "Right Wave",
+} as const;
 
 export enum ButtonStatus {
   DOWN = 0,
