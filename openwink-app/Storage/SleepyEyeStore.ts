@@ -1,36 +1,25 @@
-
-
+import Storage from ".";
 const key = "SLEEPY_KEY";
 
 export abstract class SleepyEyeStore {
-  static async set(side: "left" | "right", value: number) {
+  static set(side: "left" | "right", value: number) {
     if (value < 0 || value > 100) return null;
-    try {
-      await AsyncStorage.setItem(`${key}_${side}`, value.toString());
-    } catch (err) {
-      return null;
-    }
+    Storage.set(`${key}_${side}`, value);
   }
 
 
-  static async get(side: "left" | "right") {
-    try {
-      const stored = await AsyncStorage.getItem(`${key}_${side}`);
-      if (!stored) return 50;
-      else return parseInt(stored);
-    } catch (err) {
-      return null;
-    }
+  static get(side: "left" | "right") {
+
+    const stored = Storage.getNumber(`${key}_${side}`);
+    if (!stored) return 50;
+    else return stored;
   }
 
-  static async reset(side: "left" | "right" | "both") {
-    try {
-      if (side === "both") {
-        const keys = (await AsyncStorage.getAllKeys()).filter(v => v.startsWith(key));
-        await AsyncStorage.multiRemove(keys);
-      } else await AsyncStorage.removeItem(`${key}_${side}`);
-    } catch (err) {
-      return null;
-    }
+  static reset(side: "left" | "right" | "both") {
+    if (side === "both") {
+      const keys = Storage.getAllKeys().filter(v => v.startsWith(key));
+      for (const key of keys)
+        Storage.delete(key);
+    } else Storage.delete(`${key}_${side}`);
   }
 }
