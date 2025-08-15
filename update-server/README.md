@@ -1,6 +1,6 @@
 <div align="center">
 
-# Wink Module Update Server
+# Open Wink Module Update Server
 
 This directory contains the code base which serves as the update server for the Wink Module. This server holds the binary file which is sent over http requests to the app to stage for update of the module over a local AP that the module creates. The server is hosted on Netlify, using serverless functions.
 
@@ -24,8 +24,8 @@ This directory contains the code base which serves as the update server for the 
 
 Clone this repository and  ensure you are in the correct directory.
 ```bash
-> git clone https://github.com/seasaltsaige/winkduino-long-range.git
-> cd ./winkduino-long-range/update-server
+> git clone https://github.com/seasaltsaige/openwink.git
+> cd ./openwink/update-server
 ```
 
 Install required dependencies.
