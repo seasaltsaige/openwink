@@ -32,14 +32,14 @@ bool wifi_enabled = false;
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer) {
   printf("Client connected:: %s\n");
-  WinkduinoBLE::setDeviceConnected(true);
-  WinkduinoBLE::updateHeadlightChars();
+  BLE::setDeviceConnected(true);
+  BLE::updateHeadlightChars();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
-  WinkduinoBLE::setDeviceConnected(false);
+  BLE::setDeviceConnected(false);
   awakeTime_ms = 0;
-  WinkduinoBLE::start();
+  BLE::start();
 }
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
@@ -87,7 +87,7 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
   leftStatus = 1;
   rightStatus = 1;
 
-  WinkduinoBLE::updateHeadlightChars();
+  BLE::updateHeadlightChars();
 }
 
 // Send sleep command
@@ -132,7 +132,7 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   leftStatus = leftSleepyValue + 10;
   rightStatus = rightSleepyValue + 10;
 
-  WinkduinoBLE::updateHeadlightChars();
+  BLE::updateHeadlightChars();
 }
 
 // Updates headlight status
@@ -155,7 +155,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
 
   int valueInt = String(value.c_str()).toInt();
 
-  // WinkduinoBLE::setBusy(true);
+  // BLE::setBusy(true);
 
   switch (valueInt) {
     // Both Up
@@ -213,7 +213,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
         delay(HEADLIGHT_MOVEMENT_DELAY);
 
         setAllOff();
-        WinkduinoBLE::updateHeadlightChars();
+        BLE::updateHeadlightChars();
       }
 
       leftWave();
@@ -228,7 +228,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
         delay(HEADLIGHT_MOVEMENT_DELAY);
 
         setAllOff();
-        WinkduinoBLE::updateHeadlightChars();
+        BLE::updateHeadlightChars();
       }
 
       rightWave();
@@ -238,8 +238,8 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
   delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
 
-  WinkduinoBLE::updateHeadlightChars();
-  // WinkduinoBLE::setBusy(false);
+  BLE::updateHeadlightChars();
+  // BLE::setBusy(false);
 }
 
 // NOTE: this is for waves.
@@ -321,7 +321,7 @@ void updateProgress(size_t progress, size_t size) {
 
     if (progress != last_progress) {
       // UPDATE APP PROGRESS STATUS
-      WinkduinoBLE::setFirmwarePercent(to_string(progress));
+      BLE::setFirmwarePercent(to_string(progress));
       last_progress = progress;
     }
   }
@@ -339,12 +339,12 @@ void setupUpdateServer() {
     [&]() {
       if (Update.hasError()) {
         server.send(200);
-        WinkduinoBLE::setFirmwareUpdateStatus("failed");
+        BLE::setFirmwareUpdateStatus("failed");
       } else {
 
         server.client().setNoDelay(true);
         server.send(200);
-        WinkduinoBLE::setFirmwareUpdateStatus("success");
+        BLE::setFirmwareUpdateStatus("success");
         delay(100);
         server.client().stop();
         esp_ota_mark_app_valid_cancel_rollback();
@@ -359,13 +359,13 @@ void setupUpdateServer() {
         if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
           Update.printError(Serial);
         }
-        WinkduinoBLE::setFirmwareUpdateStatus("updating");
+        BLE::setFirmwareUpdateStatus("updating");
       } else if (raw.status == RAW_ABORTED || Update.hasError()) {
         if (raw.status == RAW_ABORTED) {
 
           if (!Update.end(false)) {
             Update.printError(Serial);
-            WinkduinoBLE::setFirmwareUpdateStatus("failed");
+            BLE::setFirmwareUpdateStatus("failed");
           }
 
           Serial.println("Update was aborted");
@@ -419,7 +419,7 @@ void handleHTTPClient() {
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
   switch (reason) {
     case 0:
-      WinkduinoBLE::setDeviceConnected(true);
+      BLE::setDeviceConnected(true);
       printf("Client connecting\n");
       return;
     default:

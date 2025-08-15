@@ -61,7 +61,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   // Uses above array of items
   int response = customButtonPressArray[numberOfPresses];
 
-  WinkduinoBLE::setBusy(true);
+  BLE::setBusy(true);
 
   switch (response) {
     case 1:
@@ -117,8 +117,8 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
 
-  WinkduinoBLE::updateHeadlightChars();
-  WinkduinoBLE::setBusy(false);
+  BLE::updateHeadlightChars();
+  BLE::setBusy(false);
 }
 
 
@@ -165,7 +165,7 @@ void ButtonHandler::loopButtonHandler() {
   } else {
     int button = digitalRead(OEM_BUTTON_INPUT);
     if (button != initialButton) {
-      WinkduinoBLE::setBusy(true);
+      BLE::setBusy(true);
       initialButton = button;
 
       if (button == 1) {
@@ -187,8 +187,8 @@ void ButtonHandler::loopButtonHandler() {
         digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
       }
 
-      WinkduinoBLE::setBusy(false);
-      WinkduinoBLE::updateHeadlightChars();
+      BLE::setBusy(false);
+      BLE::updateHeadlightChars();
     }
   }
 }
@@ -212,7 +212,7 @@ void ButtonHandler::handleBusyInput() {
       // TODO: Set in storage if different
       // Set RTC DATA ATTR var value
       // Send notification for app to update value
-      WinkduinoBLE::setMotionInValue((int)timeOn + 25);
+      BLE::setMotionInValue((int)timeOn + 25);
     }
   }
 }
@@ -220,7 +220,7 @@ void ButtonHandler::handleBusyInput() {
 void ButtonHandler::updateButtonSleep() {
 
   if (
-    !WinkduinoBLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
+    !BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
     if (buttonInput == 1)
@@ -230,7 +230,7 @@ void ButtonHandler::updateButtonSleep() {
 
     Serial.println("Entering deep sleep...");
 
-    if (!WinkduinoBLE::getDeviceConnected())
+    if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();
   }
 }
