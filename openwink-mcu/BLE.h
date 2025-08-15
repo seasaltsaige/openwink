@@ -10,7 +10,7 @@ using namespace std;
 extern int leftStatus;
 extern int rightStatus;
 
-class WinkduinoBLE {
+class BLE {
 private:
 
   static NimBLEServer* server;

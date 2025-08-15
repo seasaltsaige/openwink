@@ -1,8 +1,8 @@
 <div align="center">
 
-# Wink Module
+# Open Wink Module
 
-This directory contains the code base for the receiver module, which wires in between the headlight connectors. Please keep in mind, this directory is highly volatile. See [issue #14](https://github.com/seasaltsaige/winkduino-long-range/issues/14) for more information.
+This directory contains the code base for the receiver module, which wires in between the headlight connectors. Please keep in mind, this directory is highly volatile. See [issue #14](https://github.com/seasaltsaige/openwink/issues/14) for more information.
 
 [![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)](https://cplusplus.com/)
 [![Espressif](https://img.shields.io/badge/espressif-E7352C.svg?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
@@ -28,7 +28,7 @@ Download and install the latest version of the [Arduino IDE](https://www.arduino
 
 This code base is split up into multiple files to split functionality up to be reused through the project as needed.
 
-`winkduino-mcu.ino` is the main entry point of the program, initializing and starting components of program that work together.
+`openwink-mcu.ino` is the main entry point of the program, initializing and starting components of program that work together.
 
 `constants.cpp/h` contains constants and definitions that get used throughout the project files.
 

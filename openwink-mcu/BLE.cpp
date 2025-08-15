@@ -21,42 +21,42 @@ using namespace std;
 RTC_DATA_ATTR int leftStatus = 0;
 RTC_DATA_ATTR int rightStatus = 0;
 
-NimBLEServer* WinkduinoBLE::server;
+NimBLEServer* BLE::server;
 
-NimBLEExtAdvertisement WinkduinoBLE::advertisement;
-NimBLEExtAdvertising* WinkduinoBLE::advertising;
+NimBLEExtAdvertisement BLE::advertisement;
+NimBLEExtAdvertising* BLE::advertising;
 
-NimBLEService* WinkduinoBLE::winkService;
+NimBLEService* BLE::winkService;
 // WINK CHARACTERISTICS
-NimBLECharacteristic* WinkduinoBLE::winkChar;
-NimBLECharacteristic* WinkduinoBLE::busyChar;
-NimBLECharacteristic* WinkduinoBLE::leftStatusChar;
-NimBLECharacteristic* WinkduinoBLE::rightStatusChar;
-NimBLECharacteristic* WinkduinoBLE::sleepChar;
-// NimBLECharacteristic* WinkduinoBLE::leftSleepChar;
-// NimBLECharacteristic* WinkduinoBLE::rightSleepChar;
-NimBLECharacteristic* WinkduinoBLE::syncChar;
+NimBLECharacteristic* BLE::winkChar;
+NimBLECharacteristic* BLE::busyChar;
+NimBLECharacteristic* BLE::leftStatusChar;
+NimBLECharacteristic* BLE::rightStatusChar;
+NimBLECharacteristic* BLE::sleepChar;
+// NimBLECharacteristic* BLE::leftSleepChar;
+// NimBLECharacteristic* BLE::rightSleepChar;
+NimBLECharacteristic* BLE::syncChar;
 
 
-NimBLEService* WinkduinoBLE::otaService;
+NimBLEService* BLE::otaService;
 // OTA CHARACTERISTICS
-NimBLECharacteristic* WinkduinoBLE::otaUpdateChar;
-NimBLECharacteristic* WinkduinoBLE::firmwareUpdateNotifier;
-NimBLECharacteristic* WinkduinoBLE::firmwareStatus;
-NimBLECharacteristic* WinkduinoBLE::firmwareChar;
+NimBLECharacteristic* BLE::otaUpdateChar;
+NimBLECharacteristic* BLE::firmwareUpdateNotifier;
+NimBLECharacteristic* BLE::firmwareStatus;
+NimBLECharacteristic* BLE::firmwareChar;
 
 
-NimBLEService* WinkduinoBLE::settingsService;
+NimBLEService* BLE::settingsService;
 // SETTINGS CHARACTERISTICS
-NimBLECharacteristic* WinkduinoBLE::longTermSleepChar;
-NimBLECharacteristic* WinkduinoBLE::customButtonChar;
-NimBLECharacteristic* WinkduinoBLE::headlightDelayChar;
-NimBLECharacteristic* WinkduinoBLE::headlightMotionChar;
-NimBLECharacteristic* WinkduinoBLE::sleepSettingsChar;
+NimBLECharacteristic* BLE::longTermSleepChar;
+NimBLECharacteristic* BLE::customButtonChar;
+NimBLECharacteristic* BLE::headlightDelayChar;
+NimBLECharacteristic* BLE::headlightMotionChar;
+NimBLECharacteristic* BLE::sleepSettingsChar;
 
-bool WinkduinoBLE::deviceConnected = false;
+bool BLE::deviceConnected = false;
 
-void WinkduinoBLE::init(string deviceName) {
+void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
   initDeviceServer();
   initServerService();
@@ -65,18 +65,18 @@ void WinkduinoBLE::init(string deviceName) {
   NimBLEDevice::setPower(ESP_PWR_LVL_P9);
 }
 
-void WinkduinoBLE::initDeviceServer() {
+void BLE::initDeviceServer() {
   server = NimBLEDevice::createServer();
   server->setCallbacks(new ServerCallbacks());
 }
 
-void WinkduinoBLE::initServerService() {
+void BLE::initServerService() {
   winkService = server->createService(NimBLEUUID(WINK_SERVICE_UUID));
   otaService = server->createService(NimBLEUUID(OTA_SERVICE_UUID));
   settingsService = server->createService(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
 }
 
-void WinkduinoBLE::initServiceCharacteristics() {
+void BLE::initServiceCharacteristics() {
 
   winkChar = winkService->createCharacteristic(HEADLIGHT_CHAR_UUID, NIMBLE_PROPERTY::WRITE);
   sleepChar = winkService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE);
@@ -122,12 +122,12 @@ void WinkduinoBLE::initServiceCharacteristics() {
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
 }
 
-void WinkduinoBLE::initAdvertising() {
+void BLE::initAdvertising() {
   winkService->start();
   otaService->start();
   settingsService->start();
 
-  advertisement.setName("Winkduino");
+  advertisement.setName("OpenWink");
 
   advertisement.setConnectable(true);
   advertisement.setScannable(false);
@@ -143,26 +143,26 @@ void WinkduinoBLE::initAdvertising() {
   advertising->setCallbacks(new AdvertisingCallbacks());
 }
 
-void WinkduinoBLE::start() {
+void BLE::start() {
   if (advertising->setInstanceData(0, advertisement)) {
     if (advertising->start(0)) {
       printf("Started advertising\n");
-      WinkduinoBLE::updateHeadlightChars();
-      WinkduinoBLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
+      BLE::updateHeadlightChars();
+      BLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
     } else
       printf("Failed to start advertising\n");
   } else
     printf("Failed to register advertisement data\n");
 }
 
-void WinkduinoBLE::updateHeadlightChars() {
+void BLE::updateHeadlightChars() {
   leftStatusChar->setValue(std::string(String(leftStatus).c_str()));
   rightStatusChar->setValue(std::string(String(rightStatus).c_str()));
   leftStatusChar->notify();
   rightStatusChar->notify();
 }
 
-void WinkduinoBLE::setMotionInValue(int value) {
+void BLE::setMotionInValue(int value) {
   if (value < 500 || value > 800) return;
   HEADLIGHT_MOVEMENT_DELAY = value;
   // Storage::setMotionTiming(value);
@@ -172,7 +172,7 @@ void WinkduinoBLE::setMotionInValue(int value) {
   headlightMotionChar->notify();
 }
 
-void WinkduinoBLE::setBusy(bool busy) {
+void BLE::setBusy(bool busy) {
   if (busy) {
     busyChar->setValue("1");
   } else {
@@ -181,12 +181,12 @@ void WinkduinoBLE::setBusy(bool busy) {
   busyChar->notify();
 }
 
-void WinkduinoBLE::setFirmwareUpdateStatus(string status) {
+void BLE::setFirmwareUpdateStatus(string status) {
   firmwareStatus->setValue(status.c_str());
   firmwareStatus->notify();
 }
 
-void WinkduinoBLE::setFirmwarePercent(string stringPercentage) {
+void BLE::setFirmwarePercent(string stringPercentage) {
   firmwareUpdateNotifier->setValue(stringPercentage);
   firmwareUpdateNotifier->notify();
 }
