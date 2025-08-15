@@ -1,4 +1,4 @@
-# Contributing to Winkduino Headlight Wink Mod
+# Contributing to the Open Wink Headlight Mod
 
 First off, thanks for taking the time to contribute to this project! 
 
@@ -109,11 +109,11 @@ Enhancement suggestions are tracked as [GitHub issues](/issues).
 - Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 - **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
 - You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://github.com/GNOME/byzanz) on Linux. 
-- **Explain why this enhancement would be useful** to most most Winkduino users.
+- **Explain why this enhancement would be useful** to most most Open Wink users.
 
 
 ### Your First Code Contribution
-If you are not sure where to begin, and you want to contribute to the Winkduino project, you can start by sifting through the beginner friendly issues here:
+If you are not sure where to begin, and you want to contribute to the Open Wink project, you can start by sifting through the beginner friendly issues here:
 - [Good First Issues](/issues?q=state%3Aopen%20label%3A%22good%20first%20issue%22)
 - [Help Wanted Issues](/issues?q=state%3Aopen%20label%3A%22help%20wanted%22)
 
