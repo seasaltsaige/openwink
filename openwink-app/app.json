@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "winkduino-app-3.0",
-    "slug": "winkduino3",
+    "name": "openwink-app",
+    "slug": "openwink",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,7 +26,7 @@
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.maxisthemoose.winkduino3"
+      "package": "com.seasaltsaige.openwink"
     },
     "web": {
       "favicon": "./assets/favicon.png"
