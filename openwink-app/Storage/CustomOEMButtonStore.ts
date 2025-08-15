@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 // Maps english to actual value
 export const buttonBehaviorMap = {

@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const MAC_ADDR_KEY = "mac-addr";
 
 export abstract class DeviceMACStore {

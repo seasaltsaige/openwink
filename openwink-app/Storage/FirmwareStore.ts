@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 const VERSION_KEY = "firmware-version";
 

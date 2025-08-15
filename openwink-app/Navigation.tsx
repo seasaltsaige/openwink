@@ -102,7 +102,6 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
   </View >
 
 
-
 }
 
 
