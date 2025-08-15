@@ -4,8 +4,9 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { useEffect, useMemo, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
-import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValue, DefaultCommandValueEnglish } from "../../helper/Constants";
-import { buttonBehaviorMap, ButtonBehaviors, CommandOutput, CustomCommandStore, CustomOEMButtonStore, Presses } from "../../Storage";
+import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
+import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { ButtonBehaviors, Presses } from "../../helper/Types";
 import * as Application from "expo-application";
 
 
