@@ -1,34 +1,18 @@
-
+import Storage from ".";
 import { ColorTheme } from "../helper/Constants";
 
 export abstract class ThemeStore {
 
-  static async setTheme(key: keyof typeof ColorTheme.themeNames) {
-    try {
-      await AsyncStorage.setItem("color-theme", key);
-    } catch (err) {
-      console.log(err);
-    }
+  static setTheme(key: keyof typeof ColorTheme.themeNames) {
+    Storage.set("color-theme", key);
   }
 
-  static async getStoredTheme() {
-
-    try {
-      const themeName: keyof typeof ColorTheme.themeNames = await AsyncStorage.getItem("color-theme") as any;
-      return themeName;
-    } catch (err) {
-      console.log(err);
-    }
-
+  static getStoredTheme() {
+    const themeName: keyof typeof ColorTheme.themeNames = Storage.getString("color-theme") as any;
+    return themeName;
   }
 
-  static async reset() {
-    try {
-      await AsyncStorage.removeItem(`color-theme`);
-    } catch (err) {
-      console.log(err);
-    }
-
+  static reset() {
+    Storage.delete("color-theme");
   }
-
 }
