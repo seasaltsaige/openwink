@@ -38,8 +38,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "03332a0c-de38-4206-b190-0bc6d7c3111c"
+        "projectId": "6f04b4b4-4888-49c9-8dd1-51111d08e58b"
       }
-    }
+    },
+    "owner": "seasaltsaige"
   }
 }
