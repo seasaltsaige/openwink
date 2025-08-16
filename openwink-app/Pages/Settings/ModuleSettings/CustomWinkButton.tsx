@@ -69,17 +69,17 @@ export function CustomWinkButton() {
     setMax(newHigh);
   }, []);
 
-  useFocusEffect(() => {
+  useFocusEffect(useCallback(() => {
     const setValue = CustomOEMButtonStore.getDelay();
     if (setValue !== null)
       setIntervalValue(setValue);
 
     fetchActionsFromStorage();
-  });
+  }, []));
 
   const updateButtonAction = async (action: CustomButtonAction) => {
     await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!);
-    await fetchActionsFromStorage();
+    fetchActionsFromStorage();
   }
 
   const deleteButtonAction = async (action: CustomButtonAction) => {

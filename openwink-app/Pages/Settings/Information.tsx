@@ -1,7 +1,7 @@
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
@@ -87,7 +87,7 @@ export function Information() {
   }, {} as { [key: string]: boolean }));
 
 
-  useFocusEffect(() => {
+  useFocusEffect(useCallback(() => {
     const actions = CustomOEMButtonStore.getAll();
     if (actions)
       setRawButtonActions(actions);
@@ -97,7 +97,7 @@ export function Information() {
     if (commands)
       setCustomCommands(commands);
     else setCustomCommands([]);
-  });
+  }, []));
 
   const navigation = useNavigation();
   const route = useRoute();
