@@ -7,7 +7,7 @@ import { useBLE } from "../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
 import { HeaderWithBackButton } from "../../Components";
 
-export function CustomCommand() {
+export function CustomCommands() {
   const { theme, colorTheme } = useColorTheme();
   const { device, isConnecting, isScanning } = useBLE();
   const navigation = useNavigation();
