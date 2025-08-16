@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 import { DefaultCommandValue } from "../helper/Constants";
 
 export interface CommandInput {

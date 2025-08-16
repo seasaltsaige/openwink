@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 const AUTO_CONNECT_KEY = "auto-reconnect-setting";
 export abstract class AutoConnectStore {
 
