@@ -1,54 +1,48 @@
 import { Pressable, Text, View } from "react-native";
 import { CommandOutput, CustomCommandStore } from "../Storage";
 import { useColorTheme } from "../hooks/useColorTheme";
+import IonIcons from "@expo/vector-icons/Ionicons";
 import { DefaultCommandValueEnglish } from "../helper/Constants";
 interface ICustomCommandProps {
   command: CommandOutput;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-export function CustomCommand({ command, onEdit }: ICustomCommandProps) {
+export function CustomCommand({ command, onEdit, onDelete }: ICustomCommandProps) {
 
   const { theme, colorTheme } = useColorTheme();
 
-  const onDelete = () => {
+  const __onDelete = () => {
     CustomCommandStore.deleteCommand(command.name);
+    onDelete();
   }
 
   return (
     <View
-      style={{
-        backgroundColor: colorTheme.backgroundSecondaryColor,
-        width: "80%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 8,
-        paddingHorizontal: 15,
-        borderRadius: 10,
-        rowGap: 4,
+      style={[theme.mainLongButtonPressableContainer, {
         boxShadow: "0 0px 5px rgba(0, 0, 0,0.3)"
-      }}
+      }]}
     >
 
-      <Text style={{ color: colorTheme.headerTextColor, fontSize: 18, fontFamily: "IBMPlexSans_500Medium" }}>
-        {command.name}
-      </Text>
+      <View style={theme.mainLongButtonPressableView}>
+        <Text style={theme.mainLongButtonPressableText}>
+          {command.name}
+        </Text>
+      </View>
 
-      <Text style={{ textAlign: "center", color: colorTheme.headerTextColor, fontSize: 16, fontFamily: "IBMPlexSans_400Regular" }}>
-        {
-          command.command ? (
-            command.command.map(cmd => cmd.transmitValue ? DefaultCommandValueEnglish[cmd.transmitValue! - 1] : `${cmd.delay} ms Delay`).join(" → ").slice(0, 50)
-          ) : "Command Data not found"
-        }...
-      </Text>
-
-      <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-evenly", alignItems: "center", width: "100%" }}>
-        <Pressable onPress={onEdit}>
-          <Text>Edit</Text>
+      <View style={[theme.mainLongButtonPressableIcon, { display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: 65, }]}>
+        <Pressable onPress={onEdit} hitSlop={10}>
+          {
+            ({ pressed }) =>
+              <IonIcons name="pencil-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+          }
         </Pressable>
-        <Pressable onPress={onDelete}>
-          <Text>Delete</Text>
+        <Pressable onPress={__onDelete} hitSlop={10}>
+          {
+            ({ pressed }) =>
+              <IonIcons name="trash-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+          }
         </Pressable>
       </View>
 
