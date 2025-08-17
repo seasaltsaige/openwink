@@ -52,6 +52,26 @@ export abstract class CustomCommandStore {
     return allCommands;
   }
 
+  static get(name: string) {
+    const cmdString = Storage.getString(`${COMMAND_STORE_KEY}_${name}`);
+    if (!cmdString) return null;
+
+    const command: CommandOutput = {
+      name,
+      command: [],
+    }
+
+    const parts = cmdString.split("-");
+    for (const part of parts) {
+      if (part.startsWith("d"))
+        command.command?.push({ delay: parseFloat(part.slice(1, part.length)) });
+      else
+        command.command?.push({ transmitValue: parseInt(part) });
+    }
+
+    return command;
+  }
+
   static deleteCommand(name: string) {
     Storage.delete(`${COMMAND_STORE_KEY}_${name}`);
   }
