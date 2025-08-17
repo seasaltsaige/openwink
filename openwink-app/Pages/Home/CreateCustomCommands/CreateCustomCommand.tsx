@@ -22,17 +22,22 @@ export function CreateCustomCommand() {
 
   const [pageState, setPageState] = useState(PageType.MAIN);
   const [modifyType, setModifyType] = useState(ModifyType.CREATE);
+  const [commandName, setCommandName] = useState("");
+
 
   return (
     <>
       {
         pageState === PageType.MAIN ? (
           <MainView
-            
+            setModifyType={(type) => { setModifyType(type); setPageState(PageType.MODIFY); }}
+            setEditCommandName={setCommandName}
           />
         ) : (
           <ModifyView
             type={modifyType}
+            commandName={commandName}
+            onDiscard={() => setPageState(PageType.MAIN)}
           />
         )
       }

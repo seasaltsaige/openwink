@@ -4,6 +4,7 @@ import { IBMPlexSans_700Bold, IBMPlexSans_500Medium, IBMPlexSans_400Regular, IBM
 import { BleProvider } from './Providers/BleProvider';
 import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
 
@@ -20,7 +21,9 @@ export default function App() {
     <NavigationContainer>
       <BleProvider>
         <ThemeProvider>
-          <AppNavigator />
+          <GestureHandlerRootView>
+            <AppNavigator />
+          </GestureHandlerRootView>
         </ThemeProvider>
       </BleProvider>
     </NavigationContainer>

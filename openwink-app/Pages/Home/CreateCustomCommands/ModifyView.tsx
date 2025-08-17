@@ -15,13 +15,23 @@ export enum ModifyType {
 
 interface IModifyViewProps {
   type: ModifyType;
+  commandName: string;
+  onDiscard: () => void;
 }
 
-export function ModifyView({ }: IModifyViewProps) {
+export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
   const { colorTheme, theme } = useColorTheme();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
+
+
+  const discardChanges = () => {
+    // TODO: Reset all parameters
+
+    onDiscard();
+  }
+
   return (
     <>
       {/* MAIN Modify VIEW */}
@@ -29,7 +39,7 @@ export function ModifyView({ }: IModifyViewProps) {
 
         <HeaderWithBackButton
           backText={back}
-          headerText="Create Custom"
+          headerText={type === ModifyType.CREATE ? "Create Custom" : "Edit Custom"}
           headerTextStyle={theme.settingsHeaderText}
         />
 
@@ -96,6 +106,7 @@ export function ModifyView({ }: IModifyViewProps) {
             backgroundColor: colorTheme.backgroundSecondaryColor
           }}
           hitSlop={20}
+          onPress={discardChanges}
         >
           {({ pressed }) => (
             <IonIcons name={`trash${pressed ? "" : "-outline"}`} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={30} style={{ height: 30 }} />

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
+    "@gorhom/bottom-sheet": "^5.1.8",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
@@ -34,7 +35,9 @@
     "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-wifi-reborn": "^4.13.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "react-native-reanimated": "~3.16.1",
+    "react-native-gesture-handler": "~2.20.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
