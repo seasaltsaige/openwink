@@ -106,8 +106,8 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
 
       <HeaderWithBackButton
         backText={back}
-        headerText="View Custom"
-        headerTextStyle={theme.settingsHeaderText}
+        headerText="View Commands"
+        headerTextStyle={{ ...theme.settingsHeaderText, fontSize: 28 }}
       />
 
       <View style={{
@@ -149,6 +149,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
                 paddingHorizontal: 40,
                 paddingRight: 10,
                 borderRadius: 100,
+                fontFamily: "IBMPlexSans_400Regular",
                 color: colorTheme.textColor,
               }}
               onChangeText={(text) => setCommandNameFilter(text)}
@@ -213,6 +214,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           justifyContent: "flex-start",
           rowGap: 10,
         }}
+
 
         >
           <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
