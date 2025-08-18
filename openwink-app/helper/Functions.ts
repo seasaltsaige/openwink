@@ -1,3 +1,5 @@
+import { useCallback, useRef } from "react";
+
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 export const generatePassword = (len: number) => {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\",./<>?|\\";
@@ -46,19 +48,16 @@ export const toProperCase = <S extends string>(str: S): ToProperCase<S> => {
   return `${first}${rest}` as ToProperCase<S>;
 }
 
-
-export function throttle<T extends unknown[]>(
-  callback: (...args: T) => void,
+export const useThrottle = <T extends unknown[], K>(
+  cb: (...args: T) => K,
   delay: number
-) {
-  let timerFlag: NodeJS.Timeout | null = null;
-
+) => {
+  const throttle = useRef(Date.now());
   return (...args: T) => {
-    if (timerFlag === null) {
-      callback(...args);
-      timerFlag = setTimeout(() => {
-        timerFlag = null;
-      }, delay);
-    } else return false;
-  };
-}
+    if (Date.now() - throttle.current >= delay) {
+      console.log(throttle.current);
+      cb(...args);
+      throttle.current = Date.now();
+    }
+  }
+};
