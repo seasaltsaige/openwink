@@ -45,3 +45,20 @@ export const toProperCase = <S extends string>(str: S): ToProperCase<S> => {
   const rest = str.slice(1);
   return `${first}${rest}` as ToProperCase<S>;
 }
+
+
+export function throttle<T extends unknown[]>(
+  callback: (...args: T) => void,
+  delay: number
+) {
+  let timerFlag: NodeJS.Timeout | null = null;
+
+  return (...args: T) => {
+    if (timerFlag === null) {
+      callback(...args);
+      timerFlag = setTimeout(() => {
+        timerFlag = null;
+      }, delay);
+    } else return false;
+  };
+}
