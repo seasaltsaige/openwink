@@ -11,6 +11,7 @@ import { useCallback, useRef, useState } from "react";
 import { ConfirmationModal } from "../../../Components/ConfirmationModal";
 import { useThrottle } from "../../../helper/Functions";
 import { ComponentModal } from "../../../Components/ComponentModal";
+import { DefaultCommandValueEnglish } from "../../../helper/Constants";
 
 export enum ModifyType {
   EDIT,
@@ -28,6 +29,7 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
+  const [cmdName, setCommandName] = useState("");
   const [command, setCommand] = useState({ name: "", command: [] } as CommandOutput);
   const [undoLog, setUndoLog] = useState([] as Array<CommandOutput>)
   const [confirmationVisible, setConfirmationVisible] = useState(false);
@@ -40,7 +42,7 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
     if (cmd !== null) {
       setCommand(cmd);
       setUndoLog([cmd]);
-    } else setUndoLog([{ name: "", command: [] }]);
+    } else setUndoLog([]);
   }, []));
 
 
@@ -58,28 +60,26 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
     moveCommand?: { from: number; to: number };
   }) => {
     setUndoLog((old) => [...old, command]);
+
     if (data.name || data.name === "" || data.addCommand) {
       setCommand((old) => ({
         ...old,
         name: (data.name || data.name === "") ? data.name : old.name,
         command: data.addCommand ? [...old.command!, data.addCommand] : [...old.command!],
       }));
-    } else if (data.removeCommand) {
+    } else if (data.removeCommand !== undefined && data.removeCommand >= 0) {
       setCommand((old) => {
-        old.command!.splice(data.removeCommand!, 1);
-        return { ...old, };
+        const spliced = old.command!.toSpliced(data.removeCommand!, 1);
+        return { ...old, command: spliced };
       });
     } else if (data.moveCommand) {
       setCommand((old) => {
-        const cmd = old.command!.splice(data.removeCommand!, 1)[0];
-        // if moving to position before original position, index is normal
-        if (data.moveCommand!.from > data.moveCommand!.to)
-          old.command!.splice(data.moveCommand!.to, 0, cmd);
-        // otherwise, must subtract one, as item was spliced out of array, changing length
-        else
-          old.command!.splice(data.moveCommand!.to - 1, 0, cmd);
-      })
-    } else return false;
+        const cmdArr = [...old.command!];
+        const c = cmdArr.splice(data.moveCommand!.from!, 1)[0];
+        cmdArr.splice(data.moveCommand!.to, 0, c);
+        return { ...old, command: cmdArr };
+      });
+    }
   };
 
   const saveCommand = () => {
@@ -87,16 +87,18 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
   }
 
   const undo = () => {
-    const lastCommandState = undoLog[undoLog.length - 2];
+    const lastCommandState = undoLog.at(-1)!;
+
     setUndoLog((old) => {
       old.splice(old.length - 1, 1);
-      return [...old];
+      return old;
     });
-    setCommand(lastCommandState);
+    setCommandName(lastCommandState.name);
+    setCommand(() => lastCommandState);
   }
 
   const canSave = command.name !== "" && command.command && command.command.length > 0;
-  const canUndo = undoLog.length > 1;
+  const canUndo = undoLog.length > 0;
 
   return (
     <>
@@ -140,10 +142,10 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
               fontFamily: "IBMPlexSans_400Regular",
               textAlign: "center",
             }}
-            onEndEditing={() => handleCommandChange({ name: command.name })}
-            value={command.name}
+            onEndEditing={() => handleCommandChange({ name: cmdName })}
+            value={cmdName}
             maxLength={16}
-            onChangeText={(text) => setCommand((prev) => ({ ...prev, name: text }))}
+            onChangeText={(text) => setCommandName(text)}
             placeholder="Enter command name..."
             placeholderTextColor={colorTheme.disabledButtonColor}
           />
@@ -172,17 +174,98 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "flex-start",
-              rowGap: 20,
+              rowGap: 15,
             }}
             ref={scrollRef}
           >
 
             {
               command.command ?
-                command.command.map((cmd) => (
-                  <>
-                    {/* TODO: Map commands with edit buttons */}
-                  </>
+                command.command.map((cmd, index) => (
+
+                  <View
+                    key={`${cmd.transmitValue}-${cmd.delay}-${index}`}
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      width: "60%",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingVertical: 2,
+                      paddingHorizontal: 10,
+                      borderStyle: "solid",
+                      borderColor: colorTheme.headerTextColor,
+                      borderWidth: 1.75,
+                      borderRadius: 10,
+                      height: 48,
+                    }}
+                  >
+                    {/* Up down re-order button */}
+                    <View style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      columnGap: 15,
+                      paddingVertical: 3,
+                    }}>
+                      {
+                        command.command!.length > 1 ?
+                          <View
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              height: "100%",
+                            }}
+                          >
+                            {
+                              index === 0 ? <></> :
+                                <Pressable
+                                  hitSlop={10}
+                                  onPress={() => handleCommandChange({ moveCommand: { from: index, to: index - 1 } })}
+                                >
+                                  {({ pressed }) => (
+                                    <IonIcons size={18} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} name="chevron-up" />
+                                  )}
+                                </Pressable>
+                            }
+                            {
+                              index === command.command!.length - 1 ? <></> :
+                                <Pressable
+                                  hitSlop={10}
+                                  onPress={() => handleCommandChange({ moveCommand: { from: index, to: index + 1 } })}
+                                >
+                                  {({ pressed }) => (
+                                    <IonIcons size={18} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} name="chevron-down" />
+                                  )}
+                                </Pressable>
+                            }
+                          </View>
+                          : <></>
+                      }
+
+
+                      <Text style={{
+                        color: colorTheme.headerTextColor,
+                        fontSize: 18,
+                        fontFamily: "IBMPlexSans_500Medium"
+                      }}>
+                        {
+                          cmd.delay ? `${cmd.delay} ms Delay` : DefaultCommandValueEnglish[cmd.transmitValue! - 1]
+                        }
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      onPress={() => handleCommandChange({ removeCommand: index })}
+                    >
+                      {({ pressed }) => (
+                        <IonIcons name="close" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} />
+                      )}
+                    </Pressable>
+
+                  </View>
                 )) :
                 <></>
             }
@@ -191,11 +274,11 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
               onPress={() => setAddComponentVisible(true)}
               style={({ pressed }) => ({
                 display: "flex",
+                width: "60%",
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
-                columnGap: 20,
-                paddingVertical: 5,
+                justifyContent: "space-between",
+                paddingVertical: 8,
                 paddingHorizontal: 15,
                 paddingLeft: 20,
                 borderStyle: "dashed",
@@ -300,7 +383,16 @@ export function ModifyView({ type, commandName, onDiscard }: IModifyViewProps) {
       <ComponentModal
         onRequestClose={() => setAddComponentVisible(false)}
         visible={addComponentVisible}
-        onSelect={({ action, delay }) => { }}
+        onSelect={({ action, delay }) => {
+          handleCommandChange({
+            addCommand: {
+              delay: (delay && delay > 0) ? delay : undefined,
+              transmitValue: action,
+            }
+          });
+          setAddComponentVisible(false);
+          scrollRef.current!.scrollToEnd();
+        }}
       />
 
       <ConfirmationModal
