@@ -35,13 +35,13 @@ export function CustomCommand({ command, onEdit, onDelete }: ICustomCommandProps
         <Pressable onPress={onEdit} hitSlop={10}>
           {
             ({ pressed }) =>
-              <IonIcons name="pencil-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+              <IonIcons name="create-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
           }
         </Pressable>
         <Pressable onPress={__onDelete} hitSlop={10}>
           {
             ({ pressed }) =>
-              <IonIcons name="trash-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+              <IonIcons name="close" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
           }
         </Pressable>
       </View>
