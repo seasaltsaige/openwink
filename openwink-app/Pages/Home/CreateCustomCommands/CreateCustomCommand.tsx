@@ -8,7 +8,7 @@ import { useBLE } from "../../../hooks/useBLE";
 import { ActivityIndicator } from "react-native";
 import { HeaderWithBackButton } from "../../../Components";
 import { DefaultCommandValue } from "../../../helper/Constants";
-import { CommandOutput } from "../../../Storage";
+import { CommandOutput, CustomCommandStore } from "../../../Storage";
 import { CustomCommand } from "../../../Components/CustomCommand";
 import { MainView } from "./MainView";
 import { ModifyType, ModifyView } from "./ModifyView";
@@ -20,7 +20,7 @@ enum PageType {
 
 export function CreateCustomCommand() {
 
-  const [pageState, setPageState] = useState(PageType.MAIN);
+  const [pageState, setPageState] = useState(CustomCommandStore.getAll().length > 0 ? PageType.MAIN : PageType.MODIFY);
   const [modifyType, setModifyType] = useState(ModifyType.CREATE);
   const [commandName, setCommandName] = useState("");
 
