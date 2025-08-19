@@ -38,6 +38,7 @@ export function CreateCustomCommand() {
             type={modifyType}
             commandName={commandName}
             onDiscard={() => setPageState(PageType.MAIN)}
+            onSave={() => setPageState(PageType.MAIN)}
           />
         )
       }
