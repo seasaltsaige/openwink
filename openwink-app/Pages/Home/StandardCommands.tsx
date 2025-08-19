@@ -35,6 +35,7 @@ export function StandardCommands() {
         backText={back}
         headerText="Commands"
         headerTextStyle={theme.settingsHeaderText}
+        deviceStatus
       />
 
       <View style={theme.contentContainer}>

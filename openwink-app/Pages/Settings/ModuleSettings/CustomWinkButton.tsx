@@ -96,7 +96,7 @@ export function CustomWinkButton() {
     }
 
     // Fetch from storate again
-    await fetchActionsFromStorage();
+    fetchActionsFromStorage();
   }
 
   return (
@@ -105,6 +105,7 @@ export function CustomWinkButton() {
         <HeaderWithBackButton
           backText={backHumanReadable}
           headerText="Button"
+          deviceStatus
         />
 
         {/* MAIN Custom Retractor Button Toggle */}

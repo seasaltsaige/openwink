@@ -38,6 +38,7 @@ export function SleepyEyeSettings() {
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Sleepy"
+        deviceStatus
       />
 
       <TooltipHeader

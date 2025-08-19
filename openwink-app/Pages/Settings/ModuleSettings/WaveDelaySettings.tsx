@@ -53,6 +53,7 @@ export function WaveDelaySettings() {
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Waves"
+        deviceStatus
       />
 
       <TooltipHeader

@@ -22,6 +22,7 @@ export function CustomCommands() {
         backText={back}
         headerText="Run Custom"
         headerTextStyle={theme.settingsHeaderText}
+        deviceStatus
       />
 
       <View style={theme.contentContainer}>
