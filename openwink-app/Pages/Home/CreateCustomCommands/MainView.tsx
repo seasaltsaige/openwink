@@ -47,7 +47,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
   const getCommandsFromStorage = () => {
     const storedCommands = CustomCommandStore.getAll();
     setCustomCommands(storedCommands);
-
   }
 
   useFocusEffect(useCallback(() => {
@@ -55,15 +54,11 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
   }, []));
 
   const createFilteredCommands = () => {
-
-    // console.log(commandNameFilterOn, selectedFilters.length);
-    console.log(commandNameFilter);
     if (selectedFilters.length < 1 && commandNameFilter.length < 1) return customCommands;
 
     const filteredCommands: CommandOutput[] = [];
-
     for (const cmd of customCommands) {
-      console.log(cmd.name)
+
       if ((commandNameFilter !== "" && cmd.name.toLowerCase().includes(commandNameFilter))) {
         filteredCommands.push(cmd);
         continue;
@@ -179,7 +174,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           rowGap: 16,
         }}>
           {
-            filteredCommands.length > 1 ? filteredCommands.map(command => (
+            filteredCommands.length > 0 ? filteredCommands.map(command => (
               <CustomCommand
                 command={command}
                 onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
