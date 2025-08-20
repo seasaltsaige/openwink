@@ -106,7 +106,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
       />
 
       <View style={{
-        height: "90%",
         width: "100%",
         display: "flex",
         flexDirection: "column",
@@ -127,7 +126,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
 
           <Pressable
             hitSlop={10}
-            onPress={() => setModifyType(ModifyType.CREATE)}
+            onPress={() => { setEditCommandName(""); setModifyType(ModifyType.CREATE); }}
           >
             {
               ({ pressed }) =>
@@ -166,27 +165,31 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          rowGap: 16,
+        <View style={{
+          height: "88%"
         }}>
-          {
-            filteredCommands.length > 0 ? filteredCommands.map(command => (
-              <CustomCommand
-                command={command}
-                onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
-                onDelete={() => { CustomCommandStore.deleteCommand(command.name); getCommandsFromStorage(); }}
-                key={command.name}
-              />
-            ))
-              : <Text style={{ color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
-                No Commands Found
-              </Text>
-          }
-        </ScrollView>
+          <ScrollView contentContainerStyle={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            rowGap: 14,
+          }}>
+            {
+              filteredCommands.length > 0 ? filteredCommands.map(command => (
+                <CustomCommand
+                  command={command}
+                  onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
+                  onDelete={() => { CustomCommandStore.deleteCommand(command.name); getCommandsFromStorage(); }}
+                  key={command.name}
+                />
+              ))
+                : <Text style={{ color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
+                  No Commands Found
+                </Text>
+            }
+          </ScrollView>
+        </View>
       </View>
 
 
