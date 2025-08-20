@@ -27,7 +27,7 @@
     "react-native-base64": "^0.2.1",
     "react-native-ble-plx": "^3.2.1",
     "react-native-bouncy-checkbox": "^4.1.2",
-    "react-native-draggable-flatlist": "^4.0.3",
+    "react-native-draglist": "^3.9.9",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-mmkv": "^3.3.0",
