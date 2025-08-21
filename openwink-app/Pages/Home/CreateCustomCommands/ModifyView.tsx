@@ -30,6 +30,13 @@ interface IModifyViewProps {
   onSave: () => void;
 }
 
+type CommandChangeData =
+  | { name: string }
+  | { addCommand: CommandInput }
+  | { editCommand: { index: number; command: CommandInput } }
+  | { removeCommand: number }
+  | { moveCommand: { from: number; to: number } };
+
 export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyViewProps) {
   const { colorTheme, theme } = useColorTheme();
   const route = useRoute();
@@ -152,51 +159,47 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             </Pressable>
 
           </View>
-
-          {/* {
-            itemIndex === command.command!.length - 1 ? (
-
-            ) : <></>
-          } */}
         </>
       )
     }, [command.command]
   )
 
-  const handleCommandChange = (data: {
-    name?: string;
-    addCommand?: CommandInput;
-    editCommand?: { index: number; command: CommandInput; };
-    removeCommand?: number;
-    moveCommand?: { from: number; to: number };
-  }) => {
+  const handleCommandChange = (changeData: CommandChangeData) => {
     setUndoLog((old) => [...old, command]);
 
-    if (data.name || data.name === "" || data.addCommand) {
-      setCommand((old) => ({
-        ...old,
-        name: (data.name || data.name === "") ? data.name : old.name,
-        command: data.addCommand ? [...old.command!, data.addCommand] : [...old.command!],
-      }));
-    } else if (data.removeCommand !== undefined && data.removeCommand >= 0) {
-      setCommand((old) => {
-        const spliced = old.command!.toSpliced(data.removeCommand!, 1);
-        return { ...old, command: spliced };
-      });
-    } else if (data.moveCommand) {
-      setCommand((old) => {
-        const cmdArr = [...old.command!];
-        const c = cmdArr.splice(data.moveCommand!.from!, 1)[0];
-        cmdArr.splice(data.moveCommand!.to!, 0, c);
-        return { ...old, command: cmdArr };
-      });
-    } else if (data.editCommand) {
-      setCommand((old) => {
-        const modified = old.command!.toSpliced(data.editCommand?.index!, 1);
-        modified.splice(data.editCommand?.index!, 0, data.editCommand?.command!);
-        return { ...old, command: modified };
-      })
-    }
+    setCommand((oldCommand) => {
+      if ("name" in changeData)
+        return { ...oldCommand, name: changeData.name };
+    });
+
+    // if ("name" in data)
+    //   return 
+
+    // if (data.name || data.name === "" || data.addCommand) {
+    //   setCommand((old) => ({
+    //     ...old,
+    //     name: (data.name || data.name === "") ? data.name : old.name,
+    //     command: data.addCommand ? [...old.command!, data.addCommand] : [...old.command!],
+    //   }));
+    // } else if (data.removeCommand !== undefined && data.removeCommand >= 0) {
+    //   setCommand((old) => {
+    //     const spliced = old.command!.toSpliced(data.removeCommand!, 1);
+    //     return { ...old, command: spliced };
+    //   });
+    // } else if (data.moveCommand) {
+    //   setCommand((old) => {
+    //     const cmdArr = [...old.command!];
+    //     const c = cmdArr.splice(data.moveCommand!.from!, 1)[0];
+    //     cmdArr.splice(data.moveCommand!.to!, 0, c);
+    //     return { ...old, command: cmdArr };
+    //   });
+    // } else if (data.editCommand) {
+    //   setCommand((old) => {
+    //     const modified = old.command!.toSpliced(data.editCommand?.index!, 1);
+    //     modified.splice(data.editCommand?.index!, 0, data.editCommand?.command!);
+    //     return { ...old, command: modified };
+    //   })
+    // }
   };
 
   const undo = () => {
@@ -282,12 +285,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         />
 
 
-        <View style={{
-          height: "65%",
-          width: "100%",
-        }}>
-
-
+        <View style={{ height: "65%" }}>
           <DragList
             contentContainerStyle={{
               width: "100%",
@@ -295,19 +293,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "flex-start",
-              rowGap: 15,
-            }}
-            style={{
-              height: "100%",
-            }}
-            containerStyle={{
-              height: "100%",
+              rowGap: 12,
             }}
             scrollEnabled
             ref={listRef}
-            getItemLayout={(data, index) => (
-              { length: 48, offset: (48 + 15) * index, index }
-            )}
             ListFooterComponent={
               <Pressable
                 onPress={() => setAddComponentVisible(true)}
