@@ -2,10 +2,10 @@ import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toProperCase } from "../helper/Functions";
 
 interface IComponentModalProps {
-  // animationType?: "slide" | "none" | "fade" | undefined;
   visible: boolean;
   onRequestClose: () => void;
   onSelect: (action: { delay?: number; action?: DefaultCommandValue }) => void;
@@ -26,7 +26,6 @@ export function ComponentModal({
   const [delay, setDelay] = useState<number>(0);
 
   useEffect(() => {
-    console.log(initialValue);
     setSelectedCommand(!initialValue?.action ? null : initialValue.action);
     setDelay(!initialValue?.delay ? 0 : initialValue.delay);
   }, [initialValue]);
@@ -49,6 +48,22 @@ export function ComponentModal({
   }
 
   const canSubmit = selectedCommand !== null || delay > 0;
+
+  const commandTypes = useMemo(() => {
+    const commandKeys = Object.keys(DefaultCommandValue).map(key => parseInt(key)).filter(key => !isNaN(key));
+    const commandMap: { left: number[], right: number[], both: number[] } = {
+      left: [],
+      right: [],
+      both: [],
+    };
+
+    for (const cmd of commandKeys) {
+      const englishCommand = DefaultCommandValueEnglish[cmd - 1].toLowerCase();
+      commandMap[englishCommand.split(" ")[0] as "left" | "right" | "both"].push(cmd);
+    }
+
+    return commandMap;
+  }, [DefaultCommandValue]);
 
   return (
     <Modal
@@ -77,8 +92,7 @@ export function ComponentModal({
             justifyContent: "flex-start",
             backgroundColor: colorTheme.backgroundSecondaryColor,
             borderRadius: 10,
-            paddingVertical: 10,
-            paddingBottom: 15,
+            paddingVertical: 15,
             paddingHorizontal: 20,
             rowGap: 12
           }}
@@ -88,7 +102,7 @@ export function ComponentModal({
           <Text
             style={{
               color: colorTheme.headerTextColor,
-              fontSize: 22,
+              fontSize: 24,
               fontFamily: "IBMPlexSans_700Bold",
               textAlign: "center"
             }}
@@ -113,7 +127,7 @@ export function ComponentModal({
             <Text style={{
               width: "100%",
               color: colorTheme.headerTextColor,
-              fontSize: 18,
+              fontSize: 20,
               fontFamily: "IBMPlexSans_500Medium",
               textAlign: "center",
             }}>
@@ -121,47 +135,61 @@ export function ComponentModal({
             </Text>
 
             <View style={{
-              display: "flex",
               flexDirection: "row",
               flexWrap: "wrap",
               alignItems: "center",
               justifyContent: "center",
               columnGap: 20,
-              rowGap: 10,
+              rowGap: 20,
             }}>
-
               {
-                Object.keys(DefaultCommandValue).map(key => parseInt(key)).filter(key => !isNaN(key)).map((key) => (
-                  <Pressable
-                    style={{ width: "45%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
-                    key={key}
-                    hitSlop={10}
-                    onPress={() => {
-                      setSelectedCommand(key);
-                      setDelay(0);
-                    }}
-                  >
-                    {({ pressed }) => (
-                      <>
-                        <Text
+                Object.keys(commandTypes).map((type) => (
+                  <View
+                    key={type}
+                    style={{
+                      width: "45%",
+                      alignItems: "center",
+                      rowGap: 7,
+                    }}>
+                    {
+                      commandTypes[type as "left" | "right" | "both"].map(cmd => (
+                        <Pressable
                           style={{
-                            fontFamily: "IBMPlexSans_500Medium",
-                            fontSize: 16,
-                            color: (pressed) ? colorTheme.buttonColor : colorTheme.textColor,
-                            textDecorationLine: (selectedCommand === key) ? "underline" : "none",
+                            width: "100%",
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between"
+                          }}
+                          key={`${type}-${cmd}`}
+                          hitSlop={10}
+                          onPress={() => {
+                            setSelectedCommand(cmd);
+                            setDelay(0);
                           }}
                         >
-                          {DefaultCommandValueEnglish[key - 1]}
-                        </Text>
+                          {({ pressed }) => (
+                            <>
+                              <Text
+                                style={{
+                                  fontFamily: "IBMPlexSans_500Medium",
+                                  fontSize: 16,
+                                  color: (pressed) ? colorTheme.buttonColor : colorTheme.textColor,
+                                  textDecorationLine: (selectedCommand === cmd) ? "underline" : "none",
+                                }}
+                              >
+                                {DefaultCommandValueEnglish[cmd - 1]}
+                              </Text>
 
-                        <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={20} name={(selectedCommand === key) ? "radio-button-on" : "radio-button-off"} />
-                      </>
-                    )}
+                              <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={20} name={(selectedCommand === cmd) ? "radio-button-on" : "radio-button-off"} />
+                            </>
+                          )}
+                        </Pressable>
+                      ))
+                    }
 
-                  </Pressable>
+                  </View>
                 ))
               }
-
             </View>
           </View>
 
@@ -177,7 +205,7 @@ export function ComponentModal({
             <Text style={{
               width: "100%",
               color: colorTheme.headerTextColor,
-              fontSize: 18,
+              fontSize: 20,
               fontFamily: "IBMPlexSans_500Medium",
               textAlign: "center",
             }}>
