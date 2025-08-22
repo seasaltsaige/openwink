@@ -5,9 +5,9 @@ import { useColorTheme } from "../hooks/useColorTheme";
 
 import IonIcons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@react-native-vector-icons/material-design-icons";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import ToggleSwitch from "toggle-switch-react-native";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 
 
@@ -98,6 +98,14 @@ export function SearchBarFilter<
   }, [filterType]);
 
 
+  const renderBackdrop = useCallback((props: BottomSheetBackdropProps) => {
+    return <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+    />
+  }, []);
+
   return (
     <>
       <View style={{ position: "relative", width: "80%" }}>
@@ -140,7 +148,7 @@ export function SearchBarFilter<
             boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
           }}
           handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
-          enableDynamicSizing
+          backdropComponent={renderBackdrop}
         >
           <BottomSheetView
 
@@ -156,23 +164,15 @@ export function SearchBarFilter<
 
 
           >
-            <View style={{
-              width: "100%", display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between"
-            }}>
-              <Text style={{ textAlign: "left", color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
-                Filter by Command Type
-              </Text>
-              <Pressable
-                hitSlop={10}
-                onPress={() => bottomSheetRef.current?.close()}
-              >
-                {
-                  ({ pressed }) =>
-                    <IonIcons name="close" size={30} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
-                }
-              </Pressable>
-            </View>
 
+            <Text style={{
+              textAlign: "center",
+              color: colorTheme.headerTextColor,
+              fontSize: 22,
+              fontFamily: "IBMPlexSans_700Bold"
+            }}>
+              Filter by Command Type
+            </Text>
 
             <View style={{ marginVertical: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", width: "100%", columnGap: 15, }}>
               <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "50%" }}>
