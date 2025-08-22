@@ -12,8 +12,8 @@ import { Portal } from "@gorhom/portal";
 
 interface ISearchBarFilter<
   T extends ReadonlyArray<string>,
-  K extends Array<{ [key: string]: string } & { [key: string]: any }>,
-  I extends keyof K[number],
+  K extends Array<{ [key: string]: any }>,
+  I extends keyof (K[number]) & string,
 > {
   searchFilterKey: I;
   onFiltersChange: (selectedFilters: Array<string>) => void;
@@ -58,7 +58,7 @@ export function SearchBarFilter<
     if (__filters.length < 1 && __fitlerText.length < 1) return filterables;
     // Text filter
     for (const item of filterables) {
-      if ((item[searchFilterKey].toLowerCase().includes(__fitlerText))) {
+      if ((item[searchFilterKey].toLowerCase().includes(__fitlerText.toLowerCase()))) {
         fitleredByName.push(item);
         continue;
       }
@@ -72,9 +72,6 @@ export function SearchBarFilter<
 
 
   const __onFiltersChange = (filter: T[number]) => {
-    // if (__filters.includes(filter)) {
-
-    // } else
     __setFilters((prev) => {
       if (prev.includes(filter)) {
         const index = prev.indexOf(filter);
@@ -84,8 +81,7 @@ export function SearchBarFilter<
     });
   }
 
-  const __onFilteredItemsUpdate = (filteredItems: K) =>
-    onFilteredItemsUpdate(filteredItems);
+  const __onFilteredItemsUpdate = (filteredItems: K) => onFilteredItemsUpdate(filteredItems);
 
 
   useEffect(() => {
@@ -96,6 +92,9 @@ export function SearchBarFilter<
     onFilterTextChange(__fitlerText);
     __onFilteredItemsUpdate(createFilteredItems());
   }, [__fitlerText]);
+  useEffect(() => {
+    __onFilteredItemsUpdate(createFilteredItems());
+  }, [filterType]);
 
 
   return (
@@ -144,8 +143,7 @@ export function SearchBarFilter<
             boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
           }}
           handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor }}
-          enableDynamicSizing={false}
-          snapPoints={["48%"]}
+          enableDynamicSizing
         >
           <BottomSheetView
 
@@ -155,10 +153,8 @@ export function SearchBarFilter<
               paddingTop: 10,
               alignItems: 'center',
               justifyContent: "flex-start",
-              rowGap: 10,
-              bottom: 0,
+              rowGap: 15,
               width: "100%",
-              // height: "50%",
             }}
 
 
