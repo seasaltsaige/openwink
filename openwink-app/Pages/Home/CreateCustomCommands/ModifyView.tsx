@@ -168,38 +168,30 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     setUndoLog((old) => [...old, command]);
 
     setCommand((oldCommand) => {
+
       if ("name" in changeData)
         return { ...oldCommand, name: changeData.name };
+
+      if ("addCommand" in changeData)
+        return { ...oldCommand, command: [...oldCommand.command!, changeData.addCommand] };
+
+      if ("removeCommand" in changeData && changeData.removeCommand >= 0)
+        return { ...oldCommand, command: oldCommand.command!.toSpliced(changeData.removeCommand, 1) };
+
+      if ("moveCommand" in changeData) {
+        const cmdArr = [...oldCommand.command!];
+        const c = cmdArr.splice(changeData.moveCommand.from, 1)[0];
+        cmdArr.splice(changeData.moveCommand.to, 0, c);
+        return { ...oldCommand, command: cmdArr };
+      }
+
+      if ("editCommand" in changeData) {
+        const modified = oldCommand.command!.toSpliced(changeData.editCommand.index, 1);
+        modified.splice(changeData.editCommand.index, 0, changeData.editCommand.command);
+        return { ...oldCommand, command: modified };
+      }
+
     });
-
-    // if ("name" in data)
-    //   return 
-
-    // if (data.name || data.name === "" || data.addCommand) {
-    //   setCommand((old) => ({
-    //     ...old,
-    //     name: (data.name || data.name === "") ? data.name : old.name,
-    //     command: data.addCommand ? [...old.command!, data.addCommand] : [...old.command!],
-    //   }));
-    // } else if (data.removeCommand !== undefined && data.removeCommand >= 0) {
-    //   setCommand((old) => {
-    //     const spliced = old.command!.toSpliced(data.removeCommand!, 1);
-    //     return { ...old, command: spliced };
-    //   });
-    // } else if (data.moveCommand) {
-    //   setCommand((old) => {
-    //     const cmdArr = [...old.command!];
-    //     const c = cmdArr.splice(data.moveCommand!.from!, 1)[0];
-    //     cmdArr.splice(data.moveCommand!.to!, 0, c);
-    //     return { ...old, command: cmdArr };
-    //   });
-    // } else if (data.editCommand) {
-    //   setCommand((old) => {
-    //     const modified = old.command!.toSpliced(data.editCommand?.index!, 1);
-    //     modified.splice(data.editCommand?.index!, 0, data.editCommand?.command!);
-    //     return { ...old, command: modified };
-    //   })
-    // }
   };
 
   const undo = () => {
