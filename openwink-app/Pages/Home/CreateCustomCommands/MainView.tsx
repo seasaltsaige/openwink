@@ -1,15 +1,13 @@
-import { useCallback, useRef, useState } from "react";
-import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
+import { useCallback, useState } from "react";
+import { DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandOutput, CustomCommandStore } from "../../../Storage";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { CustomCommand } from "../../../Components/CustomCommand";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { HeaderWithBackButton } from "../../../Components";
+import { HeaderWithBackButton, SearchBarFilter } from "../../../Components";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { ModifyType } from "./ModifyView";
-import ToggleSwitch from "toggle-switch-react-native";
 
 interface IMainViewProps {
   setModifyType: (type: ModifyType) => void;
@@ -24,80 +22,20 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
   //@ts-ignore
   const { back } = route.params;
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
-
-
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const [selectedFilters, setSelectedFilters] = useState([] as ((typeof FILTERS)[number])[]);
-  const [filterType, setFilterType] = useState("narrow" as "narrow" | "inclusive");
-  const [commandNameFilter, setCommandNameFilter] = useState("");
-
-  const updateSelectedFilters = (method: "add" | "remove", filter: typeof FILTERS[number]) => {
-    if (method === "add") {
-      setSelectedFilters((old) => ([...old, filter]));
-    } else {
-      setSelectedFilters((old) => {
-        const index = old.indexOf(filter);
-        old.splice(index, 1);
-        return [...old];
-      });
-    }
-
-  }
+  const [filteredCommands, setFilteredCommands] = useState([] as CommandOutput[]);
 
   const getCommandsFromStorage = () => {
     const storedCommands = CustomCommandStore.getAll();
     setCustomCommands(storedCommands);
+    setFilteredCommands(storedCommands);
   }
 
   useFocusEffect(useCallback(() => {
     getCommandsFromStorage();
   }, []));
 
-  const createFilteredCommands = () => {
-    if (selectedFilters.length < 1 && commandNameFilter.length < 1) return customCommands;
-
-    const filteredCommands: CommandOutput[] = [];
-    for (const cmd of customCommands) {
-
-      if ((commandNameFilter !== "" && cmd.name.toLowerCase().includes(commandNameFilter))) {
-        filteredCommands.push(cmd);
-        continue;
-      }
-      if (!cmd.command) continue;
-      if (selectedFilters.length < 1) continue;
-
-      const mappedCommands = cmd.command.map(c => c.delay ? "Delay" : (DefaultCommandValueEnglish[c.transmitValue! - 1]));
-
-      if (filterType === "inclusive") {
-        for (const filter of selectedFilters) {
-          if (mappedCommands.includes(filter)) {
-            filteredCommands.push(cmd);
-            break;
-          }
-        }
-      } else if (filterType === "narrow") {
-        let includesAll = false;
-        for (let i = 0; i < selectedFilters.length; i++) {
-          const filter = selectedFilters[i];
-          if (!mappedCommands.includes(filter)) break;
-
-          if (i === selectedFilters.length - 1) includesAll = true;
-        }
-
-        if (includesAll) filteredCommands.push(cmd);
-      }
-
-    }
-
-    return filteredCommands;
-
-  }
-
-  const filteredCommands = createFilteredCommands();
-
   return (
     <View style={theme.container}>
-
 
       <HeaderWithBackButton
         backText={back}
@@ -130,39 +68,48 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           >
             {
               ({ pressed }) =>
-                // <Octicons name="diff-added" size={25} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
                 <IonIcons name="add" size={27} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
             }
           </Pressable>
+          <SearchBarFilter
+            searchFilterKey="name"
+            filters={FILTERS}
+            filterFn={({ filterType, itemsToFilter, selectedFilters }) => {
+              if (selectedFilters.length < 1) return itemsToFilter;
 
-          <View style={{ position: "relative", width: "80%" }}>
-            <TextInput
-              style={{
-                height: 40,
-                backgroundColor: colorTheme.backgroundSecondaryColor,
-                paddingHorizontal: 40,
-                paddingRight: 10,
-                borderRadius: 100,
-                fontFamily: "IBMPlexSans_400Regular",
-                color: colorTheme.textColor,
-              }}
-              onChangeText={(text) => setCommandNameFilter(text)}
-              placeholderTextColor={colorTheme.disabledButtonColor}
-              placeholder="Find command by name..."
-            />
-            <IonIcons name="search" size={20} color={colorTheme.textColor} style={{ position: "absolute", left: 12, top: 10, }} />
-          </View>
+              const filteredItems: CommandOutput[] = [];
+              for (const cmd of itemsToFilter) {
+                console.log(cmd);
+                if (!cmd.command) continue;
 
+                const mappedCommands = cmd.command.map(c => c.delay ? "Delay" : (DefaultCommandValueEnglish[c.transmitValue! - 1]));
 
-          <Pressable
-            hitSlop={10}
-            onPress={() => bottomSheetRef.current?.expand()}
-          >
-            {
-              ({ pressed }) =>
-                <IonIcons name="filter-outline" size={25} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
-            }
-          </Pressable>
+                if (filterType === "inclusive") {
+                  for (const filter of selectedFilters) {
+                    if (mappedCommands.includes(filter)) {
+                      filteredItems.push(cmd);
+                      break;
+                    }
+                  }
+                } else {
+                  let includesAll = false;
+                  for (let i = 0; i < selectedFilters.length; i++) {
+                    const filter = selectedFilters[i];
+                    if (!mappedCommands.includes(filter)) break;
+                    if (i === selectedFilters.length - 1) includesAll = true;
+                  }
+
+                  if (includesAll) filteredItems.push(cmd);
+                }
+              }
+              return filteredItems;
+            }}
+            filterables={customCommands}
+            onFilteredItemsUpdate={(filteredItems) => setFilteredCommands(filteredItems)}
+            onFilterTextChange={(filterText) => { }}
+            onFiltersChange={(selectedFilters) => { }}
+            placeholderText="Find command by name..."
+          />
         </View>
 
         <View style={{
@@ -193,7 +140,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
       </View>
 
 
-      <BottomSheet
+      {/* <BottomSheet
         ref={bottomSheetRef}
         index={-1}
         enablePanDownToClose
@@ -237,9 +184,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
               <Text style={{ color: colorTheme.headerTextColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
                 Filters Narrow:
               </Text>
-
-              {/* <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", columnGap: 7, }}> */}
-              {/* <Text>Off</Text> */}
               <ToggleSwitch
                 onColor={colorTheme.buttonColor}
                 offColor={colorTheme.disabledButtonColor}
@@ -249,8 +193,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
                 circleColor={colorTheme.buttonTextColor}
                 onToggle={(isOn) => setFilterType(isOn ? "narrow" : "inclusive")}
               />
-              {/* <Text>On</Text> */}
-              {/* </View> */}
             </View>
             <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "40%" }}>
 
@@ -304,7 +246,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
             }
           </View>
         </BottomSheetView>
-      </BottomSheet>
+      </BottomSheet> */}
     </View>
   )
 
