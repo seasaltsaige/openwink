@@ -1,8 +1,8 @@
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Text, View } from "react-native";
 import { Pressable, ScrollView } from "react-native-gesture-handler";
 import { useColorTheme } from "../hooks/useColorTheme";
-import React from "react";
+import React, { useCallback } from "react";
 
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@expo/vector-icons/Octicons";
@@ -22,56 +22,41 @@ export function CommandSequenceBottomSheet({
 }: ICommandSequenceBottomSheet) {
   const { colorTheme } = useColorTheme();
 
+  const renderBackdrop = useCallback((props: BottomSheetBackdropProps) => {
+    return <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+    />
+  }, []);
+
   return (
+
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
       onClose={close}
       enablePanDownToClose
-      backgroundStyle={{
-        backgroundColor: colorTheme.backgroundSecondaryColor,
-        boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
-      }}
+      backgroundStyle={{ backgroundColor: colorTheme.backgroundSecondaryColor }}
       handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
-      enableDynamicSizing
+      backdropComponent={renderBackdrop}
     >
       <BottomSheetView
         style={{
           padding: 25,
           paddingTop: 10,
-          rowGap: 30,
+          rowGap: 25,
         }}
       >
-        <View style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between"
+        <Text style={{
+          width: "100%",
+          textAlign: "center",
+          color: colorTheme.headerTextColor,
+          fontSize: 20,
+          fontFamily: "IBMPlexSans_700Bold"
         }}>
-          <Text style={{
-            width: "75%",
-            textAlign: "left",
-            color: colorTheme.headerTextColor,
-            fontSize: 19,
-            fontFamily: "IBMPlexSans_700Bold"
-          }}>
-            Command Sequence for{"\n"}{command?.name}
-          </Text>
-
-
-          <Pressable
-            hitSlop={10}
-            key={"close-button"}
-            onPress={() => bottomSheetRef.current?.close()}
-          >
-            {
-              ({ pressed }) =>
-                <IonIcons name="close" size={30} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
-            }
-          </Pressable>
-
-        </View>
-
-
+          Command Sequence for{"\n"}{command?.name}
+        </Text>
 
         <ScrollView
           scrollEnabled
