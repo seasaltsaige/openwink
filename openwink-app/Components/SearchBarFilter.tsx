@@ -4,6 +4,7 @@ import { TextInput } from "react-native-gesture-handler";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 import IonIcons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import ToggleSwitch from "toggle-switch-react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -63,12 +64,12 @@ export function SearchBarFilter<
         continue;
       }
     }
+    // Implementation based filter
     const filtered = filterFn({ filterType, itemsToFilter: fitleredByName, selectedFilters: __filters });
     return filtered;
   }
 
-  const __onFilterTextChange = (text: string) =>
-    __setFilterText(text);
+  const __onFilterTextChange = (text: string) => __setFilterText(text);
 
 
   const __onFiltersChange = (filter: T[number]) => {
@@ -99,8 +100,6 @@ export function SearchBarFilter<
 
   return (
     <>
-
-      {/* <View style={{ position: "relative", width: "80%" }}> */}
       <View style={{ position: "relative", width: "80%" }}>
         <TextInput
           style={{
@@ -119,15 +118,13 @@ export function SearchBarFilter<
         <IonIcons name="search" size={20} color={colorTheme.textColor} style={{ position: "absolute", left: 12, top: 10, }} />
       </View>
 
-      {/* </View> */}
-
       <Pressable
         hitSlop={10}
         onPress={() => bottomSheetRef.current?.snapToIndex(0)}
       >
         {
           ({ pressed }) =>
-            <IonIcons name="filter-outline" size={25} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
+            <MaterialIcons name="filter-outline" size={28} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
         }
       </Pressable>
 
@@ -142,7 +139,7 @@ export function SearchBarFilter<
             backgroundColor: colorTheme.backgroundSecondaryColor,
             boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
           }}
-          handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor }}
+          handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
           enableDynamicSizing
         >
           <BottomSheetView
