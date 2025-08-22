@@ -11,6 +11,7 @@
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
     "@gorhom/bottom-sheet": "^5.1.8",
+    "@gorhom/portal": "^1.0.14",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
@@ -25,7 +26,7 @@
     "react": "18.3.1",
     "react-native": "0.76.3",
     "react-native-base64": "^0.2.1",
-    "react-native-ble-plx": "^3.2.1",
+    "react-native-ble-plx": "^3.5.0",
     "react-native-bouncy-checkbox": "^4.1.2",
     "react-native-draglist": "^3.9.9",
     "react-native-dropdown-picker": "^5.4.6",
@@ -38,7 +39,8 @@
     "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-wifi-reborn": "^4.13.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "expo-build-properties": "~0.13.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
