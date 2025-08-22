@@ -4,6 +4,7 @@ import { IBMPlexSans_700Bold, IBMPlexSans_500Medium, IBMPlexSans_400Regular, IBM
 import { BleProvider } from './Providers/BleProvider';
 import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
+import { PortalProvider } from '@gorhom/portal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
@@ -22,7 +23,9 @@ export default function App() {
       <BleProvider>
         <ThemeProvider>
           <GestureHandlerRootView>
-            <AppNavigator />
+            <PortalProvider>
+              <AppNavigator />
+            </PortalProvider>
           </GestureHandlerRootView>
         </ThemeProvider>
       </BleProvider>
