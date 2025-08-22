@@ -6,3 +6,4 @@ export * from "./CustomCommand";
 export * from "./MainHeader";
 export * from "./TooltipHeader";
 export * from "./SearchBarFilter";
+export * from "./CommandSequenceBottomSheet";
