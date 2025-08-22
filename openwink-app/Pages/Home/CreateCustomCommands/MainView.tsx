@@ -79,7 +79,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
 
               const filteredItems: CommandOutput[] = [];
               for (const cmd of itemsToFilter) {
-                console.log(cmd);
                 if (!cmd.command) continue;
 
                 const mappedCommands = cmd.command.map(c => c.delay ? "Delay" : (DefaultCommandValueEnglish[c.transmitValue! - 1]));
@@ -123,14 +122,15 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
             rowGap: 14,
           }}>
             {
-              filteredCommands.length > 0 ? filteredCommands.map(command => (
-                <CustomCommand
-                  command={command}
-                  onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
-                  onDelete={() => { CustomCommandStore.deleteCommand(command.name); getCommandsFromStorage(); }}
-                  key={command.name}
-                />
-              ))
+              filteredCommands.length > 0 ?
+                filteredCommands.map(command => (
+                  <CustomCommand
+                    command={command}
+                    onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
+                    onDelete={() => { CustomCommandStore.deleteCommand(command.name); getCommandsFromStorage(); }}
+                    key={command.name}
+                  />
+                ))
                 : <Text style={{ color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
                   No Commands Found
                 </Text>
@@ -138,115 +138,6 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           </ScrollView>
         </View>
       </View>
-
-
-      {/* <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        enablePanDownToClose
-
-        backgroundStyle={{
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
-        }}
-        handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor }}
-      >
-        <BottomSheetView style={{
-          flex: 1,
-          padding: 36,
-          paddingTop: 10,
-          alignItems: 'center',
-          justifyContent: "flex-start",
-          rowGap: 10,
-        }}
-
-
-        >
-          <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ textAlign: "left", color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
-              Filter by Command Type
-            </Text>
-            <Pressable
-              hitSlop={10}
-              onPress={() => bottomSheetRef.current?.close()}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {
-                ({ pressed }) =>
-                  <IonIcons name="close-circle-outline" size={35} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
-              }
-            </Pressable>
-          </View>
-
-
-          <View style={{ marginVertical: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", width: "100%", columnGap: 15, }}>
-            <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "50%" }}>
-
-              <Text style={{ color: colorTheme.headerTextColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
-                Filters Narrow:
-              </Text>
-              <ToggleSwitch
-                onColor={colorTheme.buttonColor}
-                offColor={colorTheme.disabledButtonColor}
-                isOn={filterType === "narrow"}
-                size="medium"
-                hitSlop={10}
-                circleColor={colorTheme.buttonTextColor}
-                onToggle={(isOn) => setFilterType(isOn ? "narrow" : "inclusive")}
-              />
-            </View>
-            <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "40%" }}>
-
-              <Pressable
-                style={{ width: "100%" }}
-                onPress={() => setSelectedFilters([])}
-              >
-                {
-                  ({ pressed }) => (
-                    <Text style={{
-                      textAlign: "right",
-                      width: "100%",
-                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                      textDecorationColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                      textDecorationStyle: "solid",
-                      textDecorationLine: "underline",
-                      fontSize: 17,
-                      fontFamily: "IBMPlexSans_500Medium"
-                    }}>
-                      Clear Filters
-                    </Text>
-                  )
-                }
-              </Pressable>
-
-            </View>
-          </View>
-
-
-          <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", rowGap: 10, alignItems: "center", justifyContent: "space-between" }}>
-            {
-              FILTERS.map(filter => (
-                <View key={filter} style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "42%" }}>
-                  <Text style={{ color: colorTheme.textColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
-                    {
-                      filter
-                    }
-                  </Text>
-
-                  <Pressable
-                    hitSlop={10}
-                    onPress={() => updateSelectedFilters(selectedFilters.includes(filter) ? "remove" : "add", filter)}
-                  >
-                    {
-                      ({ pressed }) =>
-                        <IonIcons color={(pressed) ? colorTheme.buttonColor : colorTheme.headerTextColor} size={25} name={selectedFilters.includes(filter) ? "checkbox-outline" : "square-outline"} />
-                    }
-                  </Pressable>
-                </View>
-              ))
-            }
-          </View>
-        </BottomSheetView>
-      </BottomSheet> */}
     </View>
   )
 
