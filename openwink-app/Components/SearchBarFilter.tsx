@@ -4,7 +4,7 @@ import { TextInput } from "react-native-gesture-handler";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 import IonIcons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialIcons from "@react-native-vector-icons/material-design-icons";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import ToggleSwitch from "toggle-switch-react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -124,7 +124,7 @@ export function SearchBarFilter<
       >
         {
           ({ pressed }) =>
-            <MaterialIcons name="filter-outline" size={28} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
+            <MaterialIcons name="filter-multiple-outline" size={28} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
         }
       </Pressable>
 
@@ -157,7 +157,7 @@ export function SearchBarFilter<
 
           >
             <View style={{
-              width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between"
+              width: "100%", display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between"
             }}>
               <Text style={{ textAlign: "left", color: colorTheme.headerTextColor, fontSize: 22, fontFamily: "IBMPlexSans_700Bold" }}>
                 Filter by Command Type
@@ -165,10 +165,10 @@ export function SearchBarFilter<
               <Pressable
                 hitSlop={10}
                 onPress={() => bottomSheetRef.current?.close()}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+              >
                 {
                   ({ pressed }) =>
-                    <IonIcons name="close-circle-outline" size={35} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+                    <IonIcons name="close" size={30} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
                 }
               </Pressable>
             </View>
