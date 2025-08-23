@@ -13,11 +13,13 @@
     "@gorhom/bottom-sheet": "^5.1.8",
     "@gorhom/portal": "^1.0.14",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
+    "@react-native-vector-icons/material-design-icons": "^12.3.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/native-stack": "^7.1.14",
     "expo": "~52.0.11",
     "expo-application": "~6.0.2",
+    "expo-build-properties": "~0.13.3",
     "expo-dev-client": "~5.0.5",
     "expo-device": "~7.0.1",
     "expo-font": "~13.0.4",
@@ -39,8 +41,7 @@
     "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-wifi-reborn": "^4.13.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0",
-    "expo-build-properties": "~0.13.3"
+    "toggle-switch-react-native": "^3.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
