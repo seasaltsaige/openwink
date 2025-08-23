@@ -7,7 +7,23 @@ import React, { useCallback } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@expo/vector-icons/Octicons";
 import { CommandOutput } from "../Storage";
-import { DefaultCommandValueEnglish } from "../helper/Constants";
+import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
+const COMMAND_TYPE_COLORS: {
+  [key in DefaultCommandValue | "delay"]: `#${string}`
+} = {
+  1: "#4d1d46",
+  2: "#563060",
+  3: "#8f5050",
+  4: "#dc7049",
+  5: "#EBB865",
+  6: "#35506e",
+  7: "#313967",
+  8: "#143f46",
+  9: "#2a695e",
+  10: "#8d8171",
+  11: "#cbb89a",
+  delay: "#3c3a3d",
+}
 
 interface ICommandSequenceBottomSheet {
   bottomSheetRef: React.RefObject<BottomSheet>;
@@ -62,10 +78,7 @@ export function CommandSequenceBottomSheet({
           scrollEnabled
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
-            columnGap: 5,
-          }}
-
+          contentContainerStyle={{ columnGap: 7 }}
         >
           {
             (command !== null && command.command! && command.command.length > 0)
@@ -73,14 +86,14 @@ export function CommandSequenceBottomSheet({
                 command.command.map((cmdPart, index) => (
                   <View
                     key={`${cmdPart.delay}-${cmdPart.transmitValue}-${index}`}
-                    style={{ flexDirection: "row", alignItems: "center", columnGap: 5 }}
+                    style={{ flexDirection: "row", alignItems: "center", columnGap: 7 }}
                   >
                     <View
                       style={{
-                        backgroundColor: `${colorTheme.backgroundPrimaryColor}CC`,
+                        backgroundColor: cmdPart.delay ? COMMAND_TYPE_COLORS["delay"] : COMMAND_TYPE_COLORS[cmdPart.transmitValue!],
                         borderRadius: 100,
-                        paddingHorizontal: 15,
-                        paddingVertical: 5,
+                        paddingHorizontal: 18,
+                        paddingVertical: 7,
                       }}
                     >
                       <Text style={{
