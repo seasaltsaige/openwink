@@ -1,5 +1,5 @@
 
-export * from "./Home/CreateCustomCommand";
+export * from "./Home/CreateCustomCommands/CreateCustomCommand";
 export * from "./Home/CustomCommands";
 export * from "./Home/Home";
 export * from "./Home/StandardCommands";

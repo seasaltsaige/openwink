@@ -34,12 +34,25 @@
     "plugins": [
       "react-native-ble-plx",
       "react-native-wifi-reborn",
-      "expo-font"
+      "expo-font",
+      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
-        "projectId": "03332a0c-de38-4206-b190-0bc6d7c3111c"
+        "projectId": "6f04b4b4-4888-49c9-8dd1-51111d08e58b"
       }
-    }
+    },
+    "owner": "seasaltsaige"
   }
 }

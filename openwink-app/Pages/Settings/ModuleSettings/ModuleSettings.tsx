@@ -89,11 +89,10 @@ export function ModuleSettings() {
         <HeaderWithBackButton
           backText={back}
           headerText="Module"
+          deviceStatus
         />
 
         <View style={[theme.homeScreenButtonsContainer, { rowGap: 15 }]}>
-
-          {/* TODO: MOVE TO main settings page? dont have an app settings... */}
           <View style={theme.mainLongButtonPressableContainer}>
             <View style={theme.mainLongButtonPressableView}>
               <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} />

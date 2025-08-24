@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 const VERSION_KEY = "firmware-version";
 
 export abstract class FirmwareStore {
@@ -13,6 +13,6 @@ export abstract class FirmwareStore {
   static getFirmwareVersion(): string | null {
     const version = Storage.getString(VERSION_KEY);
     if (!version) return null;
-    else return version; 
+    else return version;
   }
 }

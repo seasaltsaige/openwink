@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 const MAC_ADDR_KEY = "mac-addr";
 
 export abstract class DeviceMACStore {

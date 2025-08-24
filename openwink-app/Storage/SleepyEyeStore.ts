@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 const key = "SLEEPY_KEY";
 
 export abstract class SleepyEyeStore {

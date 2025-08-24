@@ -1,6 +1,6 @@
 import { ButtonBehaviors, Presses } from "../helper/Types";
 import { buttonBehaviorMap } from "../helper/Constants";
-import Storage from ".";
+import Storage from "./Storage";
 
 const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
 const BUTTON_KEY = "oem-button-values";

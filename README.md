@@ -92,7 +92,7 @@ The [Open Wink - Wink Mod](https://github.com/seasaltsaige/openwink) is free and
 The Open Wink project codebase was created and is maintained by [seasaltsaige](https://github.com/seasaltsaige).
 
 - Special thanks to [pyroxenes](https://github.com/pyroxenes) for creating and iterating on the PCB design and assembly. 
-  - See related - [Board Design](todo:pyroxenes_github_link)
+  - See related - [Board Design](https://github.com/pyroxenes/openwink-hardware-module)
 
 
 ## Contact Me

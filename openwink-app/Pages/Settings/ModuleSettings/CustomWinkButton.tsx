@@ -69,17 +69,17 @@ export function CustomWinkButton() {
     setMax(newHigh);
   }, []);
 
-  useFocusEffect(() => {
+  useFocusEffect(useCallback(() => {
     const setValue = CustomOEMButtonStore.getDelay();
     if (setValue !== null)
       setIntervalValue(setValue);
 
     fetchActionsFromStorage();
-  });
+  }, []));
 
   const updateButtonAction = async (action: CustomButtonAction) => {
     await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!);
-    await fetchActionsFromStorage();
+    fetchActionsFromStorage();
   }
 
   const deleteButtonAction = async (action: CustomButtonAction) => {
@@ -96,7 +96,7 @@ export function CustomWinkButton() {
     }
 
     // Fetch from storate again
-    await fetchActionsFromStorage();
+    fetchActionsFromStorage();
   }
 
   return (
@@ -105,6 +105,7 @@ export function CustomWinkButton() {
         <HeaderWithBackButton
           backText={backHumanReadable}
           headerText="Button"
+          deviceStatus
         />
 
         {/* MAIN Custom Retractor Button Toggle */}

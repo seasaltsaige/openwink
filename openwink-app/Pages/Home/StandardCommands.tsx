@@ -16,17 +16,30 @@ export function StandardCommands() {
   //@ts-ignore
   const { back } = route.params;
 
-  const { leftStatus, rightStatus, device, isConnecting, isScanning, headlightsBusy, sendDefaultCommand } = useBLE();
+  const {
+    leftStatus,
+    rightStatus,
+    device,
+    isConnecting,
+    isScanning,
+    headlightsBusy,
+    sendDefaultCommand,
+    sendSleepyEye,
+    sendSyncCommand
+  } = useBLE();
 
-  const [disableActions, setDisableActions] = useState(false);
+  const deviceConnected = device &&
+    !headlightsBusy &&
+    !isScanning &&
+    !isConnecting;
 
-  useEffect(() => {
-    if (!device || headlightsBusy || (leftStatus > 0 && leftStatus < 1) || (rightStatus > 0 && rightStatus < 1))
-      setDisableActions(true);
-    else setDisableActions(false);
+  const canSendMainCommands = deviceConnected &&
+    (leftStatus === 0 || leftStatus === 1) &&
+    (rightStatus === 0 || rightStatus === 1);
 
-  }, [leftStatus, rightStatus, headlightsBusy, device]);
-
+  const canSync = deviceConnected &&
+    (leftStatus !== 0 && leftStatus !== 1) &&
+    (rightStatus !== 0 && rightStatus !== 1);
 
   return (
     <View style={theme.container}>
@@ -35,28 +48,29 @@ export function StandardCommands() {
         backText={back}
         headerText="Commands"
         headerTextStyle={theme.settingsHeaderText}
+        deviceStatus
       />
 
       <View style={theme.contentContainer}>
 
         <View style={theme.headlightStatusContainer}>
           {
-            [
+            ([
               ["Left", leftStatus],
               ["Right", rightStatus]
-            ].map(([label, status], i) => (
+            ] as const).map(([label, status], i) => (
               <View
                 key={i}
                 style={theme.headlightStatusSideContainer}
               >
                 {/* HEADLIGHT STATUS TEXT */}
                 <Text style={theme.headlightStatusText}>
-                  {label}: {status === 0 ? "Down" : status === 1 ? "Up" : `${(status as number * 100).toFixed(0)}%`}
+                  {label}: {status === 0 ? "Down" : status === 1 ? "Up" : `${(status * 100).toFixed(0)}%`}
                 </Text>
 
                 {/* HEADLIGHT STATUS BAR */}
                 <View style={theme.headlightStatusBarUnderlay}>
-                  <View style={[theme.headlightStatusBarOverlay, { width: `${status as number * 100}%`, }]} />
+                  <View style={[theme.headlightStatusBarOverlay, { width: `${status * 100}%`, }]} />
                 </View>
               </View>
             ))}
@@ -79,14 +93,14 @@ export function StandardCommands() {
                   <Pressable
                     style={({ pressed }) => (
                       [theme.commandButton, {
-                        backgroundColor: disableActions ? colorTheme.disabledButtonColor
+                        backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor
                           : pressed ? colorTheme.buttonColor
                             : colorTheme.backgroundSecondaryColor,
                       }]
                     )}
                     key={val.value}
                     onPress={() => sendDefaultCommand(val.value)}
-                    disabled={disableActions}
+                    disabled={!canSendMainCommands}
                   >
                     <Text style={theme.commandButtonText}>
                       {val.name}
@@ -111,12 +125,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "30%",
-                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   }
                 ])}
                 key={row.value}
                 onPress={() => sendDefaultCommand(row.value)}
-                disabled={disableActions}
+                disabled={!canSendMainCommands}
               >
                 <Text style={theme.commandButtonText}>
                   {row.name}
@@ -143,12 +157,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "48%",
-                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   }
                 ])}
                 key={98}
                 onPress={() => sendDefaultCommand(10)}
-                disabled={disableActions}
+                disabled={!canSendMainCommands}
               >
                 <Text style={theme.commandButtonText}>
                   Left Wave
@@ -161,12 +175,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "48%",
-                    backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   }
                 ])}
                 key={99}
                 onPress={() => sendDefaultCommand(11)}
-                disabled={disableActions}
+                disabled={!canSendMainCommands}
               >
                 <Text style={theme.commandButtonText}>
                   Right Wave
@@ -183,12 +197,12 @@ export function StandardCommands() {
                     theme.commandButton,
                     {
                       width: "48%",
-                      backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                      backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     }
                   ])}
                   key={105}
-                  onPress={() => { }}
-                  disabled={disableActions}
+                  onPress={sendSleepyEye}
+                  disabled={!canSendMainCommands}
                 >
                   <Text style={theme.commandButtonText}>
                     Sleepy Eye
@@ -200,12 +214,12 @@ export function StandardCommands() {
                     theme.commandButton,
                     {
                       width: "48%",
-                      backgroundColor: disableActions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                      backgroundColor: !canSync ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     }
                   ])}
                   key={106}
-                  onPress={() => { }}
-                  disabled={!device || !disableActions}
+                  onPress={sendSyncCommand}
+                  disabled={!canSync}
                 >
                   <Text style={theme.commandButtonText}>
                     Reset
