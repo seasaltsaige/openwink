@@ -492,7 +492,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       }
     }
-
+    setHeadlightsBusy(false);
     customCommandActive.current = false;
   }
 

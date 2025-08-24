@@ -15,8 +15,6 @@ export function CustomCommands() {
   const { theme, colorTheme } = useColorTheme();
   const {
     device,
-    isConnecting,
-    isScanning,
     customCommandActive,
     customCommandInterrupt,
     sendCustomCommand,
@@ -39,7 +37,6 @@ export function CustomCommands() {
     setFilteredCommands(commandsFromStorage);
   }, []));
 
-  const canRunCommands = device !== null && !customCommandActive.current;
 
   const handleCommandInteraction = (command: CommandOutput, type: "start" | "stop") => {
     if (type === "stop") customCommandInterrupt();
@@ -50,9 +47,11 @@ export function CustomCommands() {
   }
 
   useEffect(() => {
-    if (!customCommandActive.current)
+    if (!customCommandActive.current && !headlightsBusy)
       setActiveCommand(null);
-  }, [customCommandActive.current]);
+  }, [customCommandActive.current, headlightsBusy]);
+
+  const canRunCommands = device && !customCommandActive.current;
 
   return (
     <View style={theme.container}>
