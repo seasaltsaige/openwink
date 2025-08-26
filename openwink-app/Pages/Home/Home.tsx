@@ -13,13 +13,15 @@ export function Home() {
 
   const navigate = useNavigation();
   const route = useRoute();
-  const { colorTheme, update, theme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
 
   const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false as null | boolean);
   const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+  const [quickLinks, setQuickLinks] = useState([] as []);
+
 
   const {
     device,
@@ -149,27 +151,61 @@ export function Home() {
 
 
         {/* QUICK LINKS */}
-        <View style={theme.homeScreenButtonsContainer}>
+        {/* <View style={theme.homeScreenButtonsContainer}>
           <Text style={theme.labelHeader}>
             Quick Links
-          </Text>
-          {/* CUSTOM WINK BUTTON */}
-          <LongButton
+          </Text> */}
+        {/* CUSTOM WINK BUTTON */}
+        {/* <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
             key={"CustomWinkButton"}
             icons={{ names: ["speedometer-outline", "chevron-forward-outline"], size: [20, 20] }}
             text="Set Up Custom Wink Button"
-          />
-          {/* COLOR THEME */}
-          <LongButton
+          /> */}
+        {/* COLOR THEME */}
+        {/* <LongButton
             //@ts-ignore
             onPress={() => navigate.navigate("Theme", { back: route.name })}
             key={"Theme"}
             icons={{ names: ["color-fill-outline", "chevron-forward-outline"], size: [20, 20] }}
             text="Change App Theme"
           />
+        </View> */}
+
+        {/* Includes: Icon, Navigation Name, Display Name */}
+
+        <View style={theme.homeScreenButtonsContainer}>
+          {/* QUICK LINKS HEADER */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+            <Text style={theme.labelHeader}>
+              Quick Links
+            </Text>
+
+            <Pressable
+              style={{ flexDirection: "row", alignItems: "center", columnGap: 10 }}
+              // TODO: Open 
+              onPress={() => { }}
+            >
+              {
+                ({ pressed }) =>
+                  <>
+                    <Text style={{
+                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                      fontSize: 15,
+                      fontFamily: "IBMPlexSans_400Regular",
+                    }}>
+                      Edit
+                    </Text>
+                    <IonIcons style={{ marginTop: 3 }} name="list" size={23} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+                  </>
+              }
+            </Pressable>
+
+          </View>
         </View>
+
+
 
 
         {/* Status about app/module Updates + if update is available -> press = update */}
