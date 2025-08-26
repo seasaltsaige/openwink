@@ -1,7 +1,7 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { LongButton } from "../../Components";
+import { AboutFooter, LongButton } from "../../Components";
 import { MainHeader } from "../../Components";
 import { SETTINGS_DATA } from "../../helper/Constants";
 
@@ -37,7 +37,7 @@ export function Settings() {
         </View>
 
 
-        {/* TODO: Credits footer */}
+        <AboutFooter />
 
       </View >
     </>

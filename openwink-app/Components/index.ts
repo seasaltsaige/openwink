@@ -7,3 +7,4 @@ export * from "./MainHeader";
 export * from "./TooltipHeader";
 export * from "./SearchBarFilter";
 export * from "./CommandSequenceBottomSheet";
+export * from "./AboutFooter";

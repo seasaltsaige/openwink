@@ -757,7 +757,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           flexDirection: "row",
           justifyContent: "center",
           alignItems: "center",
-          fontFamily: "IBMPlexSans_700Bold",
+          fontFamily: "IBMPlexSans_400Regular",
         },
         modalContentContainer: {
           backgroundColor: themeColors.backgroundPrimaryColor,
