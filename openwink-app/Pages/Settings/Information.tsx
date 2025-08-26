@@ -1,28 +1,23 @@
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
 import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
 import { ButtonBehaviors, Presses } from "../../helper/Types";
 import * as Application from "expo-application";
-
-
-
-type CustomButtonAction = {
-  behavior: BehaviorEnum;
-  behaviorHumanReadable: ButtonBehaviors;
-  presses: Presses;
-};
-
+import { CommandSequenceBottomSheet } from "../../Components";
+import BottomSheet from "@gorhom/bottom-sheet";
 
 export function Information() {
 
   const { colorTheme, theme, themeName } = useColorTheme();
   const { mac, firmwareVersion, device, isScanning, isConnecting, leftStatus, rightStatus, waveDelayMulti, oemCustomButtonEnabled, autoConnectEnabled, buttonDelay } = useBLE();
 
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [displayedCommand, setDisplayedCommand] = useState(null as CommandOutput | null);
 
   const headlightStatus = (connected: boolean, status: number) => (
     connected ? (
@@ -65,29 +60,18 @@ export function Information() {
     behavior: buttonBehaviorMap[action.behavior],
   })).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
-  // TEMP: for testing until actual custom commands are implemented
-  // const [customCommands, setCustomCommands] = useState([
-  //   { name: "Test Command", command: [{ transmitValue: DefaultCommandValue.RIGHT_WINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 2", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  //   { name: "Test Command 3", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 4", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  //   { name: "Test Command 5", command: [{ transmitValue: DefaultCommandValue.RIGHT_WAVE }, { delay: 150 }, { transmitValue: DefaultCommandValue.BOTH_BLINK }, { delay: 150 }, { transmitValue: DefaultCommandValue.LEFT_WAVE }] },
-  //   { name: "Test Command 6", command: [{ transmitValue: DefaultCommandValue.LEFT_WINK }, { transmitValue: DefaultCommandValue.RIGHT_WINK }] },
-  // ] as CommandOutput[]);
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
-
-  // TODO refactor useFocusEffect, as it is no longer async
-  const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
-    ...state,
-    [action.name]: !state[action.name],
-  }), customCommands.reduce((accum, curr) => {
-    accum[curr.name] = false
-    return accum;
-  }, {} as { [key: string]: boolean }));
+  // const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
+  //   ...state,
+  //   [action.name]: !state[action.name],
+  // }), customCommands.reduce((accum, curr) => {
+  //   accum[curr.name] = false
+  //   return accum;
+  // }, {} as { [key: string]: boolean }));
 
 
-  useFocusEffect(() => {
+  useFocusEffect(useCallback(() => {
     const actions = CustomOEMButtonStore.getAll();
     if (actions)
       setRawButtonActions(actions);
@@ -97,19 +81,12 @@ export function Information() {
     if (commands)
       setCustomCommands(commands);
     else setCustomCommands([]);
-  });
+  }, []));
 
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-
-  const openGithub = async (type: "module" | "software") => {
-    if (type === "module")
-      await Linking.openURL("https://github.com/pyroxenes");
-    else if (type === "software")
-      await Linking.openURL("https://github.com/seasaltsaige");
-  }
 
   return (
     <View style={theme.container}>
@@ -256,32 +233,24 @@ export function Information() {
                         <Text style={[theme.infoBoxInnerContentText, { width: "85%" }]}>
                           {
                             command.command ? (
-                              customCommandsExpandedState[command.name] ? (
-                                command.command.map(c => (
-                                  c.delay ?
-                                    `${c.delay} ms Delay` :
-                                    DefaultCommandValueEnglish[c.transmitValue! - 1]
-                                )).join(" → ")
-                              ) : (
-                                command.command.map(c => (
-                                  c.delay ?
-                                    `${c.delay} ms Delay` :
-                                    DefaultCommandValueEnglish[c.transmitValue! - 1]
-                                )).slice(0, 2).join(" → ").slice(0, 16) + "..."
-                              )
-                            ) : "Unknown Error Getting Command"
+                              command.command.map(c => (
+                                c.delay ?
+                                  `${c.delay} ms Delay` :
+                                  DefaultCommandValueEnglish[c.transmitValue! - 1]
+                              )).slice(0, 2).join(" → ").slice(0, 16) + "..."
+                            ) : "Unknown Error"
                           }
                         </Text>
                         {
                           command.command ? (
                             <Pressable
                               style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPress={() => dispatchCustomCommands({ name: command.name })}
+                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand(); }}
                               hitSlop={5}
                             >
                               {
                                 ({ pressed }) =>
-                                  <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} name={customCommandsExpandedState[command.name] ? "chevron-up" : "chevron-down"} />
+                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} />
                               }
                             </Pressable>
                           ) : <></>
@@ -299,68 +268,11 @@ export function Information() {
 
       </ScrollView>
 
-
-
-
-
-
-      {/* <View style={[theme.infoFooterContainer, { height: 60, flexDirection: "column", rowGap: 5 }]}>
-        <Pressable
-          style={({ pressed }) => [pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer, { marginBottom: 8 }]}
-          onPress={() => {
-            // Install update to wink module
-            // Should only become this state if connected to wink module (To check device for version)
-          }}
-        >
-          <View style={theme.mainLongButtonPressableView}>
-            <Text style={theme.mainLongButtonPressableText}>
-              Check for Module Update
-            </Text>
-          </View>
-
-          <IonIcons name="cloud-download-outline" style={theme.mainLongButtonPressableIcon} size={20} color={colorTheme.textColor} />
-        </Pressable> */}
-
-      {/* <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
-          <Text style={theme.infoFooterText}>
-            Module hardware developed and maintained by
-          </Text>
-
-          <Pressable
-            onPress={() => openGithub("module")}
-          >
-            {
-              ({ pressed }) => <Text style={[theme.infoFooterText, {
-                color: "#99c3ff",
-                textDecorationLine: pressed ? "underline" : "none"
-              }]}>
-                @pyroxenes
-              </Text>
-            }
-
-          </Pressable>
-        </View>
-
-        <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 4 }}>
-          <Text style={theme.infoFooterText}>
-
-            Module software developed and maintained by
-          </Text>
-          <Pressable
-            onPress={() => openGithub("software")}
-          >
-            {
-              ({ pressed }) => <Text style={[theme.infoFooterText, {
-                color: "#99c3ff",
-                textDecorationLine: pressed ? "underline" : "none"
-              }]}>
-                @seasaltsaige
-              </Text>
-            }
-
-          </Pressable>
-        </View> */}
-      {/* </View> */}
+      <CommandSequenceBottomSheet
+        bottomSheetRef={bottomSheetRef}
+        close={() => setDisplayedCommand(null)}
+        command={displayedCommand!}
+      />
 
     </View >
   )

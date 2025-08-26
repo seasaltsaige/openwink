@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 const key = "HEADLIGHT_MULTI";
 export abstract class CustomWaveStore {
 

@@ -9,6 +9,7 @@
 #include "BLECallbacks.h"
 #include "BLE.h"
 #include "MainFunctions.h"
+#include "ButtonHandler.h"
 #include "esp_sleep.h"
 #include "Storage.h"
 
@@ -307,6 +308,16 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
       }
     }
   }
+}
+
+
+void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  string value = pChar->getValue();
+
+  if (value == "1")
+    ButtonHandler::setCustomCommandActive(true);
+  else
+    ButtonHandler::setCustomCommandActive(false);
 }
 
 void updateProgress(size_t progress, size_t size) {

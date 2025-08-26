@@ -1,4 +1,4 @@
-import Storage from ".";
+import Storage from "./Storage";
 import { ColorTheme } from "../helper/Constants";
 
 export abstract class ThemeStore {

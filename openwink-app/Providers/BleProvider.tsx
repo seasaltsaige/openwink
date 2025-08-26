@@ -29,8 +29,9 @@ import {
   SLEEPY_SETTINGS_UUID,
   LONG_TERM_SLEEP_UUID,
   SYNC_UUID,
+  CUSTOM_COMMAND_STATUS_UUID,
 } from '../helper/Constants';
-import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
+import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
@@ -53,8 +54,10 @@ export type BleContextType = {
   sendSleepyEye: () => Promise<void>;
   sendSyncCommand: () => Promise<void>;
   enterDeepSleep: () => Promise<void>;
+  sendCustomCommand: (commandSequence: CommandInput[]) => Promise<void>;
+  customCommandInterrupt: () => void;
   waveDelayMulti: number;
-  // setOEMButtonInterval: (delay: number) => Promise<void>;
+  customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
   updateProgress: number;
   oemCustomButtonEnabled: boolean;
@@ -109,6 +112,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
+
+  // const [customCommandActive, setCustomCommandActive] = useState(false);
+  const customCommandActive = useRef(false);
 
 
 
@@ -244,6 +250,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setMotionValue(parseInt(val));
     });
 
+
+    connection.monitorCharacteristicForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, (err, char) => {
+      if (err) return console.log(err);
+      const val = base64.decode(char?.value!);
+      if (val === "0") customCommandInterrupt();
+    });
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -392,7 +404,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }
 
 
-  const sendDefaultCommand = async (command: number) => {
+  const sendDefaultCommand = async (command: DefaultCommandValue) => {
     if (headlightsBusy) return;
 
     if ((leftStatus === ButtonStatus.UP && command === DefaultCommandValue.LEFT_UP) ||
@@ -453,8 +465,57 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, SYNC_UUID, base64.encode("1"));
   }
 
-  const sendCustomCommand = async (commandSequence: string) => {
+  const sendCustomCommand = async (commandSequence: CommandInput[]) => {
+    if (customCommandActive.current) return;
+    customCommandActive.current = true;
+    setHeadlightsBusy(true);
 
+    // Alert device custom command is in progress;
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("1"));
+
+    for (const part of commandSequence) {
+      if (!customCommandActive.current) break;
+      if (part.delay)
+        await sleep(part.delay);
+      else {
+
+        if (part.transmitValue) {
+          await device?.writeCharacteristicWithoutResponseForService(
+            WINK_SERVICE_UUID,
+            HEADLIGHT_CHAR_UUID,
+            base64.encode(part.transmitValue.toString()),
+          );
+
+          if (part.transmitValue === DefaultCommandValue.BOTH_BLINK || part.transmitValue === DefaultCommandValue.LEFT_WINK || part.transmitValue === DefaultCommandValue.RIGHT_WINK)
+            await sleep(motionValue * 2);
+          else if (part.transmitValue === DefaultCommandValue.RIGHT_WAVE || part.transmitValue === DefaultCommandValue.LEFT_WAVE) {
+            let additionalDelayFromDiff = 0;
+            if (leftStatus !== rightStatus) additionalDelayFromDiff = motionValue;
+            const toEndMulti = 1.0 - waveDelayMulti;
+
+            const total = ((motionValue * waveDelayMulti) * 3) +
+              ((motionValue * toEndMulti) * 2) +
+              additionalDelayFromDiff;
+
+            await sleep(total);
+          } else await sleep(motionValue);
+        }
+
+        await sleep(75);
+      }
+    }
+
+    // No longer in progress
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("0"));
+
+    setHeadlightsBusy(false);
+    customCommandActive.current = false;
+  }
+
+  const customCommandInterrupt = () => {
+    device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("0"));
+    customCommandActive.current = false;
+    setHeadlightsBusy(false);
   }
 
   const setOEMButtonStatus = async (status: "enable" | "disable") => {
@@ -546,6 +607,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     () => ({
       device,
       requestPermissions,
+      sendCustomCommand,
       sendDefaultCommand,
       setOEMButtonStatus,
       scanForModule,
@@ -558,6 +620,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sendSleepyEye,
       setSleepyEyeValues,
       enterDeepSleep,
+      customCommandInterrupt,
+      customCommandActive,
       waveDelayMulti,
       leftSleepyEye,
       rightSleepyEye,
@@ -578,6 +642,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }),
     [
       device,
+      customCommandActive,
       updatingStatus,
       updateProgress,
       buttonDelay,

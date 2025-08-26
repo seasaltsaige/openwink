@@ -15,7 +15,7 @@ unsigned long motionTimer = 0;
 unsigned long ButtonHandler::mainTimer;
 unsigned long ButtonHandler::buttonTimer;
 int ButtonHandler::buttonPressCounter;
-
+bool ButtonHandler::customCommandActive;
 
 void ButtonHandler::setupGPIO() {
   // Outputs for headlight movement
@@ -26,6 +26,18 @@ void ButtonHandler::setupGPIO() {
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(OEM_BUTTON_INPUT, INPUT);
   pinMode(OEM_HEADLIGHT_STATUS, INPUT);
+}
+
+// If OEM Button Pressed while custom command is active
+void ButtonHandler::loopCustomCommandInterruptHandler() {
+  if (!ButtonHandler::customCommandActive) return;
+  // Send interrupt command; 0 = turn command off.
+  ButtonHandler::setCustomCommandActive(false);
+  BLE::setCustomStatus(0);
+}
+
+void ButtonHandler::setCustomCommandActive(bool value) {
+  ButtonHandler::customCommandActive = value;
 }
 
 void ButtonHandler::readOnWakeup() {
@@ -128,6 +140,9 @@ void ButtonHandler::loopButtonHandler() {
 
   if (buttonInput != initialButton && awakeTime_ms == 0)
     awakeTime_ms = 5 * 1000 * 60;
+
+  if (buttonInput != initialButton)
+    ButtonHandler::loopCustomCommandInterruptHandler();
 
   if (customButtonStatusEnabled) {
 

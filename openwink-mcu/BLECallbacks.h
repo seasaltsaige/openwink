@@ -63,6 +63,10 @@ class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
+class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks{
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
 void handleHTTPClient();
 
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {

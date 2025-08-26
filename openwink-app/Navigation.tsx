@@ -12,7 +12,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   AppTheme,
   CreateCustomCommand,
-  CustomCommand,
+  CustomCommands,
   Home,
   HowToUse,
   Information,
@@ -145,7 +145,7 @@ export function AppNavigator() {
       <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
       <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
-      <Stack.Screen name="CustomCommands" component={CustomCommand} />
+      <Stack.Screen name="CustomCommands" component={CustomCommands} />
       <Stack.Screen name="StandardCommands" component={StandardCommands} />
 
       <Stack.Screen name="ModuleSettings" component={ModuleSettings} />

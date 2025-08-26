@@ -4,7 +4,6 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useReducer, useState } from "react";
 import { useBLE } from "../../../hooks/useBLE";
-import Tooltip from "react-native-walkthrough-tooltip";
 import VerticalSlider from "rn-vertical-slider-matyno";
 import { HeaderWithBackButton } from "../../../Components";
 import { TooltipHeader } from "../../../Components";
@@ -17,9 +16,6 @@ export function SleepyEyeSettings() {
   const route = useRoute();
   //@ts-ignore
   const { back, backHumanReadable } = route.params;
-
-  const [headlightToolTipVisible, setHeadlightToolTipVisible] = useState(false);
-  const [quickPresetToolTipVisible, setQuickPresetToolTipVisible] = useState(false);
 
   const [headlightPosition, dispatchHeadlightPosition] = useReducer((state: { left: number; right: number }, action: { side: "left" | "right"; percentage: number }) => {
     if (action.side === "left")
@@ -42,6 +38,7 @@ export function SleepyEyeSettings() {
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Sleepy"
+        deviceStatus
       />
 
       <TooltipHeader
