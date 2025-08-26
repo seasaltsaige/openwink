@@ -43,13 +43,13 @@ void setup() {
 
   setCpuFrequencyMhz(80);
 
-  WinkduinoBLE::init("Winkduino");
+  BLE::init("OpenWink");
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   printf("Version %s\n", FIRMWARE_VERSION);
 
-  WinkduinoBLE::start();
+  BLE::start();
 
   xTaskCreatePinnedToCore(
     motionInMonitorTask,

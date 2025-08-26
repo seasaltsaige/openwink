@@ -9,6 +9,7 @@
 #include "BLECallbacks.h"
 #include "BLE.h"
 #include "MainFunctions.h"
+#include "ButtonHandler.h"
 #include "esp_sleep.h"
 #include "Storage.h"
 
@@ -309,6 +310,16 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   }
 }
 
+
+void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  string value = pChar->getValue();
+
+  if (value == "1")
+    ButtonHandler::setCustomCommandActive(true);
+  else
+    ButtonHandler::setCustomCommandActive(false);
+}
+
 void updateProgress(size_t progress, size_t size) {
   double slope = 1.0 * (100 - 0) / (60 - 0);
   static int last_progress = -1;
@@ -362,7 +373,7 @@ void setupUpdateServer() {
         BLE::setFirmwareUpdateStatus("updating");
       } else if (raw.status == RAW_ABORTED || Update.hasError()) {
         if (raw.status == RAW_ABORTED) {
-          
+
           if (!Update.end(false)) {
             Update.printError(Serial);
             BLE::setFirmwareUpdateStatus("failed");

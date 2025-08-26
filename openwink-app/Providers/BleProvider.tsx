@@ -470,6 +470,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     customCommandActive.current = true;
     setHeadlightsBusy(true);
 
+    // Alert device custom command is in progress;
     await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("1"));
 
     for (const part of commandSequence) {
@@ -499,13 +500,20 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             await sleep(total);
           } else await sleep(motionValue);
         }
+
+        await sleep(75);
       }
     }
+
+    // No longer in progress
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("0"));
+
     setHeadlightsBusy(false);
     customCommandActive.current = false;
   }
 
   const customCommandInterrupt = () => {
+    device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("0"));
     customCommandActive.current = false;
     setHeadlightsBusy(false);
   }

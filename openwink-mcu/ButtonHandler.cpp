@@ -28,10 +28,12 @@ void ButtonHandler::setupGPIO() {
   pinMode(OEM_HEADLIGHT_STATUS, INPUT);
 }
 
+// If OEM Button Pressed while custom command is active
 void ButtonHandler::loopCustomCommandInterruptHandler() {
   if (!ButtonHandler::customCommandActive) return;
-
-
+  // Send interrupt command; 0 = turn command off.
+  ButtonHandler::setCustomCommandActive(false);
+  BLE::setCustomStatus(0);
 }
 
 void ButtonHandler::setCustomCommandActive(bool value) {
