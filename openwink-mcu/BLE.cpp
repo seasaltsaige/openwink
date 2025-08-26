@@ -33,8 +33,7 @@ NimBLECharacteristic* BLE::busyChar;
 NimBLECharacteristic* BLE::leftStatusChar;
 NimBLECharacteristic* BLE::rightStatusChar;
 NimBLECharacteristic* BLE::sleepChar;
-// NimBLECharacteristic* BLE::leftSleepChar;
-// NimBLECharacteristic* BLE::rightSleepChar;
+NimBLECharacteristic* BLE::customStatusChar;
 NimBLECharacteristic* BLE::syncChar;
 
 
@@ -85,9 +84,11 @@ void BLE::initServiceCharacteristics() {
   leftStatusChar = winkService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
+  customStatusChar = winkService->createCharacteristic(CUSTOM_COMMAND_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
+  customStatusChar->setValue(0);
 
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());

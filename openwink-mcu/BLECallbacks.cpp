@@ -362,7 +362,7 @@ void setupUpdateServer() {
         BLE::setFirmwareUpdateStatus("updating");
       } else if (raw.status == RAW_ABORTED || Update.hasError()) {
         if (raw.status == RAW_ABORTED) {
-
+          
           if (!Update.end(false)) {
             Update.printError(Serial);
             BLE::setFirmwareUpdateStatus("failed");

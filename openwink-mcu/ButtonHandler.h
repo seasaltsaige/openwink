@@ -9,6 +9,7 @@ private:
   static unsigned long mainTimer;
   static unsigned long buttonTimer;
   static int buttonPressCounter;
+  static bool customCommandActive;
 
   static void handleButtonPressesResponse(int numberOfPresses);
 
@@ -17,6 +18,7 @@ public:
     mainTimer = 0;
     buttonTimer = 0;
     buttonPressCounter = 0;
+    customCommandActive = false;
   }
 
   static void setupGPIO();
@@ -24,6 +26,8 @@ public:
   static void readWakeUpReason();
 
   static void loopButtonHandler();
+  static void loopCustomCommandInterruptHandler();
   static void handleBusyInput();
   static void updateButtonSleep();
+  static void setCustomCommandActive(bool value);
 };

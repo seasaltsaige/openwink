@@ -25,8 +25,7 @@ private:
   static NimBLECharacteristic* leftStatusChar;
   static NimBLECharacteristic* rightStatusChar;
   static NimBLECharacteristic* sleepChar;
-  // static NimBLECharacteristic* leftSleepChar;
-  // static NimBLECharacteristic* rightSleepChar;
+  static NimBLECharacteristic* customStatusChar;
   static NimBLECharacteristic* syncChar;
 
 
@@ -41,7 +40,7 @@ private:
   static NimBLEService* settingsService;
   // SETTINGS CHARACTERISTICS
   static NimBLECharacteristic* longTermSleepChar; 
-  static NimBLECharacteristic* customButtonChar;
+  static vNimBLECharacteristic* customButtonChar;
   static NimBLECharacteristic* headlightDelayChar;
   static NimBLECharacteristic* headlightMotionChar;
   static NimBLECharacteristic* sleepSettingsChar;
@@ -61,6 +60,11 @@ public:
   static void setFirmwareUpdateStatus(string status);
   static void setFirmwarePercent(string stringPercentage);
   static void setMotionInValue(int value);
+  
+  static void setCustomStatus(int value) {
+    customStatusChar->setValue(value);
+    customStatusChar->notify();
+  }
 
   static bool getDeviceConnected() {
     return deviceConnected;
