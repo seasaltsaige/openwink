@@ -29,6 +29,7 @@ import {
   SLEEPY_SETTINGS_UUID,
   LONG_TERM_SLEEP_UUID,
   SYNC_UUID,
+  CUSTOM_COMMAND_STATUS_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 
@@ -249,6 +250,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setMotionValue(parseInt(val));
     });
 
+
+    connection.monitorCharacteristicForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, (err, char) => {
+      if (err) return console.log(err);
+      const val = base64.decode(char?.value!);
+      if (val === "0") customCommandInterrupt();
+    });
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -462,6 +469,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (customCommandActive.current) return;
     customCommandActive.current = true;
     setHeadlightsBusy(true);
+
+    await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, CUSTOM_COMMAND_STATUS_UUID, base64.encode("1"));
 
     for (const part of commandSequence) {
       if (!customCommandActive.current) break;
