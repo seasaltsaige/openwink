@@ -106,7 +106,7 @@ export const SETTINGS_DATA: Array<{
       pageSymbol: "color-fill-outline"
     },
     {
-      pageName: "System Terms Of Use",
+      pageName: "System Terms of Use",
       navigationName: "TermsOfUse",
       pageSymbol: "document-text-outline",
     }
