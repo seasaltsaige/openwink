@@ -8,3 +8,4 @@ export * from "./TooltipHeader";
 export * from "./SearchBarFilter";
 export * from "./CommandSequenceBottomSheet";
 export * from "./AboutFooter";
+export * from "./EditQuickLinksModal";
