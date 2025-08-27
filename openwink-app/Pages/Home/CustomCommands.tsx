@@ -67,6 +67,8 @@ export function CustomCommands() {
 
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", width: "90%", columnGap: 15, marginTop: 10, }}>
           <SearchBarFilter
+            useFilters
+            filterTitleText="Filter by Command Type"
             filterables={commands}
             searchFilterKey="name"
             filters={FILTERS}
