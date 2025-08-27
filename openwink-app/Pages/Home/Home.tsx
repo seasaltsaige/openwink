@@ -1,13 +1,15 @@
-import { useFocusEffect, useNavigation, useRoute, useTheme } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useNavigationState, useRoute, useTheme } from "@react-navigation/native";
 import { Pressable, SafeAreaView, ScrollView, StatusBar, Text, View, } from "react-native"
 import { ActivityIndicator } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import Octicons from "@react-native-vector-icons/octicons";
 import { useBLE } from "../../hooks/useBLE";
 import { useCallback, useEffect, useState } from "react";
-import { AutoConnectStore } from "../../Storage";
-import { LongButton } from "../../Components";
+import { AutoConnectStore, QuickLinksStore } from "../../Storage";
+import { EditQuickLinksModal, LongButton, QuickLink } from "../../Components";
 import { MainHeader } from "../../Components";
+// import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
 
 export function Home() {
 
@@ -20,8 +22,9 @@ export function Home() {
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
-  const [quickLinks, setQuickLinks] = useState([] as []);
 
+  const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
+  const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
 
   const {
     device,
@@ -45,6 +48,11 @@ export function Home() {
     updateProgress,
     updatingStatus
   } = useBLE();
+
+  const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
+    QuickLinksStore.setLinks(newQuickLinks);
+    setQuickLinks(() => newQuickLinks);
+  }
 
   const checkAppUpdate = async () => {
     // fetch request to get app update info
@@ -149,43 +157,27 @@ export function Home() {
           />
         </View>
 
-
-        {/* QUICK LINKS */}
-        {/* <View style={theme.homeScreenButtonsContainer}>
-          <Text style={theme.labelHeader}>
-            Quick Links
-          </Text> */}
-        {/* CUSTOM WINK BUTTON */}
-        {/* <LongButton
-            //@ts-ignore
-            onPress={() => navigate.navigate("CustomWinkButton", { back: route.name, backHumanReadable: "Home" })}
-            key={"CustomWinkButton"}
-            icons={{ names: ["speedometer-outline", "chevron-forward-outline"], size: [20, 20] }}
-            text="Set Up Custom Wink Button"
-          /> */}
-        {/* COLOR THEME */}
-        {/* <LongButton
-            //@ts-ignore
-            onPress={() => navigate.navigate("Theme", { back: route.name })}
-            key={"Theme"}
-            icons={{ names: ["color-fill-outline", "chevron-forward-outline"], size: [20, 20] }}
-            text="Change App Theme"
-          />
-        </View> */}
-
-        {/* Includes: Icon, Navigation Name, Display Name */}
-
-        <View style={theme.homeScreenButtonsContainer}>
+        <View style={[theme.homeScreenButtonsContainer, { rowGap: 10, }]}>
           {/* QUICK LINKS HEADER */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%"
+          }}>
             <Text style={theme.labelHeader}>
               Quick Links
             </Text>
 
+            {/* EDIT Button */}
             <Pressable
-              style={{ flexDirection: "row", alignItems: "center", columnGap: 10 }}
-              // TODO: Open 
-              onPress={() => { }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                columnGap: 8
+              }}
+              hitSlop={10}
+              onPress={() => setQuickLinksModalVisible(true)}
             >
               {
                 ({ pressed }) =>
@@ -193,16 +185,32 @@ export function Home() {
                     <Text style={{
                       color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                       fontSize: 15,
-                      fontFamily: "IBMPlexSans_400Regular",
+                      fontFamily: "IBMPlexSans_500Medium",
+
                     }}>
                       Edit
                     </Text>
-                    <IonIcons style={{ marginTop: 3 }} name="list" size={23} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+                    <Octicons style={{ marginTop: 3 }} name="sliders" size={17} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
                   </>
               }
             </Pressable>
-
           </View>
+
+          {
+            quickLinks.length > 0 ?
+              quickLinks.map((link) => (
+                <LongButton
+                  key={link.title}
+                  //@ts-ignore
+                  onPress={() => navigate.navigate(link.navigation.page, { back: link.navigation.back, backHumanReadable: link.navigation.backHumanReadable })}
+                  icons={{ names: [link.icon, "chevron-forward-outline"], size: [20, 20] }}
+                  text={link.title}
+                />
+              ))
+              : <Text style={[theme.labelHeader, { alignSelf: "center", width: "100%", fontSize: 16 }]}>
+                No Quick Links Selected
+              </Text>
+          }
         </View>
 
 
@@ -278,6 +286,13 @@ export function Home() {
         </View>
 
       </ScrollView>
-    </View >
+
+      <EditQuickLinksModal
+        close={() => setQuickLinksModalVisible(false)}
+        visible={quickLinksModalVisible}
+        initialLinks={quickLinks}
+        onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+      />
+    </View>
   );
 }
