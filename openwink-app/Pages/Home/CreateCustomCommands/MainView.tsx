@@ -72,7 +72,9 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
             }
           </Pressable>
           <SearchBarFilter
+            useFilters
             searchFilterKey="name"
+            filterTitleText="Filter by Command Type"
             filters={FILTERS}
             filterFn={({ filterType, itemsToFilter, selectedFilters }) => {
               if (selectedFilters.length < 1) return itemsToFilter;

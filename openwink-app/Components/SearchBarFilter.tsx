@@ -4,45 +4,78 @@ import { TextInput } from "react-native-gesture-handler";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 import IonIcons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@react-native-vector-icons/material-design-icons";
+// import MaterialIcons from "@react-native-vector-icons/material-design-icons";
+
+import Octicons from "@react-native-vector-icons/octicons";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import ToggleSwitch from "toggle-switch-react-native";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 
 
-interface ISearchBarFilter<
+interface BaseSearchBarFilter<
   T extends ReadonlyArray<string>,
   K extends Array<{ [key: string]: any }>,
   I extends keyof (K[number]) & string,
 > {
   searchFilterKey: I;
-  onFiltersChange: (selectedFilters: Array<string>) => void;
+  onFilterTextChange: (filterText: string) => void;
+  onFilteredItemsUpdate: (filteredItems: K) => void;
+  filterables: K;
+  placeholderText: string;
+  filterTitleText: string;
+}
+
+interface SearchBarFilterWithFilters<
+  T extends ReadonlyArray<string>,
+  K extends Array<{ [key: string]: any }>,
+  I extends keyof (K[number]) & string,
+> extends BaseSearchBarFilter<T, K, I> {
+  useFilters: true;
+  filters: T;
+  onFiltersChange: (selectedFilters: T[number][]) => void;
   filterFn: (filterData: {
     itemsToFilter: K;
     filterType: "narrow" | "inclusive";
-    selectedFilters: T[number][],
+    selectedFilters: T[number][];
   }) => K;
-  onFilterTextChange: (filterText: string) => void;
-  onFilteredItemsUpdate: (fitleredItems: K) => void;
-  filterables: K;
-  filters: T;
-  placeholderText: string;
 }
+
+interface SearchBarFilterWithoutFilters<
+  T extends ReadonlyArray<string>,
+  K extends Array<{ [key: string]: any }>,
+  I extends keyof (K[number]) & string,
+> extends BaseSearchBarFilter<T, K, I> {
+  useFilters: false;
+  filters?: never;
+  onFiltersChange?: never;
+  filterFn?: never;
+}
+
+type ISearchBarFilter<
+  T extends ReadonlyArray<string>,
+  K extends Array<{ [key: string]: any }>,
+  I extends keyof (K[number]) & string,
+> =
+  | SearchBarFilterWithFilters<T, K, I>
+  | SearchBarFilterWithoutFilters<T, K, I>;
 
 export function SearchBarFilter<
   T extends ReadonlyArray<string>,
   K extends Array<{ [key: string]: any }>,
   I extends keyof (K[number]) & string,
+  J extends boolean,
 >({
   searchFilterKey,
+  useFilters,
   filterables,
   filters,
+  filterTitleText,
   onFilterTextChange,
   onFiltersChange,
   onFilteredItemsUpdate,
   filterFn,
-  placeholderText
+  placeholderText,
 }: ISearchBarFilter<T, K, I>) {
 
   const { colorTheme } = useColorTheme();
@@ -65,8 +98,10 @@ export function SearchBarFilter<
       }
     }
     // Implementation based filter
-    const filtered = filterFn({ filterType, itemsToFilter: fitleredByName, selectedFilters: __filters });
-    return filtered;
+    if (useFilters) {
+      const filtered = filterFn({ filterType, itemsToFilter: fitleredByName, selectedFilters: __filters });
+      return filtered;
+    } else return fitleredByName;
   }
 
   const __onFilterTextChange = (text: string) => __setFilterText(text);
@@ -86,8 +121,10 @@ export function SearchBarFilter<
 
 
   useEffect(() => {
-    onFiltersChange(__filters);
-    __onFilteredItemsUpdate(createFilteredItems());
+    if (useFilters) {
+      onFiltersChange(__filters);
+      __onFilteredItemsUpdate(createFilteredItems());
+    }
   }, [__filters]);
   useEffect(() => {
     onFilterTextChange(__fitlerText);
@@ -125,142 +162,151 @@ export function SearchBarFilter<
         />
         <IonIcons name="search" size={20} color={colorTheme.textColor} style={{ position: "absolute", left: 12, top: 10, }} />
       </View>
-
-      <Pressable
-        hitSlop={10}
-        onPress={() => bottomSheetRef.current?.snapToIndex(0)}
-      >
-        {
-          ({ pressed }) =>
-            <MaterialIcons name="filter-multiple-outline" size={28} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
-        }
-      </Pressable>
-
-
-
-      <Portal>
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          enablePanDownToClose
-          backgroundStyle={{
-            backgroundColor: colorTheme.backgroundSecondaryColor,
-            boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
-          }}
-          handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
-          backdropComponent={renderBackdrop}
-        >
-          <BottomSheetView
-
-            style={{
-              flex: 1,
-              padding: 36,
-              paddingTop: 10,
-              alignItems: 'center',
-              justifyContent: "flex-start",
-              rowGap: 15,
-              width: "100%",
-            }}
-
-
+      {
+        useFilters ?
+          <Pressable
+            hitSlop={10}
+            onPress={() => bottomSheetRef.current?.snapToIndex(0)}
           >
+            {
+              ({ pressed }) =>
+                <Octicons name="sliders" size={23} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
+            }
+          </Pressable>
+          : <></>
+      }
 
-            <Text style={{
-              textAlign: "center",
-              color: colorTheme.headerTextColor,
-              fontSize: 22,
-              fontFamily: "IBMPlexSans_700Bold"
-            }}>
-              Filter by Command Type
-            </Text>
+      {
+        useFilters ?
+          <Portal
+            name="bottomSheet"
+          >
+            <BottomSheet
+              ref={bottomSheetRef}
+              index={-1}
+              enablePanDownToClose
+              backgroundStyle={{
+                backgroundColor: colorTheme.backgroundSecondaryColor,
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)"
+              }}
+              handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
+              backdropComponent={renderBackdrop}
+            >
+              <BottomSheetView
 
-            <View style={{ marginVertical: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", width: "100%", columnGap: 15, }}>
-              <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "50%" }}>
+                style={{
+                  flex: 1,
+                  padding: 36,
+                  paddingTop: 10,
+                  alignItems: 'center',
+                  justifyContent: "flex-start",
+                  rowGap: 15,
+                  width: "100%",
+                  zIndex: 200,
+                }}
 
-                <Text style={{ color: colorTheme.headerTextColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
-                  Filters Narrow:
+
+
+              >
+
+                <Text style={{
+                  textAlign: "center",
+                  color: colorTheme.headerTextColor,
+                  fontSize: 22,
+                  fontFamily: "IBMPlexSans_700Bold"
+                }}>
+                  {filterTitleText}
                 </Text>
-                <ToggleSwitch
-                  onColor={colorTheme.buttonColor}
-                  offColor={colorTheme.disabledButtonColor}
-                  isOn={filterType === "narrow"}
-                  size="medium"
-                  hitSlop={10}
-                  circleColor={colorTheme.buttonTextColor}
-                  onToggle={(isOn) => setFilterType(isOn ? "narrow" : "inclusive")}
-                />
-              </View>
-              <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "40%" }}>
 
-                <Pressable
-                  style={{ width: "100%" }}
-                  onPress={() => __setFilters([] as T[number][])}
-                >
-                  {
-                    ({ pressed }) => (
-                      <Text style={{
-                        textAlign: "right",
-                        width: "100%",
-                        color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                        textDecorationColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                        textDecorationStyle: "solid",
-                        textDecorationLine: "underline",
-                        fontSize: 17,
-                        fontFamily: "IBMPlexSans_500Medium"
-                      }}>
-                        Clear Filters
-                      </Text>
-                    )
-                  }
-                </Pressable>
+                <View style={{ marginVertical: 10, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", width: "100%", columnGap: 15, }}>
+                  <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "50%" }}>
 
-              </View>
-            </View>
-
-
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                flexWrap: "wrap",
-                rowGap: 10,
-                alignItems: "center",
-                justifyContent: "space-between",
-                // width: "100%",
-              }}>
-              {
-                filters.map(filter => (
-                  <View
-                    key={filter}
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "44%",
-                    }}>
-
-                    <Text style={{ color: colorTheme.textColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
-                      {filter}
+                    <Text style={{ color: colorTheme.headerTextColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
+                      Filters Narrow:
                     </Text>
+                    <ToggleSwitch
+                      onColor={colorTheme.buttonColor}
+                      offColor={colorTheme.disabledButtonColor}
+                      isOn={filterType === "narrow"}
+                      size="medium"
+                      hitSlop={10}
+                      circleColor={colorTheme.buttonTextColor}
+                      onToggle={(isOn) => setFilterType(isOn ? "narrow" : "inclusive")}
+                    />
+                  </View>
+                  <View style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "40%" }}>
 
                     <Pressable
-                      hitSlop={10}
-                      onPress={() => __onFiltersChange(filter)}
-                      style={{ width: 25, height: 25 }}
+                      style={{ width: "100%" }}
+                      onPress={() => __setFilters([] as T[number][])}
                     >
                       {
-                        ({ pressed }) =>
-                          <IonIcons color={(pressed) ? colorTheme.buttonColor : colorTheme.headerTextColor} size={25} name={__filters.includes(filter) ? "checkbox-outline" : "square-outline"} />
+                        ({ pressed }) => (
+                          <Text style={{
+                            textAlign: "right",
+                            width: "100%",
+                            color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                            textDecorationColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                            textDecorationStyle: "solid",
+                            textDecorationLine: "underline",
+                            fontSize: 17,
+                            fontFamily: "IBMPlexSans_500Medium"
+                          }}>
+                            Clear Filters
+                          </Text>
+                        )
                       }
                     </Pressable>
+
                   </View>
-                ))
-              }
-            </View>
-          </BottomSheetView>
-        </BottomSheet>
-      </Portal>
+                </View>
+
+
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    rowGap: 10,
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    // width: "100%",
+                  }}>
+                  {
+                    filters.map(filter => (
+                      <View
+                        key={filter}
+                        style={{
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "48%",
+                        }}>
+
+                        <Text style={{ color: colorTheme.textColor, fontSize: 17, fontFamily: "IBMPlexSans_500Medium" }}>
+                          {filter}
+                        </Text>
+
+                        <Pressable
+                          hitSlop={10}
+                          onPress={() => __onFiltersChange(filter)}
+                          style={{ width: 25, height: 25 }}
+                        >
+                          {
+                            ({ pressed }) =>
+                              <IonIcons color={(pressed) ? colorTheme.buttonColor : colorTheme.headerTextColor} size={25} name={__filters.includes(filter) ? "checkbox-outline" : "square-outline"} />
+                          }
+                        </Pressable>
+                      </View>
+                    ))
+                  }
+                </View>
+              </BottomSheetView>
+            </BottomSheet>
+          </Portal>
+          : <></>
+      }
     </>
   )
 }
