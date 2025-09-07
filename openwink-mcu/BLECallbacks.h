@@ -1,6 +1,8 @@
-#include "NimBLEConnInfo.h"
-#include "NimBLECharacteristic.h"
 #pragma once
+
+
+// #include "NimBLEConnInfo.h"
+// #include "NimBLECharacteristic.h"
 
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
@@ -27,8 +29,8 @@ extern bool customButtonStatusEnabled;
 extern bool wifi_enabled;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
-  void onConnect(NimBLEServer* pServer);
-  void onDisconnect(NimBLEServer* pServer);
+  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override;
+  void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override;
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {

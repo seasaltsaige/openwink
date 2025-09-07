@@ -31,17 +31,36 @@ RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 WebServer server(80);
 bool wifi_enabled = false;
 
-void ServerCallbacks::onConnect(NimBLEServer* pServer) {
-  printf("Client connected:: %s\n");
+void ServerCallbacks::onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)  {
+  const NimBLEAddress addr = connInfo.getIdAddress();
+  string strAddr = addr.toString();
+  string storedValue = Storage::getWhitelist();
+
+  Serial.printf("Stored '%s'; Received '%s';\n", storedValue.c_str(), strAddr.c_str());
+
+  if (storedValue == "") {
+    Storage::setWhitelist(strAddr);
+    Serial.printf("Whitelist saved for address: %s\n", strAddr.c_str());
+  } else {
+    // stored value exists
+    if (storedValue != strAddr) {
+      Serial.printf("Device MAC Addr not recognized. Expected '%s'; Got '%s';\n", storedValue.c_str(), strAddr.c_str());
+      pServer->disconnect(connInfo);
+      return;
+    } else Serial.printf("Device MAC Addr recognized.\n");
+  }
+  Serial.printf("Client connected:: %s\n", strAddr.c_str());
   BLE::setDeviceConnected(true);
   BLE::updateHeadlightChars();
 }
 
-void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
+void ServerCallbacks::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) {
   BLE::setDeviceConnected(false);
   awakeTime_ms = 0;
+  BLE::init("OpenWink");
   BLE::start();
 }
+
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   printf("long term sleep written\n");
@@ -63,8 +82,6 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
 
   double percentageToUpLeft = 1 - (leftSleepyValue / 100);
   double percentageToUpRight = 1 - (rightSleepyValue / 100);
-
-  Serial.printf("left dec: %f  -  right dec: %f\n", percentageToUpLeft, percentageToUpRight);
   unsigned long initialTime = millis();
   bothUp();
 
