@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "ButtonHandler.h"
 #include "BLE.h"
+#include "Storage.h"
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
@@ -14,8 +15,11 @@ unsigned long motionTimer = 0;
 
 unsigned long ButtonHandler::mainTimer;
 unsigned long ButtonHandler::buttonTimer;
+unsigned long ButtonHandler::resetTimer;
 int ButtonHandler::buttonPressCounter;
+int ButtonHandler::resetPressCounter;
 bool ButtonHandler::customCommandActive;
+bool ButtonHandler::resetArmed;
 
 void ButtonHandler::setupGPIO() {
   // Outputs for headlight movement
@@ -247,5 +251,57 @@ void ButtonHandler::updateButtonSleep() {
 
     if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();
+  }
+}
+
+
+void ButtonHandler::handleResetLogic() {
+  if (resetPressCounter == 0 && initialButton != LOW) return;
+
+  int buttonValue = digitalRead(OEM_BUTTON_INPUT);
+  if (buttonValue == initialButton) return;
+  // TODO: Decide if unnecessary or not. Potentially sequence to arm, then maybe 5 presses in a row or something to confirm. (any delay withing 30 seconds total)
+  resetArmed = true;
+  // Initial Press (must be low state)
+  if (resetPressCounter == 0) {
+    Serial.println("Reset Press 1.");
+    resetTimer = millis();
+    resetPressCounter++;
+  } else {
+    // presss 2, and 3
+    if (resetPressCounter < 3 && (millis() - resetTimer) > 3500 && (millis() - resetTimer) < 6500) {
+      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
+      resetTimer = millis();
+      resetPressCounter++;
+      // last press 4
+    } else if (resetPressCounter == 3 && (millis() - resetTimer) > 5000 && (millis() - resetTimer) < 7000) {
+      // Reset activated
+      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
+      Storage::clearWhitelist();
+      // reset sequence to visually indicate reset success
+      leftWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      rightWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      bothBlink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
+
+      esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+      esp_sleep_enable_timer_wakeup(sleepTime_us);
+      esp_deep_sleep_start();
+
+    } else {
+      // Something pressed incorrectly (timing perhaps) resets reset sequence.
+      resetTimer = 0;
+      resetPressCounter = 0;
+      resetArmed = false;
+    }
   }
 }

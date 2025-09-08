@@ -8,6 +8,9 @@ class ButtonHandler {
 private:
   static unsigned long mainTimer;
   static unsigned long buttonTimer;
+  static unsigned long resetTimer;
+  static bool resetArmed;
+  static int resetPressCounter;
   static int buttonPressCounter;
   static bool customCommandActive;
 
@@ -30,4 +33,5 @@ public:
   static void handleBusyInput();
   static void updateButtonSleep();
   static void setCustomCommandActive(bool value);
+  static void handleResetLogic();
 };

@@ -76,4 +76,8 @@ public:
   static void setDeviceConnected(bool deviceStatus) {
     deviceConnected = deviceStatus;
   }
+
+  // static void disconnect() {
+  //   server->disconnect();
+  // }
 };

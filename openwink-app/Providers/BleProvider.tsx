@@ -119,6 +119,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
   useEffect(() => {
+
     (async () => {
       const macAddr = await DeviceMACStore.getStoredMAC();
       if (macAddr) setMac(macAddr);

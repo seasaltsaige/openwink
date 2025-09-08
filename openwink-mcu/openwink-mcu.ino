@@ -74,6 +74,7 @@ void loop() {
   if (wifi_enabled)
     handleHTTPClient();
 
+  ButtonHandler::handleResetLogic();
   ButtonHandler::loopButtonHandler();
   ButtonHandler::updateButtonSleep();
 }

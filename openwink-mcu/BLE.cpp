@@ -57,6 +57,9 @@ bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
+  NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+  NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+  NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
