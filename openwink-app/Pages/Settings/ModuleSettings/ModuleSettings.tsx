@@ -36,7 +36,7 @@ export function ModuleSettings() {
   const { colorTheme, theme } = useColorTheme();
   const navigate = useNavigation();
 
-  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect } = useBLE();
+  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect, unpair } = useBLE();
 
   const route = useRoute();
   //@ts-ignore
@@ -78,8 +78,7 @@ export function ModuleSettings() {
 
   const forgetModulePairing = async () => {
     if (!device) return;
-    await device.cancelConnection();
-    DeviceMACStore.forgetMAC();
+    await unpair();
   }
 
 
@@ -154,7 +153,11 @@ export function ModuleSettings() {
               {/* FORGET MODULE */}
               <LongButton
                 pressableStyle={{ width: "95%" }}
-                onPress={() => { setConfirmationType("forget"); setActionFunction(forgetModulePairing); setConfirmationOpen(true); }}
+                onPress={() => {
+                  setConfirmationType("forget");
+                  setActionFunction((old) => forgetModulePairing);
+                  setConfirmationOpen(true);
+                }}
                 key="Forget"
                 icons={{ names: ["reload", "ellipsis-horizontal"], size: [25, 20] }}
                 text="Forget Module"
@@ -180,7 +183,7 @@ export function ModuleSettings() {
         visible={confirmationOpen}
         close={() => setConfirmationOpen(false)}
         type={confirmationType}
-        confirmationFunction={actionFunction!}
+        confirmationFunction={() => actionFunction!()}
       />
 
     </>
@@ -188,14 +191,14 @@ export function ModuleSettings() {
 }
 
 // Confirmation Modal for module sleep, module forgetting, and data deletion
-function ConfirmationModal(props: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => void }) {
+function ConfirmationModal({ close, confirmationFunction, type, visible }: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => void }) {
   const { colorTheme, theme } = useColorTheme();
   const { device } = useBLE();
 
   return (
     <Modal
-      visible={props.visible}
-      onRequestClose={() => props.close()}
+      visible={visible}
+      onRequestClose={() => close()}
       animationType="fade"
       hardwareAccelerated
       transparent
@@ -205,36 +208,36 @@ function ConfirmationModal(props: { visible: boolean; close: () => void; type: "
         <View style={theme.modalSettingsContentContainer}>
           <Text style={theme.modalSettingsConfirmationHeader}>
             {
-              props.type === "sleep" ? "Are you sure you want to put your module to sleep?"
-                : props.type === "delete" ? "Are you sure you want to delete all saved data?"
+              type === "sleep" ? "Are you sure you want to put your module to sleep?"
+                : type === "delete" ? "Are you sure you want to delete all saved data?"
                   : "Are you sure you want to forget current pairing?"
             }
           </Text>
 
           <Text style={theme.modalSettingsConfirmationText}>
             {
-              props.type === "sleep" ? "To wake the module, press the headlight retractor button."
-                : props.type === "delete" ? "This action is irreversible. All saved settings will be erased."
+              type === "sleep" ? "To wake the module, press the headlight retractor button."
+                : type === "delete" ? "This action is irreversible. All saved settings will be erased."
                   : "Connection information will be forgotten, and pairing must take place again."
             }
           </Text>
 
           <View style={theme.modalSettingsConfirmationButtonContainer}>
             <Pressable
-              style={({ pressed }) => ((props.type === "sleep" || props.type === "delete") && !device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              disabled={(props.type === "sleep" || props.type === "delete") && !device}
-              onPress={() => props.confirmationFunction()}
+              style={({ pressed }) => (!device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
+              disabled={!device}
+              onPress={() => confirmationFunction()}
             >
-              <IonIcons name={props.type === "sleep" ? "moon-outline" : props.type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
+              <IonIcons name={type === "sleep" ? "moon-outline" : type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
               <Text style={theme.modalSettingsConfirmationButtonText}>
-                {props.type === "sleep" ? "Sleep" : props.type === "forget" ? "Forget" : "Delete"}
+                {type === "sleep" ? "Sleep" : type === "forget" ? "Forget" : "Delete"}
               </Text>
             </Pressable>
 
 
             <Pressable
               style={({ pressed }) => pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              onPress={() => props.close()}
+              onPress={() => close()}
             >
               <Text style={theme.modalSettingsConfirmationButtonText}>
                 Cancel

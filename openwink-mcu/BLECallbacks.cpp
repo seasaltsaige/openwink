@@ -33,25 +33,29 @@ bool wifi_enabled = false;
 
 void ServerCallbacks::onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)  {
   const NimBLEAddress addr = connInfo.getIdAddress();
-  string strAddr = addr.toString();
-  string storedValue = Storage::getWhitelist();
+  // string strAddr = addr.toString();
+  bool bonded = Storage::getWhitelist();
 
-  Serial.printf("Stored '%s'; Received '%s';\n", storedValue.c_str(), strAddr.c_str());
-
-  if (storedValue == "") {
-    Storage::setWhitelist(strAddr);
-    Serial.printf("Whitelist saved for address: %s\n", strAddr.c_str());
+  if (!bonded) {
+    Storage::setWhitelist();
+    NimBLEDevice::startSecurity(connInfo.getConnHandle());
+    Serial.printf("Whitelist bond saved for address: %s\n", addr.toString().c_str());
+    Serial.printf("Client connected:: %s\n", addr.toString().c_str());
+    BLE::setDeviceConnected(true);
+    BLE::updateHeadlightChars();
   } else {
     // stored value exists
-    if (storedValue != strAddr) {
-      Serial.printf("Device MAC Addr not recognized. Expected '%s'; Got '%s';\n", storedValue.c_str(), strAddr.c_str());
+    if (NimBLEDevice::isBonded(addr)) {
+      Serial.printf("Device MAC Addr is bonded.\n");
+      NimBLEDevice::startSecurity(connInfo.getConnHandle());
+      Serial.printf("Client connected:: %s\n", addr.toString().c_str());
+      BLE::setDeviceConnected(true);
+      BLE::updateHeadlightChars();
+    } else {
+      Serial.printf("Device MAC Addr not bonded.\n");
       pServer->disconnect(connInfo);
-      return;
-    } else Serial.printf("Device MAC Addr recognized.\n");
+    }
   }
-  Serial.printf("Client connected:: %s\n", strAddr.c_str());
-  BLE::setDeviceConnected(true);
-  BLE::updateHeadlightChars();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) {
@@ -60,6 +64,14 @@ void ServerCallbacks::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connIn
   BLE::init("OpenWink");
   BLE::start();
 }
+
+void ServerCallbacks::onAuthenticationComplete(NimBLEConnInfo &connInfo) {
+  if (connInfo.isBonded()) {
+    Serial.println("Bonded successfully");
+  } else {
+    Serial.println("Not bonded");
+  }
+} 	
 
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
@@ -336,6 +348,11 @@ void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, N
   else
     ButtonHandler::setCustomCommandActive(false);
 }
+
+void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  Storage::clearWhitelist();
+  BLE::disconnect(info);
+};
 
 void updateProgress(size_t progress, size_t size) {
   double slope = 1.0 * (100 - 0) / (60 - 0);

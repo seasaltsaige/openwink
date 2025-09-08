@@ -44,6 +44,7 @@ private:
   static NimBLECharacteristic* headlightDelayChar;
   static NimBLECharacteristic* headlightMotionChar;
   static NimBLECharacteristic* sleepSettingsChar;
+  static NimBLECharacteristic* unpairChar;
 
   static bool deviceConnected;
 
@@ -60,7 +61,6 @@ public:
   static void setFirmwareUpdateStatus(string status);
   static void setFirmwarePercent(string stringPercentage);
   static void setMotionInValue(int value);
-
   static void setCustomStatus(int value) {
     if (value == 0)
       customStatusChar->setValue("0");
@@ -77,7 +77,7 @@ public:
     deviceConnected = deviceStatus;
   }
 
-  // static void disconnect() {
-  //   server->disconnect();
-  // }
+  static void disconnect(const NimBLEConnInfo &connInfo) {
+    server->disconnect(connInfo);
+  }
 };

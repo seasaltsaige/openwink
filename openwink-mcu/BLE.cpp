@@ -52,11 +52,13 @@ NimBLECharacteristic* BLE::customButtonChar;
 NimBLECharacteristic* BLE::headlightDelayChar;
 NimBLECharacteristic* BLE::headlightMotionChar;
 NimBLECharacteristic* BLE::sleepSettingsChar;
+NimBLECharacteristic* BLE::unpairChar;
 
 bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
+  NimBLEDevice::setSecurityAuth(true, false, false);
   NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
   NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
   NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
@@ -113,6 +115,7 @@ void BLE::initServiceCharacteristics() {
   headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE);
 
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
@@ -125,6 +128,7 @@ void BLE::initServiceCharacteristics() {
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
+  unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {

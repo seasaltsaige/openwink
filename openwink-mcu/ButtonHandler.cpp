@@ -274,10 +274,11 @@ void ButtonHandler::handleResetLogic() {
       resetTimer = millis();
       resetPressCounter++;
       // last press 4
-    } else if (resetPressCounter == 3 && (millis() - resetTimer) > 5000 && (millis() - resetTimer) < 7000) {
+    } else if (resetPressCounter == 3 && (millis() - resetTimer) > 5500 && (millis() - resetTimer) < 8500) {
       // Reset activated
       Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
       Storage::clearWhitelist();
+      NimBLEDevice::deleteAllBonds();
       // reset sequence to visually indicate reset success
       leftWink();
       delay(HEADLIGHT_MOVEMENT_DELAY);

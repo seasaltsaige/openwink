@@ -29,8 +29,9 @@ extern bool customButtonStatusEnabled;
 extern bool wifi_enabled;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
-  void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override;
-  void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override;
+  void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
+  void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
+  void onAuthenticationComplete(NimBLEConnInfo &connInfo) override; 	
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -65,12 +66,17 @@ class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks{
+class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-void handleHTTPClient();
+class UnpairCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+void
+handleHTTPClient();
 
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
-  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id);
+  void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id);
 };

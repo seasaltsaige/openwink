@@ -82,9 +82,9 @@ void Storage::setSleepyValues(int side, double value) {
   }
 }
 
-void Storage::setWhitelist(string mac) {
+void Storage::setWhitelist() {
   const char *whitelistKey = "whitelist";
-  storage.putString(whitelistKey, mac.c_str());
+  storage.putBool(whitelistKey, true);
 }
 
 void Storage::clearWhitelist() {
@@ -92,13 +92,10 @@ void Storage::clearWhitelist() {
   storage.remove(whitelistKey);
 }
 
-string Storage::getWhitelist() {
+bool Storage::getWhitelist() {
   const char *whitelistKey = "whitelist";
-
-  string storageItem = string(storage.getString(whitelistKey).c_str());
-  if (storageItem.length() > 1)
-    return storageItem;
-  else return "";
+  bool stored = storage.getBool(whitelistKey, false);
+  return stored;
 }
 
 // void Storage::setMotionTiming(int time) {

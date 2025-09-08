@@ -30,6 +30,7 @@ import {
   LONG_TERM_SLEEP_UUID,
   SYNC_UUID,
   CUSTOM_COMMAND_STATUS_UUID,
+  UNPAIR_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 
@@ -56,6 +57,7 @@ export type BleContextType = {
   enterDeepSleep: () => Promise<void>;
   sendCustomCommand: (commandSequence: CommandInput[]) => Promise<void>;
   customCommandInterrupt: () => void;
+  unpair: () => Promise<void>;
   waveDelayMulti: number;
   customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -120,30 +122,30 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
 
-    (async () => {
-      const macAddr = await DeviceMACStore.getStoredMAC();
-      if (macAddr) setMac(macAddr);
+    // (async () => {
+    const macAddr = DeviceMACStore.getStoredMAC();
+    if (macAddr) setMac(macAddr);
 
-      const isOEMCustomButtonEnabled = await CustomOEMButtonStore.isEnabled();
-      setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
-      const autoConn = await AutoConnectStore.get();
-      if (autoConn)
-        setAutoConnectEnabled(autoConn);
+    const isOEMCustomButtonEnabled = CustomOEMButtonStore.isEnabled();
+    setOemCustomButtonEnabled(isOEMCustomButtonEnabled);
+    const autoConn = AutoConnectStore.get();
+    if (autoConn)
+      setAutoConnectEnabled(autoConn);
 
-      const delay = await CustomOEMButtonStore.getDelay();
-      if (delay) setButtonDelay(delay);
+    const delay = CustomOEMButtonStore.getDelay();
+    if (delay) setButtonDelay(delay);
 
-      const waveMulti = await CustomWaveStore.getMultiplier();
-      if (waveMulti) setWaveDelayMulti(waveMulti);
+    const waveMulti = CustomWaveStore.getMultiplier();
+    if (waveMulti) setWaveDelayMulti(waveMulti);
 
-      const firmwareVer = await FirmwareStore.getFirmwareVersion();
-      if (firmwareVer) setFirmwareVersion(firmwareVer);
+    const firmwareVer = FirmwareStore.getFirmwareVersion();
+    if (firmwareVer) setFirmwareVersion(firmwareVer);
 
-      const left = await SleepyEyeStore.get("left");
-      const right = await SleepyEyeStore.get("right");
-      if (left) setLeftSleepyEye(left);
-      if (right) setRightSleepyEye(right);
-    })();
+    const left = SleepyEyeStore.get("left");
+    const right = SleepyEyeStore.get("right");
+    if (left) setLeftSleepyEye(left);
+    if (right) setRightSleepyEye(right);
+    // })();
 
     return () => { }
   }, []);
@@ -604,6 +606,13 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!device) return;
   }
 
+  const unpair = async () => {
+    if (!device) return;
+    await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, UNPAIR_UUID, base64.encode("0"));
+    DeviceMACStore.forgetMAC();
+    device.cancelConnection().catch(console.log);
+  }
+
   const value: BleContextType = useMemo(
     () => ({
       device,
@@ -622,6 +631,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSleepyEyeValues,
       enterDeepSleep,
       customCommandInterrupt,
+      unpair,
       customCommandActive,
       waveDelayMulti,
       leftSleepyEye,
