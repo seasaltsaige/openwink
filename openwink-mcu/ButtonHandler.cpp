@@ -294,8 +294,19 @@ void ButtonHandler::handleResetLogic() {
 
       Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
 
+      // reset wakeup sources
       esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+      // enable sleep timer
       esp_sleep_enable_timer_wakeup(sleepTime_us);
+
+      int buttonInput = digitalRead(OEM_BUTTON_INPUT);
+      // enable gpio wakeup, depending on current state
+      if (buttonInput == 1)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+      else if (buttonInput == 0)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+      Serial.println("Entering deep sleep from reset. Wake with gpio input/timer...");
       esp_deep_sleep_start();
 
     } else {
