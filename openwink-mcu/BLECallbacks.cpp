@@ -69,7 +69,8 @@ void ServerCallbacks::onAuthenticationComplete(NimBLEConnInfo &connInfo) {
   if (connInfo.isBonded()) {
     Serial.println("Bonded successfully");
   } else {
-    Serial.println("Not bonded");
+    Serial.println("Not bonded, disconnecting from device.");
+    BLE::disconnect(connInfo);
   }
 } 	
 
