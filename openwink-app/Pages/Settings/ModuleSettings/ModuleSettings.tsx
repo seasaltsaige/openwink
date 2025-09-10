@@ -1,13 +1,16 @@
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
 import { LongButton } from "../../../Components";
 import { HeaderWithBackButton } from "../../../Components";
+
+import Toast from "react-native-toast-message";
+
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -36,7 +39,7 @@ export function ModuleSettings() {
   const { colorTheme, theme } = useColorTheme();
   const navigate = useNavigation();
 
-  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect, unpair } = useBLE();
+  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect } = useBLE();
 
   const route = useRoute();
   //@ts-ignore
@@ -46,7 +49,7 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  const [actionFunction, setActionFunction] = useState<() => void>();
+  // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
   const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
 
   const togglePress = async (val: boolean) => {
@@ -60,25 +63,6 @@ export function ModuleSettings() {
       setAutoConnect(false);
       if (isScanning) await manager.stopDeviceScan();
     }
-  }
-
-  const deleteStoredModuleData = () => {
-    AutoConnectStore.disable();
-    CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
-    CustomOEMButtonStore.removeAll();
-    DeviceMACStore.forgetMAC();
-    FirmwareStore.forgetFirmwareVersion();
-    SleepyEyeStore.reset("both");
-  }
-
-  const putModuleToSleep = async () => {
-
-  }
-
-  const forgetModulePairing = async () => {
-    if (!device) return;
-    await unpair();
   }
 
 
@@ -130,7 +114,12 @@ export function ModuleSettings() {
           {/* PUT MODULE TO SLEEP */}
           <LongButton
             // @ts-ignore
-            onPress={() => { setConfirmationType("sleep"); setActionFunction(putModuleToSleep); setConfirmationOpen(true); }}
+            onPress={() => {
+              setConfirmationType("sleep");
+              // console.log(putModuleToSleep);
+              // setActionFunction(putModuleToSleep);
+              setConfirmationOpen(true);
+            }}
             key={"Sleep"}
             icons={{ names: ["moon-outline", "ellipsis-horizontal"], size: [25, 20] }}
             text="Put Module to Sleep"
@@ -155,7 +144,8 @@ export function ModuleSettings() {
                 pressableStyle={{ width: "95%" }}
                 onPress={() => {
                   setConfirmationType("forget");
-                  setActionFunction((old) => forgetModulePairing);
+                  // console.log(forgetModulePairing);
+                  // setActionFunction(forgetModulePairing);
                   setConfirmationOpen(true);
                 }}
                 key="Forget"
@@ -166,7 +156,12 @@ export function ModuleSettings() {
               {/* DELETE SETTINGS */}
               <LongButton
                 pressableStyle={{ width: "95%" }}
-                onPress={() => { setConfirmationType("delete"); setActionFunction(deleteStoredModuleData); setConfirmationOpen(true); }}
+                onPress={() => {
+                  setConfirmationType("delete");
+                  // console.log(deleteStoredModuleData);
+                  // setActionFunction(deleteStoredModuleData);
+                  setConfirmationOpen(true);
+                }}
                 key="Delete"
                 icons={{ names: ["trash-outline", "ellipsis-horizontal"], size: [25, 20] }}
                 text="Delete Module Settings"
@@ -183,7 +178,6 @@ export function ModuleSettings() {
         visible={confirmationOpen}
         close={() => setConfirmationOpen(false)}
         type={confirmationType}
-        confirmationFunction={() => actionFunction!()}
       />
 
     </>
@@ -191,10 +185,51 @@ export function ModuleSettings() {
 }
 
 // Confirmation Modal for module sleep, module forgetting, and data deletion
-function ConfirmationModal({ close, confirmationFunction, type, visible }: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => void }) {
-  const { colorTheme, theme } = useColorTheme();
-  const { device } = useBLE();
+function ConfirmationModal({
+  close,
+  type,
+  visible
+}: {
+  visible: boolean;
+  close: () => void;
+  type: "sleep" | "delete" | "forget";
+  // confirmationFunction: (() => Promise<void>) | null;
+}) {
 
+  const { colorTheme, theme } = useColorTheme();
+  const { device, unpair, enterDeepSleep } = useBLE();
+
+
+
+  const deleteStoredModuleData = async () => {
+    AutoConnectStore.disable();
+    CustomCommandStore.deleteAll();
+    CustomOEMButtonStore.disable();
+    CustomOEMButtonStore.removeAll();
+    DeviceMACStore.forgetMAC();
+    FirmwareStore.forgetFirmwareVersion();
+    SleepyEyeStore.reset("both");
+
+    // TODO: Send reset signal to esp as well.
+
+    return;
+  }
+
+  const putModuleToSleep = async () => {
+    if (!device) return;
+    // await enterDeepSleep();
+  }
+
+  const forgetModulePairing = async () => {
+    if (!device) return;
+    // await unpair();
+  }
+
+
+
+  // useEffect(() => {
+  //   console.log(confirmationFunction?.toString());
+  // }, [confirmationFunction]);
   return (
     <Modal
       visible={visible}
@@ -226,7 +261,16 @@ function ConfirmationModal({ close, confirmationFunction, type, visible }: { vis
             <Pressable
               style={({ pressed }) => (!device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
               disabled={!device}
-              onPress={() => confirmationFunction()}
+              onPress={async () => {
+                if (type === "delete")
+                  await deleteStoredModuleData();
+                else if (type === "forget")
+                  await forgetModulePairing();
+                else
+                  await putModuleToSleep();
+
+                close();
+              }}
             >
               <IonIcons name={type === "sleep" ? "moon-outline" : type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
               <Text style={theme.modalSettingsConfirmationButtonText}>
