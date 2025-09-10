@@ -222,6 +222,15 @@ function ConfirmationModal({
 
   const forgetModulePairing = async () => {
     if (!device) return;
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 5000,
+
+      type: "success",
+      text1: "Unpaired",
+      text2: "OpenWink Module successfully unpaired. To repair, remove the saved bond in your Bluetooth settings."
+    })
     // await unpair();
   }
 

@@ -86,8 +86,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const manager = useMemo(() => new BleManager(), []);
 
   // Connected device
-  const [device, setDevice] = useState<Device | null>(null);
-  // const [device, setDevice] = useState<Device | null>({} as Device);
+  // const [device, setDevice] = useState<Device | null>(null);
+  const [device, setDevice] = useState<Device | null>({} as Device);
 
   // Monitored characteristic values
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
