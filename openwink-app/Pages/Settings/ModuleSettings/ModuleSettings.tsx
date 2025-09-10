@@ -225,8 +225,10 @@ function ConfirmationModal({
 
     Toast.show({
       autoHide: true,
-      visibilityTime: 5000,
+      visibilityTime: 8000,
+      onPress: () => {
 
+      },
       type: "success",
       text1: "Unpaired",
       text2: "OpenWink Module successfully unpaired. To repair, remove the saved bond in your Bluetooth settings."

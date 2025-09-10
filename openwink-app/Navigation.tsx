@@ -24,6 +24,7 @@ import {
   WaveDelaySettings,
   SleepyEyeSettings,
 } from "./Pages";
+import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
 
 const Tab = createBottomTabNavigator();
 
@@ -127,33 +128,65 @@ const Stack = createNativeStackNavigator();
 
 export function AppNavigator() {
 
+  const { theme, colorTheme } = useColorTheme();
+
+  const toastConfig: ToastConfig = {
+    success: (props) => (
+      <BaseToast
+        {...props}
+        text1Style={{
+          fontFamily: "IBMPlexSans_700Bold",
+          color: colorTheme.headerTextColor,
+          fontSize: 17
+        }}
+        text2Style={{
+          fontFamily: "IBMPlexSans_500Medium",
+          color: colorTheme.textColor,
+          fontSize: 13,
+        }}
+        text2NumberOfLines={4}
+        style={{
+          borderLeftColor: "green",
+          height: "auto",
+          paddingVertical: 10,
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+        }}
+      />
+    )
+  }
+
   const { disconnectFromModule } = useBLE();
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);
   return (
-    <Stack.Navigator screenOptions={{
-      headerShown: false,
-      animation: "slide_from_right",
-      animationDuration: 100,
-    }}
-    >
+    <>
+      <Stack.Navigator screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        animationDuration: 100,
+      }}
+      >
 
-      <Stack.Screen name="MainTabs" component={BottomTabs} />
-      <Stack.Screen name="Theme" component={AppTheme} />
-      <Stack.Screen name="Info" component={Information} />
-      <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
+        <Stack.Screen name="MainTabs" component={BottomTabs} />
+        <Stack.Screen name="Theme" component={AppTheme} />
+        <Stack.Screen name="Info" component={Information} />
+        <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
 
-      <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
-      <Stack.Screen name="CustomCommands" component={CustomCommands} />
-      <Stack.Screen name="StandardCommands" component={StandardCommands} />
+        <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
+        <Stack.Screen name="CustomCommands" component={CustomCommands} />
+        <Stack.Screen name="StandardCommands" component={StandardCommands} />
 
-      <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
-      <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
-      <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
-      <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
+        <Stack.Screen name="ModuleSettings" component={ModuleSettings} />
+        <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
+        <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
+        <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
 
-    </Stack.Navigator>
+      </Stack.Navigator>
+
+
+      <Toast config={toastConfig} />
+    </>
   )
 }
 
