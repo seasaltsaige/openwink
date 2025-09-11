@@ -217,7 +217,16 @@ function ConfirmationModal({
 
   const putModuleToSleep = async () => {
     if (!device) return;
-    // await enterDeepSleep();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Sleep Successful",
+      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+    });
+
+    await enterDeepSleep();
   }
 
   const forgetModulePairing = async () => {
@@ -226,21 +235,14 @@ function ConfirmationModal({
     Toast.show({
       autoHide: true,
       visibilityTime: 8000,
-      onPress: () => {
-
-      },
       type: "success",
-      text1: "Unpaired",
+      text1: "Unpair Successful",
       text2: "OpenWink Module successfully unpaired. To repair, remove the saved bond in your Bluetooth settings."
-    })
-    // await unpair();
+    });
+
+    await unpair();
   }
 
-
-
-  // useEffect(() => {
-  //   console.log(confirmationFunction?.toString());
-  // }, [confirmationFunction]);
   return (
     <Modal
       visible={visible}
