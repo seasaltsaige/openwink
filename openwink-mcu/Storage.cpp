@@ -45,6 +45,33 @@ void Storage::getFromStorage() {
   // HEADLIGHT_MOVEMENT_DELAY = motion;
 }
 
+void Storage::reset() {
+  const char *customOemKey = "oem-button-key";
+  storage.remove(customOemKey);
+  const char *delayKey = "delay-key";
+  storage.remove(delayKey);
+  const char *headlightKey = "headlight-key";
+  storage.remove(headlightKey);
+  const char *leftSleepyHeadlightKey = "sleepy-left";
+  storage.remove(leftSleepyHeadlightKey);
+  const char *rightSleepyHeadligthKey = "sleepy-right";
+  storage.remove(rightSleepyHeadlightKey);
+  char pressesKey[15];  
+
+  for (int i = 0; i < 10; i++) {
+    snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
+    storage.remove(pressesKey);
+  }
+
+  customButtonStatusEnabled = false;
+  maxTimeBetween_ms = 500;
+  headlightMultiplier = 1.0;
+  leftSleepyValue = 50;
+  rightSleepyValue = 50;
+  customButtonPressArray = customButtonPressArrayDefaults;
+
+}
+
 void Storage::setCustomOEMButtonStatus(bool status) {
   const char *customOemKey = "oem-button-key";
   storage.putBool(customOemKey, status);

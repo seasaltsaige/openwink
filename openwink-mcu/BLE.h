@@ -45,6 +45,7 @@ private:
   static NimBLECharacteristic* headlightMotionChar;
   static NimBLECharacteristic* sleepSettingsChar;
   static NimBLECharacteristic* unpairChar;
+  static NimBLECharacteristic* resetChar;
 
   static bool deviceConnected;
 

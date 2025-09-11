@@ -10,6 +10,7 @@ private:
 public:
   static void begin(const char* name);
   static void getFromStorage();
+  static void reset();
 
   static void setCustomOEMButtonStatus(bool status);
   static void setHeadlightMulti(double multi);

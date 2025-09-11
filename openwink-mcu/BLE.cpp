@@ -53,6 +53,8 @@ NimBLECharacteristic* BLE::headlightDelayChar;
 NimBLECharacteristic* BLE::headlightMotionChar;
 NimBLECharacteristic* BLE::sleepSettingsChar;
 NimBLECharacteristic* BLE::unpairChar;
+NimBLECharacteristic* BLE::resetChar;
+
 
 bool BLE::deviceConnected = false;
 
@@ -116,7 +118,7 @@ void BLE::initServiceCharacteristics() {
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE);
-
+  resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE);
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
   headlightDelayChar->setValue(headlightMultiplier);
@@ -129,6 +131,7 @@ void BLE::initServiceCharacteristics() {
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
   unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
+  resetChar->setCallbacks(new ResetCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {

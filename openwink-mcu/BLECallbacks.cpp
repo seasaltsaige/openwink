@@ -278,7 +278,6 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   string val = pChar->getValue();
 
   double multi = stod(val);
-  Serial.printf("MULTI VAL: %f\n", multi);
   Storage::setHeadlightMulti(multi);
   headlightMultiplier = multi;
 }
@@ -352,7 +351,15 @@ void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, N
 
 void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   Storage::clearWhitelist();
+  NimBLEDevice::deleteAllBonds();
   BLE::disconnect(info);
+};
+
+void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  // Resets all stored data on esp.
+  // all customizations, etc
+  // does not affect bond
+  Storage::reset();
 };
 
 void updateProgress(size_t progress, size_t size) {

@@ -31,7 +31,7 @@ extern bool wifi_enabled;
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
   void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
-  void onAuthenticationComplete(NimBLEConnInfo &connInfo) override; 	
+  void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -74,8 +74,11 @@ class UnpairCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-void
-handleHTTPClient();
+class ResetCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+void handleHTTPClient();
 
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
   void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id);
