@@ -4,12 +4,13 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
-import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
+import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, QuickLinksStore, SleepyEyeStore, ThemeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
 import { LongButton } from "../../../Components";
 import { HeaderWithBackButton } from "../../../Components";
 
 import Toast from "react-native-toast-message";
+import Storage from "../../../Storage/Storage";
 
 
 const moduleSettingsData: Array<{
@@ -196,27 +197,37 @@ function ConfirmationModal({
   // confirmationFunction: (() => Promise<void>) | null;
 }) {
 
-  const { colorTheme, theme } = useColorTheme();
-  const { device, unpair, enterDeepSleep } = useBLE();
-
+  const { colorTheme, theme, reset } = useColorTheme();
+  const { device, unpair, enterDeepSleep, resetModule } = useBLE();
 
 
   const deleteStoredModuleData = async () => {
-    AutoConnectStore.disable();
+
+    await resetModule();
+
+    AutoConnectStore.enable();
     CustomCommandStore.deleteAll();
     CustomOEMButtonStore.disable();
     CustomOEMButtonStore.removeAll();
-    DeviceMACStore.forgetMAC();
     FirmwareStore.forgetFirmwareVersion();
     SleepyEyeStore.reset("both");
+    CustomWaveStore.reset();
+    QuickLinksStore.reset();
+    await reset();
 
-    // TODO: Send reset signal to esp as well.
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Reset Successful",
+      text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
+    });
 
-    return;
   }
 
   const putModuleToSleep = async () => {
     if (!device) return;
+    await enterDeepSleep();
 
     Toast.show({
       autoHide: true,
@@ -225,12 +236,11 @@ function ConfirmationModal({
       text1: "Sleep Successful",
       text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
     });
-
-    await enterDeepSleep();
   }
 
   const forgetModulePairing = async () => {
     if (!device) return;
+    await unpair();
 
     Toast.show({
       autoHide: true,
@@ -239,8 +249,6 @@ function ConfirmationModal({
       text1: "Unpair Successful",
       text2: "OpenWink Module successfully unpaired. To repair, remove the saved bond in your Bluetooth settings."
     });
-
-    await unpair();
   }
 
   return (

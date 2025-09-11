@@ -54,7 +54,7 @@ void Storage::reset() {
   storage.remove(headlightKey);
   const char *leftSleepyHeadlightKey = "sleepy-left";
   storage.remove(leftSleepyHeadlightKey);
-  const char *rightSleepyHeadligthKey = "sleepy-right";
+  const char *rightSleepyHeadlightKey = "sleepy-right";
   storage.remove(rightSleepyHeadlightKey);
   char pressesKey[15];  
 
@@ -68,7 +68,10 @@ void Storage::reset() {
   headlightMultiplier = 1.0;
   leftSleepyValue = 50;
   rightSleepyValue = 50;
-  customButtonPressArray = customButtonPressArrayDefaults;
+
+  for (int i = 0; i < 10; i++) { 
+    customButtonPressArray[i] = customButtonPressArrayDefaults[i];
+  }
 
 }
 

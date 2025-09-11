@@ -360,6 +360,12 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   // all customizations, etc
   // does not affect bond
   Storage::reset();
+  bothBlink();
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
+  bothBlink();
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
 };
 
 void updateProgress(size_t progress, size_t size) {

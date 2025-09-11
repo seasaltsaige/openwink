@@ -31,6 +31,7 @@ import {
   SYNC_UUID,
   CUSTOM_COMMAND_STATUS_UUID,
   UNPAIR_UUID,
+  RESET_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 
@@ -58,6 +59,7 @@ export type BleContextType = {
   sendCustomCommand: (commandSequence: CommandInput[]) => Promise<void>;
   customCommandInterrupt: () => void;
   unpair: () => Promise<void>;
+  resetModule: () => Promise<void>;
   waveDelayMulti: number;
   customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -86,8 +88,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const manager = useMemo(() => new BleManager(), []);
 
   // Connected device
-  // const [device, setDevice] = useState<Device | null>(null);
-  const [device, setDevice] = useState<Device | null>({} as Device);
+  const [device, setDevice] = useState<Device | null>(null);
+  // const [device, setDevice] = useState<Device | null>({} as Device);
 
   // Monitored characteristic values
   const [headlightsBusy, setHeadlightsBusy] = useState(false);
@@ -604,13 +606,20 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const enterDeepSleep = async () => {
     if (!device) return;
+    await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, LONG_TERM_SLEEP_UUID, base64.encode("0"));
+    device.cancelConnection().catch(err => console.log(err));
   }
 
   const unpair = async () => {
     if (!device) return;
     await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, UNPAIR_UUID, base64.encode("0"));
     DeviceMACStore.forgetMAC();
-    device.cancelConnection().catch(console.log);
+    device.cancelConnection().catch(err => console.log(err));
+  }
+
+  const resetModule = async () => {
+    if (!device) return;
+    await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, RESET_UUID, base64.encode("0"));
   }
 
   const value: BleContextType = useMemo(
@@ -632,6 +641,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       enterDeepSleep,
       customCommandInterrupt,
       unpair,
+      resetModule,
       customCommandActive,
       waveDelayMulti,
       leftSleepyEye,
