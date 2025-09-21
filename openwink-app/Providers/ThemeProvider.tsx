@@ -292,7 +292,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           padding: 15,
           paddingVertical: 12,
           borderRadius: 7,
-          width: "60%"
+          width: "67.5%"
         },
         homeScreenConnectionButtonPressed: {
           backgroundColor: themeColors.buttonColor,
@@ -303,7 +303,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           padding: 15,
           paddingVertical: 12,
           borderRadius: 7,
-          width: "60%"
+          width: "67.5%"
         },
         homeScreenConnectionButtonText: {
           color: themeColors.headerTextColor,

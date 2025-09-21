@@ -439,8 +439,15 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const disconnectFromModule = async () => {
     const isConnected = await device?.isConnected();
-    if (isConnected)
+    if (isConnected) {
       await device?.cancelConnection();
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        text1: "Module Disconnected",
+        text2: "Successfully disconnected from Open Wink Module ."
+      })
+    }
   }
 
 

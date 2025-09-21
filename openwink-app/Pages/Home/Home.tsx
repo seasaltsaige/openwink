@@ -94,12 +94,24 @@ export function Home() {
 
         {
           device ? (
-            <View style={theme.homeScreenConnectionButton}>
+            // <View style={theme.homeScreenConnectionButton}>
+            //   <Text style={theme.mainLongButtonPressableText}>
+            //     Connected to Module
+            //   </Text>
+            //   <IonIcons name="checkmark-done-outline" size={25} color={colorTheme.headerTextColor} />
+            // </View>
+
+            <Pressable
+              style={({ pressed }) => pressed ? theme.homeScreenConnectionButtonPressed : theme.homeScreenConnectionButton}
+              onPress={() => disconnectFromModule()}
+            >
               <Text style={theme.homeScreenConnectionButtonText}>
                 Connected to Module
               </Text>
+
               <IonIcons name="checkmark-done-outline" size={20} color={colorTheme.headerTextColor} />
-            </View>
+            </Pressable>
+
           ) : (
             isScanning || isConnecting ? (
               <View style={theme.homeScreenConnectionButton}>
