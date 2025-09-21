@@ -6,7 +6,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, QuickLinksStore, SleepyEyeStore, ThemeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
-import { LongButton } from "../../../Components";
+import { ConfirmationModal, LongButton } from "../../../Components";
 import { HeaderWithBackButton } from "../../../Components";
 
 import Toast from "react-native-toast-message";
@@ -37,10 +37,10 @@ const moduleSettingsData: Array<{
 
 export function ModuleSettings() {
 
-  const { colorTheme, theme } = useColorTheme();
+  const { colorTheme, theme, reset } = useColorTheme();
   const navigate = useNavigation();
 
-  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect } = useBLE();
+  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect, unpair, enterDeepSleep, resetModule } = useBLE();
 
   const route = useRoute();
   //@ts-ignore
@@ -52,6 +52,57 @@ export function ModuleSettings() {
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
   // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
   const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
+
+  const deleteStoredModuleData = async () => {
+
+    await resetModule();
+
+    AutoConnectStore.enable();
+    CustomCommandStore.deleteAll();
+    CustomOEMButtonStore.disable();
+    CustomOEMButtonStore.removeAll();
+    FirmwareStore.forgetFirmwareVersion();
+    SleepyEyeStore.reset("both");
+    CustomWaveStore.reset();
+    QuickLinksStore.reset();
+    await reset();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Reset Successful",
+      text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
+    });
+
+  }
+
+  const putModuleToSleep = async () => {
+    if (!device) return;
+    await enterDeepSleep();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Sleep Successful",
+      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+    });
+  }
+
+  const forgetModulePairing = async () => {
+    if (!device) return;
+    await unpair();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Unpair Successful",
+      text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
+    });
+  }
+
 
   const togglePress = async (val: boolean) => {
     setToggleOn(val);
@@ -65,6 +116,13 @@ export function ModuleSettings() {
       if (isScanning) await manager.stopDeviceScan();
     }
   }
+
+  const confirmationBody = confirmationType === "sleep" ?
+    "To wake the module, press the headlight retractor button." :
+    confirmationType === "delete" ?
+      "This action is irreversible. All saved settings will be erased." :
+      "Connection information will be forgotten, and pairing must take place again.";
+  const confirmationHeader = "Are you sure?";
 
 
   return (
@@ -117,8 +175,6 @@ export function ModuleSettings() {
             // @ts-ignore
             onPress={() => {
               setConfirmationType("sleep");
-              // console.log(putModuleToSleep);
-              // setActionFunction(putModuleToSleep);
               setConfirmationOpen(true);
             }}
             key={"Sleep"}
@@ -145,8 +201,6 @@ export function ModuleSettings() {
                 pressableStyle={{ width: "95%" }}
                 onPress={() => {
                   setConfirmationType("forget");
-                  // console.log(forgetModulePairing);
-                  // setActionFunction(forgetModulePairing);
                   setConfirmationOpen(true);
                 }}
                 key="Forget"
@@ -159,8 +213,6 @@ export function ModuleSettings() {
                 pressableStyle={{ width: "95%" }}
                 onPress={() => {
                   setConfirmationType("delete");
-                  // console.log(deleteStoredModuleData);
-                  // setActionFunction(deleteStoredModuleData);
                   setConfirmationOpen(true);
                 }}
                 key="Delete"
@@ -171,146 +223,25 @@ export function ModuleSettings() {
           }
 
         </View>
-
-
       </View>
+
 
       <ConfirmationModal
         visible={confirmationOpen}
-        close={() => setConfirmationOpen(false)}
-        type={confirmationType}
+        onRequestClose={() => setConfirmationOpen(false)}
+        body={confirmationBody}
+        header={confirmationHeader}
+        cancelButton="Cancel"
+        confirmButton={confirmationType === "sleep" ? "Put to Sleep" : confirmationType === "forget" ? "Forget Module" : "Delete Settings"}
+        onConfirm={() => {
+          if (confirmationType === "sleep") putModuleToSleep();
+          else if (confirmationType === "forget") forgetModulePairing();
+          else deleteStoredModuleData();
+        }}
+        animationType="fade"
+        disableConfirmation={!device}
       />
 
     </>
-  )
-}
-
-// Confirmation Modal for module sleep, module forgetting, and data deletion
-function ConfirmationModal({
-  close,
-  type,
-  visible
-}: {
-  visible: boolean;
-  close: () => void;
-  type: "sleep" | "delete" | "forget";
-  // confirmationFunction: (() => Promise<void>) | null;
-}) {
-
-  const { colorTheme, theme, reset } = useColorTheme();
-  const { device, unpair, enterDeepSleep, resetModule } = useBLE();
-
-
-  const deleteStoredModuleData = async () => {
-
-    await resetModule();
-
-    AutoConnectStore.enable();
-    CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
-    CustomOEMButtonStore.removeAll();
-    FirmwareStore.forgetFirmwareVersion();
-    SleepyEyeStore.reset("both");
-    CustomWaveStore.reset();
-    QuickLinksStore.reset();
-    await reset();
-
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Reset Successful",
-      text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
-    });
-
-  }
-
-  const putModuleToSleep = async () => {
-    if (!device) return;
-    await enterDeepSleep();
-
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Sleep Successful",
-      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
-    });
-  }
-
-  const forgetModulePairing = async () => {
-    if (!device) return;
-    await unpair();
-
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Unpair Successful",
-      text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
-    });
-  }
-
-  return (
-    <Modal
-      visible={visible}
-      onRequestClose={() => close()}
-      animationType="fade"
-      hardwareAccelerated
-      transparent
-    >
-
-      <View style={theme.modalBackground}>
-        <View style={theme.modalSettingsContentContainer}>
-          <Text style={theme.modalSettingsConfirmationHeader}>
-            {
-              type === "sleep" ? "Are you sure you want to put your module to sleep?"
-                : type === "delete" ? "Are you sure you want to delete all saved data?"
-                  : "Are you sure you want to forget current pairing?"
-            }
-          </Text>
-
-          <Text style={theme.modalSettingsConfirmationText}>
-            {
-              type === "sleep" ? "To wake the module, press the headlight retractor button."
-                : type === "delete" ? "This action is irreversible. All saved settings will be erased."
-                  : "Connection information will be forgotten, and pairing must take place again."
-            }
-          </Text>
-
-          <View style={theme.modalSettingsConfirmationButtonContainer}>
-            <Pressable
-              style={({ pressed }) => (!device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              disabled={!device}
-              onPress={async () => {
-                if (type === "delete")
-                  await deleteStoredModuleData();
-                else if (type === "forget")
-                  await forgetModulePairing();
-                else
-                  await putModuleToSleep();
-
-                close();
-              }}
-            >
-              <IonIcons name={type === "sleep" ? "moon-outline" : type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
-              <Text style={theme.modalSettingsConfirmationButtonText}>
-                {type === "sleep" ? "Sleep" : type === "forget" ? "Forget" : "Delete"}
-              </Text>
-            </Pressable>
-
-
-            <Pressable
-              style={({ pressed }) => pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              onPress={() => close()}
-            >
-              <Text style={theme.modalSettingsConfirmationButtonText}>
-                Cancel
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
-    </Modal>
   )
 }

@@ -12,6 +12,7 @@ interface IConfirmationModalProps {
   body: string;
   confirmButton: string;
   cancelButton: string;
+  disableConfirmation?: boolean;
 }
 
 export function ConfirmationModal({
@@ -23,6 +24,7 @@ export function ConfirmationModal({
   body,
   cancelButton,
   confirmButton,
+  disableConfirmation,
 }: IConfirmationModalProps) {
 
   const { theme, colorTheme } = useColorTheme();
@@ -117,6 +119,7 @@ export function ConfirmationModal({
             </Pressable>
             <Pressable
               onPress={onConfirm}
+              disabled={disableConfirmation}
             >
               {({ pressed }) =>
                 <Text
@@ -124,7 +127,7 @@ export function ConfirmationModal({
                     textAlign: "center",
                     fontSize: 18,
                     fontFamily: "IBMPlexSans_500Medium",
-                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                    color: disableConfirmation ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                     textDecorationLine: "underline"
                   }}
                 >
