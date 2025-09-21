@@ -52,11 +52,19 @@ NimBLECharacteristic* BLE::customButtonChar;
 NimBLECharacteristic* BLE::headlightDelayChar;
 NimBLECharacteristic* BLE::headlightMotionChar;
 NimBLECharacteristic* BLE::sleepSettingsChar;
+NimBLECharacteristic* BLE::unpairChar;
+NimBLECharacteristic* BLE::resetChar;
+NimBLECharacteristic* BLE::clientMacChar;
+
 
 bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
+  // NimBLEDevice::setSecurityAuth(true, false, false);
+  // NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
+  // NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+  // NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
@@ -110,6 +118,9 @@ void BLE::initServiceCharacteristics() {
   headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE);
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE);
+  resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE);
+  clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
@@ -122,6 +133,9 @@ void BLE::initServiceCharacteristics() {
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
+  unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
+  resetChar->setCallbacks(new ResetCharacteristicCallbacks());
+  clientMacChar->setCallbacks(new ClientMacCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {
@@ -135,7 +149,7 @@ void BLE::initAdvertising() {
   advertisement.setScannable(false);
 
   advertisement.setPrimaryPhy(BLE_HCI_LE_PHY_1M);
-  advertisement.setSecondaryPhy(BLE_HCI_LE_PHY_CODED);
+  advertisement.setSecondaryPhy(BLE_HCI_LE_PHY_2M);
 
   advertisement.addServiceUUID(NimBLEUUID(WINK_SERVICE_UUID));
   advertisement.addServiceUUID(NimBLEUUID(OTA_SERVICE_UUID));

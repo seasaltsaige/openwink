@@ -137,7 +137,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const getFromStorage = async () => {
-    const theme = await ThemeStore.getStoredTheme();
+    const theme = ThemeStore.getStoredTheme();
     if (theme) {
       setThemeName(theme);
       update(theme);
@@ -829,12 +829,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   async function setTheme(theme: keyof typeof ColorTheme.themeNames) {
     update(theme);
-    await ThemeStore.setTheme(theme);
+    ThemeStore.setTheme(theme);
   }
 
   async function reset() {
     update(defaultName);
-    await ThemeStore.reset();
+    ThemeStore.reset();
   }
 
   const value: ThemeContextType = useMemo(() => ({

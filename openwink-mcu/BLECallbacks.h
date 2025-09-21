@@ -1,6 +1,8 @@
-#include "NimBLEConnInfo.h"
-#include "NimBLECharacteristic.h"
 #pragma once
+
+
+// #include "NimBLEConnInfo.h"
+// #include "NimBLECharacteristic.h"
 
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
@@ -27,8 +29,10 @@ extern bool customButtonStatusEnabled;
 extern bool wifi_enabled;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
-  void onConnect(NimBLEServer* pServer);
-  void onDisconnect(NimBLEServer* pServer);
+  void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
+  void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
+  // void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
+  void onPhyUpdate(NimBLEConnInfo &connInfo, uint8_t txPhy, uint8_t rxPhy) override;
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -63,12 +67,24 @@ class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks{
+class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class UnpairCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class ResetCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class ClientMacCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 void handleHTTPClient();
 
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
-  void onStopped(NimBLEExtAdvertising *pAdv, int reason, uint8_t inst_id);
+  void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id);
 };

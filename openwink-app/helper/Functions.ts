@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import Storage from "../Storage/Storage";
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 export const generatePassword = (len: number) => {
@@ -61,3 +62,16 @@ export const useThrottle = <T extends unknown[], K>(
     }
   }
 };
+
+
+export const getDeviceUUID = () => {
+  const charSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let uuidValue = Storage.getString("device-uuid");
+  if (!uuidValue) {
+    uuidValue = "";
+    for (let i = 0; i < 15; i++)
+      uuidValue += charSet.charAt(Math.floor(Math.random() * charSet.length));
+    Storage.set("device-uuid", uuidValue);
+  }
+  return uuidValue;
+}

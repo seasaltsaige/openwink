@@ -31,17 +31,38 @@ RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 WebServer server(80);
 bool wifi_enabled = false;
 
-void ServerCallbacks::onConnect(NimBLEServer* pServer) {
-  printf("Client connected:: %s\n");
+void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
+
   BLE::setDeviceConnected(true);
   BLE::updateHeadlightChars();
+  bool update = pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
+  if (update) {
+    Serial.println("PHY SUCCESSFULLY UPDATE");
+  } else {
+    Serial.println("PHY UPDATE FAILED");
+  }
 }
 
-void ServerCallbacks::onDisconnect(NimBLEServer* pServer) {
+void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
   BLE::setDeviceConnected(false);
   awakeTime_ms = 0;
+  BLE::init("OpenWink");
   BLE::start();
 }
+
+// void ServerCallbacks::onAuthenticationComplete(NimBLEConnInfo& connInfo) {
+//   if (connInfo.isBonded()) {
+//     Serial.println("Bonded successfully");
+//   } else {
+//     Serial.println("Not bonded, disconnecting from device.");
+//     BLE::disconnect(connInfo);
+//   }
+// }
+
+void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {
+  Serial.printf("Phy Update Request Completed: %d, %d\n", txPhy, rxPhy);
+}
+
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   printf("long term sleep written\n");
@@ -63,8 +84,6 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
 
   double percentageToUpLeft = 1 - (leftSleepyValue / 100);
   double percentageToUpRight = 1 - (rightSleepyValue / 100);
-
-  Serial.printf("left dec: %f  -  right dec: %f\n", percentageToUpLeft, percentageToUpRight);
   unsigned long initialTime = millis();
   bothUp();
 
@@ -248,7 +267,6 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   string val = pChar->getValue();
 
   double multi = stod(val);
-  Serial.printf("MULTI VAL: %f\n", multi);
   Storage::setHeadlightMulti(multi);
   headlightMultiplier = multi;
 }
@@ -318,6 +336,46 @@ void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, N
     ButtonHandler::setCustomCommandActive(true);
   else
     ButtonHandler::setCustomCommandActive(false);
+}
+
+void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  Storage::clearWhitelist();
+  // NimBLEDevice::deleteAllBonds();
+  BLE::disconnect(info);
+};
+
+void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  // Resets all stored data on esp.
+  // all customizations, etc
+  // does not affect bond
+  Storage::reset();
+  bothBlink();
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
+  bothBlink();
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  setAllOff();
+};
+
+// TODO: Timer based check, auto disconnect if characteristic not set/bonded
+void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  string value = pChar->getValue();
+  string storedMac = Storage::getWhitelist();
+
+  if (storedMac.length() == 0) {
+    // Set bond, let client know bond happened
+    Storage::setWhitelist(value);
+    pChar->setValue("5");
+    pChar->notify();
+  } else {
+    // check if mac checks out
+    if (value == storedMac) {
+      pChar->setValue("1");
+      pChar->notify();
+    } else {
+      BLE::disconnect(info);
+    }
+  }
 }
 
 void updateProgress(size_t progress, size_t size) {

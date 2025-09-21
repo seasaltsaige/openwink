@@ -45,6 +45,36 @@ void Storage::getFromStorage() {
   // HEADLIGHT_MOVEMENT_DELAY = motion;
 }
 
+void Storage::reset() {
+  const char *customOemKey = "oem-button-key";
+  storage.remove(customOemKey);
+  const char *delayKey = "delay-key";
+  storage.remove(delayKey);
+  const char *headlightKey = "headlight-key";
+  storage.remove(headlightKey);
+  const char *leftSleepyHeadlightKey = "sleepy-left";
+  storage.remove(leftSleepyHeadlightKey);
+  const char *rightSleepyHeadlightKey = "sleepy-right";
+  storage.remove(rightSleepyHeadlightKey);
+  char pressesKey[15];  
+
+  for (int i = 0; i < 10; i++) {
+    snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
+    storage.remove(pressesKey);
+  }
+
+  customButtonStatusEnabled = false;
+  maxTimeBetween_ms = 500;
+  headlightMultiplier = 1.0;
+  leftSleepyValue = 50;
+  rightSleepyValue = 50;
+
+  for (int i = 0; i < 10; i++) { 
+    customButtonPressArray[i] = customButtonPressArrayDefaults[i];
+  }
+
+}
+
 void Storage::setCustomOEMButtonStatus(bool status) {
   const char *customOemKey = "oem-button-key";
   storage.putBool(customOemKey, status);
@@ -80,6 +110,23 @@ void Storage::setSleepyValues(int side, double value) {
   } else if (side == 1) {
     storage.putDouble(rightSleepyHeadligthKey, value);
   }
+}
+
+void Storage::setWhitelist(string mac) {
+  const char *whitelistKey = "whitelist";
+  // storage.putBool(whitelistKey, true);
+  storage.putString(whitelistKey, mac.c_str());
+}
+
+void Storage::clearWhitelist() {
+  const char *whitelistKey = "whitelist";
+  storage.remove(whitelistKey);
+}
+
+string Storage::getWhitelist() {
+  const char *whitelistKey = "whitelist";
+  String stored = storage.getString(whitelistKey, "");
+  return string(stored.c_str());
 }
 
 // void Storage::setMotionTiming(int time) {

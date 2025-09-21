@@ -29,6 +29,10 @@ export const CUSTOM_BUTTON_UPDATE_UUID = "795a9433-cf23-4550-80b5-70a0c9413cac";
 export const HEADLIGHT_MOVEMENT_DELAY_UUID = "859290b7-32f5-4afd-80fd-832b95bc5a4b";
 export const HEADLIGHT_MOTION_IN_UUID = "5cdfa4ac-31f5-439b-af8d-ec09a808ce9d";
 export const SLEEPY_SETTINGS_UUID = "bf133860-e47e-43e3-b1ed-cd87a1d9cb63";
+export const UNPAIR_UUID = "c67c4fd1-21ce-4a75-bd16-629f990e575d";
+export const RESET_UUID = "a55946b8-1978-4522-8a29-27d17e21b092";
+
+export const CLIENT_MAC_UUID = "f61146f2-791d-4ef7-95aa-b565097f69c2"
 
 export const SCAN_TIME_SECONDS = 30 * 1000;
 

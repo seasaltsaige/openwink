@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include "ButtonHandler.h"
 #include "BLE.h"
+#include "Storage.h"
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
@@ -14,8 +15,11 @@ unsigned long motionTimer = 0;
 
 unsigned long ButtonHandler::mainTimer;
 unsigned long ButtonHandler::buttonTimer;
+unsigned long ButtonHandler::resetTimer;
 int ButtonHandler::buttonPressCounter;
+int ButtonHandler::resetPressCounter;
 bool ButtonHandler::customCommandActive;
+bool ButtonHandler::resetArmed;
 
 void ButtonHandler::setupGPIO() {
   // Outputs for headlight movement
@@ -134,77 +138,86 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 }
 
 
+void ButtonHandler::handleCustomSequence(int buttonInput) {
+
+
+  if (buttonPressCounter == 0 && buttonInput != initialButton) {
+    buttonPressCounter = 1;
+    initialButton = buttonInput;
+    buttonTimer = millis();
+    return;
+  }
+
+  if (buttonPressCounter > 0) {
+
+    if ((millis() - buttonTimer) > maxTimeBetween_ms) {
+      handleButtonPressesResponse(buttonPressCounter - 1);
+      // buttonTimer = millis();
+      buttonPressCounter = 0;
+      return;
+    }
+
+    if (buttonInput != initialButton) {
+      buttonPressCounter++;
+      initialButton = buttonInput;
+
+      if (buttonPressCounter == 10) {
+        // Limit Reached - Only 10 items in array
+        handleButtonPressesResponse(9);
+        buttonPressCounter = 0;
+        return;
+      }
+
+      // reaches item in array not set (set to 0) means previous key is last set item
+      if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+        // - 2 due to the fact that say, array is { 5, 3, 2, 8, 0, 0, 0, 0, 0, 0 };
+        // button presses is equal to 5. [buttonPressCounter - 1] gives position 4 (which is 0). 
+        // to get last entry that is not 0, must be buttonPressCounter - 2, which is 8
+        handleButtonPressesResponse(buttonPressCounter - 2);
+        buttonPressCounter = 0;
+        return;
+      }
+    }
+
+  }
+}
+
+void ButtonHandler::handleDefaultBehavior(int buttonInput) {
+  if (buttonInput != initialButton) {
+    BLE::setBusy(true);
+    initialButton = buttonInput;
+
+    if (buttonInput == 1) {
+      bothUp();
+    } else {
+      bothDown();
+    }
+
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
+
+    BLE::setBusy(false);
+    BLE::updateHeadlightChars();
+  }
+}
+
 void ButtonHandler::loopButtonHandler() {
 
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
-  if (buttonInput != initialButton && awakeTime_ms == 0)
+  if (buttonInput != initialButton && awakeTime_ms == 0) {
     awakeTime_ms = 5 * 1000 * 60;
+  }
 
-  if (buttonInput != initialButton)
+  if (buttonInput != initialButton) {
     ButtonHandler::loopCustomCommandInterruptHandler();
+  }
+
 
   if (customButtonStatusEnabled) {
-
-    if (buttonPressCounter == 0 && buttonInput != initialButton) {
-
-      buttonPressCounter++;
-      initialButton = buttonInput;
-      buttonTimer = millis();
-
-    } else if (buttonPressCounter > 0) {
-      if ((millis() - buttonTimer) > maxTimeBetween_ms) {
-        // Execute button value
-        handleButtonPressesResponse(buttonPressCounter - 1);
-        buttonPressCounter = 0;
-      } else {
-
-        int buttonRead = digitalRead(OEM_BUTTON_INPUT);
-        if (buttonRead != initialButton) {
-          buttonPressCounter++;
-          initialButton = buttonRead;
-
-          if (buttonPressCounter == 11) {
-            // Execute last one (has 10 total loaded)
-            handleButtonPressesResponse(9);
-            buttonPressCounter = 0;
-          } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
-            // Execute last one (reached last loaded value)
-            handleButtonPressesResponse(buttonPressCounter - 2);
-            buttonPressCounter = 0;
-          }
-          buttonTimer = millis();
-        }
-      }
-    }
+    handleCustomSequence(buttonInput);
   } else {
-    int button = digitalRead(OEM_BUTTON_INPUT);
-    if (button != initialButton) {
-      BLE::setBusy(true);
-      initialButton = button;
-
-      if (button == 1) {
-        digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-        digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        digitalWrite(OUT_PIN_LEFT_UP, LOW);
-        digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-      } else {
-        digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-        digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-        digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-      }
-
-      BLE::setBusy(false);
-      BLE::updateHeadlightChars();
-    }
+    handleDefaultBehavior(buttonInput);
   }
 }
 
@@ -247,5 +260,69 @@ void ButtonHandler::updateButtonSleep() {
 
     if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();
+  }
+}
+
+
+void ButtonHandler::handleResetLogic() {
+  if (resetPressCounter == 0 && initialButton != LOW) return;
+
+  int buttonValue = digitalRead(OEM_BUTTON_INPUT);
+  if (buttonValue == initialButton) return;
+  // TODO: Decide if unnecessary or not. Potentially sequence to arm, then maybe 5 presses in a row or something to confirm. (any delay withing 30 seconds total)
+  resetArmed = true;
+  // Initial Press (must be low state)
+  if (resetPressCounter == 0) {
+    Serial.println("Reset Press 1.");
+    resetTimer = millis();
+    resetPressCounter++;
+  } else {
+    // presss 2, and 3
+    if (resetPressCounter < 3 && (millis() - resetTimer) > 3500 && (millis() - resetTimer) < 6500) {
+      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
+      resetTimer = millis();
+      resetPressCounter++;
+      // last press 4
+    } else if (resetPressCounter == 3 && (millis() - resetTimer) > 5500 && (millis() - resetTimer) < 8500) {
+      // Reset activated
+      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
+      Storage::clearWhitelist();
+      NimBLEDevice::deleteAllBonds();
+      // reset sequence to visually indicate reset success
+      leftWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      rightWink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      bothBlink();
+      delay(HEADLIGHT_MOVEMENT_DELAY);
+      setAllOff();
+
+      Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
+
+      // reset wakeup sources
+      esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+      // enable sleep timer
+      esp_sleep_enable_timer_wakeup(sleepTime_us);
+
+      int buttonInput = digitalRead(OEM_BUTTON_INPUT);
+      // enable gpio wakeup, depending on current state
+      if (buttonInput == 1)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+      else if (buttonInput == 0)
+        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+      Serial.println("Entering deep sleep from reset. Wake with gpio input/timer...");
+      esp_deep_sleep_start();
+
+    } else {
+      // Something pressed incorrectly (timing perhaps) resets reset sequence.
+      resetTimer = 0;
+      resetPressCounter = 0;
+      resetArmed = false;
+    }
   }
 }

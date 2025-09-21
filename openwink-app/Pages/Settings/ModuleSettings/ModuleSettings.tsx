@@ -1,13 +1,17 @@
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../../hooks/useBLE";
-import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from "../../../Storage";
+import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, QuickLinksStore, SleepyEyeStore, ThemeStore } from "../../../Storage";
 import ToggleSwitch from "toggle-switch-react-native";
 import { LongButton } from "../../../Components";
 import { HeaderWithBackButton } from "../../../Components";
+
+import Toast from "react-native-toast-message";
+import Storage from "../../../Storage/Storage";
+
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -46,7 +50,7 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  const [actionFunction, setActionFunction] = useState<() => void>();
+  // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
   const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
 
   const togglePress = async (val: boolean) => {
@@ -60,26 +64,6 @@ export function ModuleSettings() {
       setAutoConnect(false);
       if (isScanning) await manager.stopDeviceScan();
     }
-  }
-
-  const deleteStoredModuleData = () => {
-    AutoConnectStore.disable();
-    CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
-    CustomOEMButtonStore.removeAll();
-    DeviceMACStore.forgetMAC();
-    FirmwareStore.forgetFirmwareVersion();
-    SleepyEyeStore.reset("both");
-  }
-
-  const putModuleToSleep = async () => {
-
-  }
-
-  const forgetModulePairing = async () => {
-    if (!device) return;
-    await device.cancelConnection();
-    DeviceMACStore.forgetMAC();
   }
 
 
@@ -131,7 +115,12 @@ export function ModuleSettings() {
           {/* PUT MODULE TO SLEEP */}
           <LongButton
             // @ts-ignore
-            onPress={() => { setConfirmationType("sleep"); setActionFunction(putModuleToSleep); setConfirmationOpen(true); }}
+            onPress={() => {
+              setConfirmationType("sleep");
+              // console.log(putModuleToSleep);
+              // setActionFunction(putModuleToSleep);
+              setConfirmationOpen(true);
+            }}
             key={"Sleep"}
             icons={{ names: ["moon-outline", "ellipsis-horizontal"], size: [25, 20] }}
             text="Put Module to Sleep"
@@ -154,7 +143,12 @@ export function ModuleSettings() {
               {/* FORGET MODULE */}
               <LongButton
                 pressableStyle={{ width: "95%" }}
-                onPress={() => { setConfirmationType("forget"); setActionFunction(forgetModulePairing); setConfirmationOpen(true); }}
+                onPress={() => {
+                  setConfirmationType("forget");
+                  // console.log(forgetModulePairing);
+                  // setActionFunction(forgetModulePairing);
+                  setConfirmationOpen(true);
+                }}
                 key="Forget"
                 icons={{ names: ["reload", "ellipsis-horizontal"], size: [25, 20] }}
                 text="Forget Module"
@@ -163,7 +157,12 @@ export function ModuleSettings() {
               {/* DELETE SETTINGS */}
               <LongButton
                 pressableStyle={{ width: "95%" }}
-                onPress={() => { setConfirmationType("delete"); setActionFunction(deleteStoredModuleData); setConfirmationOpen(true); }}
+                onPress={() => {
+                  setConfirmationType("delete");
+                  // console.log(deleteStoredModuleData);
+                  // setActionFunction(deleteStoredModuleData);
+                  setConfirmationOpen(true);
+                }}
                 key="Delete"
                 icons={{ names: ["trash-outline", "ellipsis-horizontal"], size: [25, 20] }}
                 text="Delete Module Settings"
@@ -180,7 +179,6 @@ export function ModuleSettings() {
         visible={confirmationOpen}
         close={() => setConfirmationOpen(false)}
         type={confirmationType}
-        confirmationFunction={actionFunction!}
       />
 
     </>
@@ -188,14 +186,75 @@ export function ModuleSettings() {
 }
 
 // Confirmation Modal for module sleep, module forgetting, and data deletion
-function ConfirmationModal(props: { visible: boolean; close: () => void; type: "sleep" | "delete" | "forget"; confirmationFunction: () => void }) {
-  const { colorTheme, theme } = useColorTheme();
-  const { device } = useBLE();
+function ConfirmationModal({
+  close,
+  type,
+  visible
+}: {
+  visible: boolean;
+  close: () => void;
+  type: "sleep" | "delete" | "forget";
+  // confirmationFunction: (() => Promise<void>) | null;
+}) {
+
+  const { colorTheme, theme, reset } = useColorTheme();
+  const { device, unpair, enterDeepSleep, resetModule } = useBLE();
+
+
+  const deleteStoredModuleData = async () => {
+
+    await resetModule();
+
+    AutoConnectStore.enable();
+    CustomCommandStore.deleteAll();
+    CustomOEMButtonStore.disable();
+    CustomOEMButtonStore.removeAll();
+    FirmwareStore.forgetFirmwareVersion();
+    SleepyEyeStore.reset("both");
+    CustomWaveStore.reset();
+    QuickLinksStore.reset();
+    await reset();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Reset Successful",
+      text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
+    });
+
+  }
+
+  const putModuleToSleep = async () => {
+    if (!device) return;
+    await enterDeepSleep();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Sleep Successful",
+      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+    });
+  }
+
+  const forgetModulePairing = async () => {
+    if (!device) return;
+    await unpair();
+
+    Toast.show({
+      autoHide: true,
+      visibilityTime: 8000,
+      type: "success",
+      text1: "Unpair Successful",
+      text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
+    });
+  }
 
   return (
     <Modal
-      visible={props.visible}
-      onRequestClose={() => props.close()}
+      visible={visible}
+      onRequestClose={() => close()}
       animationType="fade"
       hardwareAccelerated
       transparent
@@ -205,36 +264,45 @@ function ConfirmationModal(props: { visible: boolean; close: () => void; type: "
         <View style={theme.modalSettingsContentContainer}>
           <Text style={theme.modalSettingsConfirmationHeader}>
             {
-              props.type === "sleep" ? "Are you sure you want to put your module to sleep?"
-                : props.type === "delete" ? "Are you sure you want to delete all saved data?"
+              type === "sleep" ? "Are you sure you want to put your module to sleep?"
+                : type === "delete" ? "Are you sure you want to delete all saved data?"
                   : "Are you sure you want to forget current pairing?"
             }
           </Text>
 
           <Text style={theme.modalSettingsConfirmationText}>
             {
-              props.type === "sleep" ? "To wake the module, press the headlight retractor button."
-                : props.type === "delete" ? "This action is irreversible. All saved settings will be erased."
+              type === "sleep" ? "To wake the module, press the headlight retractor button."
+                : type === "delete" ? "This action is irreversible. All saved settings will be erased."
                   : "Connection information will be forgotten, and pairing must take place again."
             }
           </Text>
 
           <View style={theme.modalSettingsConfirmationButtonContainer}>
             <Pressable
-              style={({ pressed }) => ((props.type === "sleep" || props.type === "delete") && !device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              disabled={(props.type === "sleep" || props.type === "delete") && !device}
-              onPress={() => props.confirmationFunction()}
+              style={({ pressed }) => (!device) ? theme.modalSettingsConfirmationButtonDisabled : pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
+              disabled={!device}
+              onPress={async () => {
+                if (type === "delete")
+                  await deleteStoredModuleData();
+                else if (type === "forget")
+                  await forgetModulePairing();
+                else
+                  await putModuleToSleep();
+
+                close();
+              }}
             >
-              <IonIcons name={props.type === "sleep" ? "moon-outline" : props.type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
+              <IonIcons name={type === "sleep" ? "moon-outline" : type === "forget" ? "unlink-outline" : "trash-outline"} color={colorTheme.headerTextColor} size={20} />
               <Text style={theme.modalSettingsConfirmationButtonText}>
-                {props.type === "sleep" ? "Sleep" : props.type === "forget" ? "Forget" : "Delete"}
+                {type === "sleep" ? "Sleep" : type === "forget" ? "Forget" : "Delete"}
               </Text>
             </Pressable>
 
 
             <Pressable
               style={({ pressed }) => pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              onPress={() => props.close()}
+              onPress={() => close()}
             >
               <Text style={theme.modalSettingsConfirmationButtonText}>
                 Cancel

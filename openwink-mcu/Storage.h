@@ -1,7 +1,8 @@
 #pragma once
 
 #include <Preferences.h>
-
+#include <NimBLEDevice.h>
+using namespace std;
 class Storage {
 private:
   static Preferences storage;
@@ -9,6 +10,7 @@ private:
 public:
   static void begin(const char* name);
   static void getFromStorage();
+  static void reset();
 
   static void setCustomOEMButtonStatus(bool status);
   static void setHeadlightMulti(double multi);
@@ -16,4 +18,7 @@ public:
   static void setMotionTiming(int time);
   static void setCustomButtonPressArray(int index, int value);
   static void setSleepyValues(int side, double value);
+  static void setWhitelist(string mac);
+  static void clearWhitelist();
+  static string getWhitelist();
 };
