@@ -32,15 +32,16 @@ import {
   CUSTOM_COMMAND_STATUS_UUID,
   UNPAIR_UUID,
   RESET_UUID,
+  CLIENT_MAC_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
-
 import base64 from 'react-native-base64';
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from "expo-device";
-import { sleep, toProperCase } from '../helper/Functions';
+import { getDeviceUUID, sleep, toProperCase } from '../helper/Functions';
 import { ButtonBehaviors, Presses } from '../helper/Types';
 import { buttonBehaviorMap } from "../helper/Constants";
+import Toast from 'react-native-toast-message';
 
 export type BleContextType = {
   device: Device | null;
@@ -182,11 +183,22 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         buttonPositive: "OK",
       }
     );
+    // console.log("before");
+    // const wifiState = await PermissionsAndroid.request(
+    //   PermissionsAndroid.PERMISSIONS.ACCESS_WIFI_STATE,
+    //   {
+    //     title: "WiFi State Permission",
+    //     message: "Secure connection and updates requires WiFi State",
+    //     buttonPositive: "OK",
+    //   }
+    // )
+    // console.log(wifiState);
 
     return (
       bluetoothScanPermission === "granted" &&
       bluetoothConnectPermission === "granted" &&
       fineLocationPermission === "granted"
+      // wifiState === "granted"
     );
   };
 
@@ -261,6 +273,26 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const val = base64.decode(char?.value!);
       if (val === "0") customCommandInterrupt();
     });
+
+    connection.monitorCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, CLIENT_MAC_UUID, (err, char) => {
+      if (err) return console.log(err);
+      const val = parseInt(base64.decode(char?.value!));
+      if (val === 1) {
+        Toast.show({
+          autoHide: true,
+          visibilityTime: 8000,
+          text1: "Module Connected",
+          text2: "Successfully connected to Open Wink Module."
+        });
+      } else if (val === 5) {
+        Toast.show({
+          autoHide: true,
+          visibilityTime: 8000,
+          text1: "Module Bonded",
+          text2: "Successfully bonded to new Open Wink Module ."
+        });
+      }
+    })
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -309,13 +341,17 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const connection = await manager.connectToDevice(dev.id);
       await connection.discoverAllServicesAndCharacteristics();
 
-      await DeviceMACStore.setMAC(connection.id);
+      DeviceMACStore.setMAC(connection.id);
       setMac(connection.id);
       setDevice(connection);
       setIsConnecting(false);
 
       await initBLEMonitors(connection);
       await readInitialBLEStatus(connection);
+
+
+      const deviceUUID = getDeviceUUID();
+      await connection.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, CLIENT_MAC_UUID, base64.encode(deviceUUID));
 
       connection.onDisconnected(async (err, d) => {
         if (err) {
@@ -325,7 +361,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
 
         setDevice(null);
-        const autoConnectStatus = await AutoConnectStore.get();
+        const autoConnectStatus = AutoConnectStore.get();
         if (autoConnectStatus) scanForModule();
       });
 
@@ -337,8 +373,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsConnecting(false);
       setIsScanning(false);
 
-      const autoConnect = await AutoConnectStore.get();
-      if (autoConnect === null) { }
+      const autoConnect = AutoConnectStore.get();
       if (autoConnect) {
         setIsScanning(true);
         await scanForModule();
@@ -350,12 +385,12 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (device !== null || isScanning || isConnecting) return;
 
     setIsScanning(true);
-    const deviceMac = await DeviceMACStore.getStoredMAC();
+    const deviceMac = DeviceMACStore.getStoredMAC();
 
     let deviceFound = false;
 
     setTimeout(async () => {
-      const autoConnectStatus = await AutoConnectStore.get();
+      const autoConnectStatus = AutoConnectStore.get();
       if (autoConnectStatus === null) { /* TODO: Handle error */ }
       else
         setAutoConnectEnabled(autoConnectStatus)
@@ -449,8 +484,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setSleepyEyeValues = async (left: number, right: number) => {
     if (left < 0 || left > 100 || right < 0 || right > 100 || !device) return;
 
-    await SleepyEyeStore.set("left", left);
-    await SleepyEyeStore.set("right", right);
+    SleepyEyeStore.set("left", left);
+    SleepyEyeStore.set("right", right);
 
     setLeftSleepyEye(left);
     setRightSleepyEye(right);

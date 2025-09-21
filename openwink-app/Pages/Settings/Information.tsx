@@ -4,12 +4,13 @@ import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/nativ
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
-import { BehaviorEnum, ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
+import { ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
 import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
 import { ButtonBehaviors, Presses } from "../../helper/Types";
 import * as Application from "expo-application";
 import { CommandSequenceBottomSheet } from "../../Components";
 import BottomSheet from "@gorhom/bottom-sheet";
+import { getDeviceUUID } from "../../helper/Functions";
 
 export function Information() {
 
@@ -35,6 +36,7 @@ export function Information() {
   const appInfo = useMemo(() => ({
     "App Version": `v${Application.nativeApplicationVersion}`,
     "App Theme": ColorTheme.themeNames[themeName],
+    "App ID": getDeviceUUID(),
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({

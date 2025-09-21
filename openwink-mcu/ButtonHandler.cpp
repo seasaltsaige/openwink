@@ -138,77 +138,86 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 }
 
 
+void ButtonHandler::handleCustomSequence(int buttonInput) {
+
+
+  if (buttonPressCounter == 0 && buttonInput != initialButton) {
+    buttonPressCounter = 1;
+    initialButton = buttonInput;
+    buttonTimer = millis();
+    return;
+  }
+
+  if (buttonPressCounter > 0) {
+
+    if ((millis() - buttonTimer) > maxTimeBetween_ms) {
+      handleButtonPressesResponse(buttonPressCounter - 1);
+      // buttonTimer = millis();
+      buttonPressCounter = 0;
+      return;
+    }
+
+    if (buttonInput != initialButton) {
+      buttonPressCounter++;
+      initialButton = buttonInput;
+
+      if (buttonPressCounter == 10) {
+        // Limit Reached - Only 10 items in array
+        handleButtonPressesResponse(9);
+        buttonPressCounter = 0;
+        return;
+      }
+
+      // reaches item in array not set (set to 0) means previous key is last set item
+      if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+        // - 2 due to the fact that say, array is { 5, 3, 2, 8, 0, 0, 0, 0, 0, 0 };
+        // button presses is equal to 5. [buttonPressCounter - 1] gives position 4 (which is 0). 
+        // to get last entry that is not 0, must be buttonPressCounter - 2, which is 8
+        handleButtonPressesResponse(buttonPressCounter - 2);
+        buttonPressCounter = 0;
+        return;
+      }
+    }
+
+  }
+}
+
+void ButtonHandler::handleDefaultBehavior(int buttonInput) {
+  if (buttonInput != initialButton) {
+    BLE::setBusy(true);
+    initialButton = buttonInput;
+
+    if (buttonInput == 1) {
+      bothUp();
+    } else {
+      bothDown();
+    }
+
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
+
+    BLE::setBusy(false);
+    BLE::updateHeadlightChars();
+  }
+}
+
 void ButtonHandler::loopButtonHandler() {
 
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
-  if (buttonInput != initialButton && awakeTime_ms == 0)
+  if (buttonInput != initialButton && awakeTime_ms == 0) {
     awakeTime_ms = 5 * 1000 * 60;
+  }
 
-  if (buttonInput != initialButton)
+  if (buttonInput != initialButton) {
     ButtonHandler::loopCustomCommandInterruptHandler();
+  }
+
 
   if (customButtonStatusEnabled) {
-
-    if (buttonPressCounter == 0 && buttonInput != initialButton) {
-
-      buttonPressCounter++;
-      initialButton = buttonInput;
-      buttonTimer = millis();
-
-    } else if (buttonPressCounter > 0) {
-      if ((millis() - buttonTimer) > maxTimeBetween_ms) {
-        // Execute button value
-        handleButtonPressesResponse(buttonPressCounter - 1);
-        buttonPressCounter = 0;
-      } else {
-
-        int buttonRead = digitalRead(OEM_BUTTON_INPUT);
-        if (buttonRead != initialButton) {
-          buttonPressCounter++;
-          initialButton = buttonRead;
-
-          if (buttonPressCounter == 11) {
-            // Execute last one (has 10 total loaded)
-            handleButtonPressesResponse(9);
-            buttonPressCounter = 0;
-          } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
-            // Execute last one (reached last loaded value)
-            handleButtonPressesResponse(buttonPressCounter - 2);
-            buttonPressCounter = 0;
-          }
-          buttonTimer = millis();
-        }
-      }
-    }
+    handleCustomSequence(buttonInput);
   } else {
-    int button = digitalRead(OEM_BUTTON_INPUT);
-    if (button != initialButton) {
-      BLE::setBusy(true);
-      initialButton = button;
-
-      if (button == 1) {
-        digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-        digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        digitalWrite(OUT_PIN_LEFT_UP, LOW);
-        digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-      } else {
-        digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-        digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-        digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-      }
-
-      BLE::setBusy(false);
-      BLE::updateHeadlightChars();
-    }
+    handleDefaultBehavior(buttonInput);
   }
 }
 

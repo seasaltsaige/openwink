@@ -47,6 +47,8 @@ private:
   static NimBLECharacteristic* unpairChar;
   static NimBLECharacteristic* resetChar;
 
+  static NimBLECharacteristic* clientMacChar;
+
   static bool deviceConnected;
 
   static void initDeviceServer();

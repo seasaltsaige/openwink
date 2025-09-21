@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore, QuickLinksStore } from "../../Storage";
 import { EditQuickLinksModal, LongButton, QuickLink } from "../../Components";
 import { MainHeader } from "../../Components";
+import { getDeviceUUID } from "../../helper/Functions";
 // import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
 
 export function Home() {
@@ -72,12 +73,11 @@ export function Home() {
   }
 
   useEffect(() => {
+    getDeviceUUID();
     const autoConn = AutoConnectStore.get();
     if (autoConn && !device) scanForDevice();
-
     (async () => {
       const res = await checkAppUpdate();
-
     })();
   }, []);
 

@@ -37,6 +37,8 @@ void setup() {
   // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
 
+  // Storage::clearWhitelist();
+
   ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();

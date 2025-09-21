@@ -247,7 +247,7 @@ function ConfirmationModal({
       visibilityTime: 8000,
       type: "success",
       text1: "Unpair Successful",
-      text2: "OpenWink Module successfully unpaired. To repair, remove the saved bond in your Bluetooth settings."
+      text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
     });
   }
 
