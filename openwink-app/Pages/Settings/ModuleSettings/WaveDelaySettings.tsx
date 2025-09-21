@@ -16,7 +16,7 @@ export function WaveDelaySettings() {
 
   const { colorTheme, theme } = useColorTheme();
 
-  const { waveDelayMulti, device, isScanning, isConnecting, updateWaveDelayMulti } = useBLE();
+  const { waveDelayMulti, device, updateWaveDelayMulti } = useBLE();
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -31,13 +31,6 @@ export function WaveDelaySettings() {
     setMin(newLow);
     setMax(newHigh);
   }, []);
-
-  const [delayMultiTooltipVisible, setDelayMultiTooltipVisible] = useState(false);
-  const [delayPresetTooltipVisible, setDelayPresetTooltipVisible] = useState(false);
-
-  const [accordionOpen, setAccordionOpen] = useState(false);
-
-  const [fineControlValue, setFineControlValue] = useState("");
 
   useEffect(() => {
     if (waveDelayMulti * 100 !== MIN)
@@ -155,67 +148,6 @@ export function WaveDelaySettings() {
           ))
         }
       </View>
-
-
-
-
-      {/* TODO: Likely will remove fine controls here. It just feels out of place. The other two forms of modification feel like more than enough as well. */}
-      <View style={[theme.settingsDropdownContainer, { paddingBottom: accordionOpen ? 10 : 0 }]}>
-
-        <Pressable
-          style={({ pressed }) => pressed ? theme.mainLongButtonPressableContainerPressed : theme.mainLongButtonPressableContainer}
-          onPress={() => setAccordionOpen(!accordionOpen)}
-          key={6}
-        >
-          <View style={theme.mainLongButtonPressableView}>
-            <IonIcons name="flask-outline" size={25} color={colorTheme.headerTextColor} />
-            <Text style={theme.mainLongButtonPressableText}>
-              Fine Control
-            </Text>
-          </View>
-          <IonIcons style={theme.mainLongButtonPressableIcon} name={accordionOpen ? "chevron-up-outline" : "chevron-down-outline"} size={20} color={colorTheme.headerTextColor} />
-        </Pressable>
-
-        {
-          accordionOpen ? (
-            <View style={{ width: "100%", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-evenly" }}>
-              <TextInput
-                style={[theme.waveTextEntry, { backgroundColor: !device ? colorTheme.disabledButtonColor : colorTheme.backgroundPrimaryColor }]}
-                textAlign="center"
-                placeholderTextColor={colorTheme.textColor}
-                placeholder={!!device ? "Enter percentage" : "Connect to module"}
-                value={fineControlValue}
-                editable={!!device}
-                onChangeText={(text) => {
-                  const oldText = fineControlValue;
-                  setFineControlValue(text);
-                  if (text.length > 0) {
-                    if (isNaN(parseFloat(text))) setFineControlValue(oldText);
-                    if (parseFloat(text) > 100 || parseFloat(text) < 0) setFineControlValue(oldText);
-                    if (text.length > 4) setFineControlValue(oldText)
-                  }
-                }}
-              />
-              <Pressable
-                style={({ pressed }) => !device ? theme.modalSettingsConfirmationButtonDisabled :
-                  pressed ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-                disabled={!device}
-                onPress={() => { updateWaveDelayMulti(parseFloat(fineControlValue) / 100); setFineControlValue("") }}
-              >
-                <Text
-                  style={[theme.modalSettingsConfirmationButtonText, { fontSize: 16 }]}
-                >
-                  Set Value
-                </Text>
-                <IonIcons size={22} name={"arrow-forward-outline"} color={colorTheme.textColor} />
-              </Pressable>
-            </View>
-          ) : <></>
-        }
-
-      </View>
-
-
     </View>
   )
 
