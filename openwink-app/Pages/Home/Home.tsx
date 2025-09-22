@@ -10,6 +10,7 @@ import { AutoConnectStore, QuickLinksStore } from "../../Storage";
 import { EditQuickLinksModal, LongButton, QuickLink } from "../../Components";
 import { MainHeader } from "../../Components";
 import { getDeviceUUID } from "../../helper/Functions";
+import { OTA } from "../../helper/Handlers/OTA";
 // import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
 
 export function Home() {
@@ -30,24 +31,11 @@ export function Home() {
   const {
     device,
     disconnectFromModule,
-    firmwareVersion,
-    headlightsBusy,
     isConnecting,
     isScanning,
-    autoConnectEnabled,
-    oemCustomButtonEnabled,
-    sendDefaultCommand,
-    setAutoConnect,
-    setOEMButtonStatus,
-    leftStatus,
-    mac,
-    manager,
     requestPermissions,
-    rightStatus,
     scanForModule,
-    setHeadlightsBusy,
-    updateProgress,
-    updatingStatus
+    startOTAService,
   } = useBLE();
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
@@ -66,10 +54,18 @@ export function Home() {
 
   const fetchModuleUpdate = async () => {
     console.log("Fetching firmware version");
+    setFetchingModuleUpdateInfo(true);
+    const available = await OTA.fetchUpdateAvailable();
+    setFetchingModuleUpdateInfo(false);
+    if (available)
+      setModuleUpdateAvailable(true);
   }
 
   const installModuleUpdate = async () => {
+    const password = OTA.generateWifiPasskey();
+    await startOTAService(password);
 
+    const status = await OTA.updateFirmware();
   }
 
   useEffect(() => {
@@ -77,9 +73,14 @@ export function Home() {
     const autoConn = AutoConnectStore.get();
     if (autoConn && !device) scanForDevice();
     (async () => {
-      const res = await checkAppUpdate();
+      await checkAppUpdate();
     })();
   }, []);
+
+  useEffect(() => {
+    if (device !== null)
+      fetchModuleUpdate();
+  }, [device]);
 
   const scanForDevice = async () => {
     const result = await requestPermissions();

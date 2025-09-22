@@ -33,6 +33,7 @@ import {
   UNPAIR_UUID,
   RESET_UUID,
   CLIENT_MAC_UUID,
+  OTA_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import base64 from 'react-native-base64';
@@ -61,6 +62,7 @@ export type BleContextType = {
   customCommandInterrupt: () => void;
   unpair: () => Promise<void>;
   resetModule: () => Promise<void>;
+  startOTAService: (password: string) => Promise<void>;
   waveDelayMulti: number;
   customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -312,17 +314,19 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (rightInitStatus) {
       const strVal = base64.decode(rightInitStatus?.value!);
       if (strVal.length < 1) return setRightStatus(0);
+
       const intVal = parseInt(strVal);
       if (intVal > 1) {
         const realValDecimal = (intVal - 10) / 100;
         setRightStatus(realValDecimal);
-      } else setRightStatus(intVal);
+      } else
+        setRightStatus(intVal);
     }
 
     const firmware = await connection?.readCharacteristicForService(OTA_SERVICE_UUID, FIRMWARE_UUID);
     if (firmware.value) {
       setFirmwareVersion(base64.decode(firmware.value));
-      await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
+      FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
     }
 
 
@@ -664,6 +668,20 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, RESET_UUID, base64.encode("0"));
   }
 
+  const startOTAService = async (password: string) => {
+    if (!device) return;
+    try {
+      await device.writeCharacteristicWithoutResponseForService(
+        OTA_SERVICE_UUID,
+        OTA_UUID,
+        base64.encode(password),
+      );
+      await sleep(1500);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   const value: BleContextType = useMemo(
     () => ({
       device,
@@ -684,6 +702,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       customCommandInterrupt,
       unpair,
       resetModule,
+      startOTAService,
       customCommandActive,
       waveDelayMulti,
       leftSleepyEye,
