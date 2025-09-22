@@ -34,15 +34,14 @@ export function Information() {
   );
 
   const appInfo = useMemo(() => ({
-    "App Version": `v${Application.nativeApplicationVersion}`,
-    "App Theme": ColorTheme.themeNames[themeName],
-    "App ID": getDeviceUUID(),
+    "Application Version": `v${Application.nativeApplicationVersion}`,
+    "Application Theme": ColorTheme.themeNames[themeName],
+    "Application ID": getDeviceUUID(),
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({
     "Module ID": mac,
     "Firmware Version": `v${firmwareVersion}`,
-
     "Connection Status": connectionStatus(isScanning, isConnecting, !!device),
     "Left Headlight Status": headlightStatus(!!device, leftStatus),
     "Right Headlight Status": headlightStatus(!!device, rightStatus),
