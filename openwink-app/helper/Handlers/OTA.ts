@@ -3,12 +3,14 @@ import WifiManager from "react-native-wifi-reborn";
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
 import { UPDATE_URL } from "../Constants";
 import { generatePassword } from "../Functions";
+import Toast from "react-native-toast-message";
 
 type FirmwareType = `${number}.${number}.${number}`;
 
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
+  private static readonly wifiSSID: string = "Wink Module: Update Access Point";
   private static wifiPasskey: string;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
@@ -38,43 +40,60 @@ export abstract class OTA {
   }
 
   public static async updateFirmware() {
-    const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
-      {
-        method: "GET",
-        headers: {
-          authorization: DeviceMACStore.getStoredMAC() ?? "",
+    try {
+      const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
+        {
+          method: "GET",
+          headers: {
+            authorization: DeviceMACStore.getStoredMAC() ?? "",
+          }
         }
-      }
-    );
+      );
 
-    if (!firmwareResponse.ok) return false;
+      if (!firmwareResponse.ok) return false;
 
-    const firmwareBlob = await firmwareResponse.blob();
-    const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
+      const firmwareBlob = await firmwareResponse.blob();
+      const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
 
-    console.log("Downloaded firmware blob.");
-    console.log(blobWithType.size);
+      console.log("Downloaded firmware blob.");
+      console.log(blobWithType.size);
 
-    await WifiManager.connectToProtectedSSIDOnce(
-      "Wink Module: Update Access Point",
-      this.wifiPasskey,
-      false,
-      true,
-    );
+      // await WifiManager.connectToProtectedSSID(
+      //   "Wink Module: Update Access Point",
+      //   this.wifiPasskey,
+      //   // false,
+      //   // false
+      // );
 
+      await WifiManager.connectToProtectedWifiSSID({
+        password: this.wifiPasskey,
+        ssid: this.wifiSSID,
+      });
 
-    const updateStatusResponse = await fetch("http://module-update.local/update",
-      {
-        method: "POST",
-        body: blobWithType,
-        headers: {
-          "Content-Length": blobWithType.size.toString(),
+      const updateStatusResponse = await fetch("http://module-update.local/update",
+        {
+          method: "POST",
+          body: blobWithType,
+          headers: {
+            "Content-Length": blobWithType.size.toString(),
+          },
         },
-      },
-    );
+      );
 
-    if (updateStatusResponse.ok) {
+      await WifiManager.disconnectFromSSID("Wink Module: Update Access Point");
+      Toast.hide();
 
+      if (updateStatusResponse.ok) {
+        // Update successful
+        return true;
+      } else {
+        // Update went wrong for some reason
+        return false;
+      }
+
+    } catch (err) {
+      console.log(err);
+      return false;
     }
 
   }

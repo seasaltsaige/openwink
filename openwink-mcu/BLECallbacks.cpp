@@ -468,15 +468,25 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
 
+  Serial.println("Started Wifi AP");
+
   delay(150);
 
   setupUpdateServer();
 
+  Serial.println("Started http server");
+
   MDNS.begin("module-update");
+
+  Serial.println("Started MDNS");
 
   server.begin();
 
+  Serial.println("Started server");
+
   MDNS.addService("http", "tcp", 80);
+
+  Serial.println("Add MDNS service");
 
   wifi_enabled = true;
 }

@@ -48,7 +48,7 @@ export type BleContextType = {
   device: Device | null;
   requestPermissions: () => Promise<boolean>;
   scanForModule: () => Promise<void>;
-  disconnectFromModule: () => Promise<void>;
+  disconnectFromModule: (showToast?: boolean) => Promise<void>;
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
@@ -441,16 +441,16 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }
 
-  const disconnectFromModule = async () => {
+  const disconnectFromModule = async (showToast: boolean = true) => {
     const isConnected = await device?.isConnected();
     if (isConnected) {
       await device?.cancelConnection();
-      Toast.show({
+      if (showToast) Toast.show({
         autoHide: true,
         visibilityTime: 8000,
         text1: "Module Disconnected",
         text2: "Successfully disconnected from Open Wink Module ."
-      })
+      });
     }
   }
 

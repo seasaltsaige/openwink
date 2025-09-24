@@ -11,6 +11,7 @@ import { EditQuickLinksModal, LongButton, QuickLink } from "../../Components";
 import { MainHeader } from "../../Components";
 import { getDeviceUUID } from "../../helper/Functions";
 import { OTA } from "../../helper/Handlers/OTA";
+import Toast from "react-native-toast-message";
 // import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
 
 export function Home() {
@@ -24,6 +25,8 @@ export function Home() {
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+
+  const [installingFirmware, setInstallingFirmware] = useState(false);
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
@@ -62,10 +65,41 @@ export function Home() {
   }
 
   const installModuleUpdate = async () => {
+    setInstallingFirmware(true);
+
     const password = OTA.generateWifiPasskey();
     await startOTAService(password);
 
-    const status = await OTA.updateFirmware();
+    const updateStatus = await OTA.updateFirmware();
+
+    setInstallingFirmware(false);
+
+    if (updateStatus) {
+      Toast.show({
+        text1: "Update Success",
+        type: "success",
+        text2: "Open Wink firmware update was installed successfully. The module will now restart to apply the firmware.",
+        autoHide: true,
+        visibilityTime: 8000,
+      });
+      return disconnectFromModule(false);
+    } else {
+      Toast.show({
+        type: "error",
+        autoHide: true,
+        visibilityTime: 8000,
+        text1: "Update Failed",
+        // TODO: if continued errors, suggest a bug report.
+        text2: "Something went wrong while installing firmware. Please reconnect to the module and try again."
+      });
+
+      return disconnectFromModule(false);
+    }
+  }
+
+  const scanForDevice = async () => {
+    const result = await requestPermissions();
+    if (result) await scanForModule();
   }
 
   useEffect(() => {
@@ -82,10 +116,6 @@ export function Home() {
       fetchModuleUpdate();
   }, [device]);
 
-  const scanForDevice = async () => {
-    const result = await requestPermissions();
-    if (result) await scanForModule();
-  }
 
   return (
     <View style={theme.container}>
@@ -266,14 +296,10 @@ export function Home() {
             // TODO: update to 'if update available for module'
             moduleUpdateAvailable ? (
               <LongButton
-                onPress={() => {
-                  // Install update to wink module
-                  // Should only become this state if connected to wink module (To check device for version)
-                }}
+                onPress={() => installModuleUpdate()}
                 icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
                 text="Install Module Update"
               />
-
             ) : (
               <View style={theme.mainLongButtonPressableContainer}>
                 <View style={theme.mainLongButtonPressableView}>
