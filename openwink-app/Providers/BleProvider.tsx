@@ -63,6 +63,7 @@ export type BleContextType = {
   unpair: () => Promise<void>;
   resetModule: () => Promise<void>;
   startOTAService: (password: string) => Promise<void>;
+  updateFirmwareVersion: (version: string) => void;
   waveDelayMulti: number;
   customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -119,8 +120,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
-
-  // const [customCommandActive, setCustomCommandActive] = useState(false);
   const customCommandActive = useRef(false);
 
 
@@ -150,7 +149,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const right = SleepyEyeStore.get("right");
     if (left) setLeftSleepyEye(left);
     if (right) setRightSleepyEye(right);
-    // })();
 
     return () => { }
   }, []);
@@ -185,22 +183,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         buttonPositive: "OK",
       }
     );
-    // console.log("before");
-    // const wifiState = await PermissionsAndroid.request(
-    //   PermissionsAndroid.PERMISSIONS.ACCESS_WIFI_STATE,
-    //   {
-    //     title: "WiFi State Permission",
-    //     message: "Secure connection and updates requires WiFi State",
-    //     buttonPositive: "OK",
-    //   }
-    // )
-    // console.log(wifiState);
 
     return (
       bluetoothScanPermission === "granted" &&
       bluetoothConnectPermission === "granted" &&
       fineLocationPermission === "granted"
-      // wifiState === "granted"
     );
   };
 
@@ -299,7 +286,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           text2: "Successfully bonded to new Open Wink Module ."
         });
       }
-    })
+    });
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -687,6 +674,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }
 
+  const updateFirmwareVersion = (version: string) => {
+    setFirmwareVersion(version);
+    FirmwareStore.setFirmwareVersion(version);
+  }
+
   const value: BleContextType = useMemo(
     () => ({
       device,
@@ -708,6 +700,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unpair,
       resetModule,
       startOTAService,
+      updateFirmwareVersion,
       customCommandActive,
       waveDelayMulti,
       leftSleepyEye,

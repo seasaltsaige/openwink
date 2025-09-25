@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AutoConnectStore, QuickLinksStore } from "../../Storage";
 import { EditQuickLinksModal, LongButton, QuickLink, ModuleUpdateModal } from "../../Components";
 import { MainHeader } from "../../Components";
-import { getDeviceUUID } from "../../helper/Functions";
+import { getDeviceUUID, sleep } from "../../helper/Functions";
 import { OTA } from "../../helper/Handlers/OTA";
 import Toast from "react-native-toast-message";
 // import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
@@ -42,6 +42,7 @@ export function Home() {
     requestPermissions,
     scanForModule,
     startOTAService,
+    updateFirmwareVersion
   } = useBLE();
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
@@ -59,8 +60,6 @@ export function Home() {
   }
 
   const fetchModuleUpdate = async () => {
-    setFetchingModuleUpdateInfo(true);
-
     const available = await OTA.fetchUpdateAvailable();
 
     setUpdateDescription(OTA.updateDescription);
@@ -68,8 +67,11 @@ export function Home() {
     setUpdateSize(OTA.getUpdateSize());
 
     setFetchingModuleUpdateInfo(false);
+
     if (available)
       setModuleUpdateAvailable(true);
+    else
+      setModuleUpdateAvailable(false);
   }
 
   const installModuleUpdate = async () => {
@@ -83,6 +85,9 @@ export function Home() {
     setInstallingFirmware(false);
 
     if (updateStatus) {
+      updateFirmwareVersion(OTA.latestVersion);
+      setModuleUpdateAvailable(false);
+      setFetchingModuleUpdateInfo(false);
       Toast.show({
         text1: "Update Success",
         type: "success",
@@ -92,6 +97,8 @@ export function Home() {
       });
       return disconnectFromModule(false);
     } else {
+      setModuleUpdateAvailable(false);
+      setFetchingModuleUpdateInfo(false);
       Toast.show({
         type: "error",
         autoHide: true,
@@ -120,8 +127,14 @@ export function Home() {
   }, []);
 
   useEffect(() => {
-    if (device !== null)
-      fetchModuleUpdate();
+    // updateFirmwareVersion("0.3.5");
+    (async () => {
+      if (device !== null) {
+        setFetchingModuleUpdateInfo(true);
+        await sleep(1000);
+        fetchModuleUpdate();
+      }
+    })();
   }, [device]);
 
 
@@ -134,13 +147,6 @@ export function Home() {
 
           {
             device ? (
-              // <View style={theme.homeScreenConnectionButton}>
-              //   <Text style={theme.mainLongButtonPressableText}>
-              //     Connected to Module
-              //   </Text>
-              //   <IonIcons name="checkmark-done-outline" size={25} color={colorTheme.headerTextColor} />
-              // </View>
-
               <Pressable
                 style={({ pressed }) => pressed ? theme.homeScreenConnectionButtonPressed : theme.homeScreenConnectionButton}
                 onPress={() => disconnectFromModule()}
@@ -148,7 +154,6 @@ export function Home() {
                 <Text style={theme.homeScreenConnectionButtonText}>
                   Connected to Module
                 </Text>
-
                 <IonIcons name="checkmark-done-outline" size={20} color={colorTheme.headerTextColor} />
               </Pressable>
 
@@ -317,7 +322,7 @@ export function Home() {
                 <LongButton
                   onPress={() => installModuleUpdate()}
                   icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
-                  text="Install Module Update"
+                  text="Install Firmware Update"
                 />
               ) : (
                 <View style={theme.mainLongButtonPressableContainer}>

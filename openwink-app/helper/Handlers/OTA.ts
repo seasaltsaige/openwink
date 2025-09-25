@@ -94,6 +94,8 @@ export abstract class OTA {
 
       if (updateStatusResponse.status == 200) {
         // Update successful
+        FirmwareStore.setFirmwareVersion(this.latestVersion);
+        this.activeVersion = this.latestVersion;
         return true;
       } else {
         // Update went wrong for some reason
