@@ -33,6 +33,7 @@ import {
   UNPAIR_UUID,
   RESET_UUID,
   CLIENT_MAC_UUID,
+  OTA_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import base64 from 'react-native-base64';
@@ -47,7 +48,7 @@ export type BleContextType = {
   device: Device | null;
   requestPermissions: () => Promise<boolean>;
   scanForModule: () => Promise<void>;
-  disconnectFromModule: () => Promise<void>;
+  disconnectFromModule: (showToast?: boolean) => Promise<void>;
   sendDefaultCommand: (command: number) => Promise<void>;
   setHeadlightsBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setOEMButtonStatus: (status: "enable" | "disable") => Promise<boolean | undefined>;
@@ -61,6 +62,8 @@ export type BleContextType = {
   customCommandInterrupt: () => void;
   unpair: () => Promise<void>;
   resetModule: () => Promise<void>;
+  startOTAService: (password: string) => Promise<void>;
+  updateFirmwareVersion: (version: string) => void;
   waveDelayMulti: number;
   customCommandActive: React.MutableRefObject<boolean>;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
@@ -117,8 +120,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
-
-  // const [customCommandActive, setCustomCommandActive] = useState(false);
   const customCommandActive = useRef(false);
 
 
@@ -148,7 +149,6 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const right = SleepyEyeStore.get("right");
     if (left) setLeftSleepyEye(left);
     if (right) setRightSleepyEye(right);
-    // })();
 
     return () => { }
   }, []);
@@ -183,22 +183,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         buttonPositive: "OK",
       }
     );
-    // console.log("before");
-    // const wifiState = await PermissionsAndroid.request(
-    //   PermissionsAndroid.PERMISSIONS.ACCESS_WIFI_STATE,
-    //   {
-    //     title: "WiFi State Permission",
-    //     message: "Secure connection and updates requires WiFi State",
-    //     buttonPositive: "OK",
-    //   }
-    // )
-    // console.log(wifiState);
 
     return (
       bluetoothScanPermission === "granted" &&
       bluetoothConnectPermission === "granted" &&
       fineLocationPermission === "granted"
-      // wifiState === "granted"
     );
   };
 
@@ -259,6 +248,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (err) return console.log(err);
       const statusValue = toProperCase(base64.decode(char?.value!) as "idle" | "updating" | "failed" | "success");
       setUpdatingStatus(statusValue);
+      // reset statuses for potential same instance update
+      if (statusValue === "Success") {
+        setUpdateProgress(0);
+        setUpdatingStatus("Idle");
+      }
     });
 
     connection.monitorCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, HEADLIGHT_MOTION_IN_UUID, (err, char) => {
@@ -292,7 +286,7 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           text2: "Successfully bonded to new Open Wink Module ."
         });
       }
-    })
+    });
   }
 
   const readInitialBLEStatus = async (connection: Device) => {
@@ -312,17 +306,19 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (rightInitStatus) {
       const strVal = base64.decode(rightInitStatus?.value!);
       if (strVal.length < 1) return setRightStatus(0);
+
       const intVal = parseInt(strVal);
       if (intVal > 1) {
         const realValDecimal = (intVal - 10) / 100;
         setRightStatus(realValDecimal);
-      } else setRightStatus(intVal);
+      } else
+        setRightStatus(intVal);
     }
 
     const firmware = await connection?.readCharacteristicForService(OTA_SERVICE_UUID, FIRMWARE_UUID);
     if (firmware.value) {
       setFirmwareVersion(base64.decode(firmware.value));
-      await FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
+      FirmwareStore.setFirmwareVersion(base64.decode(firmware.value));
     }
 
 
@@ -437,16 +433,16 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }
 
-  const disconnectFromModule = async () => {
+  const disconnectFromModule = async (showToast: boolean = true) => {
     const isConnected = await device?.isConnected();
     if (isConnected) {
       await device?.cancelConnection();
-      Toast.show({
+      if (showToast) Toast.show({
         autoHide: true,
         visibilityTime: 8000,
         text1: "Module Disconnected",
         text2: "Successfully disconnected from Open Wink Module ."
-      })
+      });
     }
   }
 
@@ -664,6 +660,25 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await device.writeCharacteristicWithoutResponseForService(MODULE_SETTINGS_SERVICE_UUID, RESET_UUID, base64.encode("0"));
   }
 
+  const startOTAService = async (password: string) => {
+    if (!device) return;
+    try {
+      await device.writeCharacteristicWithoutResponseForService(
+        OTA_SERVICE_UUID,
+        OTA_UUID,
+        base64.encode(password),
+      );
+      await sleep(1500);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  const updateFirmwareVersion = (version: string) => {
+    setFirmwareVersion(version);
+    FirmwareStore.setFirmwareVersion(version);
+  }
+
   const value: BleContextType = useMemo(
     () => ({
       device,
@@ -684,6 +699,8 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       customCommandInterrupt,
       unpair,
       resetModule,
+      startOTAService,
+      updateFirmwareVersion,
       customCommandActive,
       waveDelayMulti,
       leftSleepyEye,

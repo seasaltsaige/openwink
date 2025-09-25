@@ -6,7 +6,7 @@ import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
 import { PortalProvider } from '@gorhom/portal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Toast from 'react-native-toast-message';
+
 
 export default function App() {
 
@@ -26,7 +26,6 @@ export default function App() {
           <GestureHandlerRootView>
             <PortalProvider>
               <AppNavigator />
-              <Toast />
             </PortalProvider>
           </GestureHandlerRootView>
         </ThemeProvider>

@@ -379,17 +379,11 @@ void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 }
 
 void updateProgress(size_t progress, size_t size) {
-  double slope = 1.0 * (100 - 0) / (60 - 0);
   static int last_progress = -1;
-
   if (size > 0) {
     progress = (progress * 100) / size;
-    progress = (progress > 100 ? 100 : progress);  // 0-100
-
-    progress = 0 + slope * (progress - 0);
-
+    progress = (progress > 100 ? 100 : progress);  //0-100
     if (progress != last_progress) {
-      // UPDATE APP PROGRESS STATUS
       BLE::setFirmwarePercent(to_string(progress));
       last_progress = progress;
     }
@@ -407,7 +401,7 @@ void setupUpdateServer() {
     String("/update"), HTTP_POST,
     [&]() {
       if (Update.hasError()) {
-        server.send(200);
+        server.send(500);
         BLE::setFirmwareUpdateStatus("failed");
       } else {
 
@@ -468,15 +462,25 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
 
+  Serial.println("Started Wifi AP");
+
   delay(150);
 
   setupUpdateServer();
 
+  Serial.println("Started http server");
+
   MDNS.begin("module-update");
+
+  Serial.println("Started MDNS");
 
   server.begin();
 
+  Serial.println("Started server");
+
   MDNS.addService("http", "tcp", 80);
+
+  Serial.println("Add MDNS service");
 
   wifi_enabled = true;
 }
