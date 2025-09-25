@@ -3,12 +3,16 @@ import { useColorTheme } from "../hooks/useColorTheme";
 import { useBLE } from "../hooks/useBLE";
 
 interface IModuleUpdateModal {
+  version: string;
+  description: string;
   visible: boolean;
   onRequestClose: () => void;
   binSizeBytes: number;
 }
 
 export function ModuleUpdateModal({
+  version,
+  description,
   onRequestClose,
   visible,
   binSizeBytes,
@@ -47,7 +51,7 @@ export function ModuleUpdateModal({
             borderRadius: 10,
             paddingVertical: 15,
             paddingHorizontal: 20,
-            rowGap: 20
+            rowGap: 17
           }}
         >
           {
@@ -83,18 +87,17 @@ export function ModuleUpdateModal({
           }}>
             <View style={{
               width: "100%",
-              backgroundColor: `${colorTheme.disabledButtonColor}69`,
-              height: 14,
+              backgroundColor: `${colorTheme.disabledButtonColor}80`,
+              height: 16,
               position: "absolute",
-              borderRadius: 3,
+              borderRadius: 10,
             }} />
             <View style={{
               width: `${updateProgress}%`,
-              // width: 200,
               backgroundColor: colorTheme.buttonColor,
-              height: 14,
+              height: 16,
               position: "absolute",
-              borderRadius: 3,
+              borderRadius: 10,
             }} />
           </View>
 
@@ -102,8 +105,19 @@ export function ModuleUpdateModal({
             color: colorTheme.textColor,
             fontFamily: "IBMPlexSans_400Regular",
             fontSize: 14,
+            textAlign: "center",
           }}>
-            ({((updateSizeMB * updateProgress) / 100).toFixed(2)}MB/{(updateSizeMB).toFixed(2)}MB)
+            ({((updateSizeMB * updateProgress) / 100).toFixed(2)}MB/{(updateSizeMB).toFixed(2)}MB) – v{version}
+          </Text>
+
+          <Text style={{
+            marginTop: -10,
+            color: colorTheme.textColor,
+            fontFamily: "IBMPlexSans_400Regular",
+            fontSize: 14,
+            textAlign: "center"
+          }}>
+            {description}
           </Text>
         </View>
       </View>

@@ -34,9 +34,9 @@ export function Information() {
   );
 
   const appInfo = useMemo(() => ({
+    "Application ID": getDeviceUUID(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
-    "Application ID": getDeviceUUID(),
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({

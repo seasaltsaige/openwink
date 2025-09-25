@@ -261,6 +261,11 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (err) return console.log(err);
       const statusValue = toProperCase(base64.decode(char?.value!) as "idle" | "updating" | "failed" | "success");
       setUpdatingStatus(statusValue);
+      // reset statuses for potential same instance update
+      if (statusValue === "Success") {
+        setUpdateProgress(0);
+        setUpdatingStatus("Idle");
+      }
     });
 
     connection.monitorCharacteristicForService(MODULE_SETTINGS_SERVICE_UUID, HEADLIGHT_MOTION_IN_UUID, (err, char) => {

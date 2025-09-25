@@ -14,7 +14,7 @@
 // Green wire in wiring harness, indicating busy when high
 #define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
 
-#define FIRMWARE_VERSION "0.3.2" // test for update things -- change back to 0.3.5 when complete
+#define FIRMWARE_VERSION "0.3.5"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements

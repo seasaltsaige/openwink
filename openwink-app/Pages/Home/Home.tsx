@@ -26,6 +26,8 @@ export function Home() {
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
   const [updateSize, setUpdateSize] = useState(0);
+  const [updateVersion, setUpdateVersion] = useState("");
+  const [updateDescription, setUpdateDescription] = useState("");
 
   const [installingFirmware, setInstallingFirmware] = useState(false);
 
@@ -61,6 +63,8 @@ export function Home() {
 
     const available = await OTA.fetchUpdateAvailable();
 
+    setUpdateDescription(OTA.updateDescription);
+    setUpdateVersion(OTA.latestVersion);
     setUpdateSize(OTA.getUpdateSize());
 
     setFetchingModuleUpdateInfo(false);
@@ -354,6 +358,8 @@ export function Home() {
         onRequestClose={() => setInstallingFirmware(false)}
         visible={installingFirmware}
         binSizeBytes={updateSize}
+        version={updateVersion}
+        description={updateDescription}
       />
     </>
   );

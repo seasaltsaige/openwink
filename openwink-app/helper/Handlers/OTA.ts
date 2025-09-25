@@ -10,6 +10,7 @@ type FirmwareType = `${number}.${number}.${number}`;
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
+  public static updateDescription: string = "";
 
   private static readonly wifiSSID: string = "Wink Module: Update Access Point";
   private static wifiPasskey: string;
@@ -30,6 +31,8 @@ export abstract class OTA {
 
     const json = await response.json();
     const version = json["version"] as FirmwareType;
+    const description = json["description"] as string;
+    this.updateDescription = description;
     this.setLatestVersion(version);
     this.setActiveVersion();
 
@@ -79,8 +82,6 @@ export abstract class OTA {
         ssid: this.wifiSSID,
       });
 
-
-      console.log("POSTING FIRMWARE");
       const updateStatusResponse = await fetch("http://module-update.local/update",
         {
           method: "POST",
