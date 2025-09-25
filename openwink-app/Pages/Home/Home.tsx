@@ -294,7 +294,17 @@ export function Home() {
 
           {
             // TODO: update to 'if update available for module'
-            moduleUpdateAvailable ? (
+            installingFirmware ? (
+              <View style={theme.mainLongButtonPressableContainer}>
+                <View style={theme.mainLongButtonPressableView}>
+                  <Text style={theme.mainLongButtonPressableText}>
+                    Installing Firmware Update
+                  </Text>
+                </View>
+
+                <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
+              </View>
+            ) : moduleUpdateAvailable ? (
               <LongButton
                 onPress={() => installModuleUpdate()}
                 icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}

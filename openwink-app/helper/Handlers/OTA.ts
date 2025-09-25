@@ -65,11 +65,13 @@ export abstract class OTA {
       //   // false
       // );
 
+      console.log("CONNECTING TO WIFI AP");
       await WifiManager.connectToProtectedWifiSSID({
         password: this.wifiPasskey,
         ssid: this.wifiSSID,
       });
 
+      console.log("POSTING FIRMWARE");
       const updateStatusResponse = await fetch("http://module-update.local/update",
         {
           method: "POST",
@@ -79,6 +81,11 @@ export abstract class OTA {
           },
         },
       );
+      console.log("FINISHED");
+
+      console.log(updateStatusResponse.headers, "HEADERS");
+      console.log(updateStatusResponse.status, "STATUS");
+
 
       await WifiManager.disconnectFromSSID("Wink Module: Update Access Point");
       Toast.hide();
@@ -87,6 +94,7 @@ export abstract class OTA {
         // Update successful
         return true;
       } else {
+
         // Update went wrong for some reason
         return false;
       }
