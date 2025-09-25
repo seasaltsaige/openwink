@@ -10,8 +10,10 @@ type FirmwareType = `${number}.${number}.${number}`;
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
+
   private static readonly wifiSSID: string = "Wink Module: Update Access Point";
   private static wifiPasskey: string;
+  private static updateSizeBytes: number = 0;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
     // Fetch latest software version from API using device MAC address as access code
@@ -30,6 +32,23 @@ export abstract class OTA {
     const version = json["version"] as FirmwareType;
     this.setLatestVersion(version);
     this.setActiveVersion();
+
+    if (this.shouldUpdate()) {
+      const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
+        {
+          method: "GET",
+          headers: {
+            authorization: DeviceMACStore.getStoredMAC() ?? "",
+          }
+        }
+      );
+
+      const firmwareBlob = await firmwareResponse.blob();
+      const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
+
+      this.updateSizeBytes = blobWithType.size;
+
+    }
 
     return this.shouldUpdate();
   }
@@ -55,21 +74,11 @@ export abstract class OTA {
       const firmwareBlob = await firmwareResponse.blob();
       const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
 
-      console.log("Downloaded firmware blob.");
-      console.log(blobWithType.size);
-
-      // await WifiManager.connectToProtectedSSID(
-      //   "Wink Module: Update Access Point",
-      //   this.wifiPasskey,
-      //   // false,
-      //   // false
-      // );
-
-      console.log("CONNECTING TO WIFI AP");
       await WifiManager.connectToProtectedWifiSSID({
         password: this.wifiPasskey,
         ssid: this.wifiSSID,
       });
+
 
       console.log("POSTING FIRMWARE");
       const updateStatusResponse = await fetch("http://module-update.local/update",
@@ -81,20 +90,11 @@ export abstract class OTA {
           },
         },
       );
-      console.log("FINISHED");
 
-      console.log(updateStatusResponse.headers, "HEADERS");
-      console.log(updateStatusResponse.status, "STATUS");
-
-
-      await WifiManager.disconnectFromSSID("Wink Module: Update Access Point");
-      Toast.hide();
-
-      if (updateStatusResponse.ok) {
+      if (updateStatusResponse.status == 200) {
         // Update successful
         return true;
       } else {
-
         // Update went wrong for some reason
         return false;
       }
@@ -104,6 +104,11 @@ export abstract class OTA {
       return false;
     }
 
+  }
+
+
+  public static getUpdateSize(): number {
+    return this.updateSizeBytes;
   }
 
 
@@ -126,4 +131,5 @@ export abstract class OTA {
 
     return false;
   }
+
 }

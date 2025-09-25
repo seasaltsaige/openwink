@@ -9,3 +9,4 @@ export * from "./SearchBarFilter";
 export * from "./CommandSequenceBottomSheet";
 export * from "./AboutFooter";
 export * from "./EditQuickLinksModal";
+export * from "./ModuleUpdateModal";
