@@ -6,6 +6,7 @@ import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
 import { PortalProvider } from '@gorhom/portal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 export default function App() {
@@ -20,16 +21,18 @@ export default function App() {
   if (!loaded) return null;
 
   return (
-    <NavigationContainer>
-      <BleProvider>
-        <ThemeProvider>
-          <GestureHandlerRootView>
-            <PortalProvider>
-              <AppNavigator />
-            </PortalProvider>
-          </GestureHandlerRootView>
-        </ThemeProvider>
-      </BleProvider>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <BleProvider>
+          <ThemeProvider>
+            <GestureHandlerRootView>
+              <PortalProvider>
+                <AppNavigator />
+              </PortalProvider>
+            </GestureHandlerRootView>
+          </ThemeProvider>
+        </BleProvider>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

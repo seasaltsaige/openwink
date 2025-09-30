@@ -1,4 +1,4 @@
-import { ActivityIndicator, Dimensions, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Dimensions, Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -101,7 +101,7 @@ export function CustomWinkButton() {
 
   return (
     <>
-      <View style={theme.container}>
+      <SafeAreaView style={theme.container}>
         <HeaderWithBackButton
           backText={backHumanReadable}
           headerText="Button"
@@ -313,7 +313,7 @@ export function CustomWinkButton() {
             </ScrollView>
           </View>
         </View>
-      </View >
+      </SafeAreaView>
 
 
       <CustomButtonActionModal

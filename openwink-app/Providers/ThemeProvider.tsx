@@ -8,6 +8,7 @@ import { StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 // TODO
 
 interface StyleSheetInterface extends StyleSheet.NamedStyles<any> {
+  tabContainer: ViewStyle;
   container: ViewStyle;
   infoContainer: ViewStyle;
   infoBoxOuter: ViewStyle;
@@ -151,6 +152,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setTheme_(
       StyleSheet.create<StyleSheetInterface>({
+        tabContainer: {
+          backgroundColor: themeColors.backgroundPrimaryColor,
+          height: "100%",
+          padding: 15,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          rowGap: 18,
+          margin: 10,
+        },
         container: {
           backgroundColor: themeColors.backgroundPrimaryColor,
           height: "100%",

@@ -1,14 +1,15 @@
 import { Pressable, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
 import { CommandSequenceBottomSheet, HeaderWithBackButton, SearchBarFilter } from "../../Components";
-import { CommandInput, CommandOutput, CustomCommandStore } from "../../Storage";
+import { CommandOutput, CustomCommandStore } from "../../Storage";
 import { DefaultCommandValueEnglish } from "../../helper/Constants";
 import BottomSheet from "@gorhom/bottom-sheet";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
 export function CustomCommands() {
@@ -54,7 +55,7 @@ export function CustomCommands() {
   const canRunCommands = device && !customCommandActive.current;
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
 
       <HeaderWithBackButton
         backText={back}
@@ -203,6 +204,6 @@ export function CustomCommands() {
         close={() => { setDisplayedCommand(null); }}
       />
 
-    </View>
+    </SafeAreaView>
   )
 }

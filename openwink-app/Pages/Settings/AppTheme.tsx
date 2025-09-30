@@ -1,11 +1,11 @@
 import { Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useNavigation, useNavigationState, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useRoute } from "@react-navigation/native";
 import { ColorTheme } from "../../helper/Constants";
 import { LongButton } from "../../Components/LongButton";
 import { HeaderWithBackButton } from "../../Components";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function AppTheme() {
   const {
@@ -13,22 +13,15 @@ export function AppTheme() {
     themeName,
     theme,
     setTheme,
-    update,
     reset,
   } = useColorTheme();
 
-  const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [currentTheme, setCurrentTheme] = useState("brilliantBlack" as keyof typeof ColorTheme.themeNames);
-
-  useFocusEffect(() => {
-    setCurrentTheme(themeName);
-  });
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
       <HeaderWithBackButton
         backText={back}
         headerText="App Theme"
@@ -77,6 +70,6 @@ export function AppTheme() {
           Reset theme
         </Text>
       </Pressable>
-    </View>
+    </SafeAreaView>
   )
 }

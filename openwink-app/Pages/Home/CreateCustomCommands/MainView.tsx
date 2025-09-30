@@ -8,6 +8,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { HeaderWithBackButton, SearchBarFilter } from "../../../Components";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { ModifyType } from "./ModifyView";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface IMainViewProps {
   setModifyType: (type: ModifyType) => void;
@@ -35,7 +36,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
   }, []));
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
 
       <HeaderWithBackButton
         backText={back}
@@ -140,7 +141,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           </ScrollView>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   )
 
 }
