@@ -7,6 +7,7 @@ import { useBLE } from "../../../hooks/useBLE";
 import VerticalSlider from "rn-vertical-slider-matyno";
 import { HeaderWithBackButton } from "../../../Components";
 import { TooltipHeader } from "../../../Components";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function SleepyEyeSettings() {
 
@@ -34,7 +35,7 @@ export function SleepyEyeSettings() {
     (!device || ((leftStatus !== 1 && leftStatus !== 0) || (rightStatus !== 1 && rightStatus !== 0)));
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Sleepy"
@@ -181,7 +182,7 @@ export function SleepyEyeSettings() {
 
       </View>
 
-    </View>
+    </SafeAreaView>
   )
 
 }

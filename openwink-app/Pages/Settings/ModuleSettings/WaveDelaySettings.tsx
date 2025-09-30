@@ -8,6 +8,7 @@ import RangeSlider from "react-native-sticky-range-slider";
 import Tooltip from "react-native-walkthrough-tooltip";
 import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
 import { TooltipHeader } from "../../../Components";
+import { SafeAreaView } from "react-native-safe-area-context";
 const MIN = 0;
 const MAX = 100;
 
@@ -42,7 +43,7 @@ export function WaveDelaySettings() {
   }, [waveDelayMulti])
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Waves"
@@ -148,7 +149,7 @@ export function WaveDelaySettings() {
           ))
         }
       </View>
-    </View>
+    </SafeAreaView>
   )
 
 }

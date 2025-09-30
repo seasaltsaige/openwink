@@ -1,17 +1,13 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, SafeAreaView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
 import { useBLE } from "../../hooks/useBLE";
-import { ActivityIndicator } from "react-native";
 import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
 import { HeaderWithBackButton } from "../../Components";
 
 export function StandardCommands() {
 
   const { colorTheme, theme } = useColorTheme();
-  const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
@@ -42,7 +38,7 @@ export function StandardCommands() {
     (rightStatus !== 0 && rightStatus !== 1);
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
 
       <HeaderWithBackButton
         backText={back}
@@ -230,6 +226,6 @@ export function StandardCommands() {
           </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }

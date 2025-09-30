@@ -140,7 +140,7 @@ export function Home() {
 
   return (
     <>
-      <View style={theme.container}>
+      <SafeAreaView style={theme.tabContainer}>
         <MainHeader text="Home" />
 
         <ScrollView contentContainerStyle={theme.contentContainer} >
@@ -350,22 +350,22 @@ export function Home() {
 
         </ScrollView>
 
-      </View>
+        </SafeAreaView>
 
-      <EditQuickLinksModal
-        close={() => setQuickLinksModalVisible(false)}
-        visible={quickLinksModalVisible}
-        initialLinks={quickLinks}
-        onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
-      />
-
-      <ModuleUpdateModal
-        onRequestClose={() => setInstallingFirmware(false)}
-        visible={installingFirmware}
-        binSizeBytes={updateSize}
-        version={updateVersion}
-        description={updateDescription}
-      />
-    </>
+        <EditQuickLinksModal
+          close={() => setQuickLinksModalVisible(false)}
+          visible={quickLinksModalVisible}
+          initialLinks={quickLinks}
+          onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+        />
+  
+        <ModuleUpdateModal
+          onRequestClose={() => setInstallingFirmware(false)}
+          visible={installingFirmware}
+          binSizeBytes={updateSize}
+          version={updateVersion}
+          description={updateDescription}
+        />
+      </>
   );
 }

@@ -1,5 +1,5 @@
 
-import { FlatList, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -10,7 +10,6 @@ import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { CommandInput, CommandOutput, CustomCommandStore } from "../../../Storage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmationModal } from "../../../Components/ConfirmationModal";
-import { useThrottle } from "../../../helper/Functions";
 import { ComponentModal } from "../../../Components/ComponentModal";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 
@@ -215,9 +214,9 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   }, [command.command?.length]);
 
   return (
-    <>
+    <SafeAreaView style={theme.container}>
       {/* MAIN Modify VIEW */}
-      <View style={theme.container}>
+      <View>
 
         <HeaderWithBackButton
           backText={back}
@@ -465,6 +464,6 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           }}
         />
       </View>
-    </>
+    </SafeAreaView>
   )
 }

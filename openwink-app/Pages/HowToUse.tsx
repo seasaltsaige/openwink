@@ -1,5 +1,4 @@
-import { useTheme } from "@react-navigation/native";
-import { SafeAreaView, Text, View } from "react-native"
+import { SafeAreaView } from "react-native"
 import { useColorTheme } from "../hooks/useColorTheme";
 import { MainHeader } from "../Components";
 
@@ -8,8 +7,8 @@ export function HowToUse() {
   const { theme } = useColorTheme();
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.tabContainer}>
       <MainHeader text="Help" />
-    </View>
+    </SafeAreaView>
   );
 }
