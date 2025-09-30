@@ -50,18 +50,17 @@ export function AppTheme() {
 
       <View style={theme.homeScreenButtonsContainer}>
         {
-          Object.keys(ColorTheme.themeNames).map((val, i) => (
+          ColorTheme.themeKeys.map((themeKey) =>
             <LongButton
-              key={val}
-              pressableStyle={val === currentTheme ? { backgroundColor: ColorTheme[val as keyof typeof ColorTheme.themeNames].buttonColor } : {}}
-              icons={{ names: [null, val === currentTheme ? "checkmark-circle" : "ellipse-outline"], size: [null, 22] }}
+              key={themeKey}
+              pressableStyle={themeKey === themeName ? { backgroundColor: ColorTheme[themeKey].buttonColor } : {}}
+              icons={{ names: [null, themeKey === themeName ? "checkmark-circle" : "ellipse-outline"], size: [null, 22] }}
               onPress={() => {
-                setCurrentTheme(val as keyof typeof ColorTheme.themeNames);
-                setTheme(val as keyof typeof ColorTheme.themeNames);
+                setTheme(themeKey);
               }}
-              text={ColorTheme.themeNames[val as keyof typeof ColorTheme.themeNames]}
+              text={ColorTheme.themeNames[themeKey]}
             />
-          ))
+          )
         }
 
       </View>

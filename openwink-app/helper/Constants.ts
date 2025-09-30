@@ -188,26 +188,39 @@ export interface ThemeColors {
   disabledButtonTextColor: HexNumber;
   headerTextColor: HexNumber;
   bottomTabsBackground: HexNumber;
+  bottomTabsTextColor: HexNumber;
   bottomTabsPill: HexNumber;
   textColor: HexNumber;
 }
 
 export namespace ColorTheme {
 
-  export const themeNames = {
+  export const themeKeys = [
+    "crystalWhite",
+    "brilliantBlack",
+    "classicRed",
+    "sunburstYellow",
+    "marinerBlue",
+    "britishRacingGreen",
+  ] as const;
+
+  export type ThemeKey = typeof themeKeys[number];
+
+  export const themeNames: Record<ThemeKey, string> = {
     crystalWhite: "Crystal White",
     brilliantBlack: "Brilliant Black",
     classicRed: "Classic Red",
     sunburstYellow: "Sunburst Yellow",
     marinerBlue: "Mariner Blue",
     britishRacingGreen: "British Racing Green",
-  }
+  };
 
 
   export const crystalWhite: ThemeColors = {
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
     bottomTabsBackground: "#ffffff",
+    bottomTabsTextColor: "#141414",
     bottomTabsPill: "#f5ebdf",
     dropdownColor: "#e8e8e8",
     buttonColor: "#bd9664",
@@ -222,6 +235,7 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
     bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#efe6e6",
     dropdownColor: "#2F2F32",
     buttonColor: "#550000", // Burgundy (default)
@@ -236,6 +250,7 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
+    bottomTabsTextColor: "#141414",
     bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#c8102e", // Classic Red
@@ -250,6 +265,7 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
+    bottomTabsTextColor: "#141414",
     bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#ffcc00", // Sunburst Yellow
@@ -264,6 +280,7 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
+    bottomTabsTextColor: "#141414",
     bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#0033a0", // Marina Blue
@@ -278,6 +295,7 @@ export namespace ColorTheme {
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
+    bottomTabsTextColor: "#141414",
     bottomTabsPill: "#ffffff",
     dropdownColor: "#37373b",
     buttonColor: "#004d26", // British Racing Green
