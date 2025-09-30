@@ -1,22 +1,21 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import { useColorTheme } from "../../../hooks/useColorTheme";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useReducer, useState } from "react";
-import { useBLE } from "../../../hooks/useBLE";
-import VerticalSlider from "rn-vertical-slider-matyno";
-import { HeaderWithBackButton } from "../../../Components";
-import { TooltipHeader } from "../../../Components";
+import { useReducer } from "react";
+import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import IonIcons from "@expo/vector-icons/Ionicons";
+import { useRoute } from "@react-navigation/native";
+import VerticalSlider from "rn-vertical-slider-matyno";
+
+import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
+import { useBLE } from "../../../hooks/useBLE";
+import { useColorTheme } from "../../../hooks/useColorTheme";
 
 export function SleepyEyeSettings() {
 
   const { colorTheme, theme } = useColorTheme();
-  const { device, leftStatus, rightStatus, isScanning, isConnecting, leftSleepyEye, rightSleepyEye, setSleepyEyeValues } = useBLE();
-  const navigation = useNavigation();
+  const { device, leftStatus, rightStatus, leftSleepyEye, rightSleepyEye, setSleepyEyeValues } = useBLE();
   const route = useRoute();
   //@ts-ignore
-  const { back, backHumanReadable } = route.params;
+  const { backHumanReadable } = route.params;
 
   const [headlightPosition, dispatchHeadlightPosition] = useReducer((state: { left: number; right: number }, action: { side: "left" | "right"; percentage: number }) => {
     if (action.side === "left")

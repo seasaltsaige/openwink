@@ -1,21 +1,23 @@
 
 import { FlatList, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useColorTheme } from "../../../hooks/useColorTheme";
-import { HeaderWithBackButton, TooltipHeader } from "../../../Components";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
+import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
+
+import { useColorTheme } from "../../../hooks/useColorTheme";
+import {
+  HeaderWithBackButton,
+  TooltipHeader,
+  ConfirmationModal,
+  ComponentModal
+} from "../../../Components";
 import { CommandInput, CommandOutput, CustomCommandStore } from "../../../Storage";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ConfirmationModal } from "../../../Components/ConfirmationModal";
-import { ComponentModal } from "../../../Components/ComponentModal";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 
-// import DraggableFlatList, { RenderItem, DraggableFlatListProps, RenderItemParams, RenderPlaceholder, } from "react-native-draggable-flatlist";
-
-import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 export enum ModifyType {
   EDIT,

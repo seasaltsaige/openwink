@@ -3,11 +3,11 @@ import { StatusBar, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
+import { useLinkBuilder } from "@react-navigation/native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+
 import { useBLE } from "./hooks/useBLE";
 import { useColorTheme } from "./hooks/useColorTheme";
-import { useLinkBuilder } from "@react-navigation/native";
-
-import Ionicons from "@expo/vector-icons/Ionicons";
 
 import {
   AppTheme,

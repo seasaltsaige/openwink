@@ -1,8 +1,9 @@
 import { ScrollView } from "react-native";
-import { useColorTheme } from "../../hooks/useColorTheme";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { HeaderWithBackButton } from "../../Components";
+import { useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { useColorTheme } from "../../hooks/useColorTheme";
+import { HeaderWithBackButton } from "../../Components";
 
 export function TermsOfUse() {
 

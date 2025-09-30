@@ -1,18 +1,23 @@
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
-import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useBLE } from "../../../hooks/useBLE";
-import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, QuickLinksStore, SleepyEyeStore, ThemeStore } from "../../../Storage";
-import ToggleSwitch from "toggle-switch-react-native";
-import { ConfirmationModal, LongButton } from "../../../Components";
-import { HeaderWithBackButton } from "../../../Components";
-
 import Toast from "react-native-toast-message";
-import Storage from "../../../Storage/Storage";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ToggleSwitch from "toggle-switch-react-native";
 
+import {
+  AutoConnectStore,
+  CustomCommandStore,
+  CustomOEMButtonStore,
+  CustomWaveStore,
+  FirmwareStore,
+  QuickLinksStore,
+  SleepyEyeStore
+} from "../../../Storage";
+import { ConfirmationModal, LongButton, HeaderWithBackButton } from "../../../Components";
+import { useBLE } from "../../../hooks/useBLE";
+import { useColorTheme } from "../../../hooks/useColorTheme";
 
 const moduleSettingsData: Array<{
   pageName: string;

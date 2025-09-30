@@ -1,9 +1,7 @@
 import WifiManager from "react-native-wifi-reborn";
-
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
 import { UPDATE_URL } from "../Constants";
 import { generatePassword } from "../Functions";
-import Toast from "react-native-toast-message";
 
 type FirmwareType = `${number}.${number}.${number}`;
 

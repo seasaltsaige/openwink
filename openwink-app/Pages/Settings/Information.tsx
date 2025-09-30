@@ -1,22 +1,40 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useColorTheme } from "../../hooks/useColorTheme";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useBLE } from "../../hooks/useBLE";
-import { ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
+import * as Application from "expo-application";
+import BottomSheet from "@gorhom/bottom-sheet";
+
+import { getDeviceUUID } from "../../helper/Functions";
+import { CommandSequenceBottomSheet, HeaderWithBackButton } from "../../Components";
+import {
+  ColorTheme,
+  countToEnglish,
+  DefaultCommandValueEnglish,
+  buttonBehaviorMap
+} from "../../helper/Constants";
 import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
 import { ButtonBehaviors, Presses } from "../../helper/Types";
-import * as Application from "expo-application";
-import { CommandSequenceBottomSheet, HeaderWithBackButton } from "../../Components";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { getDeviceUUID } from "../../helper/Functions";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useColorTheme } from "../../hooks/useColorTheme";
+import { useBLE } from "../../hooks/useBLE";
 
 export function Information() {
 
   const { colorTheme, theme, themeName } = useColorTheme();
-  const { mac, firmwareVersion, device, isScanning, isConnecting, leftStatus, rightStatus, waveDelayMulti, oemCustomButtonEnabled, autoConnectEnabled, buttonDelay } = useBLE();
+  const {
+    mac,
+    firmwareVersion,
+    device,
+    isScanning,
+    isConnecting,
+    leftStatus,
+    rightStatus,
+    waveDelayMulti,
+    oemCustomButtonEnabled,
+    autoConnectEnabled,
+    buttonDelay
+  } = useBLE();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [displayedCommand, setDisplayedCommand] = useState(null as CommandOutput | null);
@@ -92,11 +110,11 @@ export function Information() {
 
   return (
     <SafeAreaView style={theme.container}>
-        <HeaderWithBackButton
-          backText={back}
-          headerText="System Info"
-          headerTextStyle={theme.settingsHeaderText}
-        />
+      <HeaderWithBackButton
+        backText={back}
+        headerText="System Info"
+        headerTextStyle={theme.settingsHeaderText}
+      />
 
       <ScrollView contentContainerStyle={theme.infoContainer}>
 

@@ -1,4 +1,5 @@
 import { ActivityIndicator, Modal, Text, View } from "react-native";
+
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBLE } from "../hooks/useBLE";
 

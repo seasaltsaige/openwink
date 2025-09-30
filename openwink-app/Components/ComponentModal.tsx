@@ -1,9 +1,9 @@
+import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import IonIcons from "@expo/vector-icons/Ionicons";
+
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
 import { useColorTheme } from "../hooks/useColorTheme";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import { useEffect, useMemo, useState } from "react";
-import { toProperCase } from "../helper/Functions";
 
 interface IComponentModalProps {
   visible: boolean;

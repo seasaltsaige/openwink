@@ -1,9 +1,10 @@
 import { Pressable, SafeAreaView, Text, View } from "react-native";
+import { useRoute } from "@react-navigation/native";
+
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useBLE } from "../../hooks/useBLE";
 import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
 import { HeaderWithBackButton } from "../../Components";
+import { useBLE } from "../../hooks/useBLE";
 
 export function StandardCommands() {
 

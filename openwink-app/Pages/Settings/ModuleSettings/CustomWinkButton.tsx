@@ -1,20 +1,17 @@
-import { ActivityIndicator, Dimensions, Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from "react-native";
-import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useCallback, useEffect, useState } from "react";
+import { Modal, Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import RangeSlider from "react-native-sticky-range-slider";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
-import { useBLE } from "../../../hooks/useBLE";
 import ToggleSwitch from "toggle-switch-react-native";
-import Tooltip from "react-native-walkthrough-tooltip";
+
 import { CustomOEMButtonStore } from "../../../Storage";
-import { Presses } from "../../../helper/Types";
-import { ButtonBehaviors } from "../../../helper/Types";
-import RangeSlider from "react-native-sticky-range-slider";
+import { ButtonBehaviors, Presses } from "../../../helper/Types";
 import { BehaviorEnum, countToEnglish, buttonBehaviorMap } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
-import { HeaderWithBackButton } from "../../../Components";
-import { TooltipHeader } from "../../../Components";
-
+import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
+import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useBLE } from "../../../hooks/useBLE";
 
 const MIN = 100;
 const MAX = 750;

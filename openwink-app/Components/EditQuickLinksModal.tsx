@@ -1,11 +1,11 @@
-import { Text, View, Pressable, Modal, TouchableOpacity } from "react-native";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useColorTheme } from "../hooks/useColorTheme";
-import { SearchBarFilter } from "./SearchBarFilter";
-import { ScrollView } from "react-native-gesture-handler";
+import { Text, View, Pressable, Modal } from "react-native";
 import DragList, { DragListRenderItemInfo } from "react-native-draglist";
+import IonIcons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useColorTheme } from "../hooks/useColorTheme";
+import { SearchBarFilter } from ".";
 
 export type QuickLink = {
   navigation: {

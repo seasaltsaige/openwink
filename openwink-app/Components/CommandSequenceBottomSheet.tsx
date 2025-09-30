@@ -1,13 +1,17 @@
-import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView } from "@gorhom/bottom-sheet";
+import { useCallback, RefObject } from "react";
 import { Text, View } from "react-native";
-import { Pressable, ScrollView } from "react-native-gesture-handler";
-import { useColorTheme } from "../hooks/useColorTheme";
-import React, { useCallback } from "react";
-
-import IonIcons from "@expo/vector-icons/Ionicons";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+  BottomSheetView
+} from "@gorhom/bottom-sheet";
+import { ScrollView } from "react-native-gesture-handler";
 import Octicons from "@expo/vector-icons/Octicons";
+
+import { useColorTheme } from "../hooks/useColorTheme";
 import { CommandOutput } from "../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
+
 const COMMAND_TYPE_COLORS: {
   [key in DefaultCommandValue | "delay"]: `#${string}`
 } = {
@@ -26,7 +30,7 @@ const COMMAND_TYPE_COLORS: {
 }
 
 interface ICommandSequenceBottomSheet {
-  bottomSheetRef: React.RefObject<BottomSheet>;
+  bottomSheetRef: RefObject<BottomSheet>;
   command: CommandOutput,
   close: () => void;
 }

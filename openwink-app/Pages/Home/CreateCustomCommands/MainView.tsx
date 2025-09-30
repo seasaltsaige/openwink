@@ -1,14 +1,14 @@
 import { useCallback, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import IonIcons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandOutput, CustomCommandStore } from "../../../Storage";
-import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { CustomCommand } from "../../../Components/CustomCommand";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import { HeaderWithBackButton, SearchBarFilter } from "../../../Components";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { HeaderWithBackButton, SearchBarFilter, CustomCommand } from "../../../Components";
 import { ModifyType } from "./ModifyView";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 interface IMainViewProps {
   setModifyType: (type: ModifyType) => void;

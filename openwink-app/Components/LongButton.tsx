@@ -1,6 +1,7 @@
 import { Pressable, Text, View, ViewStyle } from "react-native";
-import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
+
+import { useColorTheme } from "../hooks/useColorTheme";
 
 interface ILongButtonProps {
   disabled?: boolean;

@@ -1,17 +1,16 @@
-import { Pressable, Text, TextStyle, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-// import { View } from "react-native-reanimated/lib/typescript/Animated";
-import { useColorTheme } from "../hooks/useColorTheme";
-
-import IonIcons from "@expo/vector-icons/Ionicons";
-// import MaterialIcons from "@react-native-vector-icons/material-design-icons";
-
-import Octicons from "@react-native-vector-icons/octicons";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import ToggleSwitch from "toggle-switch-react-native";
-import BottomSheet, { BottomSheetBackdrop, BottomSheetBackdropProps, BottomSheetView } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
+import IonIcons from "@expo/vector-icons/Ionicons";
+import Octicons from "@react-native-vector-icons/octicons";
+import ToggleSwitch from "toggle-switch-react-native";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps, BottomSheetView
+} from "@gorhom/bottom-sheet";
 
+import { useColorTheme } from "../hooks/useColorTheme";
 
 interface BaseSearchBarFilter<
   T extends ReadonlyArray<string>,

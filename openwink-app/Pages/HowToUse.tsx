@@ -1,4 +1,5 @@
 import { SafeAreaView } from "react-native"
+
 import { useColorTheme } from "../hooks/useColorTheme";
 import { MainHeader } from "../Components";
 

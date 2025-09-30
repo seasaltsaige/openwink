@@ -1,13 +1,16 @@
 import React, {
   createContext,
-  useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { BleManager, Device, ScanCallbackType, ScanMode } from 'react-native-ble-plx';
+import Toast from 'react-native-toast-message';
+import base64 from 'react-native-base64';
+import * as ExpoDevice from "expo-device";
+
 import {
   BUSY_CHAR_UUID,
   CUSTOM_BUTTON_UPDATE_UUID,
@@ -35,14 +38,18 @@ import {
   CLIENT_MAC_UUID,
   OTA_UUID,
 } from '../helper/Constants';
-import { AutoConnectStore, CommandInput, CommandOutput, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
-import base64 from 'react-native-base64';
-import { PermissionsAndroid, Platform } from 'react-native';
-import * as ExpoDevice from "expo-device";
+import {
+  AutoConnectStore,
+  CommandInput,
+  CustomOEMButtonStore,
+  CustomWaveStore,
+  DeviceMACStore,
+  FirmwareStore,
+  SleepyEyeStore
+} from '../Storage';
 import { getDeviceUUID, sleep, toProperCase } from '../helper/Functions';
 import { ButtonBehaviors, Presses } from '../helper/Types';
 import { buttonBehaviorMap } from "../helper/Constants";
-import Toast from 'react-native-toast-message';
 
 export type BleContextType = {
   device: Device | null;

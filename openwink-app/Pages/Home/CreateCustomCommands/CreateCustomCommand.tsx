@@ -1,15 +1,6 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useColorTheme } from "../../../hooks/useColorTheme";
-import IonIcons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { useBLE } from "../../../hooks/useBLE";
-import { ActivityIndicator } from "react-native";
-import { HeaderWithBackButton } from "../../../Components";
-import { DefaultCommandValue } from "../../../helper/Constants";
-import { CommandOutput, CustomCommandStore } from "../../../Storage";
-import { CustomCommand } from "../../../Components/CustomCommand";
+import { useState } from "react";
+
+import { CustomCommandStore } from "../../../Storage";
 import { MainView } from "./MainView";
 import { ModifyType, ModifyView } from "./ModifyView";
 

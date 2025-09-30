@@ -1,14 +1,14 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
-import { useBLE } from "../../../hooks/useBLE";
 import RangeSlider from "react-native-sticky-range-slider";
-import Tooltip from "react-native-walkthrough-tooltip";
-import { HeaderWithBackButton } from "../../../Components/HeaderWithBackButton";
-import { TooltipHeader } from "../../../Components";
-import { SafeAreaView } from "react-native-safe-area-context";
+
+import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
+import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useBLE } from "../../../hooks/useBLE";
+
 const MIN = 0;
 const MAX = 100;
 

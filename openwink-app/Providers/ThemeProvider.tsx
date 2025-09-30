@@ -1,7 +1,8 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { StyleSheet, TextStyle, ViewStyle } from "react-native";
+
 import { ColorTheme, ThemeColors } from "../helper/Constants";
 import { ThemeStore } from "../Storage";
-import { StyleSheet, TextStyle, ViewStyle } from "react-native";
 
 interface StyleSheetInterface {
   tabContainer: ViewStyle;

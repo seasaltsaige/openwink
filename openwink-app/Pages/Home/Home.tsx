@@ -1,18 +1,22 @@
-import { useFocusEffect, useNavigation, useNavigationState, useRoute, useTheme } from "@react-navigation/native";
-import { Pressable, SafeAreaView, ScrollView, StatusBar, Text, View, } from "react-native"
-import { ActivityIndicator } from "react-native";
-import { useColorTheme } from "../../hooks/useColorTheme";
+import { useEffect, useState } from "react";
+import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
+import { useNavigation, useRoute } from "@react-navigation/native";
+import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
-import { useBLE } from "../../hooks/useBLE";
-import { useCallback, useEffect, useState } from "react";
+
 import { AutoConnectStore, QuickLinksStore } from "../../Storage";
-import { EditQuickLinksModal, LongButton, QuickLink, ModuleUpdateModal } from "../../Components";
-import { MainHeader } from "../../Components";
+import {
+  EditQuickLinksModal,
+  LongButton,
+  QuickLink,
+  ModuleUpdateModal,
+  MainHeader
+} from "../../Components";
 import { getDeviceUUID, sleep } from "../../helper/Functions";
 import { OTA } from "../../helper/Handlers/OTA";
-import Toast from "react-native-toast-message";
-// import { EditQuickLinksModal, QuickLink } from "../../Components/EditQuickLinksModal";
+import { useColorTheme } from "../../hooks/useColorTheme";
+import { useBLE } from "../../hooks/useBLE";
 
 export function Home() {
 
@@ -350,22 +354,22 @@ export function Home() {
 
         </ScrollView>
 
-        </SafeAreaView>
+      </SafeAreaView>
 
-        <EditQuickLinksModal
-          close={() => setQuickLinksModalVisible(false)}
-          visible={quickLinksModalVisible}
-          initialLinks={quickLinks}
-          onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
-        />
-  
-        <ModuleUpdateModal
-          onRequestClose={() => setInstallingFirmware(false)}
-          visible={installingFirmware}
-          binSizeBytes={updateSize}
-          version={updateVersion}
-          description={updateDescription}
-        />
-      </>
+      <EditQuickLinksModal
+        close={() => setQuickLinksModalVisible(false)}
+        visible={quickLinksModalVisible}
+        initialLinks={quickLinks}
+        onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+      />
+
+      <ModuleUpdateModal
+        onRequestClose={() => setInstallingFirmware(false)}
+        visible={installingFirmware}
+        binSizeBytes={updateSize}
+        version={updateVersion}
+        description={updateDescription}
+      />
+    </>
   );
 }

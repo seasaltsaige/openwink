@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 import Storage from "../Storage/Storage";
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
@@ -19,7 +19,6 @@ export const hexToRgb = (hex: string) => {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : null;
-
 }
 
 export const getBackgroundColor = (color: string) => {

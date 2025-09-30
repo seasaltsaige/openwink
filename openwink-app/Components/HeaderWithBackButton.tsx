@@ -1,7 +1,8 @@
 import { ActivityIndicator, Pressable, Text, TextStyle, View } from "react-native";
-import { useColorTheme } from "../hooks/useColorTheme";
 import { useNavigation } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
+
+import { useColorTheme } from "../hooks/useColorTheme";
 import { useBLE } from "../hooks/useBLE";
 
 interface IHeaderWithBackButtonProps {

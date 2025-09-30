@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useColorTheme } from "../hooks/useColorTheme";
 import { Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Tooltip from "react-native-walkthrough-tooltip";
 
-
+import { useColorTheme } from "../hooks/useColorTheme";
 interface ITooltipHeaderProps {
   tooltipContent: React.ReactElement<any, string | React.JSXElementConstructor<any>>;
   tooltipTitle: string;

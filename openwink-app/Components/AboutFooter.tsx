@@ -1,4 +1,5 @@
 import { Linking, Pressable, Text, View } from "react-native";
+
 import { useColorTheme } from "../hooks/useColorTheme";
 
 export function AboutFooter({ }) {

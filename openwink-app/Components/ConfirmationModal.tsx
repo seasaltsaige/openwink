@@ -1,6 +1,5 @@
-// TODO: Refactor ModuleSettings actions to use this component
+import { View, Modal, Pressable, Text } from "react-native";
 
-import { View, Modal, NativeSyntheticEvent, Pressable, Text } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 
 interface IConfirmationModalProps {

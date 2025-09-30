@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+
 import { useColorTheme } from "../hooks/useColorTheme";
 
 export function MainHeader({ text }: { text: string }) {
