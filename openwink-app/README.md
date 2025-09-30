@@ -44,11 +44,12 @@ Due to the fact that this project utilizes native components, such as WiFi and B
 
 Clone this repository and  ensure you are in the correct directory.
 ```bash
-> git clone https://github.com/seasaltsaige/winkduino-long-range.git
-> cd ./winkduino-long-range/winkduino-app
+> git clone https://github.com/seasaltsaige/openwink.git
+> cd ./openwink/openwink-app
 ```
 Ensure that you have all the relevant packages installed.
 ```bash
+> npm install -g expo # Install expo globally
 > npx expo install # Install relevant project packages
 > npm install -g eas-cli # Install global EAS CLI build tools
 ```
@@ -66,9 +67,27 @@ Check to ensure that your `eas.json` file contains a `development` build key.
 ```
 Make sure you have an [expo.dev](https://expo.dev/) account, and you log into it using the [eas-cli](https://github.com/expo/eas-cli?tab=readme-ov-file#eas-accountlogin).
 
+Create a new project in [Expo](https://expo.dev/).
+
+Login with eas-cli
+```bash
+> eas login
+```
+
+Create a `.env` file from the `.env.template` and fill in your variables.
+```bash
+# Won't overwrite if .env already exists
+> cp -n .env.template .env
+```
+
+Initialize the project
+```bash
+> eas init
+```
+
 Start your build
 ```bash
-> eas build --profile development --platform [ios|android]
+> eas build:dev --profile development --platform [ios|android]
 ```
 Once the build finishes, you will receive a QR code to install the build artifact on your device. Once you do so, you will need to start the development server on your laptop/desktop. Ensure you are connected to the same network on both devices, otherwise you will be unable to connect to the development server.
 

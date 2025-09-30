@@ -49,6 +49,7 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "@types/react-native-base64": "^0.2.2",
+    "dotenv": "^17.2.2",
     "typescript": "^5.3.3"
   },
   "private": true
