@@ -68,7 +68,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
         };
 
 
-        let iconName: any;
+        let iconName: 'home' | 'home-outline' | 'help-circle' | 'help-circle-outline' | 'settings' | 'settings-outline' = 'home';
 
         if (route.name === "Home") iconName = isFocused ? 'home' : 'home-outline';
         else if (route.name === "Help") iconName = isFocused ? "help-circle" : "help-circle-outline" as const;
@@ -86,7 +86,7 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             onLongPress={onLongPress}
           >
             <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
-              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.headerTextColor} />
+              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor} />
               {
                 isFocused ? (
                   <Text style={theme.bottomTabsPillFocusedText}>
@@ -159,6 +159,7 @@ export function AppNavigator() {
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);
+
   return (
     <>
       <Stack.Navigator screenOptions={{
@@ -183,7 +184,6 @@ export function AppNavigator() {
         <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
 
       </Stack.Navigator>
-
 
       <Toast config={toastConfig} />
     </>
