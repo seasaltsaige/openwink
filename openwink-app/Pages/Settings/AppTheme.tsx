@@ -1,11 +1,11 @@
 import { Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useNavigation, useNavigationState, useRoute } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import { useRoute } from "@react-navigation/native";
 import { ColorTheme } from "../../helper/Constants";
 import { LongButton } from "../../Components/LongButton";
 import { HeaderWithBackButton } from "../../Components";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function AppTheme() {
   const {
@@ -13,22 +13,15 @@ export function AppTheme() {
     themeName,
     theme,
     setTheme,
-    update,
     reset,
   } = useColorTheme();
 
-  const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
-  const [currentTheme, setCurrentTheme] = useState("brilliantBlack" as keyof typeof ColorTheme.themeNames);
-
-  useFocusEffect(() => {
-    setCurrentTheme(themeName);
-  });
 
   return (
-    <View style={theme.container}>
+    <SafeAreaView style={theme.container}>
       <HeaderWithBackButton
         backText={back}
         headerText="App Theme"
@@ -50,18 +43,17 @@ export function AppTheme() {
 
       <View style={theme.homeScreenButtonsContainer}>
         {
-          Object.keys(ColorTheme.themeNames).map((val, i) => (
+          ColorTheme.themeKeys.map((themeKey) =>
             <LongButton
-              key={val}
-              pressableStyle={val === currentTheme ? { backgroundColor: ColorTheme[val as keyof typeof ColorTheme.themeNames].buttonColor } : {}}
-              icons={{ names: [null, val === currentTheme ? "checkmark-circle" : "ellipse-outline"], size: [null, 22] }}
+              key={themeKey}
+              pressableStyle={themeKey === themeName ? { backgroundColor: ColorTheme[themeKey].buttonColor } : {}}
+              icons={{ names: [null, themeKey === themeName ? "checkmark-circle" : "ellipse-outline"], size: [null, 22] }}
               onPress={() => {
-                setCurrentTheme(val as keyof typeof ColorTheme.themeNames);
-                setTheme(val as keyof typeof ColorTheme.themeNames);
+                setTheme(themeKey);
               }}
-              text={ColorTheme.themeNames[val as keyof typeof ColorTheme.themeNames]}
+              text={ColorTheme.themeNames[themeKey]}
             />
-          ))
+          )
         }
 
       </View>
@@ -77,6 +69,6 @@ export function AppTheme() {
           Reset theme
         </Text>
       </Pressable>
-    </View>
+    </SafeAreaView>
   )
 }

@@ -1,16 +1,17 @@
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useBLE } from "../../hooks/useBLE";
 import { ColorTheme, countToEnglish, DefaultCommandValueEnglish, buttonBehaviorMap } from "../../helper/Constants";
 import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
 import { ButtonBehaviors, Presses } from "../../helper/Types";
 import * as Application from "expo-application";
-import { CommandSequenceBottomSheet } from "../../Components";
+import { CommandSequenceBottomSheet, HeaderWithBackButton } from "../../Components";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { getDeviceUUID } from "../../helper/Functions";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function Information() {
 
@@ -90,33 +91,12 @@ export function Information() {
   const { back } = route.params;
 
   return (
-    <View style={theme.container}>
-
-      <View style={theme.headerContainer}>
-        <Pressable
-          style={theme.backButtonContainer}
-          onPress={() => navigation.goBack()}
-        >
-          {
-            ({ pressed }) => (
-              <>
-                <IonIcons style={theme.backButtonContainerIcon} name="chevron-back-outline" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={23} />
-
-                <Text style={pressed ? theme.backButtonContainerTextPressed : theme.backButtonContainerText}>
-                  {back}
-                </Text>
-              </>
-            )
-          }
-        </Pressable>
-
-
-        <Text style={theme.subSettingHeaderText}>
-          System Info
-        </Text>
-
-      </View>
-
+    <SafeAreaView style={theme.container}>
+        <HeaderWithBackButton
+          backText={back}
+          headerText="System Info"
+          headerTextStyle={theme.settingsHeaderText}
+        />
 
       <ScrollView contentContainerStyle={theme.infoContainer}>
 
@@ -275,6 +255,6 @@ export function Information() {
         command={displayedCommand!}
       />
 
-    </View >
+    </SafeAreaView>
   )
 }

@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { View } from "react-native"
+import { SafeAreaView, View } from "react-native"
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { AboutFooter, LongButton } from "../../Components";
 import { MainHeader } from "../../Components";
@@ -7,14 +7,13 @@ import { SETTINGS_DATA } from "../../helper/Constants";
 
 export function Settings() {
 
-  const { colorTheme, theme } = useColorTheme();
+  const { theme } = useColorTheme();
 
   const navigate = useNavigation();
   const route = useRoute();
 
   return (
-    <>
-      <View style={theme.container}>
+      <SafeAreaView style={theme.tabContainer}>
         <MainHeader text="Settings" />
 
         <View style={theme.homeScreenButtonsContainer}>
@@ -39,7 +38,6 @@ export function Settings() {
 
         <AboutFooter />
 
-      </View >
-    </>
+      </SafeAreaView>
   );
 }

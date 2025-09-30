@@ -11,6 +11,7 @@ import { HeaderWithBackButton } from "../../../Components";
 
 import Toast from "react-native-toast-message";
 import Storage from "../../../Storage/Storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 
 const moduleSettingsData: Array<{
@@ -127,7 +128,7 @@ export function ModuleSettings() {
 
   return (
     <>
-      <View style={theme.moduleSettingsContainer}>
+      <SafeAreaView style={theme.moduleSettingsContainer}>
         <HeaderWithBackButton
           backText={back}
           headerText="Module"
@@ -223,7 +224,7 @@ export function ModuleSettings() {
           }
 
         </View>
-      </View>
+      </SafeAreaView>
 
 
       <ConfirmationModal
