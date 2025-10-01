@@ -44,6 +44,8 @@ export abstract class OTA {
         }
       );
 
+      if (!firmwareResponse.ok) return false;
+
       const firmwareBlob = await firmwareResponse.blob();
       const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
 
