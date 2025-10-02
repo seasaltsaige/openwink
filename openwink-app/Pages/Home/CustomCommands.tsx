@@ -16,6 +16,7 @@ import { DefaultCommandValueEnglish } from "../../helper/Constants";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { HeadlightStatus } from "../../Components/HeadlightStatus";
 
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
@@ -92,6 +93,8 @@ export function CustomCommands() {
       />
 
       <View style={theme.contentContainer}>
+
+        <HeadlightStatus />
 
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", width: "90%", columnGap: 15, marginTop: 10, }}>
           <SearchBarFilter

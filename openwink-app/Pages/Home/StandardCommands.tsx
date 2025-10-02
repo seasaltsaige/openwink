@@ -6,6 +6,7 @@ import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants"
 import { HeaderWithBackButton } from "../../Components";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { HeadlightStatus } from "../../Components/HeadlightStatus";
 
 export function StandardCommands() {
 
@@ -45,30 +46,7 @@ export function StandardCommands() {
 
       <View style={theme.contentContainer}>
 
-        <View style={theme.headlightStatusContainer}>
-          {
-            ([
-              ["Left", leftStatus],
-              ["Right", rightStatus]
-            ] as const).map(([label, status], i) => (
-              <View
-                key={i}
-                style={theme.headlightStatusSideContainer}
-              >
-                {/* HEADLIGHT STATUS TEXT */}
-                <Text style={theme.headlightStatusText}>
-                  {label}: {status === 0 ? "Down" : status === 1 ? "Up" : `${(status * 100).toFixed(0)}%`}
-                </Text>
-
-                {/* HEADLIGHT STATUS BAR */}
-                <View style={theme.headlightStatusBarUnderlay}>
-                  <View style={[theme.headlightStatusBarOverlay, { width: `${status * 100}%`, }]} />
-                </View>
-              </View>
-            ))}
-        </View>
-
-
+        <HeadlightStatus />
 
         <View style={theme.defaultCommandSectionContainer}>
           <Text style={theme.commandSectionHeader}>
