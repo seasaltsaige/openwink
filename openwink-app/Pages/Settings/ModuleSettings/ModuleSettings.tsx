@@ -16,8 +16,10 @@ import {
   SleepyEyeStore
 } from "../../../Storage";
 import { ConfirmationModal, LongButton, HeaderWithBackButton } from "../../../Components";
-import { useBLE } from "../../../hooks/useBLE";
 import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useBleConnection } from "../../../Providers/BleConnectionProvider";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -46,7 +48,22 @@ export function ModuleSettings() {
   const { colorTheme, theme, reset } = useColorTheme();
   const navigate = useNavigation();
 
-  const { device, manager, isScanning, isConnecting, scanForModule, autoConnectEnabled, setAutoConnect, unpair, enterDeepSleep, resetModule } = useBLE();
+  const {
+    manager,
+    isScanning,
+    isConnecting,
+    scanForModule,
+    autoConnectEnabled,
+    setAutoConnect,
+    unpair,
+  } = useBleConnection();
+
+  const { isConnected } = useBleMonitor();
+
+  const {
+    enterDeepSleep,
+    resetModule
+  } = useBleCommand();
 
   const route = useRoute();
   //@ts-ignore
@@ -84,7 +101,7 @@ export function ModuleSettings() {
   }
 
   const putModuleToSleep = async () => {
-    if (!device) return;
+    if (!isConnected) return;
     await enterDeepSleep();
 
     Toast.show({
@@ -97,7 +114,7 @@ export function ModuleSettings() {
   }
 
   const forgetModulePairing = async () => {
-    if (!device) return;
+    if (!isConnected) return;
     await unpair();
 
     Toast.show({
@@ -115,7 +132,7 @@ export function ModuleSettings() {
     if (val) {
       AutoConnectStore.enable();
       setAutoConnect(true);
-      if (!device && !isConnecting && !isScanning) scanForModule();
+      if (!isConnected && !isConnecting && !isScanning) scanForModule();
     } else {
       AutoConnectStore.disable();
       setAutoConnect(false);
@@ -245,7 +262,7 @@ export function ModuleSettings() {
           else deleteStoredModuleData();
         }}
         animationType="fade"
-        disableConfirmation={!device}
+        disableConfirmation={!isConnected}
       />
 
     </>

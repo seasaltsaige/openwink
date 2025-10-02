@@ -9,8 +9,10 @@ import {
 import { PortalProvider } from '@gorhom/portal';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { BleCommandProvider } from './Providers/BleCommandProvider';
+import { BleMonitorProvider } from './Providers/BleMonitorProvider';
+import { BleConnectionProvider } from './Providers/BleConnectionProvider';
 
-import { BleProvider } from './Providers/BleProvider';
 import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
 
@@ -28,15 +30,19 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <BleProvider>
-          <ThemeProvider>
-            <GestureHandlerRootView>
-              <PortalProvider>
-                <AppNavigator />
-              </PortalProvider>
-            </GestureHandlerRootView>
-          </ThemeProvider>
-        </BleProvider>
+        <BleMonitorProvider>
+          <BleConnectionProvider>
+            <BleCommandProvider>
+              <ThemeProvider>
+                <GestureHandlerRootView>
+                  <PortalProvider>
+                    <AppNavigator />
+                  </PortalProvider>
+                </GestureHandlerRootView>
+              </ThemeProvider>
+            </BleCommandProvider>
+          </BleConnectionProvider>
+        </BleMonitorProvider>
       </NavigationContainer>
     </SafeAreaProvider>
   );

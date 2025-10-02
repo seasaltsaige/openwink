@@ -4,7 +4,8 @@ import { useRoute } from "@react-navigation/native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
 import { HeaderWithBackButton } from "../../Components";
-import { useBLE } from "../../hooks/useBLE";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function StandardCommands() {
 
@@ -14,29 +15,23 @@ export function StandardCommands() {
   const { back } = route.params;
 
   const {
-    leftStatus,
-    rightStatus,
-    device,
-    isConnecting,
-    isScanning,
-    headlightsBusy,
     sendDefaultCommand,
     sendSleepyEye,
-    sendSyncCommand
-  } = useBLE();
+    sendSyncCommand,
+  } = useBleCommand();
 
-  const deviceConnected = device &&
-    !headlightsBusy &&
-    !isScanning &&
-    !isConnecting;
+  const {
+    isConnected: deviceConnected,
+    leftStatus,
+    rightStatus,
+    headlightsBusy
+  } = useBleMonitor();
 
   const canSendMainCommands = deviceConnected &&
-    (leftStatus === 0 || leftStatus === 1) &&
-    (rightStatus === 0 || rightStatus === 1);
+    !headlightsBusy;
 
   const canSync = deviceConnected &&
-    (leftStatus !== 0 && leftStatus !== 1) &&
-    (rightStatus !== 0 && rightStatus !== 1);
+    !headlightsBusy && (leftStatus !== rightStatus);
 
   return (
     <SafeAreaView style={theme.container}>

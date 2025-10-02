@@ -16,7 +16,9 @@ import {
 import { getDeviceUUID, sleep } from "../../helper/Functions";
 import { OTA } from "../../helper/Handlers/OTA";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { useBLE } from "../../hooks/useBLE";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 
 export function Home() {
 
@@ -39,15 +41,18 @@ export function Home() {
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
 
   const {
-    device,
-    disconnectFromModule,
+    disconnect: disconnectFromModule,
     isConnecting,
     isScanning,
     requestPermissions,
     scanForModule,
+  } = useBleConnection();
+
+  const { isConnected } = useBleMonitor();
+
+  const {
     startOTAService,
-    updateFirmwareVersion
-  } = useBLE();
+  } = useBleCommand();
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
@@ -89,7 +94,6 @@ export function Home() {
     setInstallingFirmware(false);
 
     if (updateStatus) {
-      updateFirmwareVersion(OTA.latestVersion);
       setModuleUpdateAvailable(false);
       setFetchingModuleUpdateInfo(false);
       Toast.show({
@@ -124,22 +128,21 @@ export function Home() {
   useEffect(() => {
     getDeviceUUID();
     const autoConn = AutoConnectStore.get();
-    if (autoConn && !device) scanForDevice();
+    if (autoConn && !isConnected) scanForDevice();
     (async () => {
       await checkAppUpdate();
     })();
   }, []);
 
   useEffect(() => {
-    // updateFirmwareVersion("0.3.5");
     (async () => {
-      if (device !== null) {
+      if (isConnected) {
         setFetchingModuleUpdateInfo(true);
         await sleep(1000);
         fetchModuleUpdate();
       }
     })();
-  }, [device]);
+  }, [isConnected]);
 
 
   return (
@@ -150,7 +153,7 @@ export function Home() {
         <ScrollView contentContainerStyle={theme.contentContainer} >
 
           {
-            device ? (
+            isConnected ? (
               <Pressable
                 style={({ pressed }) => pressed ? theme.homeScreenConnectionButtonPressed : theme.homeScreenConnectionButton}
                 onPress={() => disconnectFromModule()}
@@ -332,7 +335,7 @@ export function Home() {
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
-                      {!device ?
+                      {!isConnected ?
                         "Connect to Wink Module for updates" :
                         fetchingModuleUpdateInfo ?
                           "Checking for Module software update" :
@@ -341,7 +344,7 @@ export function Home() {
                     </Text>
                   </View>
                   {
-                    !device ?
+                    !isConnected ?
                       <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} /> :
                       fetchingModuleUpdateInfo ?
                         <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :

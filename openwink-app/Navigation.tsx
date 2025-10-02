@@ -5,8 +5,6 @@ import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/b
 import { PlatformPressable, Text } from "@react-navigation/elements";
 import { useLinkBuilder } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
-import { useBLE } from "./hooks/useBLE";
 import { useColorTheme } from "./hooks/useColorTheme";
 
 import {
@@ -25,6 +23,7 @@ import {
   SleepyEyeSettings,
 } from "./Pages";
 import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
+import { useBleConnection } from "./Providers/BleConnectionProvider";
 
 const Tab = createBottomTabNavigator();
 
@@ -155,7 +154,7 @@ export function AppNavigator() {
     )
   }
 
-  const { disconnectFromModule } = useBLE();
+  const { disconnect: disconnectFromModule } = useBleConnection();
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);

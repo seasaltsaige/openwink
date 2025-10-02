@@ -7,7 +7,8 @@ import RangeSlider from "react-native-sticky-range-slider";
 
 import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { useBLE } from "../../../hooks/useBLE";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const MIN = 0;
 const MAX = 100;
@@ -17,7 +18,8 @@ export function WaveDelaySettings() {
 
   const { colorTheme, theme } = useColorTheme();
 
-  const { waveDelayMulti, device, updateWaveDelayMulti } = useBLE();
+  const { waveDelayMulti, updateWaveDelayMulti } = useBleCommand();
+  const { isConnected } = useBleMonitor();
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -74,11 +76,11 @@ export function WaveDelaySettings() {
             {value}%
           </Text>
         )}
-        renderThumb={() => <View style={!device ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
-        renderRailSelected={() => <View style={!device ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
+        renderThumb={() => <View style={!isConnected ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
+        renderRailSelected={() => <View style={!isConnected ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
         renderRail={() => <View style={theme.rangeSliderRail} />}
         disableRange
-        disabled={!device}
+        disabled={!isConnected}
       />
 
 
@@ -90,8 +92,8 @@ export function WaveDelaySettings() {
 
       <View style={theme.rangeSliderButtonsView}>
         <Pressable
-          style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-          disabled={!device}
+          style={({ pressed }) => !isConnected ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+          disabled={!isConnected}
           onPress={() => updateWaveDelayMulti(1.0)}
         >
           <Text style={theme.rangeSliderButtonsText}>
@@ -102,8 +104,8 @@ export function WaveDelaySettings() {
 
 
         <Pressable
-          style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-          disabled={!device}
+          style={({ pressed }) => !isConnected ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+          disabled={!isConnected}
           onPress={() => updateWaveDelayMulti(min / 100)}
         >
           <Text style={theme.rangeSliderButtonsText}>
@@ -131,14 +133,14 @@ export function WaveDelaySettings() {
             { value: 1.0, name: "Slowest", icon: "time-outline" },
           ].map((obj, key) => (
             <Pressable
-              style={({ pressed }) => !device ? theme.rangeSliderButtonsDisabled : (
+              style={({ pressed }) => !isConnected ? theme.rangeSliderButtonsDisabled : (
                 obj.value === min / 100 ?
                   theme.rangeSliderButtonsPressed
                   :
                   pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons
               )}
               key={key}
-              disabled={!device}
+              disabled={!isConnected}
               onPress={() => updateWaveDelayMulti(obj.value)}
             >
               <Text style={theme.rangeSliderButtonsText}>
