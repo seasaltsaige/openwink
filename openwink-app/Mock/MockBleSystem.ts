@@ -379,11 +379,44 @@ export class MockDevice implements Partial<Device> {
   ): Promise<void> {
     const clampedTarget = Math.max(0, Math.min(100, targetPercentage));
     const currentValue = parseInt(mockStore.getValue(statusUUID));
-
-    const currentPercentage = this.decodeValueToPercentage(currentValue);
+    let currentPercentage = this.decodeValueToPercentage(currentValue);
 
     if (currentPercentage === clampedTarget) {
       return; // Already at target
+    }
+
+    if (currentPercentage !== 0 && currentPercentage !== 100) {
+      // Currently in intermediate position - must go all the way up first
+      await this.animateDirectly(statusUUID, currentPercentage, 100, duration / 2);
+      currentPercentage = 100;
+      if (clampedTarget === 100) {
+        return;
+      }
+    }
+
+    if (currentPercentage === 100) {
+      // Must go all the way down first
+      await this.animateDirectly(statusUUID, currentPercentage, 0, duration);
+      currentPercentage = 0;
+      if (clampedTarget === 0) {
+        return;
+      }
+    }
+
+    if (currentPercentage === 0) {
+      // Now can go up to the target
+      await this.animateDirectly(statusUUID, 0, clampedTarget, duration);
+    }
+  }
+
+  private async animateDirectly(
+    statusUUID: string,
+    fromPercentage: number,
+    toPercentage: number,
+    duration: number
+  ): Promise<void> {
+    if (fromPercentage === toPercentage) {
+      return;
     }
 
     const steps = 10;
@@ -393,10 +426,10 @@ export class MockDevice implements Partial<Device> {
       await this.simulateDelay(stepDuration);
 
       const progress = i / steps;
-      const currentPosition = currentPercentage + (clampedTarget - currentPercentage) * progress;
+      const currentPosition = fromPercentage + (toPercentage - fromPercentage) * progress;
       
       if (i === steps) {
-        mockStore.setValue(statusUUID, this.encodePercentageToValue(clampedTarget).toString());
+        mockStore.setValue(statusUUID, this.encodePercentageToValue(toPercentage).toString());
       } else {
         mockStore.setValue(statusUUID, this.encodePercentageToValue(currentPosition).toString());
       }
