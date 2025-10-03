@@ -122,12 +122,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "30%",
-                    backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: !deviceConnected ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   }
                 ])}
                 key={row.value}
                 onPress={() => sendDefaultCommand(row.value)}
-                disabled={!canSendMainCommands}
+                disabled={!deviceConnected}
               >
                 <Text style={theme.commandButtonText}>
                   {row.name}
