@@ -93,6 +93,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { device } = useBleConnection();
   const {
     headlightsBusy,
+    isSleepyEyeActive,
     leftStatus,
     rightStatus,
     motionValue,
@@ -381,9 +382,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return;
     }
 
-    // Only sync if headlights are in different positions
-    if (leftStatus === rightStatus) {
-      console.log('Headlights already aligned');
+    // Only sync if headlights are in sleepy eye position
+    if (isSleepyEyeActive) {
+      console.log('Headlights not in sleepy eye position, sync blocked');
       return;
     }
 

@@ -29,6 +29,7 @@ import { toProperCase } from '../helper/Functions';
 export type BleMonitorContextType = {
   isConnected: boolean;
   headlightsBusy: boolean;
+  isSleepyEyeActive: boolean;
   leftStatus: number;
   rightStatus: number;
   updateProgress: number;
@@ -447,9 +448,13 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [stopMonitoring]);
 
+  const isSleepyEyeActive = (leftStatus === 0 || leftStatus === 1) &&
+    (rightStatus === 0 || rightStatus === 1);
+
   const value: BleMonitorContextType = {
     isConnected,
     headlightsBusy,
+    isSleepyEyeActive,
     leftStatus,
     rightStatus,
     updateProgress,

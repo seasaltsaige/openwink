@@ -23,16 +23,15 @@ export function StandardCommands() {
 
   const {
     isConnected: deviceConnected,
-    leftStatus,
-    rightStatus,
-    headlightsBusy
+    headlightsBusy,
+    isSleepyEyeActive
   } = useBleMonitor();
 
   const canSendMainCommands = deviceConnected &&
-    !headlightsBusy;
+    !headlightsBusy && isSleepyEyeActive;
 
-  const canSync = deviceConnected &&
-    !headlightsBusy && (leftStatus !== rightStatus);
+  const canResetHeadlightPositions = deviceConnected &&
+    !headlightsBusy && !isSleepyEyeActive;
 
   return (
     <SafeAreaView style={theme.container}>
@@ -184,12 +183,12 @@ export function StandardCommands() {
                     theme.commandButton,
                     {
                       width: "48%",
-                      backgroundColor: !canSync ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                      backgroundColor: !canResetHeadlightPositions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     }
                   ])}
                   key={106}
                   onPress={sendSyncCommand}
-                  disabled={!canSync}
+                  disabled={!canResetHeadlightPositions}
                 >
                   <Text style={theme.commandButtonText}>
                     Reset
