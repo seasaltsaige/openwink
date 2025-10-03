@@ -39,6 +39,7 @@ void bothDown() {
 
 void bothBlink() {
 
+  // TODO: Can most likely be refactored to be more concise.
   if (leftStatus > 1 || rightStatus > 1) {
     // if headlights are in sleepy eye position, calculate delays to return
     double leftToSleepy = leftSleepyValue / 100;
@@ -166,29 +167,75 @@ void leftDown() {
 
 void leftWink() {
 
-  if (leftStatus != 1) {
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-    leftStatus = 1;
-  } else {
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    leftStatus = 0;
-  }
+  if (leftStatus > 1) {
+    // if headlights are in sleepy eye position, calculate delays to return
+    double leftToSleepy = leftSleepyValue / 100;
+    double leftToUp = (1 - leftToSleepy);
 
-  BLE::updateHeadlightChars();
-  delay(HEADLIGHT_MOVEMENT_DELAY);
 
-  if (leftStatus != 1) {
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-    leftStatus = 1;
+    // headlights have already moved partway up, so continue this
+
+    leftUp();
+
+    unsigned long initialTime = millis();
+    bool leftStatusReached = false;
+    while (!leftStatusReached) {
+      unsigned long timeElapsed = (millis() - initialTime);
+      if (!leftStatusReached && timeElapsed >= (leftToUp * HEADLIGHT_MOVEMENT_DELAY)) {
+        leftStatusReached = true;
+        digitalWrite(OUT_PIN_LEFT_UP, LOW);
+      }
+    }
+
+    setAllOff();
+    // Headlights up at this point
+
+    leftDown();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
+
+    leftUp();
+
+    // Return to sleepy
+    initialTime = millis();
+    leftStatusReached = false;
+    while (!leftStatusReached) {
+      unsigned long timeElapsed = (millis() - initialTime);
+      if (!leftStatusReached && timeElapsed >= (leftToSleepy * HEADLIGHT_MOVEMENT_DELAY)) {
+        leftStatusReached = true;
+        digitalWrite(OUT_PIN_LEFT_UP, LOW);
+      }
+    }
+
+    setAllOff();
+    leftStatus = leftSleepyValue + 10;
+    BLE::updateHeadlightChars();
   } else {
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    leftStatus = 0;
+
+    if (leftStatus != 1) {
+      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+      digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+      leftStatus = 1;
+    } else {
+      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+      digitalWrite(OUT_PIN_LEFT_UP, LOW);
+      leftStatus = 0;
+    }
+
+    BLE::updateHeadlightChars();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+
+    if (leftStatus != 1) {
+      digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+      digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+      leftStatus = 1;
+    } else {
+      digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+      digitalWrite(OUT_PIN_LEFT_UP, LOW);
+      leftStatus = 0;
+    }
+    BLE::updateHeadlightChars();
   }
-  BLE::updateHeadlightChars();
 }
 
 // Right
@@ -209,7 +256,6 @@ void rightDown() {
 }
 
 void rightWink() {
-
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
