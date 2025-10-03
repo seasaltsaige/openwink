@@ -82,6 +82,13 @@ export function CustomCommands() {
     return "play";
   }
 
+  const getCommandAction = (command: CommandOutput) => {
+    if (activeCommandName && activeCommandName === command.name) {
+      return "stop" as const;
+    }
+    return "start" as const;
+  }
+
   return (
     <SafeAreaView style={theme.container}>
 
@@ -163,7 +170,7 @@ export function CustomCommands() {
 
                     <View style={[theme.mainLongButtonPressableIcon, { flexDirection: "row", alignItems: "center", columnGap: 25 }]}>
                       <Pressable
-                        onPress={() => { handleCommandInteraction(command, "start"); }}
+                        onPress={() => { handleCommandInteraction(command, getCommandAction(command)); }}
                         hitSlop={10}
                         disabled={
                           isPlayButtonDisabled(command)
