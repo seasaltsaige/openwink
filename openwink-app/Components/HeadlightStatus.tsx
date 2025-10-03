@@ -2,11 +2,11 @@ import { Text, View, ViewStyle } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
 
-interface HeadlightStatusProps {
+interface IHeadlightStatusProps {
   style?: ViewStyle;
 }
 
-export function HeadlightStatus({ style }: HeadlightStatusProps) {
+export function HeadlightStatus({ style }: IHeadlightStatusProps) {
   const { theme } = useColorTheme();
   const { isConnected, leftStatus, rightStatus } = useBleMonitor();
 
