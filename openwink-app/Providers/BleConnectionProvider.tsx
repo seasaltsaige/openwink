@@ -21,7 +21,7 @@ import {
   UNPAIR_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore } from '../Storage';
-import { getDeviceUUID } from '../helper/Functions';
+import { getDeviceUUID, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
 import { MockBleManager } from '../Mock/MockBleSystem';
 import DeviceInfo from 'react-native-device-info';
@@ -261,8 +261,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           
           console.log(`Retrying connection in ${delay}ms...`);
-          
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await sleep(delay);
           await connectToDevice(deviceId, retryAttempt + 1);
         } else {
           // Max retries reached
