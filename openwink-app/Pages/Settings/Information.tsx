@@ -7,7 +7,7 @@ import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
 import { getDeviceUUID } from "../../helper/Functions";
-import { CommandSequenceBottomSheet, HeaderWithBackButton } from "../../Components";
+import { CommandSequenceBottomSheet, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
   countToEnglish,
@@ -127,48 +127,17 @@ export function Information() {
 
       <ScrollView contentContainerStyle={theme.infoContainer}>
 
-        {
-          ([
-            ["App Info", appInfo],
-            ["Module Info", deviceInfo],
-            ["Module Settings", deviceSettings],
-          ] as const).map(val => (
-
-            <View
-              style={theme.infoBoxOuter}
-              key={val[0]}
-            >
-              <Text style={theme.infoBoxOuterText}>
-                {val[0]}
-              </Text>
-
-              <View style={theme.infoBoxInner}>
-                {
-                  Object.keys(val[1]).map((key) => (
-                    <View
-                      style={theme.infoBoxInnerContentView}
-                      key={key}
-                    >
-
-
-                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
-                        {key}
-                      </Text>
-
-                      <Text style={theme.infoBoxInnerContentText}>
-                        {
-                          //@ts-ignore
-                          val[1][key]
-                        }
-                      </Text>
-                    </View>
-                  ))
-                }
-              </View>
-
-            </View>
-          ))
-        }
+        {[
+          { title: "App Info", data: appInfo },
+          { title: "Module Info", data: deviceInfo },
+          { title: "Module Settings", data: deviceSettings },
+        ].map((section) => (
+          <InfoBox
+            key={section.title}
+            title={section.title}
+            data={section.data}
+          />
+        ))}
 
         <View
           style={theme.infoBoxOuter}

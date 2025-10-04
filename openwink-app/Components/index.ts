@@ -10,3 +10,4 @@ export * from "./CommandSequenceBottomSheet";
 export * from "./AboutFooter";
 export * from "./EditQuickLinksModal";
 export * from "./ModuleUpdateModal";
+export * from "./InfoBox";
