@@ -465,27 +465,9 @@ export const BleProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       (leftStatus === ButtonStatus.DOWN && rightStatus === ButtonStatus.DOWN && command === DefaultCommandValue.BOTH_DOWN)) return;
 
     try {
-      setHeadlightsBusy(true);
       await device?.writeCharacteristicWithoutResponseForService(WINK_SERVICE_UUID, HEADLIGHT_CHAR_UUID, base64.encode(command.toString()));
-      if (command === DefaultCommandValue.BOTH_BLINK || command === DefaultCommandValue.LEFT_WINK || command === DefaultCommandValue.RIGHT_WINK)
-        setTimeout(() => setHeadlightsBusy(false), motionValue * 2);
-      else if (command === DefaultCommandValue.LEFT_WAVE || command === DefaultCommandValue.RIGHT_WAVE) {
-        let additionalDelayFromDiff = 0;
-
-        if (leftStatus !== rightStatus) additionalDelayFromDiff = motionValue;
-
-        const toEndMulti = 1.0 - waveDelayMulti;
-
-        setTimeout(() => setHeadlightsBusy(false),
-          ((motionValue * waveDelayMulti) * 3) +
-          ((motionValue * toEndMulti) * 2) +
-          additionalDelayFromDiff
-        );
-
-      } else setTimeout(() => setHeadlightsBusy(false), motionValue);
-      // setTimeout(() => setHeadlightsBusy(false), )
     } catch (err) {
-      setHeadlightsBusy(false);
+      console.log(err);
       // TODO: Handle ble command errors
     }
 
