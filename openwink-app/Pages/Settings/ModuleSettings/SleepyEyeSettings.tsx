@@ -6,13 +6,26 @@ import { useRoute } from "@react-navigation/native";
 import VerticalSlider from "rn-vertical-slider-matyno";
 
 import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
-import { useBLE } from "../../../hooks/useBLE";
 import { useColorTheme } from "../../../hooks/useColorTheme";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
 
 export function SleepyEyeSettings() {
 
   const { colorTheme, theme } = useColorTheme();
-  const { device, leftStatus, rightStatus, leftSleepyEye, rightSleepyEye, setSleepyEyeValues } = useBLE();
+  
+  const {
+    isConnected,
+    leftStatus,
+    rightStatus,
+  } = useBleMonitor();
+  
+  const {
+    leftSleepyEye,
+    rightSleepyEye,
+    setSleepyEyeValues
+  } = useBleCommand();
+
   const route = useRoute();
   //@ts-ignore
   const { backHumanReadable } = route.params;
@@ -31,7 +44,7 @@ export function SleepyEyeSettings() {
   }, { left: leftSleepyEye, right: rightSleepyEye });
 
   const disabledStatus =
-    (!device || ((leftStatus !== 1 && leftStatus !== 0) || (rightStatus !== 1 && rightStatus !== 0)));
+    (!isConnected || ((leftStatus !== 1 && leftStatus !== 0) || (rightStatus !== 1 && rightStatus !== 0)));
 
   return (
     <SafeAreaView style={theme.container}>

@@ -1,7 +1,7 @@
 import { ActivityIndicator, Modal, Text, View } from "react-native";
 
 import { useColorTheme } from "../hooks/useColorTheme";
-import { useBLE } from "../hooks/useBLE";
+import { useBleMonitor } from "../Providers/BleMonitorProvider";
 
 interface IModuleUpdateModal {
   version: string;
@@ -20,7 +20,7 @@ export function ModuleUpdateModal({
 }: IModuleUpdateModal) {
 
   const { colorTheme } = useColorTheme();
-  const { updateProgress, updatingStatus } = useBLE();
+  const { updateProgress, updatingStatus } = useBleMonitor();
 
   const updateSizeMB = binSizeBytes / 1000 / 1000;
   return (

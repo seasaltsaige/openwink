@@ -11,7 +11,8 @@ import { BehaviorEnum, countToEnglish, buttonBehaviorMap } from "../../../helper
 import { sleep } from "../../../helper/Functions";
 import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { useBLE } from "../../../hooks/useBLE";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const MIN = 100;
 const MAX = 750;
@@ -25,7 +26,14 @@ type CustomButtonAction = {
 export function CustomWinkButton() {
 
   const { colorTheme, theme } = useColorTheme();
-  const { oemCustomButtonEnabled, setOEMButtonStatus, buttonDelay, updateButtonDelay, updateOEMButtonPresets } = useBLE();
+  const {
+    oemCustomButtonEnabled,
+    setOEMButtonStatus,
+    buttonDelay,
+    updateButtonDelay,
+    updateOEMButtonPresets
+  } = useBleCommand();
+
   const navigation = useNavigation();
   const route = useRoute();
   //@ts-ignore
@@ -48,7 +56,7 @@ export function CustomWinkButton() {
   const [min, setMin] = useState(buttonDelay);
   const [max, setMax] = useState(MAX);
 
-  const { device, isScanning, isConnecting } = useBLE();
+  const { isConnected } = useBleMonitor();
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();
@@ -116,12 +124,12 @@ export function CustomWinkButton() {
 
           <View style={theme.mainLongButtonPressableIcon}>
             <ToggleSwitch
-              onColor={!device ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+              onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
               offColor={colorTheme.disabledButtonColor}
               isOn={oemCustomButtonEnabled}
               size="medium"
               hitSlop={10}
-              disabled={!device}
+              disabled={!isConnected}
               circleColor={colorTheme.buttonTextColor}
               onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
               labelStyle={theme.mainLongButtonPressableIcon}
@@ -158,11 +166,11 @@ export function CustomWinkButton() {
                   {value} ms
                 </Text>
               )}
-              renderThumb={() => <View style={(!device || !oemCustomButtonEnabled) ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
-              renderRailSelected={() => <View style={(!device || !oemCustomButtonEnabled) ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
+              renderThumb={() => <View style={(!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderThumbDisabled : theme.rangeSliderThumb} />}
+              renderRailSelected={() => <View style={(!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderRailSelectedDisabled : theme.rangeSliderRailSelected} />}
               renderRail={() => <View style={theme.rangeSliderRail} />}
               disableRange
-              disabled={(!device || !oemCustomButtonEnabled)}
+              disabled={(!isConnected || !oemCustomButtonEnabled)}
             />
           </View>
 
@@ -174,8 +182,8 @@ export function CustomWinkButton() {
           <View style={theme.rangeSliderButtonsView}>
             {/* RESET */}
             <Pressable
-              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-              disabled={(!device || !oemCustomButtonEnabled)}
+              style={({ pressed }) => (!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!isConnected || !oemCustomButtonEnabled)}
               onPress={() => { updateButtonDelay(500); setMin(500); }}
             >
               <Text style={theme.rangeSliderButtonsText}>
@@ -186,8 +194,8 @@ export function CustomWinkButton() {
 
             {/* SAVE */}
             <Pressable
-              style={({ pressed }) => (!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-              disabled={(!device || !oemCustomButtonEnabled)}
+              style={({ pressed }) => (!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!isConnected || !oemCustomButtonEnabled)}
               onPress={() => updateButtonDelay(min)}
             >
               <Text style={theme.rangeSliderButtonsText}>
@@ -215,8 +223,8 @@ export function CustomWinkButton() {
           <View style={theme.rangeSliderButtonsView}>
 
             <Pressable
-              style={({ pressed }) => [(!device || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
-              disabled={(!device || !oemCustomButtonEnabled)}
+              style={({ pressed }) => [(!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
+              disabled={(!isConnected || !oemCustomButtonEnabled)}
               onPress={() => {
                 setAction({
                   behavior: BehaviorEnum.DEFAULT,
@@ -234,8 +242,8 @@ export function CustomWinkButton() {
             </Pressable>
 
             <Pressable
-              style={({ pressed }) => (!device || !oemCustomButtonEnabled || actions.length >= 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-              disabled={(!device || !oemCustomButtonEnabled || actions.length >= 8)}
+              style={({ pressed }) => (!isConnected || !oemCustomButtonEnabled || actions.length >= 8) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
+              disabled={(!isConnected || !oemCustomButtonEnabled || actions.length >= 8)}
               onPress={() => {
                 setAction({
                   behavior: null,
@@ -275,7 +283,7 @@ export function CustomWinkButton() {
                     </View>
                     <View style={theme.buttonActionPressable}>
                       <Pressable
-                        disabled={(!device || !oemCustomButtonEnabled)}
+                        disabled={(!isConnected || !oemCustomButtonEnabled)}
                         onPress={() => {
                           setModalType("edit");
                           setAction(action);
@@ -290,14 +298,14 @@ export function CustomWinkButton() {
                               <Text style={[
                                 theme.buttonActionPressableText,
                                 {
-                                  color: (!device || !oemCustomButtonEnabled) ?
+                                  color: (!isConnected || !oemCustomButtonEnabled) ?
                                     colorTheme.disabledButtonColor :
                                     pressed ? colorTheme.buttonColor :
                                       colorTheme.textColor
                                 }]}>
                                 Edit
                               </Text>
-                              <IonIcons color={(!device || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
+                              <IonIcons color={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
 
                             </View>
                           )

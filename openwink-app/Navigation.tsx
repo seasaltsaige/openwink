@@ -5,14 +5,13 @@ import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/b
 import { PlatformPressable, Text } from "@react-navigation/elements";
 import { useLinkBuilder } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-
-import { useBLE } from "./hooks/useBLE";
 import { useColorTheme } from "./hooks/useColorTheme";
 
 import {
   AppTheme,
   CreateCustomCommand,
   CustomCommands,
+  DeveloperSettings,
   Home,
   HowToUse,
   Information,
@@ -25,6 +24,7 @@ import {
   SleepyEyeSettings,
 } from "./Pages";
 import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
+import { useBleConnection } from "./Providers/BleConnectionProvider";
 
 const Tab = createBottomTabNavigator();
 
@@ -155,7 +155,7 @@ export function AppNavigator() {
     )
   }
 
-  const { disconnectFromModule } = useBLE();
+  const { disconnect: disconnectFromModule } = useBleConnection();
   useEffect(() => {
     return () => { disconnectFromModule() };
   }, []);
@@ -173,6 +173,7 @@ export function AppNavigator() {
         <Stack.Screen name="Theme" component={AppTheme} />
         <Stack.Screen name="Info" component={Information} />
         <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
+        <Stack.Screen name="DeveloperSettings" component={DeveloperSettings} />
 
         <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
         <Stack.Screen name="CustomCommands" component={CustomCommands} />

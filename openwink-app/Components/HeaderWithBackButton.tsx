@@ -1,9 +1,9 @@
 import { ActivityIndicator, Pressable, Text, TextStyle, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
-
 import { useColorTheme } from "../hooks/useColorTheme";
-import { useBLE } from "../hooks/useBLE";
+import { useBleConnection } from "../Providers/BleConnectionProvider";
+import { useBleMonitor } from "../Providers/BleMonitorProvider";
 
 interface IHeaderWithBackButtonProps {
   backText: string;
@@ -14,7 +14,8 @@ interface IHeaderWithBackButtonProps {
 
 export function HeaderWithBackButton({ backText, headerText, headerTextStyle, deviceStatus }: IHeaderWithBackButtonProps) {
   const { theme, colorTheme } = useColorTheme();
-  const { device, isConnecting, isScanning } = useBLE();
+  const { isConnecting, isScanning } = useBleConnection();
+  const { isConnected } = useBleMonitor();
   const navigation = useNavigation();
 
   return (
@@ -33,7 +34,7 @@ export function HeaderWithBackButton({ backText, headerText, headerTextStyle, de
               </Text>
               {
                 deviceStatus ? (
-                  device ? (
+                  isConnected ? (
                     <IonIcons style={theme.backButtonContainerIcon} name="wifi-outline" color="#367024" size={21} />
                   ) : (
                     (isConnecting || isScanning) ?

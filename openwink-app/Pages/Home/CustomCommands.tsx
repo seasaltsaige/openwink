@@ -6,7 +6,6 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 
-import { useBLE } from "../../hooks/useBLE";
 import {
   CommandSequenceBottomSheet,
   HeaderWithBackButton,
@@ -15,25 +14,32 @@ import {
 import { CommandOutput, CustomCommandStore } from "../../Storage";
 import { DefaultCommandValueEnglish } from "../../helper/Constants";
 import { useColorTheme } from "../../hooks/useColorTheme";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { HeadlightStatus } from "../../Components/HeadlightStatus";
 
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
 export function CustomCommands() {
   const { theme, colorTheme } = useColorTheme();
+
   const {
-    device,
-    customCommandActive,
+    isConnected,
+    headlightsBusy
+  } = useBleMonitor();
+
+  const {
+    activeCommandName,
     customCommandInterrupt,
     sendCustomCommand,
-    headlightsBusy
-  } = useBLE();
+  } = useBleCommand();
 
   const [commands, setCommands] = useState([] as CommandOutput[]);
   const [filteredCommands, setFilteredCommands] = useState([] as CommandOutput[]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [displayedCommand, setDisplayedCommand] = useState(null as CommandOutput | null);
-  const [activeCommand, setActiveCommand] = useState(null as CommandOutput | null);
+
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
@@ -48,17 +54,40 @@ export function CustomCommands() {
   const handleCommandInteraction = (command: CommandOutput, type: "start" | "stop") => {
     if (type === "stop") customCommandInterrupt();
     else {
-      setActiveCommand(command);
-      sendCustomCommand(command.command!);
+      sendCustomCommand(command.name, command.command!);
     }
   }
 
-  useEffect(() => {
-    if (!customCommandActive.current && !headlightsBusy)
-      setActiveCommand(null);
-  }, [customCommandActive.current, headlightsBusy]);
+  const canRunCommands = isConnected && !activeCommandName && !headlightsBusy;
 
-  const canRunCommands = device && !customCommandActive.current;
+  const getCommandTextColor = (command: CommandOutput) => {
+    if (activeCommandName) {
+      return activeCommandName === command.name
+        ? colorTheme.textColor : colorTheme.disabledButtonColor;
+    }
+    return canRunCommands ? colorTheme.textColor : colorTheme.disabledButtonColor;
+  }
+
+  const isPlayButtonDisabled = (command: CommandOutput) => {
+    if (activeCommandName) {
+      return activeCommandName !== command.name;
+    }
+    return !canRunCommands;
+  }
+
+  const getPlayIconName = (command: CommandOutput) => {
+    if (activeCommandName && activeCommandName === command.name) {
+      return "pause";
+    }
+    return "play";
+  }
+
+  const getCommandAction = (command: CommandOutput) => {
+    if (activeCommandName && activeCommandName === command.name) {
+      return "stop" as const;
+    }
+    return "start" as const;
+  }
 
   return (
     <SafeAreaView style={theme.container}>
@@ -71,6 +100,8 @@ export function CustomCommands() {
       />
 
       <View style={theme.contentContainer}>
+
+        <HeadlightStatus />
 
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", width: "90%", columnGap: 15, marginTop: 10, }}>
           <SearchBarFilter
@@ -129,15 +160,7 @@ export function CustomCommands() {
                   >
                     <View style={theme.mainLongButtonPressableView}>
                       <Text style={[theme.mainLongButtonPressableText, {
-                        color:
-                          customCommandActive.current ? (
-                            activeCommand && activeCommand.name === command.name ?
-                              colorTheme.textColor : colorTheme.disabledButtonColor
-                          ) : (
-                            canRunCommands ? colorTheme.textColor
-                              : colorTheme.disabledButtonColor
-                          )
-
+                        color: getCommandTextColor(command)
                       }]}>
                         {command.name}
                       </Text>
@@ -147,30 +170,18 @@ export function CustomCommands() {
 
                     <View style={[theme.mainLongButtonPressableIcon, { flexDirection: "row", alignItems: "center", columnGap: 25 }]}>
                       <Pressable
-                        onPress={() => { handleCommandInteraction(command, activeCommand?.name === command.name ? "stop" : "start"); }}
+                        onPress={() => { handleCommandInteraction(command, getCommandAction(command)); }}
                         hitSlop={10}
                         disabled={
-                          customCommandActive.current ? (
-                            activeCommand && activeCommand.name === command.name ? false : true
-                          ) : canRunCommands ? false : true
+                          isPlayButtonDisabled(command)
                         }
                       >
                         {
                           ({ pressed }) =>
                             <IonIcons name={
-                              customCommandActive.current ? (
-                                activeCommand && activeCommand.name === command.name ?
-                                  "pause" : "play"
-                              ) : "play"
+                              getPlayIconName(command)
                             } size={23} color={
-                              customCommandActive.current ? (
-                                activeCommand && activeCommand.name === command.name ?
-                                  colorTheme.textColor : colorTheme.disabledButtonColor
-                              ) : (
-                                canRunCommands ? (
-                                  pressed ? colorTheme.buttonColor : colorTheme.textColor
-                                ) : colorTheme.disabledButtonColor
-                              )
+                              getCommandTextColor(command)
                             } />
                         }
                       </Pressable>
