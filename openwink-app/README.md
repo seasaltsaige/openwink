@@ -99,6 +99,51 @@ Happy Coding!
 
 
 
+### Creating a development build for iOS without a developer account
+If you don't have an Apple Developer account, you can still build and test the app on your iOS device using your personal Apple ID. This method requires manual configuration in Xcode but allows you to develop without the $99/year developer program.
+
+**Prerequisites**: Ensure you have completed the initial setup steps from [Creating a development artifact](#creating-a-development-artifact), including installing dependencies and configuring your project.
+
+Generate the native iOS project files using Expo's prebuild command.
+```bash
+> npx expo prebuild --platform ios
+```
+
+Navigate to the iOS directory and install CocoaPods dependencies.
+```bash
+> cd ios
+> npx pod-install
+```
+**Important**: Always use `npx pod-install` instead of `pod install` directly, as this prevents conflicting pod definitions.
+
+Return to the project root and open the Xcode workspace.
+```bash
+> cd ..
+> open ios/openwinkapp.xcworkspace
+```
+
+**Configure Signing in Xcode**:
+1. In Xcode's project navigator (left sidebar), select **openwinkapp**.
+2. Navigate to the **Signing & Capabilities** tab.
+3. Under **Team**, select your personal Apple ID team.
+4. Remove the **WiFi** and **Hotspot** capabilities, as these require a paid Apple Developer account.
+
+Build and install the app on your connected iOS device.
+```bash
+# In Xcode, press Cmd+B or select Product > Build
+```
+
+Once the build completes and installs on your device, start the Expo development server.
+```bash
+> npx expo start --dev-client
+```
+
+Your device should now connect to the development server. Ensure both your computer and iOS device are on the same network.
+
+Happy Coding!
+
+
+
 ### Creating a preview artifact
 A preview artifact acts similar to the distribution build, used when deployed to the corresponding app store. The preview build does not contain development tools, and serves as a functional build of the app that can be used offline.
 
