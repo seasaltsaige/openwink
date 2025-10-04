@@ -31,6 +31,7 @@ export function Home() {
 
   const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+  const [moduleUpdateCheckError, setModuleUpdateCheckError] = useState<string | null>(null);
   const [updateSize, setUpdateSize] = useState(0);
   const [updateVersion, setUpdateVersion] = useState("");
   const [updateDescription, setUpdateDescription] = useState("");
@@ -69,18 +70,35 @@ export function Home() {
   }
 
   const fetchModuleUpdate = async () => {
-    const available = await OTA.fetchUpdateAvailable();
+    try {
+      setModuleUpdateCheckError(null); // Clear any previous errors
+      const available = await OTA.fetchUpdateAvailable();
 
-    setUpdateDescription(OTA.updateDescription);
-    setUpdateVersion(OTA.latestVersion);
-    setUpdateSize(OTA.getUpdateSize());
+      setUpdateDescription(OTA.updateDescription);
+      setUpdateVersion(OTA.latestVersion);
+      setUpdateSize(OTA.getUpdateSize());
 
-    setFetchingModuleUpdateInfo(false);
+      setFetchingModuleUpdateInfo(false);
 
-    if (available)
-      setModuleUpdateAvailable(true);
-    else
+      if (available)
+        setModuleUpdateAvailable(true);
+      else
+        setModuleUpdateAvailable(false);
+    } catch (error) {
+      setFetchingModuleUpdateInfo(false);
       setModuleUpdateAvailable(false);
+      setModuleUpdateCheckError("error");
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check for updates';
+      
+      Toast.show({
+        type: "error",
+        autoHide: true,
+        visibilityTime: 6000,
+        text1: "Update Check Failed",
+        text2: errorMessage
+      });
+    }
   }
 
   const installModuleUpdate = async () => {
@@ -325,6 +343,24 @@ export function Home() {
 
                   <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
+              ) : moduleUpdateCheckError ? (
+                <Pressable
+                  style={({ pressed }) => pressed ? { ...theme.mainLongButtonPressableContainer, opacity: 0.7 } : theme.mainLongButtonPressableContainer}
+                  onPress={() => {
+                    if (isConnected) {
+                      setFetchingModuleUpdateInfo(true);
+                      setModuleUpdateCheckError(null);
+                      fetchModuleUpdate();
+                    }
+                  }}
+                >
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={[theme.mainLongButtonPressableText, { color: '#ff6b6b' }]}>
+                      Failed to check for Module updates
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="alert-circle-outline" color={'#ff6b6b'} />
+                </Pressable>
               ) : moduleUpdateAvailable ? (
                 <LongButton
                   onPress={() => installModuleUpdate()}
