@@ -26,6 +26,7 @@ import {
   DefaultCommandValue,
   ButtonStatus,
 } from '../helper/Constants';
+import { MockBleStore, MockBleState } from '../Storage/MockBleStore';
 
 // Mock characteristic value storage
 class MockCharacteristicStore {
@@ -39,16 +40,33 @@ class MockCharacteristicStore {
   private indexToUpdate: number = 0;
 
   constructor() {
-    // Initialize with default values
-    this.values.set(BUSY_CHAR_UUID, '0');
-    this.values.set(LEFT_STATUS_UUID, '0');
-    this.values.set(RIGHT_STATUS_UUID, '0');
-    this.values.set(SOFTWARE_UPDATING_CHAR_UUID, '0');
-    this.values.set(SOFTWARE_STATUS_CHAR_UUID, 'idle');
-    this.values.set(HEADLIGHT_MOTION_IN_UUID, '750');
-    this.values.set(CUSTOM_COMMAND_STATUS_UUID, '0');
-    this.values.set(CLIENT_MAC_UUID, '0');
-    this.values.set(FIRMWARE_UUID, '0.3.5');
+    // Try to load saved state first
+    const savedState = MockBleStore.loadState();
+    
+    if (savedState) {
+      // Restore from saved state
+      console.log('Mock BLE: Restoring saved state');
+      this.customButtonPressArray = savedState.customButtonPressArray;
+      this.maxTimeBetween_ms = savedState.maxTimeBetween_ms;
+      this.customButtonStatusEnabled = savedState.customButtonStatusEnabled;
+      
+      // Restore characteristic values
+      Object.entries(savedState.characteristicValues).forEach(([uuid, value]) => {
+        this.values.set(uuid, value);
+      });
+    } else {
+      // Initialize with default values
+      console.log('Mock BLE: Initializing with default values');
+      this.values.set(BUSY_CHAR_UUID, '0');
+      this.values.set(LEFT_STATUS_UUID, '0');
+      this.values.set(RIGHT_STATUS_UUID, '0');
+      this.values.set(SOFTWARE_UPDATING_CHAR_UUID, '0');
+      this.values.set(SOFTWARE_STATUS_CHAR_UUID, 'idle');
+      this.values.set(HEADLIGHT_MOTION_IN_UUID, '750');
+      this.values.set(CUSTOM_COMMAND_STATUS_UUID, '0');
+      this.values.set(CLIENT_MAC_UUID, '0');
+      this.values.set(FIRMWARE_UUID, '0.3.5');
+    }
   }
 
   // Add getter methods for custom button state
@@ -59,6 +77,7 @@ class MockCharacteristicStore {
   setCustomButtonArrayValue(index: number, value: number): void {
     if (index >= 0 && index < 10) {
       this.customButtonPressArray[index] = value;
+      this.persistState();
     }
   }
 
@@ -68,6 +87,7 @@ class MockCharacteristicStore {
 
   setMaxTimeBetween(value: number): void {
     this.maxTimeBetween_ms = value;
+    this.persistState();
   }
 
   getCustomButtonEnabled(): boolean {
@@ -76,6 +96,7 @@ class MockCharacteristicStore {
 
   setCustomButtonEnabled(enabled: boolean): void {
     this.customButtonStatusEnabled = enabled;
+    this.persistState();
   }
 
   getValue(uuid: string): string {
@@ -85,6 +106,7 @@ class MockCharacteristicStore {
   setValue(uuid: string, value: string): void {
     this.values.set(uuid, value);
     this.notifyMonitors(uuid, value);
+    this.persistState();
   }
 
   addMonitor(uuid: string, callback: (value: string) => void): () => void {
@@ -106,9 +128,21 @@ class MockCharacteristicStore {
     }
   }
 
+  // Persist current state to storage
+  private persistState(): void {
+    const state: MockBleState = {
+      characteristicValues: Object.fromEntries(this.values),
+      customButtonPressArray: [...this.customButtonPressArray],
+      maxTimeBetween_ms: this.maxTimeBetween_ms,
+      customButtonStatusEnabled: this.customButtonStatusEnabled,
+    };
+    MockBleStore.saveState(state);
+  }
+
   reset(): void {
     this.values.clear();
     this.monitors.clear();
+    MockBleStore.clearState();
   }
 }
 
