@@ -7,3 +7,4 @@ export * from "./FirmwareStore";
 export * from "./SleepyEyeStore";
 export * from "./ThemeStore";
 export * from "./QuickLinksStore";
+export * from "./MockBleStore";

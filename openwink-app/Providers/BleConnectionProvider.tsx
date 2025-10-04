@@ -20,7 +20,7 @@ import {
   CLIENT_MAC_UUID,
   UNPAIR_UUID,
 } from '../helper/Constants';
-import { AutoConnectStore, DeviceMACStore } from '../Storage';
+import { AutoConnectStore, DeviceMACStore, MockBleStore } from '../Storage';
 import { getDeviceUUID, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
 import { MockBleManager } from '../Mock/MockBleSystem';
@@ -60,9 +60,24 @@ const isSimulator = (): boolean => {
   return DeviceInfo.isEmulatorSync()
 };
 
-const createBleManager = (): BleManager => {
+const shouldUseMockBle = (): boolean => {
+  // Always use mock in simulator
   if (isSimulator()) {
-    console.log('Running in simulator - using Mock BLE Manager');
+    return true;
+  }
+  
+  // In development mode, check the user preference
+  if (__DEV__) {
+    return MockBleStore.get();
+  }
+  
+  // Never use mock in production
+  return false;
+};
+
+const createBleManager = (): BleManager => {
+  if (shouldUseMockBle()) {
+    console.log('Using Mock BLE Manager');
     return new MockBleManager() as unknown as BleManager;
   }
   
