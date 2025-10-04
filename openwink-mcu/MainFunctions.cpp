@@ -69,11 +69,18 @@ void bothBlink() {
 
 
     setAllOff();
+    leftStatus = 1;
+    rightStatus = 1;
+    BLE::updateHeadlightChars();
     // Headlights up at this point
 
     bothDown();
     delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
+
+    leftStatus = 0;
+    rightStatus = 0;
+    BLE::updateHeadlightChars();
 
     bothUp();
 
@@ -122,8 +129,8 @@ void bothBlink() {
       rightStatus = 0;
     }
 
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     BLE::updateHeadlightChars();
+    delay(HEADLIGHT_MOVEMENT_DELAY);
 
     if (leftStatus != 1) {
       digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -145,7 +152,7 @@ void bothBlink() {
       rightStatus = 0;
     }
   }
-  // BLE::updateHeadlightChars();
+  BLE::updateHeadlightChars();
 }
 
 // Left
@@ -188,11 +195,15 @@ void leftWink() {
     }
 
     setAllOff();
+    leftStatus = 1;
+    BLE::updateHeadlightChars();
     // Headlights up at this point
 
     leftDown();
     delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
+    leftStatus = 0;
+    BLE::updateHeadlightChars();
 
     leftUp();
 
