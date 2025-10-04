@@ -11,6 +11,7 @@ import {
   AppTheme,
   CreateCustomCommand,
   CustomCommands,
+  DeveloperSettings,
   Home,
   HowToUse,
   Information,
@@ -172,6 +173,7 @@ export function AppNavigator() {
         <Stack.Screen name="Theme" component={AppTheme} />
         <Stack.Screen name="Info" component={Information} />
         <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
+        <Stack.Screen name="DeveloperSettings" component={DeveloperSettings} />
 
         <Stack.Screen name="CreateCustomCommands" component={CreateCustomCommand} />
         <Stack.Screen name="CustomCommands" component={CustomCommands} />
