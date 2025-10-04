@@ -86,7 +86,7 @@ void CommandHandler::handleQueuedCommand() {
 
       break;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  // delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
 
   BLE::updateHeadlightChars();

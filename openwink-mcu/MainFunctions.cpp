@@ -17,6 +17,8 @@ void bothUp() {
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   }
 
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+
   leftStatus = 1;
   rightStatus = 1;
 }
@@ -32,6 +34,8 @@ void bothDown() {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
   }
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
 
   leftStatus = 0;
   rightStatus = 0;
@@ -162,6 +166,7 @@ void leftUp() {
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
   }
+  delay(HEADLIGHT_MOVEMENT_DELAY);
 }
 
 void leftDown() {
@@ -170,6 +175,7 @@ void leftDown() {
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
+  delay(HEADLIGHT_MOVEMENT_DELAY);
 }
 
 void leftWink() {
@@ -256,6 +262,7 @@ void rightUp() {
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
   }
+  delay(HEADLIGHT_MOVEMENT_DELAY);
 }
 
 void rightDown() {
@@ -264,6 +271,7 @@ void rightDown() {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     rightStatus = 0;
   }
+  delay(HEADLIGHT_MOVEMENT_DELAY);
 }
 
 void rightWink() {
