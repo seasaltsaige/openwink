@@ -218,55 +218,23 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   return (
     <SafeAreaView style={theme.container}>
       {/* MAIN Modify VIEW */}
-      <View>
 
-        <HeaderWithBackButton
-          backText={back}
-          headerText={type === ModifyType.CREATE ? "Create Command" : "Edit Command"}
-          headerTextStyle={{ ...theme.settingsHeaderText, fontSize: 28 }}
-        />
+      <HeaderWithBackButton
+        backText={back}
+        headerText={type === ModifyType.CREATE ? "Create Command" : "Edit Command"}
+        headerTextStyle={{ ...theme.settingsHeaderText, fontSize: 28 }}
+      />
 
 
-        <View style={{
-          width: "60%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          rowGap: 10,
-          marginVertical: 10,
-        }}>
-
-          <TooltipHeader
-            tooltipContent={
-              <Text style={theme.tooltipContainerText}>
-                TODO
-              </Text>
-            }
-            tooltipTitle="Command Name"
-          />
-          <TextInput
-            style={{
-              width: "100%",
-              fontSize: 18,
-              backgroundColor: colorTheme.backgroundSecondaryColor,
-              paddingVertical: 7,
-              paddingHorizontal: 1,
-              borderRadius: 100,
-              color: colorTheme.textColor,
-              fontFamily: "IBMPlexSans_400Regular",
-              textAlign: "center",
-            }}
-            onEndEditing={() => handleCommandChange({ name: cmdName })}
-            value={cmdName}
-            maxLength={16}
-            onChangeText={(text) => setCommandName(text)}
-            placeholder="Enter command name..."
-            placeholderTextColor={colorTheme.disabledButtonColor}
-          />
-
-        </View>
-
+      <View style={{
+        width: "60%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        rowGap: 10,
+        marginVertical: 10,
+      }}>
 
         <TooltipHeader
           tooltipContent={
@@ -274,68 +242,98 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
               TODO
             </Text>
           }
-          tooltipTitle="Command Components"
+          tooltipTitle="Command Name"
+        />
+        <TextInput
+          style={{
+            width: "100%",
+            fontSize: 18,
+            backgroundColor: colorTheme.backgroundSecondaryColor,
+            paddingVertical: 7,
+            paddingHorizontal: 1,
+            borderRadius: 100,
+            color: colorTheme.textColor,
+            fontFamily: "IBMPlexSans_400Regular",
+            textAlign: "center",
+          }}
+          onEndEditing={() => handleCommandChange({ name: cmdName })}
+          value={cmdName}
+          maxLength={16}
+          onChangeText={(text) => setCommandName(text)}
+          placeholder="Enter command name..."
+          placeholderTextColor={colorTheme.disabledButtonColor}
         />
 
+      </View>
 
-        <View style={{ height: "65%" }}>
-          <DragList
-            contentContainerStyle={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              rowGap: 12,
-            }}
-            scrollEnabled
-            ref={listRef}
-            ListFooterComponent={
-              <Pressable
-                onPress={() => setAddComponentVisible(true)}
-                style={({ pressed }) => ({
-                  display: "flex",
-                  width: 275,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingVertical: 8,
-                  paddingHorizontal: 8,
-                  paddingLeft: 20,
-                  height: 48,
-                  borderStyle: "dashed",
-                  borderColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                  borderWidth: 1.75,
-                  borderRadius: 10,
-                })}
-                hitSlop={10}
-              >
-                {
-                  ({ pressed }) => <>
 
-                    <Text
-                      style={{
-                        color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                        fontSize: 18,
-                        fontFamily: "IBMPlexSans_500Medium"
-                      }}
-                    >
-                      Add Component
-                    </Text>
-                    <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
-                  </>
-                }
-              </Pressable>
-            }
-            data={command.command!}
-            keyExtractor={(item, index) => `${item.delay}-${item.transmitValue}-${index}`}
-            renderItem={renderDragItem}
-            onReordered={(from, to) => { handleCommandChange({ moveCommand: { from, to } }); }}
-          />
+      <TooltipHeader
+        tooltipContent={
+          <Text style={theme.tooltipContainerText}>
+            TODO
+          </Text>
+        }
+        tooltipTitle="Command Components"
+      />
 
-        </View>
+
+      <View style={{ height: "65%" }}>
+        <DragList
+          contentContainerStyle={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            rowGap: 12,
+          }}
+          scrollEnabled
+          ref={listRef}
+          ListFooterComponent={
+            <Pressable
+              onPress={() => setAddComponentVisible(true)}
+              style={({ pressed }) => ({
+                display: "flex",
+                width: 275,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingVertical: 8,
+                paddingHorizontal: 8,
+                paddingLeft: 20,
+                height: 48,
+                borderStyle: "dashed",
+                borderColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                borderWidth: 1.75,
+                borderRadius: 10,
+              })}
+              hitSlop={10}
+            >
+              {
+                ({ pressed }) => <>
+
+                  <Text
+                    style={{
+                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                      fontSize: 18,
+                      fontFamily: "IBMPlexSans_500Medium"
+                    }}
+                  >
+                    Add Component
+                  </Text>
+                  <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
+                </>
+              }
+            </Pressable>
+          }
+          data={command.command!}
+          keyExtractor={(item, index) => `${item.delay}-${item.transmitValue}-${index}`}
+          renderItem={renderDragItem}
+          onReordered={(from, to) => { handleCommandChange({ moveCommand: { from, to } }); }}
+        />
 
       </View>
+
       {/* Modify TOOLBAR FOOTER */}
       <View style={{
         zIndex: 10,
