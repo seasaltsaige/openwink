@@ -439,7 +439,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       updateActiveCommandName(null);
     }
-  }, [device, leftStatus, rightStatus]);
+  }, [device, leftStatus, rightStatus, headlightsBusy]);
 
   // Enable/disable OEM button control
   const setOEMButtonStatus = useCallback(
