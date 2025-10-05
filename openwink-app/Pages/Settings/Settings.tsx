@@ -33,6 +33,19 @@ export function Settings() {
           ))
         }
 
+        {/* Developer Settings - only visible in development mode */}
+        {__DEV__ && (
+          <LongButton
+            //@ts-ignore
+            onPress={() => navigate.navigate("DeveloperSettings", { back: route.name })}
+            icons={{
+              names: ["code-slash-outline" as any, "chevron-forward-outline"],
+              size: [25, 20],
+            }}
+            text="Developer Settings"
+          />
+        )}
+
       </View>
 
 

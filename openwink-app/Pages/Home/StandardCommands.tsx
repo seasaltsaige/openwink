@@ -4,7 +4,9 @@ import { useRoute } from "@react-navigation/native";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants";
 import { HeaderWithBackButton } from "../../Components";
-import { useBLE } from "../../hooks/useBLE";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { HeadlightStatus } from "../../Components/HeadlightStatus";
 
 export function StandardCommands() {
 
@@ -14,29 +16,22 @@ export function StandardCommands() {
   const { back } = route.params;
 
   const {
-    leftStatus,
-    rightStatus,
-    device,
-    isConnecting,
-    isScanning,
-    headlightsBusy,
     sendDefaultCommand,
     sendSleepyEye,
-    sendSyncCommand
-  } = useBLE();
+    sendSyncCommand,
+  } = useBleCommand();
 
-  const deviceConnected = device &&
-    !headlightsBusy &&
-    !isScanning &&
-    !isConnecting;
+  const {
+    isConnected: deviceConnected,
+    headlightsBusy,
+    isSleepyEyeActive
+  } = useBleMonitor();
 
   const canSendMainCommands = deviceConnected &&
-    (leftStatus === 0 || leftStatus === 1) &&
-    (rightStatus === 0 || rightStatus === 1);
+    !headlightsBusy && isSleepyEyeActive;
 
-  const canSync = deviceConnected &&
-    (leftStatus !== 0 && leftStatus !== 1) &&
-    (rightStatus !== 0 && rightStatus !== 1);
+  const canResetHeadlightPositions = deviceConnected &&
+    !headlightsBusy && !isSleepyEyeActive;
 
   return (
     <SafeAreaView style={theme.container}>
@@ -50,30 +45,7 @@ export function StandardCommands() {
 
       <View style={theme.contentContainer}>
 
-        <View style={theme.headlightStatusContainer}>
-          {
-            ([
-              ["Left", leftStatus],
-              ["Right", rightStatus]
-            ] as const).map(([label, status], i) => (
-              <View
-                key={i}
-                style={theme.headlightStatusSideContainer}
-              >
-                {/* HEADLIGHT STATUS TEXT */}
-                <Text style={theme.headlightStatusText}>
-                  {label}: {status === 0 ? "Down" : status === 1 ? "Up" : `${(status * 100).toFixed(0)}%`}
-                </Text>
-
-                {/* HEADLIGHT STATUS BAR */}
-                <View style={theme.headlightStatusBarUnderlay}>
-                  <View style={[theme.headlightStatusBarOverlay, { width: `${status * 100}%`, }]} />
-                </View>
-              </View>
-            ))}
-        </View>
-
-
+        <HeadlightStatus />
 
         <View style={theme.defaultCommandSectionContainer}>
           <Text style={theme.commandSectionHeader}>
@@ -122,12 +94,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "30%",
-                    backgroundColor: !deviceConnected ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: !canSendMainCommands ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                   }
                 ])}
                 key={row.value}
                 onPress={() => sendDefaultCommand(row.value)}
-                disabled={!deviceConnected}
+                disabled={!canSendMainCommands}
               >
                 <Text style={theme.commandButtonText}>
                   {row.name}
@@ -211,12 +183,12 @@ export function StandardCommands() {
                     theme.commandButton,
                     {
                       width: "48%",
-                      backgroundColor: !canSync ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                      backgroundColor: !canResetHeadlightPositions ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                     }
                   ])}
                   key={106}
                   onPress={sendSyncCommand}
-                  disabled={!canSync}
+                  disabled={!canResetHeadlightPositions}
                 >
                   <Text style={theme.commandButtonText}>
                     Reset

@@ -7,7 +7,7 @@ import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
 import { getDeviceUUID } from "../../helper/Functions";
-import { CommandSequenceBottomSheet, HeaderWithBackButton } from "../../Components";
+import { CommandSequenceBottomSheet, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
   countToEnglish,
@@ -17,24 +17,33 @@ import {
 import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
 import { ButtonBehaviors, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { useBLE } from "../../hooks/useBLE";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Information() {
 
   const { colorTheme, theme, themeName } = useColorTheme();
+
   const {
-    mac,
-    firmwareVersion,
-    device,
     isScanning,
     isConnecting,
+    autoConnectEnabled,
+    mac,
+  } = useBleConnection();
+
+  const {
+    oemCustomButtonEnabled,
+    waveDelayMulti,
+    buttonDelay,
+  } = useBleCommand();
+
+  const {
+    isConnected,
+    firmwareVersion,
     leftStatus,
     rightStatus,
-    waveDelayMulti,
-    oemCustomButtonEnabled,
-    autoConnectEnabled,
-    buttonDelay
-  } = useBLE();
+  } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [displayedCommand, setDisplayedCommand] = useState(null as CommandOutput | null);
@@ -61,10 +70,10 @@ export function Information() {
   const deviceInfo = useMemo(() => ({
     "Module ID": mac,
     "Firmware Version": `v${firmwareVersion}`,
-    "Connection Status": connectionStatus(isScanning, isConnecting, !!device),
-    "Left Headlight Status": headlightStatus(!!device, leftStatus),
-    "Right Headlight Status": headlightStatus(!!device, rightStatus),
-  }), [mac, firmwareVersion, isScanning, isConnecting, device, leftStatus, rightStatus])
+    "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
+    "Left Headlight Status": headlightStatus(isConnected, leftStatus),
+    "Right Headlight Status": headlightStatus(isConnected, rightStatus),
+  }), [mac, firmwareVersion, isScanning, isConnecting, isConnected, leftStatus, rightStatus])
 
   const deviceSettings = useMemo(() => ({
     "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
@@ -118,48 +127,17 @@ export function Information() {
 
       <ScrollView contentContainerStyle={theme.infoContainer}>
 
-        {
-          ([
-            ["App Info", appInfo],
-            ["Module Info", deviceInfo],
-            ["Module Settings", deviceSettings],
-          ] as const).map(val => (
-
-            <View
-              style={theme.infoBoxOuter}
-              key={val[0]}
-            >
-              <Text style={theme.infoBoxOuterText}>
-                {val[0]}
-              </Text>
-
-              <View style={theme.infoBoxInner}>
-                {
-                  Object.keys(val[1]).map((key) => (
-                    <View
-                      style={theme.infoBoxInnerContentView}
-                      key={key}
-                    >
-
-
-                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
-                        {key}
-                      </Text>
-
-                      <Text style={theme.infoBoxInnerContentText}>
-                        {
-                          //@ts-ignore
-                          val[1][key]
-                        }
-                      </Text>
-                    </View>
-                  ))
-                }
-              </View>
-
-            </View>
-          ))
-        }
+        {[
+          { title: "App Info", data: appInfo },
+          { title: "Module Info", data: deviceInfo },
+          { title: "Module Settings", data: deviceSettings },
+        ].map((section) => (
+          <InfoBox
+            key={section.title}
+            title={section.title}
+            data={section.data}
+          />
+        ))}
 
         <View
           style={theme.infoBoxOuter}
