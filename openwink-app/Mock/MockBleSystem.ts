@@ -281,6 +281,7 @@ export class MockDevice implements Partial<Device> {
         break;
 
       case CUSTOM_COMMAND_STATUS_UUID:
+        mockStore.setValue(BUSY_CHAR_UUID, value);
         mockStore.setValue(CUSTOM_COMMAND_STATUS_UUID, value);
         break;
 
@@ -324,8 +325,11 @@ export class MockDevice implements Partial<Device> {
 
   private async handleHeadlightCommand(command: DefaultCommandValue): Promise<void> {
     this.animationQueue = this.animationQueue.then(async () => {
-      // Set busy
-      mockStore.setValue(BUSY_CHAR_UUID, '1');
+      const customCommandActive = mockStore.getValue(CUSTOM_COMMAND_STATUS_UUID) === '1';
+
+      if (!customCommandActive) {
+        mockStore.setValue(BUSY_CHAR_UUID, '1');
+      }
       try {
         const headlightMotionDuration = parseInt(mockStore.getValue(HEADLIGHT_MOTION_IN_UUID));
 
@@ -384,7 +388,9 @@ export class MockDevice implements Partial<Device> {
         console.error('Error executing headlight command:', error);
       } finally {
         // Clear busy
-        mockStore.setValue(BUSY_CHAR_UUID, '0');
+        if (!customCommandActive) {
+          mockStore.setValue(BUSY_CHAR_UUID, '0');
+        }
         console.log('Mock: Headlight command complete');
       }
     });
