@@ -8,7 +8,7 @@
 #include "BLE.h"
 #include "ButtonHandler.h"
 #include "BLECallbacks.h"
-
+#include "CommandHandler.h"
 // #include "esp_gatts_api.h"
 // #include "esp_gatt_defs.h"
 
@@ -75,6 +75,11 @@ void loop() {
 
   if (wifi_enabled)
     handleHTTPClient();
+
+  if (queuedCommand != -1) {
+    // handle sent command
+    CommandHandler::handleQueuedCommand();
+  }
 
   ButtonHandler::handleResetLogic();
   ButtonHandler::loopButtonHandler();

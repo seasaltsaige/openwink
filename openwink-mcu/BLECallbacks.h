@@ -25,6 +25,7 @@ extern double headlightMultiplier;
 extern int customButtonPressArray[10];
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
+extern int queuedCommand;
 
 extern bool wifi_enabled;
 

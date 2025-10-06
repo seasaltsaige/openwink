@@ -115,6 +115,12 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     activeCommandNameRef.current = name;
   };
 
+  useEffect(() => {
+    if (!headlightsBusy) {
+      updateActiveCommandName(null);
+    }
+  }, [headlightsBusy]);
+
   // Motion value ref to avoid stale closures
   const motionValueRef = useRef(motionValue);
   const waveDelayMultiRef = useRef(waveDelayMulti);
@@ -162,48 +168,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setRightSleepyEye(storedRight);
     }
   }, []);
-
-  // Calculate animation duration for a command
-  const calculateAnimationDuration = useCallback(
-    (command: DefaultCommandValue): number => {
-      const motion = motionValueRef.current;
-      const waveMulti = waveDelayMultiRef.current;
-      const left = leftStatusRef.current;
-      const right = rightStatusRef.current;
-
-      // Blink and wink commands take 2x motion time
-      if (
-        command === DefaultCommandValue.BOTH_BLINK ||
-        command === DefaultCommandValue.LEFT_WINK ||
-        command === DefaultCommandValue.RIGHT_WINK
-      ) {
-        return motion * 2;
-      }
-
-      // Wave commands have complex timing
-      if (
-        command === DefaultCommandValue.LEFT_WAVE ||
-        command === DefaultCommandValue.RIGHT_WAVE
-      ) {
-        let additionalDelayFromDiff = 0;
-        if (left !== right) {
-          additionalDelayFromDiff = motion;
-        }
-
-        const toEndMulti = 1.0 - waveMulti;
-        return (
-          motion * waveMulti * 3 +
-          motion * toEndMulti * 2 +
-          additionalDelayFromDiff
-        );
-      }
-
-      // Default commands take 1x motion time
-      return motion;
-    },
-    []
-  );
-
+       
   // Check if command should be blocked (already in target position)
   const shouldBlockCommand = useCallback(
     (command: DefaultCommandValue): boolean => {
@@ -254,16 +219,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           HEADLIGHT_CHAR_UUID,
           base64.encode(command.toString())
         );
-
-        const animationDuration = calculateAnimationDuration(command);
-
-        // Release busy state after animation completes
-        setTimeout(() => {
-          updateActiveCommandName(null);
-        }, animationDuration);
       } catch (error) {
         console.error('Error sending default command:', error);
-        updateActiveCommandName(null);
 
         Toast.show({
           type: 'error',
@@ -273,7 +230,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
       }
     },
-    [device, headlightsBusy, shouldBlockCommand, calculateAnimationDuration]
+    [device, headlightsBusy, shouldBlockCommand]
   );
 
   // Send a custom command sequence
@@ -321,10 +278,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               HEADLIGHT_CHAR_UUID,
               base64.encode(part.transmitValue.toString())
             );
-
-            // Wait for animation to complete
-            const animationDuration = calculateAnimationDuration(part.transmitValue);
-            await sleep(animationDuration);
           }
 
           // Buffer between commands
@@ -350,7 +303,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateActiveCommandName(null);
       }
     },
-    [device, calculateAnimationDuration]
+    [device]
   );
 
   // Interrupt a running custom command
@@ -486,7 +439,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       updateActiveCommandName(null);
     }
-  }, [device, leftStatus, rightStatus]);
+  }, [device, leftStatus, rightStatus, headlightsBusy]);
 
   // Enable/disable OEM button control
   const setOEMButtonStatus = useCallback(
