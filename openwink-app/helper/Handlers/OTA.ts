@@ -16,42 +16,63 @@ export abstract class OTA {
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
     // Fetch latest software version from API using device MAC address as access code
-    const response = await fetch(UPDATE_URL,
-      {
-        method: "GET",
-        headers: {
-          authorization: DeviceMACStore.getStoredMAC() ?? "",
-        },
-      }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    if (!response.ok) return false;
-
-    const json = await response.json();
-    const version = json["version"] as FirmwareType;
-    const description = json["description"] as string;
-    this.updateDescription = description;
-    this.setLatestVersion(version);
-    this.setActiveVersion();
-
-    if (this.shouldUpdate()) {
-      const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
+    try {
+      const response = await fetch(UPDATE_URL,
         {
           method: "GET",
           headers: {
             authorization: DeviceMACStore.getStoredMAC() ?? "",
-          }
+          },
+          signal: controller.signal,
         }
       );
+      clearTimeout(timeoutId);
 
-      const firmwareBlob = await firmwareResponse.blob();
-      const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch update information: ${response.status} ${response.statusText}`);
+      }
 
-      this.updateSizeBytes = blobWithType.size;
+      const json = await response.json();
+      const version = json["version"] as FirmwareType;
+      const description = json["description"] as string;
+      this.updateDescription = description;
+      this.setLatestVersion(version);
+      this.setActiveVersion();
 
+      if (this.shouldUpdate()) {
+        const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
+          {
+            method: "GET",
+            headers: {
+              authorization: DeviceMACStore.getStoredMAC() ?? "",
+            }
+          }
+        );
+
+        if (!firmwareResponse.ok) {
+          throw new Error(`Failed to fetch firmware size: ${firmwareResponse.status} ${firmwareResponse.statusText}`);
+        }
+
+        const firmwareBlob = await firmwareResponse.blob();
+        const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
+
+        this.updateSizeBytes = blobWithType.size;
+
+      }
+
+      return this.shouldUpdate();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Update check timed out. Please check your internet connection and try again.');
+      }
+      
+      throw error;
     }
-
-    return this.shouldUpdate();
   }
 
   public static generateWifiPasskey() {
