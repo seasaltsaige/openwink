@@ -3,13 +3,14 @@
 
 // #include "NimBLEConnInfo.h"
 // #include "NimBLECharacteristic.h"
-
+#include <string.h>
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
 #include <WebServer.h>
 
 extern double headlightMultiplier;
 
+using namespace std;
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
   2 : Left Blink
@@ -26,6 +27,7 @@ extern int customButtonPressArray[10];
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;
+extern string queuedCustomCommand;
 
 extern bool wifi_enabled;
 
@@ -68,7 +70,7 @@ class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+class CustomCommandCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
