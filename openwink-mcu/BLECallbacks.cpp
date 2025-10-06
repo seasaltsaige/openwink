@@ -1,6 +1,6 @@
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
-#include <string>
+#include <string.h>
 #include <vector>
 #include "NimBLEDevice.h"
 #include <Arduino.h>
@@ -28,6 +28,7 @@ RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 int queuedCommand = -1;
+string queuedCustomCommand = "";
 
 WebServer server(80);
 bool wifi_enabled = false;
@@ -86,7 +87,9 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
   double percentageToUpLeft = 1 - (leftSleepyValue / 100);
   double percentageToUpRight = 1 - (rightSleepyValue / 100);
   unsigned long initialTime = millis();
-  bothUp();
+
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   bool leftStatusReached = false;
   bool rightStatusReached = false;
@@ -121,14 +124,13 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   double left = leftSleepyValue / 100;
   double right = rightSleepyValue / 100;
 
-  if (leftStatus == 1 || rightStatus == 1) {
+  if (leftStatus == 1 || rightStatus == 1)
     bothDown();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
-  }
 
   unsigned long initialTime = millis();
 
-  bothUp();
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   bool leftStatusReached = false;
   bool rightStatusReached = false;
@@ -243,13 +245,18 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 }
 
 
-void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-
-  if (value == "1")
-    ButtonHandler::setCustomCommandActive(true);
-  else
-    ButtonHandler::setCustomCommandActive(false);
+  
+  // Set command active/not
+  if (value.length() == 1) {
+    if (stoi(value) == 1)
+      ButtonHandler::setCustomCommandActive(true);
+    else if (stoi(value) == 0)
+      ButtonHandler::setCustomCommandActive(false);
+    else ButtonHandler::setCustomCommandActive(false);
+  } else 
+    queuedCustomCommand = value;
 }
 
 void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
