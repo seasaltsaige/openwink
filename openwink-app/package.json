@@ -3,10 +3,32 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "expo start --dev-client",
+    "android": "expo start --dev-client --android",
+    "ios": "expo start --dev-client --ios",
+    
+    "run:android": "expo run:android",
+    "run:ios": "expo run:ios",
+    "prebuild": "expo prebuild --clean",
+    
+    "build:dev:android": "eas build --profile development --platform android",
+    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:dev:all": "eas build --profile development --platform all",
+    
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:preview:ios": "eas build --profile ios",
+    "build:preview:all": "eas build --profile preview --platform all",
+    
+    "build:prod:android": "eas build --profile production --platform android",
+    "build:prod:ios": "eas build --profile production --platform ios",
+    "build:prod:all": "eas build --profile production --platform all",
+    
+    "submit:android": "eas submit --platform android",
+    "submit:ios": "eas submit --platform ios",
+    
+    "update:dev": "eas update --branch development",
+    "update:preview": "eas update --branch preview",
+    "update:prod": "eas update --branch production"
   },
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
