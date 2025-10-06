@@ -27,6 +27,7 @@ RTC_DATA_ATTR double headlightMultiplier = 1.0;
 RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
+int queuedCommand = -1;
 
 WebServer server(80);
 bool wifi_enabled = false;
@@ -120,8 +121,6 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   double left = leftSleepyValue / 100;
   double right = rightSleepyValue / 100;
 
-  Serial.printf("left dec: %f  -  right dec: %f\n", left, right);
-
   if (leftStatus == 1 || rightStatus == 1) {
     bothDown();
     delay(HEADLIGHT_MOVEMENT_DELAY);
@@ -174,92 +173,7 @@ void RequestCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
   string value = pChar->getValue();
 
   int valueInt = String(value.c_str()).toInt();
-
-  // BLE::setBusy(true);
-
-  switch (valueInt) {
-    // Both Up
-    case 1:
-      bothUp();
-      break;
-
-    // Both Down
-    case 2:
-      bothDown();
-      break;
-    // Both Blink
-    case 3:
-      // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
-      bothBlink();
-      break;
-
-    // Left Up
-    case 4:
-      leftUp();
-      break;
-
-    // Left Down
-    case 5:
-      leftDown();
-      break;
-
-    // Left Blink (Wink)
-    case 6:
-      leftWink();
-      break;
-
-    // Right Up
-    case 7:
-      rightUp();
-      break;
-
-    // Right Down
-    case 8:
-      rightDown();
-      break;
-
-    // Right Blink (Wink)
-    case 9:
-      rightWink();
-      break;
-
-    // "Wave" left first
-    case 10:
-
-      if (leftStatus != rightStatus) {
-        if (leftStatus == 1) rightUp();
-        else rightDown();
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        setAllOff();
-        BLE::updateHeadlightChars();
-      }
-
-      leftWave();
-      break;
-
-    case 11:
-
-      if (leftStatus != rightStatus) {
-        if (rightStatus == 1) leftUp();
-        else leftDown();
-
-        delay(HEADLIGHT_MOVEMENT_DELAY);
-
-        setAllOff();
-        BLE::updateHeadlightChars();
-      }
-
-      rightWave();
-
-      break;
-  }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
-  setAllOff();
-
-  BLE::updateHeadlightChars();
-  // BLE::setBusy(false);
+  queuedCommand = valueInt;
 }
 
 // NOTE: this is for waves.

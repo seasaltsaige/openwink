@@ -121,6 +121,22 @@ class MockCharacteristicStore {
     };
   }
 
+  getIndexToUpdate(): number {
+    return this.indexToUpdate;
+  }
+
+  setIndexToUpdate(index: number): void {
+    this.indexToUpdate = index;
+  }
+
+  getCustomButtonPressUpdateState(): number {
+    return this.customButtonPressUpdateState;
+  }
+
+  setCustomButtonPressUpdateState(state: number): void {
+    this.customButtonPressUpdateState = state;
+  }
+
   private notifyMonitors(uuid: string, value: string): void {
     const callbacks = this.monitors.get(uuid);
     if (callbacks) {
@@ -265,6 +281,7 @@ export class MockDevice implements Partial<Device> {
         break;
 
       case CUSTOM_COMMAND_STATUS_UUID:
+        mockStore.setValue(BUSY_CHAR_UUID, value);
         mockStore.setValue(CUSTOM_COMMAND_STATUS_UUID, value);
         break;
 
@@ -273,7 +290,7 @@ export class MockDevice implements Partial<Device> {
         break;
 
       case HEADLIGHT_MOVEMENT_DELAY_UUID:
-        console.log('Mock: Wave delay updated');
+        mockStore.setValue(HEADLIGHT_MOVEMENT_DELAY_UUID, value);
         break;
 
       case SLEEPY_SETTINGS_UUID:
@@ -308,68 +325,72 @@ export class MockDevice implements Partial<Device> {
 
   private async handleHeadlightCommand(command: DefaultCommandValue): Promise<void> {
     this.animationQueue = this.animationQueue.then(async () => {
-      // Set busy
-      mockStore.setValue(BUSY_CHAR_UUID, '1');
+      const customCommandActive = mockStore.getValue(CUSTOM_COMMAND_STATUS_UUID) === '1';
+
+      if (!customCommandActive) {
+        mockStore.setValue(BUSY_CHAR_UUID, '1');
+      }
       try {
-        const motionTime = parseInt(mockStore.getValue(HEADLIGHT_MOTION_IN_UUID));
-        let duration = motionTime;
+        const headlightMotionDuration = parseInt(mockStore.getValue(HEADLIGHT_MOTION_IN_UUID));
 
         switch (command) {
           case DefaultCommandValue.LEFT_UP:
-            await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, duration);
+            await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.LEFT_DOWN:
-            await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, duration);
+            await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.RIGHT_UP:
-            await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, duration);
+            await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.RIGHT_DOWN:
-            await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, duration);
+            await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.BOTH_UP:
             await Promise.all([
-              this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, duration),
-              this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, duration),
+              this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, headlightMotionDuration),
+              this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, headlightMotionDuration),
             ]);
             break;
 
           case DefaultCommandValue.BOTH_DOWN:
             await Promise.all([
-              this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, duration),
-              this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, duration),
+              this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, headlightMotionDuration),
+              this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, headlightMotionDuration),
             ]);
             break;
 
           case DefaultCommandValue.LEFT_WINK:
-            await this.animateWink(LEFT_STATUS_UUID, motionTime);
+            await this.animateWink(LEFT_STATUS_UUID, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.RIGHT_WINK:
-            await this.animateWink(RIGHT_STATUS_UUID, motionTime);
+            await this.animateWink(RIGHT_STATUS_UUID, headlightMotionDuration);
             break;
 
           case DefaultCommandValue.BOTH_BLINK:
-            await this.animateBlink(motionTime);
+            await this.animateBlink(headlightMotionDuration);
             break;
 
           case DefaultCommandValue.LEFT_WAVE:
-            await this.animateWave(LEFT_STATUS_UUID, motionTime);
+            await this.animateWave('left', headlightMotionDuration);
             break;
 
           case DefaultCommandValue.RIGHT_WAVE:
-            await this.animateWave(RIGHT_STATUS_UUID, motionTime);
+            await this.animateWave('right', headlightMotionDuration);
             break;
         }
       } catch (error) {
         console.error('Error executing headlight command:', error);
       } finally {
         // Clear busy
-        mockStore.setValue(BUSY_CHAR_UUID, '0');
+        if (!customCommandActive) {
+          mockStore.setValue(BUSY_CHAR_UUID, '0');
+        }
         console.log('Mock: Headlight command complete');
       }
     });
@@ -420,8 +441,9 @@ export class MockDevice implements Partial<Device> {
     }
 
     if (currentPercentage !== 0 && currentPercentage !== 100) {
+      const motionTime = duration * (Math.abs(100 - currentPercentage) / 100);
       // Currently in intermediate position - must go all the way up first
-      await this.animateDirectly(statusUUID, currentPercentage, 100, duration / 2);
+      await this.animateDirectly(statusUUID, currentPercentage, 100, motionTime);
       currentPercentage = 100;
       if (clampedTarget === 100) {
         return;
@@ -438,8 +460,9 @@ export class MockDevice implements Partial<Device> {
     }
 
     if (currentPercentage === 0) {
+      const motionTime = duration * (clampedTarget / 100);
       // Now can go up to the target
-      await this.animateDirectly(statusUUID, 0, clampedTarget, duration);
+      await this.animateDirectly(statusUUID, 0, clampedTarget, motionTime);
     }
   }
 
@@ -494,15 +517,32 @@ export class MockDevice implements Partial<Device> {
     ]);
   }
 
-  private async animateWave(statusUUID: string, motionTime: number): Promise<void> {
-    const currentStatus = parseInt(mockStore.getValue(statusUUID));
-    const opposite = currentStatus === ButtonStatus.UP ? ButtonStatus.DOWN : ButtonStatus.UP;
+  private async animateWave(direction: 'left' | 'right', motionTime: number): Promise<void> {
+    const firstUUID = direction === 'left' ? LEFT_STATUS_UUID : RIGHT_STATUS_UUID;
+    const secondUUID = direction === 'left' ? RIGHT_STATUS_UUID : LEFT_STATUS_UUID;
+    const motionDelayPercent = mockStore.getValue(HEADLIGHT_MOVEMENT_DELAY_UUID);
+    const motionDelay = parseInt(motionDelayPercent);
 
-    await this.animateStatus(statusUUID, opposite, motionTime);
-    await this.animateStatus(statusUUID, currentStatus, motionTime);
-    await this.animateStatus(statusUUID, opposite, motionTime);
-    await this.animateStatus(statusUUID, currentStatus, motionTime);
-    await this.animateStatus(statusUUID, opposite, motionTime);
+    const delay = motionTime - (motionTime * motionDelay);
+
+    const firstStatus = parseInt(mockStore.getValue(firstUUID));
+    const secondStatus = parseInt(mockStore.getValue(secondUUID));
+    const oppositeFirst = firstStatus === ButtonStatus.UP ? ButtonStatus.DOWN : ButtonStatus.UP;
+    const oppositeSecond = secondStatus === ButtonStatus.UP ? ButtonStatus.DOWN : ButtonStatus.UP;
+
+    await Promise.all([
+      (async () => {
+        await this.animateStatus(firstUUID, oppositeFirst, motionTime);
+        await this.simulateDelay(delay);
+        await this.animateStatus(firstUUID, firstStatus, motionTime);
+      })(),
+      (async () => {
+        await this.simulateDelay(delay);
+        await this.animateStatus(secondUUID, oppositeSecond, motionTime);
+        await this.simulateDelay(delay);
+        await this.animateStatus(secondUUID, secondStatus, motionTime);
+      })(),
+    ]);
   }
 
   private async handleCustomButtonPressUpdate(value: string): Promise<void> {
@@ -528,25 +568,25 @@ export class MockDevice implements Partial<Device> {
         console.log(`Mock: Max time between updated to ${parsedValue}ms`);
       } else {
         // Single digit - state machine for array updates
-        if (mockStore['customButtonPressUpdateState'] === 0) {
+        if (mockStore.getCustomButtonPressUpdateState() === 0) {
           // First state: receive index
           if (parsedValue > 9) {
             console.log('Mock: Invalid index, ignoring');
             return;
           }
-          mockStore['indexToUpdate'] = parsedValue;
-          mockStore['customButtonPressUpdateState'] = 1;
+          mockStore.setIndexToUpdate(parsedValue);
+          mockStore.setCustomButtonPressUpdateState(1);
           console.log(`Mock: Index to update set to ${parsedValue}`);
         } else {
           // Second state: receive value for the index
-          mockStore['customButtonPressUpdateState'] = 0;
-          
-          if (mockStore['indexToUpdate'] === 0) {
+          mockStore.setCustomButtonPressUpdateState(0);
+
+          if (mockStore.getIndexToUpdate() === 0) {
             console.log('Mock: Cannot update index 0, ignoring');
             return;
           }
 
-          const indexToUpdate = mockStore['indexToUpdate'];
+          const indexToUpdate = mockStore.getIndexToUpdate();
           const currentArray = mockStore.getCustomButtonArray();
           currentArray[indexToUpdate] = parsedValue;
           mockStore.setCustomButtonArrayValue(indexToUpdate, parsedValue);
@@ -586,6 +626,9 @@ export class MockDevice implements Partial<Device> {
     let leftTarget = 50;
     let rightTarget = 50;
 
+    const headlightMotionDuration = mockStore.getValue(HEADLIGHT_MOTION_IN_UUID);
+    const motionTime = parseInt(headlightMotionDuration);
+
     // Settings format: "left-right" percentages
     if (settings) {
       try {
@@ -599,8 +642,8 @@ export class MockDevice implements Partial<Device> {
 
     mockStore.setValue(BUSY_CHAR_UUID, '1');
     await Promise.all([
-      this.animateToPercentage(LEFT_STATUS_UUID, leftTarget, 750),
-      this.animateToPercentage(RIGHT_STATUS_UUID, rightTarget, 750),
+      this.animateToPercentage(LEFT_STATUS_UUID, leftTarget, motionTime),
+      this.animateToPercentage(RIGHT_STATUS_UUID, rightTarget, motionTime),
     ]);
     mockStore.setValue(BUSY_CHAR_UUID, '0');
   }
@@ -608,14 +651,16 @@ export class MockDevice implements Partial<Device> {
   private async handleSync(): Promise<void> {
     const left = parseInt(mockStore.getValue(LEFT_STATUS_UUID));
     const right = parseInt(mockStore.getValue(RIGHT_STATUS_UUID));
+    const headlightMotionDuration = mockStore.getValue(HEADLIGHT_MOTION_IN_UUID);
+    const motionTime = parseInt(headlightMotionDuration);
 
     // Sync to average position
     const target = Math.round((left + right) / 2);
     
     mockStore.setValue(BUSY_CHAR_UUID, '1');
     await Promise.all([
-      this.animateStatus(LEFT_STATUS_UUID, target, 750),
-      this.animateStatus(RIGHT_STATUS_UUID, target, 750),
+      this.animateStatus(LEFT_STATUS_UUID, target, motionTime),
+      this.animateStatus(RIGHT_STATUS_UUID, target, motionTime),
     ]);
     mockStore.setValue(BUSY_CHAR_UUID, '0');
   }
