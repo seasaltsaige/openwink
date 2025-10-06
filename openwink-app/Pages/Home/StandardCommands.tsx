@@ -6,7 +6,7 @@ import { DEFAULT_COMMAND_DATA, DEFAULT_WINK_DATA } from "../../helper/Constants"
 import { HeaderWithBackButton } from "../../Components";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
-import { HeadlightStatus } from "../../Components/HeadlightStatus";
+import Headlight from "../../Components/Headlight";
 
 export function StandardCommands() {
 
@@ -45,7 +45,7 @@ export function StandardCommands() {
 
       <View style={theme.contentContainer}>
 
-        <HeadlightStatus />
+        <Headlight/>
 
         <View style={theme.defaultCommandSectionContainer}>
           <Text style={theme.commandSectionHeader}>
