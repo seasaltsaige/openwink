@@ -25,7 +25,7 @@ private:
   static NimBLECharacteristic* leftStatusChar;
   static NimBLECharacteristic* rightStatusChar;
   static NimBLECharacteristic* sleepChar;
-  static NimBLECharacteristic* customStatusChar;
+  static NimBLECharacteristic* customCommandChar;
   static NimBLECharacteristic* syncChar;
 
 
@@ -66,10 +66,10 @@ public:
   static void setMotionInValue(int value);
   static void setCustomStatus(int value) {
     if (value == 0)
-      customStatusChar->setValue("0");
+      customCommandChar->setValue("0");
     else
-      customStatusChar->setValue("1");
-    customStatusChar->notify();
+      customCommandChar->setValue("1");
+    customCommandChar->notify();
   }
 
   static bool getDeviceConnected() {
