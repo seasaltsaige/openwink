@@ -81,6 +81,9 @@ void loop() {
     CommandHandler::handleQueuedCommand();
   }
 
+  if (queuedCustomCommand != "")
+    CommandHandler::handleQueuedCustomCommand();
+
   ButtonHandler::handleResetLogic();
   ButtonHandler::loopButtonHandler();
   ButtonHandler::updateButtonSleep();

@@ -65,12 +65,12 @@ const shouldUseMockBle = (): boolean => {
   if (isSimulator()) {
     return true;
   }
-  
+
   // In development mode, check the user preference
   if (__DEV__) {
     return MockBleStore.get();
   }
-  
+
   // Never use mock in production
   return false;
 };
@@ -80,7 +80,7 @@ const createBleManager = (): BleManager => {
     console.log('Using Mock BLE Manager');
     return new MockBleManager() as unknown as BleManager;
   }
-  
+
   return new BleManager();
 };
 
@@ -162,7 +162,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const requestPermissions = useCallback(async () => {
     if (Platform.OS === 'android') {
       const apiLevel = ExpoDevice.platformApiLevel ?? -1;
-      
+
       if (apiLevel < 31) {
         try {
           const granted = await PermissionsAndroid.request(
@@ -182,7 +182,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         return await requestAndroid31Permissions();
       }
     }
-    
+
     // iOS doesn't need manual permission requests for BLE
     return true;
   }, [requestAndroid31Permissions]);
@@ -209,7 +209,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           console.log('Device disconnected:', disconnectedDevice?.id);
-          
+
           // Cleanup
           stopMonitoring();
           setDevice(null);
@@ -240,7 +240,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         console.log(`Connecting to device ${deviceId} (attempt ${retryAttempt + 1})`);
-        
+
         const connection = await manager.connectToDevice(deviceId);
         await connection.discoverAllServicesAndCharacteristics();
 
@@ -248,15 +248,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         DeviceMACStore.setMAC(connection.id);
         setMac(connection.id);
         setDevice(connection);
-        
+
         // Reset retry counter on successful connection
         retryCountRef.current = 0;
-        
+
         // Setup monitoring and handlers
         await setupConnection(connection);
 
         setIsConnecting(false);
-        
+
         Toast.show({
           type: 'success',
           text1: 'Connected',
@@ -274,14 +274,14 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             INITIAL_RETRY_DELAY * Math.pow(2, retryAttempt),
             MAX_RETRY_DELAY
           );
-          
+
           console.log(`Retrying connection in ${delay}ms...`);
           await sleep(delay);
           await connectToDevice(deviceId, retryAttempt + 1);
         } else {
           // Max retries reached
           console.error('Max connection retries reached');
-          
+
           Toast.show({
             type: 'error',
             text1: 'Connection Failed',
@@ -345,7 +345,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     scanTimeoutRef.current = setTimeout(async () => {
       if (!deviceFound) {
         console.log('Scan timeout reached, no device found');
-        
+
         try {
           await manager.stopDeviceScan();
         } catch (error) {
@@ -358,10 +358,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Restart scan if auto-connect is enabled
         if (autoConnectRef.current) {
           console.log('Auto-connect enabled, restarting scan...');
-          
+
           // Increment retry counter to track reconnection attempts
           retryCountRef.current++;
-          
+
           // Add exponential backoff for repeated scan failures
           if (retryCountRef.current > 3) {
             const delay = Math.min(
@@ -371,7 +371,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log(`Backing off for ${delay}ms before next scan...`);
             await new Promise(resolve => setTimeout(resolve, delay));
           }
-          
+
           await scanForModule();
         } else {
           Toast.show({
@@ -396,15 +396,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       async (error, scannedDevice) => {
         if (error) {
           console.error('Scan error:', error);
-          
+
           // Stop scanning on error
           deviceFound = true; // Prevent timeout from restarting
           setIsScanning(false);
-          
+
           if (scanTimeoutRef.current) {
             clearTimeout(scanTimeoutRef.current);
           }
-          
+
           Toast.show({
             type: 'error',
             text1: 'Scan Error',
@@ -448,12 +448,12 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const isConnected = await device.isConnected();
-        
+
         if (isConnected) {
           console.log('Disconnecting from device...');
           stopMonitoring();
           await device.cancelConnection();
-          
+
           if (showToast) {
             Toast.show({
               type: 'info',
@@ -477,7 +477,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     console.log('Auto-connect:', enabled);
     setAutoConnectEnabled(enabled);
     AutoConnectStore.set(enabled);
-    
+
     // Reset retry counter when toggling auto-connect
     retryCountRef.current = 0;
   }, []);
@@ -527,13 +527,13 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
       }
-      
-      manager.stopDeviceScan().catch(err => 
+
+      manager.stopDeviceScan().catch(err =>
         console.error('Error stopping scan on unmount:', err)
       );
-      
+
       if (device) {
-        device.cancelConnection().catch(err => 
+        device.cancelConnection().catch(err =>
           console.error('Error disconnecting on unmount:', err)
         );
       }

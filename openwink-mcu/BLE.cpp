@@ -1,7 +1,6 @@
 #include <string>
 #include "NimBLELocalValueAttribute.h"
 #include "NimBLECharacteristic.h"
-#include "nimble/nimble/include/nimble/hci_common.h"
 #include "esp_bt.h"
 #include "NimBLEDevice.h"
 #include "NimBLEServer.h"
@@ -33,7 +32,7 @@ NimBLECharacteristic* BLE::busyChar;
 NimBLECharacteristic* BLE::leftStatusChar;
 NimBLECharacteristic* BLE::rightStatusChar;
 NimBLECharacteristic* BLE::sleepChar;
-NimBLECharacteristic* BLE::customStatusChar;
+NimBLECharacteristic* BLE::customCommandChar;
 NimBLECharacteristic* BLE::syncChar;
 
 
@@ -61,10 +60,7 @@ bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
-  // NimBLEDevice::setSecurityAuth(true, false, false);
-  // NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
-  // NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
-  // NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID);
+  NimBLEDevice::setMTU(512);
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
@@ -92,16 +88,16 @@ void BLE::initServiceCharacteristics() {
   leftStatusChar = winkService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE);
-  customStatusChar = winkService->createCharacteristic(CUSTOM_COMMAND_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+  customCommandChar = winkService->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
-  customStatusChar->setValue("0");
+  customCommandChar->setValue("0");
 
   syncChar->setCallbacks(new SyncCharacteristicCallbacks());
   winkChar->setCallbacks(new RequestCharacteristicCallbacks());
   sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
-  customStatusChar->setCallbacks(new CustomStatusCharacteristicCallbacks());
+  customCommandChar->setCallbacks(new CustomCommandCharacteristicCallbacks());
 
   otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
   firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);

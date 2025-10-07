@@ -17,10 +17,10 @@ void bothUp() {
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
   }
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
-
   leftStatus = 1;
   rightStatus = 1;
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void bothDown() {
@@ -34,11 +34,11 @@ void bothDown() {
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
   }
-
-  delay(HEADLIGHT_MOVEMENT_DELAY);
-
   leftStatus = 0;
   rightStatus = 0;
+
+  delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void bothBlink() {
@@ -54,7 +54,8 @@ void bothBlink() {
 
     // headlights have already moved partway up, so continue this
 
-    bothUp();
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
     unsigned long initialTime = millis();
     bool leftStatusReached = false;
@@ -79,14 +80,14 @@ void bothBlink() {
     // Headlights up at this point
 
     bothDown();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
 
     leftStatus = 0;
     rightStatus = 0;
     BLE::updateHeadlightChars();
 
-    bothUp();
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
     // Return to sleepy
     initialTime = millis();
@@ -133,8 +134,8 @@ void bothBlink() {
       rightStatus = 0;
     }
 
-    BLE::updateHeadlightChars();
     delay(HEADLIGHT_MOVEMENT_DELAY);
+    BLE::updateHeadlightChars();
 
     if (leftStatus != 1) {
       digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -155,8 +156,9 @@ void bothBlink() {
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
       rightStatus = 0;
     }
+    delay(HEADLIGHT_MOVEMENT_DELAY);
+    BLE::updateHeadlightChars();
   }
-  BLE::updateHeadlightChars();
 }
 
 // Left
@@ -167,6 +169,7 @@ void leftUp() {
     leftStatus = 1;
   }
   delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void leftDown() {
@@ -176,6 +179,7 @@ void leftDown() {
     leftStatus = 0;
   }
   delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void leftWink() {
@@ -188,7 +192,7 @@ void leftWink() {
 
     // headlights have already moved partway up, so continue this
 
-    leftUp();
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
 
     unsigned long initialTime = millis();
     bool leftStatusReached = false;
@@ -206,12 +210,11 @@ void leftWink() {
     // Headlights up at this point
 
     leftDown();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
     leftStatus = 0;
     BLE::updateHeadlightChars();
 
-    leftUp();
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
 
     // Return to sleepy
     initialTime = millis();
@@ -239,8 +242,8 @@ void leftWink() {
       leftStatus = 0;
     }
 
-    BLE::updateHeadlightChars();
     delay(HEADLIGHT_MOVEMENT_DELAY);
+    BLE::updateHeadlightChars();
 
     if (leftStatus != 1) {
       digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -251,6 +254,7 @@ void leftWink() {
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
       leftStatus = 0;
     }
+    delay(HEADLIGHT_MOVEMENT_DELAY);
     BLE::updateHeadlightChars();
   }
 }
@@ -263,6 +267,7 @@ void rightUp() {
     rightStatus = 1;
   }
   delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void rightDown() {
@@ -272,6 +277,7 @@ void rightDown() {
     rightStatus = 0;
   }
   delay(HEADLIGHT_MOVEMENT_DELAY);
+  BLE::updateHeadlightChars();
 }
 
 void rightWink() {
@@ -281,7 +287,7 @@ void rightWink() {
     double rightToUp = (1 - rightToSleepy);
 
     // headlights have already moved partway up, so continue this
-    rightUp();
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
     unsigned long initialTime = millis();
     bool rightStatusReached = false;
@@ -299,13 +305,12 @@ void rightWink() {
     // Headlights up at this point
 
     rightDown();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
 
     rightStatus = 0;
     BLE::updateHeadlightChars();
 
-    rightUp();
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
     // Return to sleepy
     initialTime = millis();
@@ -331,9 +336,9 @@ void rightWink() {
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
       rightStatus = 0;
     }
-    BLE::updateHeadlightChars();
 
     delay(HEADLIGHT_MOVEMENT_DELAY);
+    BLE::updateHeadlightChars();
 
     if (rightStatus != 1) {
       digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
@@ -344,6 +349,7 @@ void rightWink() {
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
       rightStatus = 0;
     }
+    delay(HEADLIGHT_MOVEMENT_DELAY);
     BLE::updateHeadlightChars();
   }
 }

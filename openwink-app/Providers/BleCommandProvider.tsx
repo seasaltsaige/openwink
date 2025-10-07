@@ -16,7 +16,7 @@ import {
   SLEEPY_SETTINGS_UUID,
   LONG_TERM_SLEEP_UUID,
   SYNC_UUID,
-  CUSTOM_COMMAND_STATUS_UUID,
+  CUSTOM_COMMAND_UUID,
   RESET_UUID,
   OTA_UUID,
   WINK_SERVICE_UUID,
@@ -47,25 +47,25 @@ export type BleCommandContextType = {
   sendDefaultCommand: (command: DefaultCommandValue) => Promise<void>;
   sendCustomCommand: (name: string | undefined, commandSequence: CommandInput[]) => Promise<void>;
   customCommandInterrupt: () => void;
-  
+
   // Sync and positioning
   sendSyncCommand: () => Promise<void>;
   sendSleepyEye: () => Promise<void>;
   setSleepyEyeValues: (left: number, right: number) => Promise<void>;
-  
+
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
   updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
-  
+
   // Wave configuration
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
-  
+
   // Module management
   enterDeepSleep: () => Promise<void>;
   resetModule: () => Promise<void>;
   startOTAService: (password: string) => Promise<void>;
-  
+
   // State
   activeCommandName: string | null;
   oemCustomButtonEnabled: boolean;
@@ -168,7 +168,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setRightSleepyEye(storedRight);
     }
   }, []);
-       
+
   // Check if command should be blocked (already in target position)
   const shouldBlockCommand = useCallback(
     (command: DefaultCommandValue): boolean => {
@@ -256,54 +256,32 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Alert device that custom command is in progress
         await device.writeCharacteristicWithoutResponseForService(
           WINK_SERVICE_UUID,
-          CUSTOM_COMMAND_STATUS_UUID,
+          CUSTOM_COMMAND_UUID,
           base64.encode('1')
         );
 
-        // Execute each part of the sequence
-        for (const part of commandSequence) {
-          // Check if interrupted
-          if (activeCommandNameRef.current !== name) {
-            console.log('Custom command interrupted');
-            break;
-          }
+        // Wait short delay to ensure transmission
+        await sleep(25);
 
-          if (part.delay) {
-            // Simple delay
-            await sleep(part.delay);
-          } else if (part.transmitValue) {
-            // Send command
-            await device.writeCharacteristicWithoutResponseForService(
-              WINK_SERVICE_UUID,
-              HEADLIGHT_CHAR_UUID,
-              base64.encode(part.transmitValue.toString())
-            );
-          }
-
-          // Buffer between commands
-          await sleep(COMMAND_BUFFER_DELAY);
-        }
-
-        // Mark custom command as complete
+        // Parse command into sequence to send to mcu
+        const cmdSeq = commandSequence.map((cmd) => cmd.delay ? `d${cmd.delay}` : cmd.transmitValue).join("-");
+        // Write entire command sequence to MCU at once
         await device.writeCharacteristicWithoutResponseForService(
           WINK_SERVICE_UUID,
-          CUSTOM_COMMAND_STATUS_UUID,
-          base64.encode('0')
+          CUSTOM_COMMAND_UUID,
+          base64.encode(cmdSeq),
         );
       } catch (error) {
         console.error('Error executing custom command:', error);
-
         Toast.show({
           type: 'error',
           text1: 'Custom Command Failed',
           text2: 'Failed to execute custom command sequence.',
           visibilityTime: 3000,
         });
-      } finally {
-        updateActiveCommandName(null);
       }
     },
-    [device]
+    [device, headlightsBusy]
   );
 
   // Interrupt a running custom command
@@ -320,7 +298,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     device
       .writeCharacteristicWithoutResponseForService(
         WINK_SERVICE_UUID,
-        CUSTOM_COMMAND_STATUS_UUID,
+        CUSTOM_COMMAND_UUID,
         base64.encode('0')
       )
       .catch((error) => {
@@ -341,6 +319,11 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return;
     }
 
+    if (headlightsBusy) {
+      console.log("Headlights currently busy, sync blocked");
+      return;
+    }
+
     try {
       await device.writeCharacteristicWithoutResponseForService(
         WINK_SERVICE_UUID,
@@ -357,7 +340,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         visibilityTime: 3000,
       });
     }
-  }, [device, leftStatus, rightStatus]);
+  }, [device, leftStatus, rightStatus, headlightsBusy]);
 
   // Set sleepy eye values (0-100 for each side)
   const setSleepyEyeValues = useCallback(

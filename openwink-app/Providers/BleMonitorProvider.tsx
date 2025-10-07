@@ -16,7 +16,7 @@ import {
   SOFTWARE_UPDATING_CHAR_UUID,
   SOFTWARE_STATUS_CHAR_UUID,
   HEADLIGHT_MOTION_IN_UUID,
-  CUSTOM_COMMAND_STATUS_UUID,
+  CUSTOM_COMMAND_UUID,
   CLIENT_MAC_UUID,
   WINK_SERVICE_UUID,
   OTA_SERVICE_UUID,
@@ -265,7 +265,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     (device: Device, onInterrupt: () => void) => {
       const subscription = device.monitorCharacteristicForService(
         WINK_SERVICE_UUID,
-        CUSTOM_COMMAND_STATUS_UUID,
+        CUSTOM_COMMAND_UUID,
         (err, char) => {
           if (err) {
             console.error('Error monitoring CUSTOM_COMMAND_STATUS characteristic:', err);
@@ -303,7 +303,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         try {
           const val = parseInt(base64.decode(char.value));
-          
+
           if (val === 1) {
             Toast.show({
               autoHide: true,
@@ -333,7 +333,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     async (device: Device, onCustomCommandInterrupt?: () => void) => {
       // Clean up any existing subscriptions first
       stopMonitoring();
-      
+
       try {
         // Read initial values before setting up monitors
         await readInitialValues(device);
