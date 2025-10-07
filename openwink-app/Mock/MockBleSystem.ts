@@ -7,7 +7,7 @@ import {
   SOFTWARE_UPDATING_CHAR_UUID,
   SOFTWARE_STATUS_CHAR_UUID,
   HEADLIGHT_MOTION_IN_UUID,
-  CUSTOM_COMMAND_STATUS_UUID,
+  CUSTOM_COMMAND_UUID,
   CLIENT_MAC_UUID,
   WINK_SERVICE_UUID,
   OTA_SERVICE_UUID,
@@ -63,7 +63,7 @@ class MockCharacteristicStore {
       this.values.set(SOFTWARE_UPDATING_CHAR_UUID, '0');
       this.values.set(SOFTWARE_STATUS_CHAR_UUID, 'idle');
       this.values.set(HEADLIGHT_MOTION_IN_UUID, '750');
-      this.values.set(CUSTOM_COMMAND_STATUS_UUID, '0');
+      this.values.set(CUSTOM_COMMAND_UUID, '0');
       this.values.set(CLIENT_MAC_UUID, '0');
       this.values.set(FIRMWARE_UUID, '0.3.5');
     }
@@ -173,6 +173,7 @@ export class MockDevice implements Partial<Device> {
   private connected: boolean = true;
   private disconnectCallback: ((error: any, device: Device) => void) | null = null;
   private animationQueue: Promise<void> = Promise.resolve();
+  private customCommandInterrupted: boolean = false;
   serviceUUIDs?: string[];
 
   constructor(id: string = 'MOCK-MODULE-001', name: string = 'Open Wink Mock') {
@@ -280,9 +281,8 @@ export class MockDevice implements Partial<Device> {
         mockStore.setValue(CLIENT_MAC_UUID, '1');
         break;
 
-      case CUSTOM_COMMAND_STATUS_UUID:
-        mockStore.setValue(BUSY_CHAR_UUID, value);
-        mockStore.setValue(CUSTOM_COMMAND_STATUS_UUID, value);
+      case CUSTOM_COMMAND_UUID:
+        await this.handleCustomCommand(value);
         break;
 
       case CUSTOM_BUTTON_UPDATE_UUID:
@@ -325,7 +325,7 @@ export class MockDevice implements Partial<Device> {
 
   private async handleHeadlightCommand(command: DefaultCommandValue): Promise<void> {
     this.animationQueue = this.animationQueue.then(async () => {
-      const customCommandActive = mockStore.getValue(CUSTOM_COMMAND_STATUS_UUID) === '1';
+      const customCommandActive = mockStore.getValue(CUSTOM_COMMAND_UUID) === '1';
 
       if (!customCommandActive) {
         mockStore.setValue(BUSY_CHAR_UUID, '1');
@@ -396,6 +396,127 @@ export class MockDevice implements Partial<Device> {
     });
     
     await this.animationQueue;
+  }
+
+  private async handleCustomCommand(value: string): Promise<void> {
+    // New flow: first write is '1' to enable, second write is the command sequence
+    if (value === '1') {
+      // Enable custom command mode
+      console.log('Mock: Custom command mode enabled');
+      this.customCommandInterrupted = false;
+      mockStore.setValue(CUSTOM_COMMAND_UUID, '1');
+      mockStore.setValue(BUSY_CHAR_UUID, '1');
+      return;
+    }
+
+    if (value === '0') {
+      // Disable custom command mode (interrupt)
+      console.log('Mock: Custom command interrupted');
+      this.customCommandInterrupted = true;
+      return;
+    }
+
+    // Parse and execute command sequence
+    // Format: "4-d500-5-d500-4" where numbers are commands and d### are delays
+    console.log(`Mock: Executing custom command sequence: ${value}`);
+
+    this.animationQueue = this.animationQueue.then(async () => {
+      try {
+        const parts = value.split('-');
+        const headlightMotionDuration = parseInt(mockStore.getValue(HEADLIGHT_MOTION_IN_UUID));
+
+        for (const part of parts) {
+          // Check if interrupted before each step
+          if (this.customCommandInterrupted) {
+            console.log('Mock: Custom command execution interrupted');
+            break;
+          }
+
+          if (part.startsWith('d')) {
+            // Delay command
+            const delayMs = parseInt(part.substring(1));
+            console.log(`Mock: Delaying ${delayMs}ms`);
+            await this.simulateDelay(delayMs);
+          } else {
+            // Headlight command
+            const command = parseInt(part);
+            if (!isNaN(command)) {
+              console.log(`Mock: Executing command ${command}`);
+              await this.executeHeadlightCommand(command, headlightMotionDuration);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error executing custom command sequence:', error);
+      } finally {
+        if (!this.customCommandInterrupted) {
+          console.log('Mock: Custom command sequence complete');
+        } else {
+          console.log('Mock: Custom command sequence terminated by interrupt');
+        }
+        mockStore.setValue(BUSY_CHAR_UUID, '0');
+        mockStore.setValue(CUSTOM_COMMAND_UUID, '0');
+        this.customCommandInterrupted = false;
+      }
+    });
+
+    await this.animationQueue;
+  }
+
+  private async executeHeadlightCommand(command: DefaultCommandValue, motionTime: number): Promise<void> {
+    // Execute individual headlight command without setting busy flag
+    // (busy is already managed by custom command handler)
+    switch (command) {
+      case DefaultCommandValue.LEFT_UP:
+        await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, motionTime);
+        break;
+
+      case DefaultCommandValue.LEFT_DOWN:
+        await this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, motionTime);
+        break;
+
+      case DefaultCommandValue.RIGHT_UP:
+        await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, motionTime);
+        break;
+
+      case DefaultCommandValue.RIGHT_DOWN:
+        await this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, motionTime);
+        break;
+
+      case DefaultCommandValue.BOTH_UP:
+        await Promise.all([
+          this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.UP, motionTime),
+          this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.UP, motionTime),
+        ]);
+        break;
+
+      case DefaultCommandValue.BOTH_DOWN:
+        await Promise.all([
+          this.animateStatus(LEFT_STATUS_UUID, ButtonStatus.DOWN, motionTime),
+          this.animateStatus(RIGHT_STATUS_UUID, ButtonStatus.DOWN, motionTime),
+        ]);
+        break;
+
+      case DefaultCommandValue.LEFT_WINK:
+        await this.animateWink(LEFT_STATUS_UUID, motionTime);
+        break;
+
+      case DefaultCommandValue.RIGHT_WINK:
+        await this.animateWink(RIGHT_STATUS_UUID, motionTime);
+        break;
+
+      case DefaultCommandValue.BOTH_BLINK:
+        await this.animateBlink(motionTime);
+        break;
+
+      case DefaultCommandValue.LEFT_WAVE:
+        await this.animateWave('left', motionTime);
+        break;
+
+      case DefaultCommandValue.RIGHT_WAVE:
+        await this.animateWave('right', motionTime);
+        break;
+    }
   }
 
   private buttonStatusToPercentage(status: ButtonStatus): number {
