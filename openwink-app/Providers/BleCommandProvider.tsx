@@ -279,8 +279,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           text2: 'Failed to execute custom command sequence.',
           visibilityTime: 3000,
         });
-      } finally {
-        updateActiveCommandName(null);
       }
     },
     [device, headlightsBusy]
