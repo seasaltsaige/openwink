@@ -38,39 +38,20 @@ export abstract class OTA {
       const json = await response.json();
       const version = json["version"] as FirmwareType;
       const description = json["description"] as string;
+      const size = json["size"] as number;
       this.updateDescription = description;
       this.setLatestVersion(version);
       this.setActiveVersion();
-
-      if (this.shouldUpdate()) {
-        const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
-          {
-            method: "GET",
-            headers: {
-              authorization: DeviceMACStore.getStoredMAC() ?? "",
-            }
-          }
-        );
-
-        if (!firmwareResponse.ok) {
-          throw new Error(`Failed to fetch firmware size: ${firmwareResponse.status} ${firmwareResponse.statusText}`);
-        }
-
-        const firmwareBlob = await firmwareResponse.blob();
-        const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
-
-        this.updateSizeBytes = blobWithType.size;
-
-      }
+      this.updateSizeBytes = size;
 
       return this.shouldUpdate();
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Update check timed out. Please check your internet connection and try again.');
       }
-      
+
       throw error;
     }
   }
