@@ -1,4 +1,4 @@
-import { Alert, Pressable, Switch, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useMemo, useState } from "react";
@@ -68,119 +68,118 @@ export function DeveloperSettings() {
         headerTextStyle={theme.settingsHeaderText}
       />
 
-      {/* Disclaimer */}
-      <View style={theme.contentContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <IonIcons name="warning-outline" size={20} color={colorTheme.buttonColor} style={{ marginRight: 8 }} />
-          <Text style={[theme.subSettingHeaderText, { color: colorTheme.buttonColor }]}>
-            Development Only
+      <ScrollView>
+        {/* Disclaimer */}
+        <View style={theme.contentContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <IonIcons name="warning-outline" size={20} color={colorTheme.buttonColor} style={{ marginRight: 8 }} />
+            <Text style={[theme.subSettingHeaderText, { color: colorTheme.buttonColor }]}>
+              Development Only
+            </Text>
+          </View>
+          <Text style={theme.text}>
+            These settings are only available in development mode and will not appear in production builds.
           </Text>
         </View>
-        <Text style={theme.text}>
-          These settings are only available in development mode and will not appear in production builds.
-        </Text>
-      </View>
 
-      {/* Device Info */}
-      <InfoBox title="Developer Info" data={devInfo} />
+        {/* Device Info */}
+        <InfoBox title="Developer Info" data={devInfo} />
 
-      {/* Mock BLE Settings */}
-      <View style={theme.contentContainer}>
-        <TooltipHeader
-          tooltipTitle="Mock BLE Manager"
-          tooltipContent={
-            <Text style={theme.tooltipContainerText}>
-              Use a simulated Bluetooth Low Energy manager instead of the real one. This allows testing the app without a physical device. The mock BLE system maintains state between app restarts, including headlight positions and custom button configurations.
+        {/* Mock BLE Settings */}
+        <View style={theme.contentContainer}>
+          <TooltipHeader
+            tooltipTitle="Mock BLE Manager"
+            tooltipContent={
+              <Text style={theme.tooltipContainerText}>
+                Use a simulated Bluetooth Low Energy manager instead of the real one. This allows testing the app without a physical device. The mock BLE system maintains state between app restarts, including headlight positions and custom button configurations.
+              </Text>
+            }
+          />
+          
+          {isSimulator && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, padding: 12, backgroundColor: colorTheme.backgroundSecondaryColor, borderRadius: 8 }}>
+              <IonIcons name="information-circle" size={18} color={colorTheme.textColor} style={{ marginRight: 8 }} />
+              <Text style={[theme.text, { flex: 1, fontSize: 13 }]}>
+                Mock BLE is always enabled in simulator
+              </Text>
+            </View>
+          )}
+
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 16,
+            padding: 16,
+            backgroundColor: colorTheme.backgroundSecondaryColor,
+            borderRadius: 12,
+          }}>
+            <View style={{ flex: 1, marginRight: 16 }}>
+              <Text style={[theme.settingsHeaderText, { fontSize: 16 }]}>
+                Enable Mock BLE
+              </Text>
+            </View>
+            <Switch
+              value={mockBleEnabled}
+              onValueChange={handleToggleMockBle}
+              trackColor={{ false: colorTheme.disabledButtonColor, true: colorTheme.buttonColor }}
+              thumbColor={colorTheme.backgroundPrimaryColor}
+              disabled={isSimulator}
+            />
+          </View>
+        </View>
+
+        {/* Mock BLE State Reset */}
+        {(mockBleEnabled || isSimulator) && (
+          <View style={theme.contentContainer}>
+            <Text style={theme.subSettingHeaderText}>
+              Mock BLE State
             </Text>
-          }
-        />
-        
-        {isSimulator && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, padding: 12, backgroundColor: colorTheme.backgroundSecondaryColor, borderRadius: 8 }}>
-            <IonIcons name="information-circle" size={18} color={colorTheme.textColor} style={{ marginRight: 8 }} />
-            <Text style={[theme.text, { flex: 1, fontSize: 13 }]}>
-              Mock BLE is always enabled in simulator
-            </Text>
+            
+            <Pressable
+              style={({ pressed }) => [
+                {
+                  marginTop: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 14,
+                  backgroundColor: pressed ? colorTheme.disabledButtonColor : colorTheme.backgroundSecondaryColor,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colorTheme.buttonColor,
+                }
+              ]}
+              onPress={() => {
+                Alert.alert(
+                  "Reset Mock BLE State",
+                  "This will clear all saved mock BLE data and restart the app with default values. Continue?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Reset",
+                      style: "destructive",
+                      onPress: () => {
+                        MockBleStore.clearState();
+                        Alert.alert(
+                          "State Cleared",
+                          "Mock BLE state has been reset. Please restart the app to apply changes.",
+                          [{ text: "OK" }]
+                        );
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <IonIcons name="refresh-outline" color={colorTheme.buttonColor} size={20} style={{ marginRight: 8 }} />
+              <Text style={[theme.settingsHeaderText, { color: colorTheme.buttonColor, fontSize: 15 }]}>
+                Reset Mock State
+              </Text>
+            </Pressable>
           </View>
         )}
-
-        <View style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 16,
-          padding: 16,
-          backgroundColor: colorTheme.backgroundSecondaryColor,
-          borderRadius: 12,
-        }}>
-          <View style={{ flex: 1, marginRight: 16 }}>
-            <Text style={[theme.settingsHeaderText, { fontSize: 16 }]}>
-              Enable Mock BLE
-            </Text>
-          </View>
-          <Switch
-            value={mockBleEnabled}
-            onValueChange={handleToggleMockBle}
-            trackColor={{ false: colorTheme.disabledButtonColor, true: colorTheme.buttonColor }}
-            thumbColor={colorTheme.backgroundPrimaryColor}
-            disabled={isSimulator}
-          />
-        </View>
-      </View>
-
-      {/* Mock BLE State Reset */}
-      {mockBleEnabled && (
-        <View style={theme.contentContainer}>
-          <Text style={theme.subSettingHeaderText}>
-            Mock BLE State
-          </Text>
-          <Text style={theme.text}>
-            Reset the mock BLE system state to defaults. This will clear all saved characteristic values and custom button configurations.
-          </Text>
-          
-          <Pressable
-            style={({ pressed }) => [
-              {
-                marginTop: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 14,
-                backgroundColor: pressed ? colorTheme.disabledButtonColor : colorTheme.backgroundSecondaryColor,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: colorTheme.buttonColor,
-              }
-            ]}
-            onPress={() => {
-              Alert.alert(
-                "Reset Mock BLE State",
-                "This will clear all saved mock BLE data and restart the app with default values. Continue?",
-                [
-                  { text: "Cancel", style: "cancel" },
-                  {
-                    text: "Reset",
-                    style: "destructive",
-                    onPress: () => {
-                      MockBleStore.clearState();
-                      Alert.alert(
-                        "State Cleared",
-                        "Mock BLE state has been reset. Please restart the app to apply changes.",
-                        [{ text: "OK" }]
-                      );
-                    }
-                  }
-                ]
-              );
-            }}
-          >
-            <IonIcons name="refresh-outline" color={colorTheme.buttonColor} size={20} style={{ marginRight: 8 }} />
-            <Text style={[theme.settingsHeaderText, { color: colorTheme.buttonColor, fontSize: 15 }]}>
-              Reset Mock State
-            </Text>
-          </Pressable>
-        </View>
-      )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
