@@ -199,6 +199,7 @@ void CommandHandler::handleQueuedCustomCommand() {
 
       setAllOff();
     }
+    ButtonHandler::loopButtonHandler();
   }
 
   ButtonHandler::setCustomCommandActive(false);
