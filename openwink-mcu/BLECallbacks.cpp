@@ -37,11 +37,19 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 
   BLE::setDeviceConnected(true);
   BLE::updateHeadlightChars();
-  bool update = pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
+  bool update = pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S2);
   if (update) {
     Serial.println("PHY SUCCESSFULLY UPDATE");
   } else {
     Serial.println("PHY UPDATE FAILED");
+  }
+
+  
+  bool mtuUpdate = NimBLEDevice::setMTU(257);
+  if (mtuUpdate) {
+    Serial.println("MTU SUCCESSFULLY UPDATE");
+  } else {
+    Serial.println("MTU UPDATE FAILED");
   }
 }
 
@@ -65,6 +73,10 @@ void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8
   Serial.printf("Phy Update Request Completed: %d, %d\n", txPhy, rxPhy);
 }
 
+
+void ServerCallbacks::onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) {
+  Serial.printf("MTU Update Completed, set to %d\n", MTU);
+} 	
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   printf("long term sleep written\n");

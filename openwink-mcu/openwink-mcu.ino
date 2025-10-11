@@ -53,14 +53,14 @@ void setup() {
 
   BLE::start();
 
-  xTaskCreatePinnedToCore(
-    motionInMonitorTask,
-    "MotionInTask",
-    4096,
-    nullptr,
-    1,
-    nullptr,
-    1);
+  // xTaskCreatePinnedToCore(
+  //   motionInMonitorTask,
+  //   "MotionInTask",
+  //   4096,
+  //   nullptr,
+  //   1,
+  //   nullptr,
+  //   1);
 
 }
 

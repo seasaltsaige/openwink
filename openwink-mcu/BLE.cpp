@@ -60,7 +60,6 @@ bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
-  NimBLEDevice::setMTU(512);
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
