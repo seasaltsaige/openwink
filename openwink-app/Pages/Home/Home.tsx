@@ -17,8 +17,8 @@ import { getDeviceUUID, sleep } from "../../helper/Functions";
 import { OTA } from "../../helper/Handlers/OTA";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
-import { useBleCommand } from "../../Providers/BleCommandProvider";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { useOtaUpdate } from "../../Providers/OTAUpdateProvider";
 
 export function Home() {
 
@@ -57,7 +57,7 @@ export function Home() {
     sendOTAChunk,
     sendOTAComplete,
     sendOTASize,
-  } = useBleCommand();
+  } = useOtaUpdate();
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
