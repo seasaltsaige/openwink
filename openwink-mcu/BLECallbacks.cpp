@@ -296,67 +296,6 @@ void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   }
 }
 
-
-// TODO: FIGURE OUT THE WEIRD UPDATE STATUS TEXT. IT IS NOT COMING THROUGH CORRECTLY.
-
-// void setupUpdateServer() {
-//   server.onNotFound([]() {
-//     server.send(404, "text/plain", "Not Found");
-//   });
-
-//   server.on(
-//     String("/update"), HTTP_POST,
-//     [&]() {
-//       if (Update.hasError()) {
-//         server.send(500);
-//         BLE::setFirmwareUpdateStatus("failed");
-//       } else {
-
-//         server.client().setNoDelay(true);
-//         server.send(200);
-//         BLE::setFirmwareUpdateStatus("success");
-//         delay(100);
-//         server.client().stop();
-//         esp_ota_mark_app_valid_cancel_rollback();
-//         ESP.restart();
-//       }
-//     },
-//     [&]() {
-//       HTTPRaw& raw = server.raw();
-
-//       if (raw.status == RAW_START) {
-//         uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-//         if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
-//           Update.printError(Serial);
-//         }
-//         BLE::setFirmwareUpdateStatus("updating");
-//       } else if (raw.status == RAW_ABORTED || Update.hasError()) {
-//         if (raw.status == RAW_ABORTED) {
-
-//           if (!Update.end(false)) {
-//             Update.printError(Serial);
-//             BLE::setFirmwareUpdateStatus("failed");
-//           }
-
-//           Serial.println("Update was aborted");
-//         }
-//       } else if (raw.status == RAW_WRITE) {
-//         if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
-//           Update.printError(Serial);
-//         }
-//       } else if (raw.status == RAW_END) {
-//         if (Update.end(true)) {  // true to set the size to the current progress
-//           Serial.printf("Update Success: %u\nRebooting...\n", raw.totalSize);
-//         } else {
-//           Update.printError(Serial);
-//         }
-//       }
-//       delay(0);
-//     });
-
-//   Update.onProgress(updateProgress);
-// }
-
 bool updateInProgress = false;
 int buffTotalSize = 0;
 int buffSizeWritten = 0;
