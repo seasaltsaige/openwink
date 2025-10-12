@@ -247,13 +247,19 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Store MAC and update state
         DeviceMACStore.setMAC(connection.id);
         setMac(connection.id);
-        setDevice(connection);
+
 
         // Reset retry counter on successful connection
         retryCountRef.current = 0;
 
         // Setup monitoring and handlers
         await setupConnection(connection);
+
+        // Negotiate MTU to maximum size if android device. 
+        const negotiatedMTUConnection = await connection.requestMTU(517);
+        setDevice(negotiatedMTUConnection);
+
+        console.log(negotiatedMTUConnection.mtu);
 
         setIsConnecting(false);
 
@@ -450,7 +456,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const isConnected = await device.isConnected();
 
         if (isConnected) {
-          console.log('Disconnecting from device...');
+          console.log('Disconnecting from device... (From Disconnect Function)');
           stopMonitoring();
           await device.cancelConnection();
 

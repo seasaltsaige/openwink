@@ -44,6 +44,7 @@ export function Home() {
   const {
     disconnect: disconnectFromModule,
     isConnecting,
+    device,
     isScanning,
     requestPermissions,
     scanForModule,
@@ -53,6 +54,9 @@ export function Home() {
 
   const {
     startOTAService,
+    sendOTAChunk,
+    sendOTAComplete,
+    sendOTASize,
   } = useBleCommand();
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
@@ -88,9 +92,9 @@ export function Home() {
       setFetchingModuleUpdateInfo(false);
       setModuleUpdateAvailable(false);
       setModuleUpdateCheckError("error");
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to check for updates';
-      
+
       Toast.show({
         type: "error",
         autoHide: true,
@@ -101,13 +105,23 @@ export function Home() {
     }
   }
 
+  // TODO: Allow cancelation of update through button in modal and haltOTAUpdate
   const installModuleUpdate = async () => {
+    if (!device) return;
     setInstallingFirmware(true);
 
-    const password = OTA.generateWifiPasskey();
-    await startOTAService(password);
-
-    const updateStatus = await OTA.updateFirmware();
+    // const password = OTA.generateWifiPasskey();
+    await startOTAService();
+    // MTU Max size is 517, but that includes the headers/other needed data, so real max is 5 smaller
+    const HEADER = 5;
+    // TODO: handle low RSSI values
+    // device.rssi
+    const updateStatus = await OTA.updateFirmware(
+      device.mtu - HEADER,
+      sendOTAChunk,
+      sendOTASize,
+      sendOTAComplete,
+    );
 
     setInstallingFirmware(false);
 
@@ -131,10 +145,10 @@ export function Home() {
         visibilityTime: 8000,
         text1: "Update Failed",
         // TODO: if continued errors, suggest a bug report.
-        text2: "Something went wrong while installing firmware. Please reconnect to the module and try again."
+        text2: "Something went wrong while installing firmware. Please try again."
       });
 
-      return disconnectFromModule(false);
+      await fetchModuleUpdate();
     }
   }
 

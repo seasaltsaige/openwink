@@ -1,7 +1,8 @@
-import { ActivityIndicator, Modal, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
+import { useBleCommand } from "../Providers/BleCommandProvider";
 
 interface IModuleUpdateModal {
   version: string;
@@ -21,6 +22,7 @@ export function ModuleUpdateModal({
 
   const { colorTheme } = useColorTheme();
   const { updateProgress, updatingStatus } = useBleMonitor();
+  const { haltOTAUpdate } = useBleCommand();
 
   const updateSizeMB = binSizeBytes / 1000 / 1000;
   return (
@@ -120,6 +122,28 @@ export function ModuleUpdateModal({
           }}>
             {description}
           </Text>
+
+          <Pressable
+            onPress={haltOTAUpdate}
+            style={({ pressed }) => ({
+              backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+              width: "60%",
+              paddingVertical: 6,
+              borderRadius: 20,
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
+            })}
+          >
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: 17,
+                fontFamily: "IBMPlexSans_500Medium",
+                color: colorTheme.headerTextColor,
+              }}
+            >
+              Cancel Update
+            </Text>
+          </Pressable>
         </View>
       </View>
     </Modal>

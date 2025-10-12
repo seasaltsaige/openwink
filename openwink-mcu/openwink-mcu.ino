@@ -73,8 +73,8 @@ void motionInMonitorTask(void* params) {
 
 void loop() {
 
-  if (wifi_enabled)
-    handleHTTPClient();
+  // if (wifi_enabled)
+  //   handleHTTPClient();
 
   if (queuedCommand != -1) {
     // handle sent command
