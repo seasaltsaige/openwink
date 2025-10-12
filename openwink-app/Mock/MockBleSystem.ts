@@ -283,9 +283,6 @@ export class MockDevice implements Partial<Device> {
 
       case CUSTOM_COMMAND_UUID:
         await this.handleCustomCommand(value);
-      case CUSTOM_COMMAND_UUID:
-        mockStore.setValue(BUSY_CHAR_UUID, value);
-        mockStore.setValue(CUSTOM_COMMAND_UUID, value);
         break;
 
       case CUSTOM_BUTTON_UPDATE_UUID:
