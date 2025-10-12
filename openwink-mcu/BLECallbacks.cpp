@@ -12,14 +12,8 @@
 #include "ButtonHandler.h"
 #include "esp_sleep.h"
 #include "Storage.h"
-
-#include <WiFi.h>
 #include <Update.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-
 #include <iostream>
-
 #include "esp_ota_ops.h"
 
 using namespace std;
