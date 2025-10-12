@@ -115,8 +115,10 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   double left = leftSleepyValue / 100;
   double right = rightSleepyValue / 100;
 
-  if (leftStatus == 1 || rightStatus == 1)
+  if (leftStatus == 1 || rightStatus == 1) {
     bothDown();
+    setAllOff();
+  }
 
   unsigned long initialTime = millis();
 
