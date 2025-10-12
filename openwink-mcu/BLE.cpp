@@ -152,12 +152,9 @@ void BLE::start() {
   if (advertising->setInstanceData(0, advertisement)) {
     if (advertising->start(0)) {
       printf("Started advertising\n");
-      BLE::updateHeadlightChars();
       BLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
-    } else
-      printf("Failed to start advertising\n");
-  } else
-    printf("Failed to register advertisement data\n");
+    } else printf("Failed to start advertising\n");
+  } else printf("Failed to register advertisement data\n");
 }
 
 void BLE::updateHeadlightChars() {

@@ -29,6 +29,14 @@ string queuedCustomCommand = "";
 WebServer server(80);
 bool wifi_enabled = false;
 
+const uint16_t MIN_INTERVAL = 12;
+const uint16_t MAX_INTERVAL = 24;
+const uint16_t LATENCY = 0;
+const uint16_t TIMEOUT = 200;
+
+
+bool connEstablishing = false;
+
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
 
   BLE::setDeviceConnected(true);
@@ -39,6 +47,10 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   } else {
     Serial.println("PHY UPDATE FAILED");
   }
+  
+  pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
+  pServer->setDataLen(connInfo.getConnHandle(), 251);
+  connEstablishing = false;
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -402,8 +414,11 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
   switch (reason) {
     case 0:
-      BLE::setDeviceConnected(true);
-      printf("Client connecting\n");
+      if (!connEstablishing) {
+        BLE::setDeviceConnected(true);
+        printf("Client connecting\n");
+        connEstablishing = true;
+      }
       return;
     default:
       printf("Default case");
