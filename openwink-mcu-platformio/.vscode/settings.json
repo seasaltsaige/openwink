@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "nimbledevice.h": "c",
+    "vector": "cpp"
+  }
+}
