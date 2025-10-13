@@ -23,7 +23,7 @@ export function ModuleUpdateModal({
   const { colorTheme } = useColorTheme();
   const { updateProgress, updatingStatus } = useBleMonitor();
 
-  const updateSizeMB = binSizeBytes / 1000 / 1000;
+  const updateSizeKB = binSizeBytes / 1000;
   return (
     <Modal
       transparent
@@ -108,7 +108,7 @@ export function ModuleUpdateModal({
             fontSize: 14,
             textAlign: "center",
           }}>
-            ({((updateSizeMB * updateProgress) / 100).toFixed(2)}MB/{(updateSizeMB).toFixed(2)}MB) – v{version}
+            ({((updateSizeKB * updateProgress) / 100).toFixed(2)}KB/{(updateSizeKB).toFixed(2)}KB) – v{version}
           </Text>
 
           <Text style={{
