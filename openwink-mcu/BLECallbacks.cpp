@@ -342,6 +342,8 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     buffSizeWritten = 0;
     BLE::setFirmwareUpdateStatus("canceled");
     Serial.println("OTA Update Canceled");
+    delay(25);
+    ESP.restart();
     return;
   }
 
