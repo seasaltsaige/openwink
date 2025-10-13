@@ -8,26 +8,24 @@ interface IModuleUpdateModal {
   version: string;
   description: string;
   visible: boolean;
-  onRequestClose: () => void;
+  stopUpdate: () => Promise<void>
   binSizeBytes: number;
 }
 
 export function ModuleUpdateModal({
   version,
   description,
-  onRequestClose,
   visible,
   binSizeBytes,
+  stopUpdate,
 }: IModuleUpdateModal) {
 
   const { colorTheme } = useColorTheme();
   const { updateProgress, updatingStatus } = useBleMonitor();
-  const { haltOTAUpdate } = useOtaUpdate();
 
   const updateSizeMB = binSizeBytes / 1000 / 1000;
   return (
     <Modal
-      onRequestClose={onRequestClose}
       transparent
       animationType="none"
       visible={visible}
@@ -124,7 +122,7 @@ export function ModuleUpdateModal({
           </Text>
 
           <Pressable
-            onPress={haltOTAUpdate}
+            onPress={stopUpdate}
           >
             {({ pressed }) =>
               <Text
