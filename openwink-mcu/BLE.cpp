@@ -55,7 +55,7 @@ bool BLE::deviceConnected = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
-  NimBLEDevice::setMTU(517);
+  NimBLEDevice::setMTU(247);
   initDeviceServer();
   initServerService();
   initServiceCharacteristics();
@@ -94,7 +94,7 @@ void BLE::initServiceCharacteristics() {
   sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
   customCommandChar->setCallbacks(new CustomCommandCharacteristicCallbacks());
 
-  otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE);
+  otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
   firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
   firmwareUpdateNotifier = otaService->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
