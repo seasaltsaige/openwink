@@ -1,7 +1,6 @@
-import WifiManager from "react-native-wifi-reborn";
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
 import { UPDATE_URL } from "../Constants";
-import { generatePassword, sleep } from "../Functions";
+import { sleep } from "../Functions";
 
 type FirmwareType = `${number}.${number}.${number}`;
 
@@ -9,13 +8,14 @@ export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
   public static updateDescription: string = "";
-
-  private static readonly wifiSSID: string = "Wink Module: Update Access Point";
-  private static wifiPasskey: string;
   private static updateSizeBytes: number = 0;
   // private static written: number = 0;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
+    this.setActiveVersion();
+    this.setLatestVersion(this.activeVersion);
+    this.updateDescription = "";
+    this.updateSizeBytes = 0;
     // Fetch latest software version from API using device MAC address as access code
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -57,11 +57,6 @@ export abstract class OTA {
     }
   }
 
-  public static generateWifiPasskey() {
-    this.wifiPasskey = generatePassword(15);
-    return this.wifiPasskey;
-  }
-
   public static async updateFirmware(
     mtu: number,
     sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>) => Promise<boolean>,
@@ -87,15 +82,19 @@ export abstract class OTA {
       for (let i = 0; i < uint8buffer.length; i += mtu) {
         blobChunks.push(uint8buffer.slice(i, i + mtu));
       }
+      const start = Date.now();
+      console.log("[DEBUG] OTA START");
       await sendOTASize(firmwareBlob.size);
       await sleep(25);
 
       for (const chunk of blobChunks) {
-        const success = await sendOTAChunk(chunk);
-        if (!success) return false;
+        await sendOTAChunk(chunk);
       }
 
       await sendOTAComplete();
+
+      const end = Date.now();
+      console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
 
       this.activeVersion = this.latestVersion;
 
