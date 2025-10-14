@@ -6,9 +6,9 @@
 #include <string.h>
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
-#include <WebServer.h>
 
 extern double headlightMultiplier;
+extern bool otaUpdateRestartQueued;
 
 using namespace std;
 /**
@@ -28,8 +28,6 @@ extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;
 extern string queuedCustomCommand;
-
-extern bool wifi_enabled;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
