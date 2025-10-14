@@ -55,7 +55,14 @@ export function Home() {
     stopUpdate,
     checkUpdateAvailable,
     startUpdate,
-  } = useUpdateManager();
+  } = useUpdateManager({
+    onError: ({ errorType, errorMessage, errorTitle, }) => {
+
+    },
+    onSuccess: ({ }) => {
+
+    },
+  });
 
   const updatePanelVisible =
     error === ERROR_TYPE.ERR_NONE &&
