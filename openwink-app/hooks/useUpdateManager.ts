@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { OTA } from "../helper/Handlers/OTA"
 import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { sleep } from "../helper/Functions";
+import { useBleMonitor } from "../Providers/BleMonitorProvider";
 
 export enum UPDATE_STATUS {
   IDLE,
@@ -26,6 +27,22 @@ type UpdateData = {
   size: number;
 }
 
+type UpdateManagerType = {
+  onSuccess: ({
+
+  }) => void;
+
+  onError: ({
+    errorType,
+    errorMessage,
+    errorTitle,
+  }: {
+    errorType: ERROR_TYPE;
+    errorMessage: string;
+    errorTitle: string;
+  }) => void;
+}
+
 type UpdateManagerReturnType = {
   updateStatus: UPDATE_STATUS;
   updateData: UpdateData | null;
@@ -37,7 +54,10 @@ type UpdateManagerReturnType = {
 
 const OTA_HEADER_SIZE = 5;
 
-export const useUpdateManager = (): UpdateManagerReturnType => {
+export const useUpdateManager = ({
+  onError,
+  onSuccess,
+}: UpdateManagerType): UpdateManagerReturnType => {
 
   const {
     haltOTAUpdate,
@@ -48,7 +68,6 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
   } = useOtaUpdate();
 
   const { device } = useBleConnection();
-
 
   const [updateStatus, setUpdateStatus] = useState(UPDATE_STATUS.IDLE);
   const [error, setError] = useState(ERROR_TYPE.ERR_NONE);
@@ -75,9 +94,13 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
       } else {
         // If update goes wrong, reset and check for update again.
-        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
-        setUpdateStatus(UPDATE_STATUS.IDLE);
-        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+        // Additionally check to make sure update was not halted
+        if (error !== ERROR_TYPE.ERR_UPDATE_HALTED) {
+          // error does not update while in function. Would need ref def to achieve this
+          setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+          setUpdateStatus(UPDATE_STATUS.IDLE);
+          setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+        }
       }
 
     },
