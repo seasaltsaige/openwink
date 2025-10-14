@@ -95,7 +95,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       try {
-        await device.writeCharacteristicWithResponseForService(
+        await device.writeCharacteristicWithoutResponseForService(
           OTA_SERVICE_UUID,
           OTA_UUID,
           base64.encode("HALT"),
@@ -144,7 +144,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             // parse to base64 for ble-plx
             const parsedDataChunk = base64.encode(String.fromCharCode(...dataChunk));
             // send data chunk
-            await device.writeCharacteristicWithResponseForService(
+            await device.writeCharacteristicWithoutResponseForService(
               OTA_SERVICE_UUID,
               OTA_UUID,
               parsedDataChunk,
@@ -154,7 +154,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           // chunk size is already correct, so send it over.
         } else {
           const parsedChunk = base64.encode(String.fromCharCode(...chunk));
-          await device.writeCharacteristicWithResponseForService(
+          await device.writeCharacteristicWithoutResponseForService(
             OTA_SERVICE_UUID,
             OTA_UUID,
             parsedChunk,
