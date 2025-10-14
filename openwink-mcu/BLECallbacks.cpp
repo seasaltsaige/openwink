@@ -26,11 +26,10 @@ RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 int queuedCommand = -1;
 string queuedCustomCommand = "";
 
-WebServer server(80);
-bool wifi_enabled = false;
+bool otaUpdateRestartQueued = false;
 
-const uint16_t MIN_INTERVAL = 12;
-const uint16_t MAX_INTERVAL = 24;
+const uint16_t MIN_INTERVAL = 48;
+const uint16_t MAX_INTERVAL = 48;
 const uint16_t LATENCY = 0;
 const uint16_t TIMEOUT = 200;
 
@@ -47,7 +46,7 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   } else {
     Serial.println("PHY UPDATE FAILED");
   }
-  
+
   pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
   pServer->setDataLen(connInfo.getConnHandle(), 251);
   connEstablishing = false;
@@ -343,7 +342,7 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     BLE::setFirmwareUpdateStatus("canceled");
     Serial.println("OTA Update Canceled");
     delay(25);
-    ESP.restart();
+    otaUpdateRestartQueued = true;
     return;
   }
 
@@ -380,7 +379,7 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
           Serial.println("Update success");
           BLE::setFirmwareUpdateStatus("success");
           esp_ota_mark_app_valid_cancel_rollback();
-          ESP.restart();
+          otaUpdateRestartQueued = true;
         } else {
           Serial.println("OTA Update failed to finalize");
           Update.printError(Serial);

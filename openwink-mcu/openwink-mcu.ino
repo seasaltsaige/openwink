@@ -73,8 +73,10 @@ void motionInMonitorTask(void* params) {
 
 void loop() {
 
-  // if (wifi_enabled)
-  //   handleHTTPClient();
+  if (otaUpdateRestartQueued) {
+    delay(100);
+    ESP.restart();
+  }
 
   if (queuedCommand != -1) {
     // handle sent command
