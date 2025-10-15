@@ -3,7 +3,6 @@ import { OTA } from "../helper/Handlers/OTA"
 import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { sleep } from "../helper/Functions";
-import { useBleMonitor } from "../Providers/BleMonitorProvider";
 
 export enum UPDATE_STATUS {
   IDLE,
@@ -29,7 +28,13 @@ type UpdateData = {
 
 type UpdateManagerType = {
   onSuccess: ({
-
+    successType,
+    successMessage,
+    successTitle,
+  }: {
+    successType: UPDATE_STATUS;
+    successMessage: string;
+    successTitle: string;
   }) => void;
 
   onError: ({
@@ -67,7 +72,7 @@ export const useUpdateManager = ({
     startOTAService
   } = useOtaUpdate();
 
-  const { device } = useBleConnection();
+  const { isConnected, device } = useBleConnection();
 
   const [updateStatus, setUpdateStatus] = useState(UPDATE_STATUS.IDLE);
   const [error, setError] = useState(ERROR_TYPE.ERR_NONE);
@@ -76,14 +81,14 @@ export const useUpdateManager = ({
 
   const startUpdate = useCallback(
     async () => {
-      if (!device) return;
+      if (!isConnected) return;
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
       setError(ERROR_TYPE.ERR_NONE);
 
       await startOTAService();
       await sleep(50);
       const updateSuccessStatus = await OTA.updateFirmware(
-        device.mtu - OTA_HEADER_SIZE,
+        device?.mtu! - OTA_HEADER_SIZE,
         sendOTAChunk,
         sendOTASize,
         sendOTAComplete,
@@ -99,17 +104,25 @@ export const useUpdateManager = ({
           // error does not update while in function. Would need ref def to achieve this
           setError(ERROR_TYPE.ERR_UPDATE_FAILED);
           setUpdateStatus(UPDATE_STATUS.IDLE);
+
+          onError({
+            errorType: ERROR_TYPE.ERR_UPDATE_FAILED,
+            errorMessage: "Firmware update failed during installation. Reconnect to module to try again.",
+            errorTitle: "Update Failed",
+          });
+
           setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
         }
       }
 
     },
-    [device],
+    // Not 100% on this, but since its just the devices MTU being accessed, this is all that should be needed? no?
+    [isConnected, device?.mtu],
   );
 
   const checkUpdateAvailable = useCallback(
     async () => {
-      if (!device) {
+      if (!isConnected) {
         setUpdateStatus(UPDATE_STATUS.IDLE);
         setError(ERROR_TYPE.ERR_DISCONNECT);
       };
@@ -133,24 +146,40 @@ export const useUpdateManager = ({
         setUpdateData(() => (updateInfo));
         setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
+        // onSuccess({});
+
       } catch (err) {
         setError(ERROR_TYPE.ERR_TIMEOUT);
         setUpdateStatus(UPDATE_STATUS.IDLE);
+
+        onError({
+          errorType: ERROR_TYPE.ERR_TIMEOUT,
+          errorMessage: "Update timed out during download. Please try again.",
+          errorTitle: "Update Time Out"
+        });
+
         setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
       }
     },
-    [device],
+    [isConnected],
   );
 
   const stopUpdate = useCallback(
     async () => {
-      if (!device) return;
+      if (!isConnected) return;
       await haltOTAUpdate();
       setError(ERROR_TYPE.ERR_UPDATE_HALTED);
-      setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
       setUpdateStatus(UPDATE_STATUS.IDLE);
+
+      onError({
+        errorType: ERROR_TYPE.ERR_UPDATE_HALTED,
+        errorMessage: "Firmware installation halted by user. Reconnect to module to retry.",
+        errorTitle: "Update Halted",
+      });
+
+      setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
     },
-    [device],
+    [isConnected],
   );
 
   return {
