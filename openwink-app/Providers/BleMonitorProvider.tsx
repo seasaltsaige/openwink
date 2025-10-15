@@ -27,7 +27,7 @@ import { FirmwareStore } from '../Storage';
 import { toProperCase } from '../helper/Functions';
 
 export type BleMonitorContextType = {
-  isConnected: boolean;
+  // isConnected: boolean;
   headlightsBusy: boolean;
   isSleepyEyeActive: boolean;
   leftStatus: number;
@@ -59,7 +59,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [updatingStatus, setUpdatingStatus] = useState<'Idle' | 'Updating' | 'Failed' | 'Success' | 'Canceled'>('Idle');
   const [firmwareVersion, setFirmwareVersion] = useState('');
   const [motionValue, setMotionValue] = useState(750);
-  const [isConnected, setIsConnected] = useState(false);
 
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);
@@ -356,7 +355,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             monitorCustomCommandStatus(device, onCustomCommandInterrupt)
           );
         }
-        setIsConnected(true);
+        // setIsConnected(true);
       } catch (error) {
         console.error('Error setting up monitors:', error);
         stopMonitoring();
@@ -385,7 +384,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     });
     subscriptionsRef.current = [];
-    setIsConnected(false);
+    // setIsConnected(false);
   }, []);
 
   // Read initial values from characteristics
@@ -468,7 +467,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     (rightStatus === 0 || rightStatus === 1);
 
   const value: BleMonitorContextType = {
-    isConnected,
+    // isConnected,
     headlightsBusy,
     isSleepyEyeActive,
     leftStatus,

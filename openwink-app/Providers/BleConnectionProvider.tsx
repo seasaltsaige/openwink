@@ -32,6 +32,7 @@ export type BleConnectionContextType = {
   mac: string;
   isScanning: boolean;
   isConnecting: boolean;
+  isConnected: boolean;
   autoConnectEnabled: boolean;
   requestPermissions: () => Promise<boolean>;
   scanForModule: () => Promise<void>;
@@ -93,6 +94,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Track retry attempts to prevent infinite loops
   const retryCountRef = useRef(0);
@@ -202,6 +204,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           base64.encode(deviceUUID)
         );
 
+        // Once all is initialized and nothing failed, device has successfully connected.
+        setIsConnected(true);
+
         // Setup disconnect handler
         connection.onDisconnected(async (err, disconnectedDevice) => {
           if (err) {
@@ -213,6 +218,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           // Cleanup
           stopMonitoring();
           setDevice(null);
+          setIsConnected(false);
 
           // Auto-reconnect if enabled
           if (autoConnectRef.current) {
@@ -459,6 +465,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           console.log('Disconnecting from device... (From Disconnect Function)');
           stopMonitoring();
           await device.cancelConnection();
+          setIsConnected(false);
 
           if (showToast) {
             Toast.show({
@@ -553,6 +560,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     isScanning,
     isConnecting,
     autoConnectEnabled,
+    isConnected,
     requestPermissions,
     scanForModule,
     connectToDevice,
