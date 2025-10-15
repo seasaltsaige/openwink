@@ -1,7 +1,6 @@
-#include <NimBLEDevice.h>
-#include <driver/gpio.h>
+#include "../include/gpio_conf.h"
 
 extern "C" void app_main()
 {
-    NimBLEDevice::init("Device");
+    INIT_gpio();
 }
