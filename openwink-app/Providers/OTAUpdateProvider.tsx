@@ -58,24 +58,16 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         setUpdateInProgress(true);
 
-        // Wait for OTA service to initialize
-        await sleep(1500);
-
-        Toast.show({
-          type: 'info',
-          text1: 'OTA Service Started',
-          text2: 'Ready to receive firmware update.',
-          visibilityTime: 3000,
-        });
+        await sleep(100);
       } catch (error) {
         console.error('Error starting OTA service:', error);
 
-        Toast.show({
-          type: 'error',
-          text1: 'OTA Failed',
-          text2: 'Failed to start OTA service.',
-          visibilityTime: 3000,
-        });
+        // Toast.show({
+        //   type: 'error',
+        //   text1: 'OTA Failed',
+        //   text2: 'Failed to start OTA service.',
+        //   visibilityTime: 3000,
+        // });
       }
     },
     [device, otaUpdateInProgressRef]
@@ -105,21 +97,21 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         setUpdateInProgress(false);
 
-        Toast.show({
-          type: 'info',
-          text1: 'OTA Service Cancelled',
-          text2: 'Ready to receive firmware update.',
-          visibilityTime: 3000,
-        });
+        // Toast.show({
+        //   type: 'info',
+        //   text1: 'OTA Service Cancelled',
+        //   text2: 'Ready to receive firmware update.',
+        //   visibilityTime: 3000,
+        // });
       } catch (error) {
         console.error('Error stopping OTA service:', error);
 
-        Toast.show({
-          type: 'error',
-          text1: 'OTA Failed',
-          text2: 'Failed to stop OTA service.',
-          visibilityTime: 3000,
-        });
+        // Toast.show({
+        //   type: 'error',
+        //   text1: 'OTA Failed',
+        //   text2: 'Failed to stop OTA service.',
+        //   visibilityTime: 3000,
+        // });
       }
 
     },
@@ -164,12 +156,12 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch (error) {
         console.error('Error sending OTA chunk:', error);
 
-        Toast.show({
-          type: 'error',
-          text1: 'OTA Failed',
-          text2: 'Failed to send OTA update.',
-          visibilityTime: 3000,
-        });
+        // Toast.show({
+        //   type: 'error',
+        //   text1: 'OTA Failed',
+        //   text2: 'Failed to send OTA update.',
+        //   visibilityTime: 3000,
+        // });
 
         await haltOTAUpdate();
         return false;
