@@ -13,12 +13,10 @@ import {
   ModuleUpdateModal,
   MainHeader
 } from "../../Components";
-import { getDeviceUUID, sleep } from "../../helper/Functions";
-import { OTA } from "../../helper/Handlers/OTA";
+import { getDeviceUUID } from "../../helper/Functions";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
-import { useBleMonitor } from "../../Providers/BleMonitorProvider";
-import { useOtaUpdate } from "../../Providers/OTAUpdateProvider";
+
 import {
   useUpdateManager,
   ERROR_TYPE,
@@ -42,11 +40,10 @@ export function Home() {
     isConnecting,
     device,
     isScanning,
+    isConnected,
     requestPermissions,
     scanForModule,
   } = useBleConnection();
-
-  const { isConnected } = useBleMonitor();
 
   const {
     updateStatus,
@@ -56,10 +53,10 @@ export function Home() {
     checkUpdateAvailable,
     startUpdate,
   } = useUpdateManager({
-    onError: ({ errorType, errorMessage, errorTitle, }) => {
+    onError: ({ errorType, errorMessage, errorTitle }) => {
 
     },
-    onSuccess: ({ }) => {
+    onSuccess: ({ successMessage, successTitle, successType }) => {
 
     },
   });
