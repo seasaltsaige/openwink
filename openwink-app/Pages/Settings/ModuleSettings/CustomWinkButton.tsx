@@ -12,7 +12,7 @@ import { sleep } from "../../../helper/Functions";
 import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
-import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
+import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 
 const MIN = 100;
 const MAX = 750;
@@ -56,7 +56,7 @@ export function CustomWinkButton() {
   const [min, setMin] = useState(buttonDelay);
   const [max, setMax] = useState(MAX);
 
-  const { isConnected } = useBleMonitor();
+  const { isConnected } = useBleConnection();
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();

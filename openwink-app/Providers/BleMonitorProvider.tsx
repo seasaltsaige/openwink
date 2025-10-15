@@ -27,13 +27,13 @@ import { FirmwareStore } from '../Storage';
 import { toProperCase } from '../helper/Functions';
 
 export type BleMonitorContextType = {
-  isConnected: boolean;
+  // isConnected: boolean;
   headlightsBusy: boolean;
   isSleepyEyeActive: boolean;
   leftStatus: number;
   rightStatus: number;
   updateProgress: number;
-  updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success';
+  updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success' | 'Canceled';
   firmwareVersion: string;
   motionValue: number;
   startMonitoring: (device: Device) => Promise<void>;
@@ -56,10 +56,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [leftStatus, setLeftStatus] = useState(0);
   const [rightStatus, setRightStatus] = useState(0);
   const [updateProgress, setUpdateProgress] = useState(0);
-  const [updatingStatus, setUpdatingStatus] = useState<'Idle' | 'Updating' | 'Failed' | 'Success'>('Idle');
+  const [updatingStatus, setUpdatingStatus] = useState<'Idle' | 'Updating' | 'Failed' | 'Success' | 'Canceled'>('Idle');
   const [firmwareVersion, setFirmwareVersion] = useState('');
   const [motionValue, setMotionValue] = useState(750);
-  const [isConnected, setIsConnected] = useState(false);
 
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);
@@ -214,12 +213,13 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         try {
           const statusValue = toProperCase(
-            base64.decode(char.value) as 'idle' | 'updating' | 'failed' | 'success'
+            base64.decode(char.value) as 'idle' | 'updating' | 'failed' | 'success' | 'canceled'
           );
           setUpdatingStatus(statusValue);
 
-          // Reset progress when update completes successfully
-          if (statusValue === 'Success') {
+          console.log(statusValue);
+          // Reset progress when either succes or failure
+          if (statusValue === "Success" || statusValue === "Failed" || statusValue === "Canceled") {
             setUpdateProgress(0);
             // Reset status after a delay to show success state
             setTimeout(() => setUpdatingStatus('Idle'), 2000);
@@ -355,7 +355,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             monitorCustomCommandStatus(device, onCustomCommandInterrupt)
           );
         }
-        setIsConnected(true);
+        // setIsConnected(true);
       } catch (error) {
         console.error('Error setting up monitors:', error);
         stopMonitoring();
@@ -384,7 +384,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     });
     subscriptionsRef.current = [];
-    setIsConnected(false);
+    // setIsConnected(false);
   }, []);
 
   // Read initial values from characteristics
@@ -433,6 +433,21 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             setMotionValue(intVal);
           }
         }
+
+        // Read SOFTWARE_STATUS 
+        // Useful pretty much only in the case of a canceled OTA Update
+        // still need to check the case though.
+        const status = await device.readCharacteristicForService(
+          OTA_SERVICE_UUID,
+          SOFTWARE_STATUS_CHAR_UUID,
+        );
+        if (status?.value) {
+          const val = base64.decode(status.value) as any; // not good but i might be lazy
+          const proper = toProperCase(val);
+          setUpdatingStatus(proper);
+          // additionally reset update progress
+          setUpdateProgress(0);
+        }
       } catch (error) {
         console.error('Error reading initial values:', error);
         throw error;
@@ -452,7 +467,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     (rightStatus === 0 || rightStatus === 1);
 
   const value: BleMonitorContextType = {
-    isConnected,
+    // isConnected,
     headlightsBusy,
     isSleepyEyeActive,
     leftStatus,
