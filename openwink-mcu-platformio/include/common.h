@@ -1,0 +1,17 @@
+#ifndef __CONSTANTS
+#define __CONSTANTS
+
+#include "driver/gpio.h"
+
+#define LEFT_DOWN_OUT GPIO_NUM_10
+#define LEFT_UP_OUT GPIO_NUM_11
+#define RIGHT_DOWN_OUT GPIO_NUM_12
+#define RIGHT_UP_OUT GPIO_NUM_13
+#define BUTTON_INPUT GPIO_NUM_9
+#define HEADLIGHT_STATUS GPIO_NUM_46
+
+#define SLEEP_TIME_US 15 * 1000 * 1000
+#define AWAKE_TIME_DEFAULT_MS 1.5 * 1000
+#define AWAKE_TIME_INTR_MS 5 * 60 * 1000
+
+#endif
