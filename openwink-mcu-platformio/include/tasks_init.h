@@ -3,6 +3,8 @@
 
 void INIT_tasks();
 
-void start_gpio_monitor();
+void button_task(void *);
+void headlight_input_task(void *);
+void headlight_output_task(void *);
 
 #endif
