@@ -1,7 +1,9 @@
 #include "gpio_conf.h"
-#include "common.h"
+#include "../include/common.h"
 #include "driver/gpio.h"
 
+// --- GPIO DEFS ---
+// Outputs from the ESP
 gpio_config_t LEFT_DOWN_OUT_CONF = {
     .pin_bit_mask = LEFT_DOWN_OUT,
     .mode = GPIO_MODE_OUTPUT,
@@ -34,6 +36,7 @@ gpio_config_t RIGHT_UP_OUT_CONF = {
     .intr_type = GPIO_INTR_DISABLE,
 };
 
+// Inputs into the ESP
 gpio_config_t BUTTON_INPUT_CONF = {
     .pin_bit_mask = BUTTON_INPUT,
     .mode = GPIO_MODE_INPUT,
@@ -49,6 +52,7 @@ gpio_config_t HEADLIGHT_STATUS_CONF = {
     .pull_down_en = GPIO_PULLDOWN_DISABLE,
     .intr_type = GPIO_INTR_ANYEDGE,
 };
+// --- END GPIO DEFS --
 
 void inputs_conf()
 {
