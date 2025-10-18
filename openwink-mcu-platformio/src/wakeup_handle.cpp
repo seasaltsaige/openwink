@@ -1,5 +1,5 @@
 #include "wakeup_handle.h"
-#include "common.h"
+#include "../include/common.h"
 #include "gpio_conf.h"
 
 #include "esp_log.h"
