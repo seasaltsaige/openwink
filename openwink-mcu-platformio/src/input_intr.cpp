@@ -1,12 +1,18 @@
 #include "input_intr.h"
-#include "common.h"
+#include "../include/common.h"
 #include "gpio_conf.h"
 
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 
 void button_intr_fn(void *params)
 {
+
+    BaseType_t hasWokenFromHighPriorityTask = pdFALSE;
+    xQueueSendFromISR(button_queue, (void *)true, &hasWokenFromHighPriorityTask);
+
+    printf("Button interrupt triggered");
 }
 
 void headlight_status_intr_fn(void *params)
