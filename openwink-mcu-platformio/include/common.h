@@ -2,6 +2,7 @@
 #define __CONSTANTS
 
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
 
 #define LEFT_DOWN_OUT GPIO_NUM_10
 #define LEFT_UP_OUT GPIO_NUM_11
@@ -13,5 +14,10 @@
 #define SLEEP_TIME_US 15 * 1000 * 1000
 #define AWAKE_TIME_DEFAULT_MS 1.5 * 1000
 #define AWAKE_TIME_INTR_MS 5 * 60 * 1000
+
+extern QueueHandle_t button_queue;
+extern QueueHandle_t headlight_input_queue;
+extern QueueHandle_t headlight_output_queue;
+
 
 #endif
