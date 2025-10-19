@@ -1,21 +1,28 @@
 #ifndef __HANDLER_OEM_BUTTON
 #define __HANDLER_OEM_BUTTON
 
+#include "../common.h"
+#include "esp_attr.h"
+
 class OemButtonHandler
 {
   private:
-    static int lastButtonStatus;
+    static LEVEL lastButtonStatus;
     static bool customButtonEnabled;
 
   public:
-    static void init();
+    static void init()
+    {
+        lastButtonStatus = LEVEL::LOW;
+        customButtonEnabled = false;
+    };
 
     // Getters/Setters
-    static int getLastButtonStatus()
+    static LEVEL getLastButtonStatus()
     {
         return lastButtonStatus;
     };
-    static void setLastButtonStatus(int status)
+    static void setLastButtonStatus(LEVEL status)
     {
         lastButtonStatus = status;
     }
