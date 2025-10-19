@@ -5,7 +5,12 @@ class HeadlightInputHandler
 {
 
   public:
-    static void init();
+    static int headlight_delay_ms;
+    static void init()
+    {
+        // TODO: Read from NVS
+        headlight_delay_ms = 750;
+    };
 };
 
 #endif

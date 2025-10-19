@@ -1,5 +1,3 @@
 #include "../../include/handler/headlight_input.h"
 
-void HeadlightInputHandler::init()
-{
-}
+int HeadlightInputHandler::headlight_delay_ms = 750;
