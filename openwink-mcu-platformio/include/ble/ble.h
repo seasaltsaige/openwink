@@ -6,12 +6,10 @@
 #include <NimBLEServer.h>
 #include <string>
 
-using namespace std;
-
 class BLE
 {
   public:
-    static void init(string name);
+    static void init(std::string name);
 
     static bool getClientConnected()
     {
@@ -61,6 +59,6 @@ class BLE
     // static void
 };
 
-void INIT_nimble_device(string name);
+void INIT_nimble_device(std::string name);
 
 #endif
