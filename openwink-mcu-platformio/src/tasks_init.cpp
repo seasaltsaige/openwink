@@ -3,6 +3,7 @@
 #include "handler/headlight_input.h"
 #include "handler/headlight_output.h"
 #include "handler/oem_button.h"
+#include "handler/queue_handler.h"
 
 #include "freertos/FreeRTOS.h"
 
@@ -28,27 +29,49 @@ void button_task(void *)
     for (;;)
     {
         bool button_pressed;
-        if (xQueueReceive(button_queue, &button_pressed, pdMS_TO_TICKS(5)))
+        if (xQueueReceive(QueueHandler::button_queue, &button_pressed, portMAX_DELAY))
         {
             if (button_pressed)
             {
-                printf("RECEIVED BUTTON PRESS");
+                auto current_input = static_cast<LEVEL>(gpio_get_level(BUTTON_INPUT));
+
+                if (OemButtonHandler::getCustomButtonEnabled())
+                {
+                    // TODO when custom commands are enabled
+                }
+                else
+                {
+                    if (current_input != OemButtonHandler::getLastButtonStatus())
+                    {
+                        HeadlightOutputHandler::send_command(
+                            current_input == LEVEL::HIGH ? HEADLIGHT_COMMAND::BOTH_UP : HEADLIGHT_COMMAND::BOTH_DOWN);
+
+                        OemButtonHandler::setLastButtonStatus(current_input);
+                    }
+                }
             }
         }
-
-        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
 void headlight_input_task(void *)
 {
+    for (;;)
+    {
+        bool status;
+        if (xQueueReceive(QueueHandler::headlight_input_queue, &status, portMAX_DELAY))
+        {
+            printf("RECEIVED INPUT HEADLIGHT QUEUE");
+        }
+    }
 }
 
+// Used for BLE device
 void headlight_output_task(void *)
 {
     for (;;)
     {
         int receivedCommand;
-        if (xQueueReceive(headlight_output_queue, &receivedCommand, pdMS_TO_TICKS(5)))
+        if (xQueueReceive(QueueHandler::headlight_output_queue, &receivedCommand, portMAX_DELAY))
         {
             printf("RECEIVED OUTPUT QUEUE");
         }
