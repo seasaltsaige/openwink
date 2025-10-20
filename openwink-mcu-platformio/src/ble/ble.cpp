@@ -7,6 +7,8 @@
 
 using namespace std;
 
+bool BLE::device_connected = false;
+
 NimBLEServer* BLE::server;
 
 NimBLEExtAdvertising* BLE::advertising;
