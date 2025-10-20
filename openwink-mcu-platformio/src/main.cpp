@@ -14,7 +14,7 @@ extern "C" void app_main()
     // Setup GPIO pin interrupt service routines to handle button/motion inputs
     INIT_intr();
     // Enable wakeup sources on startup; By default enables both GPIO wakeup AND Timer wakeup
-    enable_wakeup_sources();
+    INIT_wakeup_sources();
 
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)

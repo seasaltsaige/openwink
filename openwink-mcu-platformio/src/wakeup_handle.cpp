@@ -5,7 +5,7 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 
-void enable_wakeup_sources()
+void INIT_wakeup_sources()
 {
     esp_err_t err = esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
     if (err != ESP_OK)
@@ -23,11 +23,11 @@ void enable_wakeup_sources()
     ESP_LOGI("WAKE", "Wake sources successfully set");
 }
 
-void enable_wakeup_sources(bool disable_gpio, uint64_t sleep_time)
+void INIT_wakeup_sources(bool disable_gpio, uint64_t sleep_time)
 {
     if (!disable_gpio)
     {
-        enable_wakeup_sources();
+        INIT_wakeup_sources();
     }
     else
     {
