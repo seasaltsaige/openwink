@@ -6,11 +6,11 @@
 
 class OemButtonHandler
 {
-  private:
+    private:
     static LEVEL lastButtonStatus;
     static bool customButtonEnabled;
 
-  public:
+    public:
     static void init()
     {
         lastButtonStatus = LEVEL::LOW;

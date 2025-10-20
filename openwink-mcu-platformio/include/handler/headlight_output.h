@@ -19,10 +19,10 @@ enum HEADLIGHT_COMMAND
 class HeadlightOutputHandler
 {
 
-  private:
+    private:
     static void set_pins_low();
 
-  public:
+    public:
     struct HeadlightStatus
     {
         static int left;

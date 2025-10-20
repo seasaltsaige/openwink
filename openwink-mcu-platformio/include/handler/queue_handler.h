@@ -5,7 +5,7 @@
 
 class QueueHandler
 {
-  public:
+    public:
     static QueueHandle_t button_queue;
     static QueueHandle_t headlight_input_queue;
     static QueueHandle_t headlight_output_queue;

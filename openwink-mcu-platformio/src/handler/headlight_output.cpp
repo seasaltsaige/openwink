@@ -7,7 +7,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 
-const char *TAG = "HLO";
+const char* TAG = "HLO";
 
 int HeadlightOutputHandler::HeadlightStatus::left = 0;
 int HeadlightOutputHandler::HeadlightStatus::right = 0;
@@ -23,9 +23,7 @@ void HeadlightOutputHandler::set_pins_low()
 void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 {
 
-    printf("Command Received: %s\n", command == HEADLIGHT_COMMAND::BOTH_UP     ? "Both Up"
-                                     : command == HEADLIGHT_COMMAND::BOTH_DOWN ? "Both Down"
-                                                                               : "Unknown");
+    printf("Command Received: %s\n", command == HEADLIGHT_COMMAND::BOTH_UP ? "Both Up" : command == HEADLIGHT_COMMAND::BOTH_DOWN ? "Both Down" : "Unknown");
     switch (command)
     {
     case HEADLIGHT_COMMAND::BOTH_UP:
@@ -56,31 +54,20 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         }
 
         break;
-    case HEADLIGHT_COMMAND::BOTH_BLINK:
-        break;
+    case HEADLIGHT_COMMAND::BOTH_BLINK: break;
 
-    case HEADLIGHT_COMMAND::LEFT_UP:
-        break;
-    case HEADLIGHT_COMMAND::LEFT_DOWN:
-        break;
-    case HEADLIGHT_COMMAND::LEFT_WINK:
-        break;
+    case HEADLIGHT_COMMAND::LEFT_UP: break;
+    case HEADLIGHT_COMMAND::LEFT_DOWN: break;
+    case HEADLIGHT_COMMAND::LEFT_WINK: break;
 
-    case HEADLIGHT_COMMAND::RIGHT_UP:
-        break;
-    case HEADLIGHT_COMMAND::RIGHT_DOWN:
-        break;
-    case HEADLIGHT_COMMAND::RIGHT_WINK:
-        break;
+    case HEADLIGHT_COMMAND::RIGHT_UP: break;
+    case HEADLIGHT_COMMAND::RIGHT_DOWN: break;
+    case HEADLIGHT_COMMAND::RIGHT_WINK: break;
 
-    case HEADLIGHT_COMMAND::WAVE_LEFT:
-        break;
+    case HEADLIGHT_COMMAND::WAVE_LEFT: break;
 
-    case HEADLIGHT_COMMAND::WAVE_RIGHT:
-        break;
+    case HEADLIGHT_COMMAND::WAVE_RIGHT: break;
 
-    default:
-        ESP_LOGE("COMMAND", "Invalid command received");
-        break;
+    default: ESP_LOGE("COMMAND", "Invalid command received"); break;
     }
 }

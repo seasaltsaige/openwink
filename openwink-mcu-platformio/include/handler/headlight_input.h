@@ -4,7 +4,7 @@
 class HeadlightInputHandler
 {
 
-  public:
+    public:
     static int headlight_delay_ms;
     static void init()
     {

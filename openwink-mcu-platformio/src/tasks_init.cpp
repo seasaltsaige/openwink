@@ -24,7 +24,7 @@ void INIT_tasks()
     xTaskCreate(headlight_input_task, "HEADLIGHT_INPUT_TASK", 1024, NULL, 2, NULL);
 }
 
-void button_task(void *)
+void button_task(void*)
 {
     uint8_t button_pressed_value;
     for (;;)
@@ -42,8 +42,7 @@ void button_task(void *)
             {
                 if (current_input != OemButtonHandler::getLastButtonStatus())
                 {
-                    HeadlightOutputHandler::send_command(current_input == LEVEL::HIGH ? HEADLIGHT_COMMAND::BOTH_UP
-                                                                                      : HEADLIGHT_COMMAND::BOTH_DOWN);
+                    HeadlightOutputHandler::send_command(current_input == LEVEL::HIGH ? HEADLIGHT_COMMAND::BOTH_UP : HEADLIGHT_COMMAND::BOTH_DOWN);
 
                     OemButtonHandler::setLastButtonStatus(current_input);
                 }
@@ -51,7 +50,7 @@ void button_task(void *)
         }
     }
 }
-void headlight_input_task(void *)
+void headlight_input_task(void*)
 {
     for (;;)
     {
@@ -64,7 +63,7 @@ void headlight_input_task(void *)
 }
 
 // Used for BLE device
-void headlight_output_task(void *)
+void headlight_output_task(void*)
 {
     for (;;)
     {

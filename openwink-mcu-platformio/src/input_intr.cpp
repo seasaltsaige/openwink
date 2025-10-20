@@ -1,14 +1,14 @@
 #include "input_intr.h"
 #include "../include/common.h"
-#include "../include/handler/queue_handler.h"
 #include "gpio_conf.h"
+#include "handler/queue_handler.h"
 
 #include "driver/gpio.h"
 #include "esp_intr_types.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 
-void button_intr_fn(void *params)
+void button_intr_fn(void* params)
 {
     // cursed asf
     gpio_num_t button_input = static_cast<gpio_num_t>((int)params);
@@ -16,13 +16,13 @@ void button_intr_fn(void *params)
     xQueueSendFromISR(QueueHandler::button_queue, &inter, NULL);
 }
 
-void headlight_status_intr_fn(void *params)
+void headlight_status_intr_fn(void* params)
 {
 }
 
 void INIT_button_intr()
 {
-    esp_err_t err = gpio_isr_handler_add(BUTTON_INPUT, &button_intr_fn, (void *)BUTTON_INPUT);
+    esp_err_t err = gpio_isr_handler_add(BUTTON_INPUT, &button_intr_fn, (void*)BUTTON_INPUT);
     if (err != ESP_OK)
     {
         ESP_LOGE("INTR", "Error initiallizing Button Input interrupt callback function");
@@ -33,7 +33,7 @@ void INIT_button_intr()
 void INIT_headlight_status_intr()
 {
 
-    esp_err_t err = gpio_isr_handler_add(HEADLIGHT_STATUS, &headlight_status_intr_fn, (void *)HEADLIGHT_STATUS);
+    esp_err_t err = gpio_isr_handler_add(HEADLIGHT_STATUS, &headlight_status_intr_fn, (void*)HEADLIGHT_STATUS);
     if (err != ESP_OK)
     {
         ESP_LOGE("INTR", "Error initiallizing Headlight Status Input interrupt callback function");

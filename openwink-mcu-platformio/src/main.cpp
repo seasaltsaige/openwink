@@ -2,10 +2,10 @@
 #include "ble/ble.h"
 #include "gpio_conf.h"
 #include "input_intr.h"
+#include "nvs_flash.h"
 #include "tasks_init.h"
 #include "wakeup_handle.h"
 
-#include "nvs_flash.h"
 
 extern "C" void app_main()
 {
@@ -26,7 +26,7 @@ extern "C" void app_main()
 
     // Initiate and start advertising BLE server
     // Not necessary in preliminary testing
-    // INIT_nimble_device("OpenWink");
+    INIT_nimble_device("OpenWink");
     // Start main code functionality
     INIT_tasks();
 }

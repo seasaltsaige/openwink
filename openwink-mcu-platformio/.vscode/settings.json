@@ -2,5 +2,18 @@
   "files.associations": {
     "nimbledevice.h": "c",
     "vector": "cpp"
-  }
+  },
+  "editor.defaultFormatter": "xaver.clang-format",
+  "editor.wrappingIndent": "none",
+  "editor.wordWrapColumn": 400,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "C_Cpp.clang_format_path": "",
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "C_Cpp.clang_format_style": "Visual Studio",
+  "editor.wordWrap": "off",
+  
 }
