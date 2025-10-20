@@ -10,9 +10,10 @@
 
 void button_intr_fn(void *params)
 {
-    BaseType_t hasWokenFromHighPriorityTask = pdFALSE;
-    bool inter = true;
-    xQueueSendFromISR(QueueHandler::button_queue, &inter, &hasWokenFromHighPriorityTask);
+    // cursed asf
+    gpio_num_t button_input = static_cast<gpio_num_t>((int)params);
+    int inter = gpio_get_level(button_input);
+    xQueueSendFromISR(QueueHandler::button_queue, &inter, NULL);
 }
 
 void headlight_status_intr_fn(void *params)

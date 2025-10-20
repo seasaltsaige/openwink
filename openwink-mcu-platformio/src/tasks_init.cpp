@@ -26,28 +26,26 @@ void INIT_tasks()
 
 void button_task(void *)
 {
+    uint8_t button_pressed_value;
     for (;;)
     {
-        bool button_pressed;
-        if (xQueueReceive(QueueHandler::button_queue, &button_pressed, portMAX_DELAY))
+        if (xQueueReceive(QueueHandler::button_queue, &button_pressed_value, portMAX_DELAY))
         {
-            if (button_pressed)
+            auto current_input = static_cast<LEVEL>(button_pressed_value);
+            printf("Button Press Received: %s\n", current_input == LEVEL::HIGH ? "High" : "Low");
+
+            if (OemButtonHandler::getCustomButtonEnabled())
             {
-                auto current_input = static_cast<LEVEL>(gpio_get_level(BUTTON_INPUT));
-
-                if (OemButtonHandler::getCustomButtonEnabled())
+                // TODO when custom commands are enabled
+            }
+            else
+            {
+                if (current_input != OemButtonHandler::getLastButtonStatus())
                 {
-                    // TODO when custom commands are enabled
-                }
-                else
-                {
-                    if (current_input != OemButtonHandler::getLastButtonStatus())
-                    {
-                        HeadlightOutputHandler::send_command(
-                            current_input == LEVEL::HIGH ? HEADLIGHT_COMMAND::BOTH_UP : HEADLIGHT_COMMAND::BOTH_DOWN);
+                    HeadlightOutputHandler::send_command(current_input == LEVEL::HIGH ? HEADLIGHT_COMMAND::BOTH_UP
+                                                                                      : HEADLIGHT_COMMAND::BOTH_DOWN);
 
-                        OemButtonHandler::setLastButtonStatus(current_input);
-                    }
+                    OemButtonHandler::setLastButtonStatus(current_input);
                 }
             }
         }
