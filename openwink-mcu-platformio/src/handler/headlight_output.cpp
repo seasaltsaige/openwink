@@ -7,7 +7,6 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 
-const char* TAG = "HLO";
 
 int HeadlightOutputHandler::HeadlightStatus::left = 0;
 int HeadlightOutputHandler::HeadlightStatus::right = 0;

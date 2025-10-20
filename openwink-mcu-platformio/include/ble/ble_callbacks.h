@@ -1,13 +1,11 @@
 #ifndef __BLE_CALLBACKS
 #define __BLE_CALLBACKS
 
-#include "NimBLECharacteristic.h"
-#include "NimBLEServer.h"
+#include "NimBLEDevice.h"
 
-class ServerCallbacks : NimBLEServerCallbacks
+class ServerCallbacks : public NimBLEServerCallbacks
 {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
-
     void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
 };
 
