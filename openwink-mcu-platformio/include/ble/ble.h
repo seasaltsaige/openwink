@@ -16,8 +16,6 @@ class BLE
         return device_connected;
     };
 
-    static void startDevice();
-
     static void setDeviceConnected(bool connected)
     {
         device_connected = connected;
@@ -59,8 +57,8 @@ class BLE
 
     static bool device_connected;
     static void startServer();
-    static void startService();
-    static void startAdvertising();
+    static void startServices();
+    static void startAdvertising(std::string name);
     // static void
 };
 

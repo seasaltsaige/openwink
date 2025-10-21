@@ -46,3 +46,9 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 
     printf("Attr: %s\n", attr.c_str());
 }
+
+
+void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId)
+{
+
+}
