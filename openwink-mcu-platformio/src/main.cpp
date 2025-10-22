@@ -1,8 +1,8 @@
 #include "../include/common.h"
 #include "ble/ble.h"
 #include "gpio_conf.h"
+#include "handler/nvs.h"
 #include "input_intr.h"
-#include "nvs_flash.h"
 #include "tasks_init.h"
 #include "wakeup_handle.h"
 
@@ -16,13 +16,7 @@ extern "C" void app_main()
     // Enable wakeup sources on startup; By default enables both GPIO wakeup AND Timer wakeup
     INIT_wakeup_sources();
 
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
+    NVS::init();
 
     // Initiate and start advertising BLE server
     // Not necessary in preliminary testing
