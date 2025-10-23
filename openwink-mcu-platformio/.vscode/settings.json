@@ -1,7 +1,8 @@
 {
   "files.associations": {
     "nimbledevice.h": "c",
-    "vector": "cpp"
+    "vector": "cpp",
+    "string": "cpp"
   },
   "editor.defaultFormatter": "xaver.clang-format",
   "editor.wrappingIndent": "none",

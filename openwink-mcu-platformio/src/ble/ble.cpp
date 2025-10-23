@@ -90,7 +90,7 @@ void BLE::startServices()
 
     // NOTE: Characteristics are commented out until callbacks are implemented
 
-    printf("Setup BLE Services");
+    printf("Setup BLE Services\n");
 }
 
 void BLE::startAdvertising(string name)
@@ -114,6 +114,8 @@ void BLE::startAdvertising(string name)
     advertisement.addServiceUUID(NimBLEUUID(WINK_SERVICE_UUID));
     advertisement.addServiceUUID(NimBLEUUID(OTA_SERVICE_UUID));
     advertisement.addServiceUUID(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
+    advertisement.setTxPower(ESP_PWR_LVL_P9);
+
 
     advertising = NimBLEDevice::getAdvertising();
     if (advertising->setInstanceData(0, advertisement))
@@ -127,6 +129,8 @@ void BLE::startAdvertising(string name)
     }
     else
         printf("Failed to set BLE Instance Data...\n");
+
+    advertising->setCallbacks(new AdvertisingCallbacks());
 }
 
 void INIT_nimble_device(string deviceName)

@@ -60,4 +60,14 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId)
 {
+    if (reason == 0)
+    {
+        printf("Advertising stopped due to connection attempt...\n");
+    }
+    else if (reason == 13)
+    {
+        printf("Advertising stopped due to timeout...\n");
+    }
+    else
+        printf("Advertising stopped for unknown reasons... Reason code: '%d'\n", reason);
 }
