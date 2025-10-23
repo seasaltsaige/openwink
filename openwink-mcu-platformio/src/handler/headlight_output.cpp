@@ -1,7 +1,8 @@
-#include "../../include/handler/headlight_output.h"
-#include "../../include/ble/ble.h"
-#include "../../include/common.h"
-#include "../../include/handler/headlight_input.h"
+#include "handler/headlight_output.h"
+#include "../include/common.h"
+#include "ble/ble.h"
+#include "handler/headlight_input.h"
+
 
 #include "driver/gpio.h"
 #include "esp_log.h"

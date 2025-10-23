@@ -3,12 +3,9 @@
 #include "handler/headlight_input.h"
 #include "handler/headlight_output.h"
 #include "handler/oem_button.h"
-#include "handler/queue_handler.h"
+#include "handler/queue.h"
 
 #include "freertos/FreeRTOS.h"
-
-// TaskHandle_t buttonTask;
-// TaskHandle_t headlightTask;
 
 void INIT_tasks()
 {

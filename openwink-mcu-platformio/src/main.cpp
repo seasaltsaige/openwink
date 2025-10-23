@@ -2,9 +2,9 @@
 #include "ble/ble.h"
 #include "gpio_conf.h"
 #include "handler/nvs.h"
+#include "handler/wakeup.h"
 #include "input_intr.h"
 #include "tasks_init.h"
-#include "wakeup_handle.h"
 
 
 extern "C" void app_main()
