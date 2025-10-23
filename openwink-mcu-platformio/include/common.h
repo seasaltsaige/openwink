@@ -20,4 +20,19 @@ enum LEVEL
     HIGH,
 };
 
+enum HEADLIGHT_COMMAND
+{
+    BOTH_UP = 1,
+    BOTH_DOWN,
+    BOTH_BLINK,
+    LEFT_UP,
+    LEFT_DOWN,
+    LEFT_WINK,
+    RIGHT_UP,
+    RIGHT_DOWN,
+    RIGHT_WINK,
+    WAVE_LEFT,
+    WAVE_RIGHT,
+};
+
 #endif

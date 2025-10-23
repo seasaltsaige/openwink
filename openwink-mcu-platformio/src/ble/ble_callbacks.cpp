@@ -1,9 +1,12 @@
 #include "ble/ble_callbacks.h"
-#include "NimBLEDevice.h"
+#include "../../include/common.h"
 #include "ble/ble.h"
+#include "handler/headlight_output.h"
+
+
+#include "NimBLEDevice.h"
 #include "esp_log.h"
 #include "esp_sleep.h"
-
 #include <string>
 
 using namespace std;
@@ -42,13 +45,19 @@ void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connIn
 
 void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
 {
-    string attr = pCharacteristic->getValue();
+    string cmd = pCharacteristic->getValue();
 
-    printf("Attr: %s\n", attr.c_str());
+    int cmd_int = stoi(cmd);
+
+    // Forces command into HEADLIGHT_COMMAND range
+    if (cmd_int <= 0 || cmd_int >= 12)
+        return;
+
+    HEADLIGHT_COMMAND command = static_cast<HEADLIGHT_COMMAND>(cmd_int);
+    HeadlightOutputHandler::send_command(command);
 }
 
 
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId)
 {
-
 }

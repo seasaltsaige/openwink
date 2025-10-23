@@ -12,6 +12,7 @@ bool BLE::device_connected = false;
 NimBLEServer* BLE::server;
 
 NimBLEExtAdvertising* BLE::advertising;
+NimBLEExtAdvertisement BLE::advertisement;
 
 NimBLEService* BLE::winkService;
 NimBLECharacteristic* BLE::winkChar;
@@ -50,6 +51,7 @@ void BLE::startServer()
 {
     server = NimBLEDevice::createServer();
     server->setCallbacks(new ServerCallbacks());
+    printf("Set up BLE Server\n");
 }
 
 void BLE::startServices()
@@ -87,6 +89,8 @@ void BLE::startServices()
     // clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
     // NOTE: Characteristics are commented out until callbacks are implemented
+
+    printf("Setup BLE Services");
 }
 
 void BLE::startAdvertising(string name)
@@ -112,6 +116,17 @@ void BLE::startAdvertising(string name)
     advertisement.addServiceUUID(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
 
     advertising = NimBLEDevice::getAdvertising();
+    if (advertising->setInstanceData(0, advertisement))
+    {
+        if (advertising->start(0))
+        {
+            printf("BLE Advertising success\n");
+        }
+        else
+            printf("Failed to start advertising...\n");
+    }
+    else
+        printf("Failed to set BLE Instance Data...\n");
 }
 
 void INIT_nimble_device(string deviceName)
