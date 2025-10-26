@@ -1,6 +1,6 @@
 #include "handler/headlight_output.h"
-#include "../include/common.h"
 #include "ble/ble.h"
+#include "globals.h"
 #include "handler/headlight_input.h"
 
 

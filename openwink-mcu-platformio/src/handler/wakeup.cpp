@@ -1,6 +1,7 @@
 #include "handler/wakeup.h"
-#include "../include/common.h"
-#include "gpio_conf.h"
+#include "config/gpio_conf.h"
+#include "globals.h"
+
 
 #include "esp_log.h"
 #include "esp_sleep.h"

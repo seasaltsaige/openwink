@@ -1,5 +1,5 @@
-#include "tasks_init.h"
-#include "../include/common.h"
+#include "config/tasks_conf.h"
+#include "globals.h"
 #include "handler/headlight_input.h"
 #include "handler/headlight_output.h"
 #include "handler/oem_button.h"

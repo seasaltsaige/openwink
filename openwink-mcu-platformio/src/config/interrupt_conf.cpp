@@ -1,7 +1,8 @@
-#include "input_intr.h"
-#include "../include/common.h"
-#include "gpio_conf.h"
+#include "config/interrupt_conf.h"
+#include "config/gpio_conf.h"
+#include "globals.h"
 #include "handler/queue.h"
+
 
 #include "driver/gpio.h"
 #include "esp_intr_types.h"

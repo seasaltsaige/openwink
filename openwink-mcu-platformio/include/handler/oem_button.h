@@ -1,8 +1,9 @@
 #ifndef __HANDLER_OEM_BUTTON
 #define __HANDLER_OEM_BUTTON
 
-#include "../common.h"
 #include "esp_attr.h"
+#include "globals.h"
+
 
 class OemButtonHandler
 {

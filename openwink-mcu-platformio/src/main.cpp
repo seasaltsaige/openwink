@@ -1,10 +1,9 @@
-#include "../include/common.h"
 #include "ble/ble.h"
-#include "gpio_conf.h"
+#include "config/gpio_conf.h"
+#include "config/interrupt_conf.h"
+#include "config/tasks_conf.h"
 #include "handler/nvs.h"
 #include "handler/wakeup.h"
-#include "input_intr.h"
-#include "tasks_init.h"
 
 
 extern "C" void app_main()

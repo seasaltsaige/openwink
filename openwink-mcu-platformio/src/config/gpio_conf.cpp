@@ -1,6 +1,7 @@
-#include "gpio_conf.h"
-#include "../include/common.h"
+#include "config/gpio_conf.h"
 #include "driver/gpio.h"
+#include "globals.h"
+
 
 // --- GPIO DEFS ---
 // Outputs from the ESP

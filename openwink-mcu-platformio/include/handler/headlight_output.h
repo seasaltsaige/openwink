@@ -1,7 +1,7 @@
 #ifndef __HEADLIGHT_OUTPUT
 #define __HEADLIGHT_OUTPUT
 
-#include "../common.h"
+#include "globals.h"
 
 class HeadlightOutputHandler
 {
