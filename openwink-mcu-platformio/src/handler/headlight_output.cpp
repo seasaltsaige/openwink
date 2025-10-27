@@ -96,6 +96,8 @@ void HeadlightOutputHandler::wave(WAVE_START_SIDE start_side)
 
 void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 {
+    BLE::setHeadlightsBusy(true);
+
     switch (command)
     {
     case HEADLIGHT_COMMAND::BOTH_UP:
@@ -286,4 +288,7 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
     default: ESP_LOGE("COMMAND", "Invalid command received"); break;
     }
+
+
+    BLE::setHeadlightsBusy(false);
 }

@@ -22,6 +22,15 @@ class BLE
     }
 
     static void updateHeadlightStatus();
+    static void setHeadlightsBusy(bool busy)
+    {
+        if (busy)
+            busyChar->setValue("1");
+        else
+            busyChar->setValue("0");
+
+        busyChar->notify();
+    }
 
     private:
     static NimBLEServer* server;
