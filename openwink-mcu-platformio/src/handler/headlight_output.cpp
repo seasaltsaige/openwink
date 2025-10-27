@@ -111,6 +111,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
             set_pins_low();
             HeadlightStatus::left = 1;
             HeadlightStatus::right = 1;
+
+            BLE::updateHeadlightStatus();
         }
 
         break;
@@ -125,6 +127,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
             set_pins_low();
             HeadlightStatus::left = 0;
             HeadlightStatus::right = 0;
+
+            BLE::updateHeadlightStatus();
         }
 
         break;
@@ -154,6 +158,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
 
+        BLE::updateHeadlightStatus();
+
         if (HeadlightStatus::left == LEVEL::LOW)
         {
             gpio_set_level(LEFT_UP_OUT, LEVEL::HIGH);
@@ -179,6 +185,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
 
+        BLE::updateHeadlightStatus();
+
         break;
 
     case HEADLIGHT_COMMAND::LEFT_UP:
@@ -189,6 +197,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         HeadlightStatus::left = 1;
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+
+        BLE::updateHeadlightStatus();
         break;
 
     case HEADLIGHT_COMMAND::LEFT_DOWN:
@@ -199,6 +209,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         HeadlightStatus::left = 0;
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+
+        BLE::updateHeadlightStatus();
         break;
 
     case HEADLIGHT_COMMAND::LEFT_WINK:
@@ -216,6 +228,7 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+        BLE::updateHeadlightStatus();
 
         if (HeadlightStatus::left == LEVEL::LOW)
         {
@@ -230,6 +243,7 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+        BLE::updateHeadlightStatus();
 
         break;
 
@@ -240,6 +254,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         HeadlightStatus::right = 1;
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+
+        BLE::updateHeadlightStatus();
         break;
     case HEADLIGHT_COMMAND::RIGHT_DOWN:
         if (HeadlightStatus::right == LEVEL::LOW)
@@ -249,6 +265,8 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
         HeadlightStatus::right = 0;
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+
+        BLE::updateHeadlightStatus();
         break;
     case HEADLIGHT_COMMAND::RIGHT_WINK:
 
@@ -265,6 +283,7 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+        BLE::updateHeadlightStatus();
 
         if (HeadlightStatus::right == LEVEL::LOW)
         {
@@ -279,6 +298,7 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
         vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
         set_pins_low();
+        BLE::updateHeadlightStatus();
 
         break;
 
