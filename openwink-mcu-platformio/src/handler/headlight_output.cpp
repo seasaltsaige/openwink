@@ -107,13 +107,106 @@ void HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND command)
 
         break;
 
-    case HEADLIGHT_COMMAND::LEFT_UP: break;
-    case HEADLIGHT_COMMAND::LEFT_DOWN: break;
-    case HEADLIGHT_COMMAND::LEFT_WINK: break;
+    case HEADLIGHT_COMMAND::LEFT_UP:
+        if (HeadlightStatus::left == LEVEL::HIGH)
+            break;
 
-    case HEADLIGHT_COMMAND::RIGHT_UP: break;
-    case HEADLIGHT_COMMAND::RIGHT_DOWN: break;
-    case HEADLIGHT_COMMAND::RIGHT_WINK: break;
+        gpio_set_level(LEFT_UP_OUT, LEVEL::HIGH);
+        HeadlightStatus::left = 1;
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+        break;
+
+    case HEADLIGHT_COMMAND::LEFT_DOWN:
+        if (HeadlightStatus::left == LEVEL::LOW)
+            break;
+
+        gpio_set_level(LEFT_DOWN_OUT, LEVEL::HIGH);
+        HeadlightStatus::left = 0;
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+        break;
+
+    case HEADLIGHT_COMMAND::LEFT_WINK:
+        if (HeadlightStatus::left == LEVEL::LOW)
+        {
+            gpio_set_level(LEFT_UP_OUT, LEVEL::HIGH);
+            HeadlightStatus::left = 1;
+        }
+        else
+        {
+            gpio_set_level(LEFT_DOWN_OUT, LEVEL::HIGH);
+            HeadlightStatus::left = 0;
+        }
+
+
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+
+        if (HeadlightStatus::left == LEVEL::LOW)
+        {
+            gpio_set_level(LEFT_UP_OUT, LEVEL::HIGH);
+            HeadlightStatus::left = 1;
+        }
+        else
+        {
+            gpio_set_level(LEFT_DOWN_OUT, LEVEL::HIGH);
+            HeadlightStatus::left = 0;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+
+        break;
+
+    case HEADLIGHT_COMMAND::RIGHT_UP:
+        if (HeadlightStatus::right == LEVEL::HIGH)
+            break;
+        gpio_set_level(RIGHT_UP_OUT, LEVEL::HIGH);
+        HeadlightStatus::right = 1;
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+        break;
+    case HEADLIGHT_COMMAND::RIGHT_DOWN:
+        if (HeadlightStatus::right == LEVEL::LOW)
+            break;
+
+        gpio_set_level(RIGHT_DOWN_OUT, LEVEL::HIGH);
+        HeadlightStatus::right = 0;
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+        break;
+    case HEADLIGHT_COMMAND::RIGHT_WINK:
+
+        if (HeadlightStatus::right == LEVEL::LOW)
+        {
+            gpio_set_level(RIGHT_UP_OUT, LEVEL::HIGH);
+            HeadlightStatus::right = 1;
+        }
+        else
+        {
+            gpio_set_level(RIGHT_DOWN_OUT, LEVEL::HIGH);
+            HeadlightStatus::right = 0;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+
+        if (HeadlightStatus::right == LEVEL::LOW)
+        {
+            gpio_set_level(RIGHT_UP_OUT, LEVEL::HIGH);
+            HeadlightStatus::right = 1;
+        }
+        else
+        {
+            gpio_set_level(RIGHT_DOWN_OUT, LEVEL::HIGH);
+            HeadlightStatus::right = 0;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(HeadlightInputHandler::headlight_delay_ms));
+        set_pins_low();
+
+        break;
 
     case HEADLIGHT_COMMAND::WAVE_LEFT: break;
 

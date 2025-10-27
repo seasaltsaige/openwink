@@ -15,6 +15,7 @@ extern "C" void app_main()
     // Enable wakeup sources on startup; By default enables both GPIO wakeup AND Timer wakeup
     INIT_wakeup_sources();
 
+    // Initialize NVS for BLE / storing module customizations
     NVS::init();
 
     // Initiate and start advertising BLE server
