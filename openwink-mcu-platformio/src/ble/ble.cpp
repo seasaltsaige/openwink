@@ -69,7 +69,7 @@ void BLE::startServices()
     // customCommandChar = winkService->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);
 
     winkChar->setCallbacks(new HeadlightMovementCharacteristicCallbacks());
-    sleepChar->setCallbacks();
+    sleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
 
     otaService = server->createService(OTA_SERVICE_UUID);
 
