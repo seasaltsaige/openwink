@@ -59,6 +59,19 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     xQueueSend(QueueHandler::headlight_output_queue, &cmd_int, (TickType_t)10);
 }
 
+void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
+{
+    LEVEL sleep_input_level = (LEVEL)gpio_get_level(BUTTON_INPUT);
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+
+    if (sleep_input_level == LEVEL::HIGH)
+        esp_sleep_enable_ext0_wakeup(BUTTON_INPUT, 0);
+    else
+        esp_sleep_enable_ext0_wakeup(BUTTON_INPUT, 1);
+
+    esp_deep_sleep_start();
+}
+
 
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId)
 {

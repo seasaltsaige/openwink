@@ -19,4 +19,9 @@ class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks
     void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId);
 };
 
+class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
+};
+
 #endif
