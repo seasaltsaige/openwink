@@ -8,8 +8,13 @@ class HeadlightOutputHandler
 
     private:
     static void set_pins_low();
+    static void wave(WAVE_START_SIDE start_side);
 
     public:
+    static bool custom_button;
+    static double wave_delay;
+    static int max_time_button_press_ms;
+    
     struct HeadlightStatus
     {
         static int left;

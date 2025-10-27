@@ -35,4 +35,10 @@ enum HEADLIGHT_COMMAND
     WAVE_RIGHT,
 };
 
+enum WAVE_START_SIDE
+{
+    LEFT,
+    RIGHT,
+};
+
 #endif

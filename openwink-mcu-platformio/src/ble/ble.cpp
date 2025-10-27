@@ -1,6 +1,7 @@
 #include "ble/ble.h"
 #include "ble/ble_callbacks.h"
 #include "ble/constants.h"
+#include "handler/headlight_output.h"
 #include <NimBLEDevice.h>
 #include <string>
 
@@ -132,6 +133,17 @@ void BLE::startAdvertising(string name)
 
     advertising->setCallbacks(new AdvertisingCallbacks());
 }
+
+void BLE::updateHeadlightStatus()
+{
+    // TODO: Once chars are implemented
+    // leftStatusChar->setValue(to_string(HeadlightOutputHandler::HeadlightStatus::left).c_str());
+    // rightStatusChar->setValue(to_string(HeadlightOutputHandler::HeadlightStatus::right).c_str());
+
+    // leftStatusChar->notify();
+    // rightStatusChar->notify();
+}
+
 
 void INIT_nimble_device(string deviceName)
 {

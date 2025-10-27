@@ -17,7 +17,7 @@ void INIT_tasks()
     HeadlightOutputHandler::init();
 
     xTaskCreate(button_task, "BUTTON_TASK", 2048, NULL, 1, NULL);
-    xTaskCreate(headlight_output_task, "HEADLIGHT_OUTPUT_TASK", 1024, NULL, 1, NULL);
+    xTaskCreate(headlight_output_task, "HEADLIGHT_OUTPUT_TASK", 2048, NULL, 1, NULL);
     xTaskCreate(headlight_input_task, "HEADLIGHT_INPUT_TASK", 1024, NULL, 2, NULL);
 }
 
@@ -67,7 +67,8 @@ void headlight_output_task(void*)
         int receivedCommand;
         if (xQueueReceive(QueueHandler::headlight_output_queue, &receivedCommand, portMAX_DELAY))
         {
-            printf("RECEIVED OUTPUT QUEUE");
+            printf("RECEIVED OUTPUT QUEUE: %d\n", receivedCommand);
+            HeadlightOutputHandler::send_command((HEADLIGHT_COMMAND)receivedCommand);
         }
     }
 }

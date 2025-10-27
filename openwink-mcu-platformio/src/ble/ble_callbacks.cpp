@@ -2,6 +2,7 @@
 #include "ble/ble.h"
 #include "globals.h"
 #include "handler/headlight_output.h"
+#include "handler/queue.h"
 
 
 #include "NimBLEDevice.h"
@@ -53,8 +54,9 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     if (cmd_int <= 0 || cmd_int >= 12)
         return;
 
-    HEADLIGHT_COMMAND command = static_cast<HEADLIGHT_COMMAND>(cmd_int);
-    HeadlightOutputHandler::send_command(command);
+    // HEADLIGHT_COMMAND command = static_cast<HEADLIGHT_COMMAND>(cmd_int);
+    printf("Sending command to queue: %d\n", cmd_int);
+    xQueueSend(QueueHandler::headlight_output_queue, &cmd_int, (TickType_t)10);
 }
 
 

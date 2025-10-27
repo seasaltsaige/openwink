@@ -21,6 +21,8 @@ class BLE
         device_connected = connected;
     }
 
+    static void updateHeadlightStatus();
+
     private:
     static NimBLEServer* server;
 
