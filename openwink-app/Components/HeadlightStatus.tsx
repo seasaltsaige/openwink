@@ -1,6 +1,7 @@
 import { Text, View, ViewStyle } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
+import { useBleConnection } from "../Providers/BleConnectionProvider";
 
 interface IHeadlightStatusProps {
   style?: ViewStyle;
@@ -8,7 +9,10 @@ interface IHeadlightStatusProps {
 
 export function HeadlightStatus({ style }: IHeadlightStatusProps) {
   const { theme } = useColorTheme();
-  const { isConnected, leftStatus, rightStatus } = useBleMonitor();
+  const { leftStatus, rightStatus } = useBleMonitor();
+  const {
+    isConnected
+  } = useBleConnection();
 
   if (!isConnected) {
     return (

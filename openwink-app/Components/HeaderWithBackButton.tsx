@@ -14,8 +14,7 @@ interface IHeaderWithBackButtonProps {
 
 export function HeaderWithBackButton({ backText, headerText, headerTextStyle, deviceStatus }: IHeaderWithBackButtonProps) {
   const { theme, colorTheme } = useColorTheme();
-  const { isConnecting, isScanning } = useBleConnection();
-  const { isConnected } = useBleMonitor();
+  const { isConnecting, isScanning, isConnected } = useBleConnection();
   const navigation = useNavigation();
 
   return (
