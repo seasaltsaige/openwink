@@ -54,10 +54,22 @@ export function Home() {
     startUpdate,
   } = useUpdateManager({
     onError: ({ errorType, errorMessage, errorTitle }) => {
-
+      Toast.show({
+        type: "error",
+        text1: errorTitle,
+        text2: errorMessage,
+        autoHide: true,
+        visibilityTime: 10000,
+      });
     },
     onSuccess: ({ successMessage, successTitle, successType }) => {
-
+      Toast.show({
+        type: "success",
+        text1: successTitle,
+        text2: successMessage,
+        autoHide: true,
+        visibilityTime: 10000,
+      });
     },
   });
 
