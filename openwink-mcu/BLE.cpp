@@ -158,8 +158,8 @@ void BLE::start() {
 }
 
 void BLE::updateHeadlightChars() {
-  leftStatusChar->setValue(std::string(String(leftStatus).c_str()));
-  rightStatusChar->setValue(std::string(String(rightStatus).c_str()));
+  leftStatusChar->setValue(std::to_string(leftStatus));
+  rightStatusChar->setValue(std::to_string(rightStatus));
   leftStatusChar->notify();
   rightStatusChar->notify();
 }
