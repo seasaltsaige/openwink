@@ -7,6 +7,7 @@ import { HeaderWithBackButton } from "../../Components";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 import { HeadlightStatus } from "../../Components/HeadlightStatus";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
 export function StandardCommands() {
 
@@ -16,13 +17,16 @@ export function StandardCommands() {
   const { back } = route.params;
 
   const {
+    isConnected: deviceConnected
+  } = useBleConnection();
+
+  const {
     sendDefaultCommand,
     sendSleepyEye,
     sendSyncCommand,
   } = useBleCommand();
 
   const {
-    isConnected: deviceConnected,
     headlightsBusy,
     isSleepyEyeActive
   } = useBleMonitor();

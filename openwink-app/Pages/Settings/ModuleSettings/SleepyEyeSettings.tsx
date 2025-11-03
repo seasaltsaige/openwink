@@ -9,17 +9,21 @@ import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 
 export function SleepyEyeSettings() {
 
   const { colorTheme, theme } = useColorTheme();
-  
+
   const {
-    isConnected,
+    isConnected
+  } = useBleConnection();
+
+  const {
     leftStatus,
     rightStatus,
   } = useBleMonitor();
-  
+
   const {
     leftSleepyEye,
     rightSleepyEye,

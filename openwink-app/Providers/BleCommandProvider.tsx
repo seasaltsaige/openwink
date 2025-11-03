@@ -64,7 +64,6 @@ export type BleCommandContextType = {
   // Module management
   enterDeepSleep: () => Promise<void>;
   resetModule: () => Promise<void>;
-  startOTAService: (password: string) => Promise<void>;
 
   // State
   activeCommandName: string | null;
@@ -109,6 +108,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Track command execution
   const [activeCommandName, setActiveCommandName] = useState<string | null>(null);
   const activeCommandNameRef = useRef<string | null>(null);
+
+
+
 
   const updateActiveCommandName = (name: string | null) => {
     setActiveCommandName(name);
@@ -656,44 +658,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [device]);
 
-  // Start OTA (Over-The-Air) firmware update service
-  const startOTAService = useCallback(
-    async (password: string) => {
-      if (!device) {
-        console.warn('No device connected');
-        return;
-      }
-
-      try {
-        await device.writeCharacteristicWithoutResponseForService(
-          OTA_SERVICE_UUID,
-          OTA_UUID,
-          base64.encode(password)
-        );
-
-        // Wait for OTA service to initialize
-        await sleep(1500);
-
-        Toast.show({
-          type: 'info',
-          text1: 'OTA Service Started',
-          text2: 'Ready to receive firmware update.',
-          visibilityTime: 3000,
-        });
-      } catch (error) {
-        console.error('Error starting OTA service:', error);
-
-        Toast.show({
-          type: 'error',
-          text1: 'OTA Failed',
-          text2: 'Failed to start OTA service.',
-          visibilityTime: 3000,
-        });
-      }
-    },
-    [device]
-  );
-
   const value: BleCommandContextType = {
     sendDefaultCommand,
     sendCustomCommand,
@@ -707,7 +671,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     updateWaveDelayMulti,
     enterDeepSleep,
     resetModule,
-    startOTAService,
     activeCommandName,
     oemCustomButtonEnabled,
     buttonDelay,

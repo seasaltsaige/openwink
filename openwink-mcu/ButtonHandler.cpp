@@ -59,7 +59,6 @@ void ButtonHandler::readOnWakeup() {
     if ((wakeupValue != initialButton)) {
       if (initialButton == 1) bothUp();
       else bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
     }
   }
@@ -188,10 +187,7 @@ void ButtonHandler::handleDefaultBehavior(int buttonInput) {
     } else {
       bothDown();
     }
-
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
-
     BLE::setBusy(false);
     BLE::updateHeadlightChars();
   }
