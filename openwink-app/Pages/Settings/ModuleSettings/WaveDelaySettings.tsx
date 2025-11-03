@@ -9,6 +9,7 @@ import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
+import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 
 const MIN = 0;
 const MAX = 100;
@@ -19,7 +20,9 @@ export function WaveDelaySettings() {
   const { colorTheme, theme } = useColorTheme();
 
   const { waveDelayMulti, updateWaveDelayMulti } = useBleCommand();
-  const { isConnected } = useBleMonitor();
+  const {
+    isConnected
+  } = useBleConnection();
 
   const navigation = useNavigation();
   const route = useRoute();

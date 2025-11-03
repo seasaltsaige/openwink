@@ -32,7 +32,7 @@ import { MockBleStore, MockBleState } from '../Storage/MockBleStore';
 class MockCharacteristicStore {
   private values: Map<string, string> = new Map();
   private monitors: Map<string, Set<(value: string) => void>> = new Map();
-  
+
   private customButtonPressArray: number[] = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   private maxTimeBetween_ms: number = 500;
   private customButtonStatusEnabled: boolean = false;
@@ -42,14 +42,14 @@ class MockCharacteristicStore {
   constructor() {
     // Try to load saved state first
     const savedState = MockBleStore.loadState();
-    
+
     if (savedState) {
       // Restore from saved state
       console.log('Mock BLE: Restoring saved state');
       this.customButtonPressArray = savedState.customButtonPressArray;
       this.maxTimeBetween_ms = savedState.maxTimeBetween_ms;
       this.customButtonStatusEnabled = savedState.customButtonStatusEnabled;
-      
+
       // Restore characteristic values
       Object.entries(savedState.characteristicValues).forEach(([uuid, value]) => {
         this.values.set(uuid, value);
@@ -260,7 +260,7 @@ export class MockDevice implements Partial<Device> {
   async cancelConnection(): Promise<Device> {
     console.log('Mock: Disconnecting');
     this.connected = false;
-    
+
     if (this.disconnectCallback) {
       setTimeout(() => {
         this.disconnectCallback!(null, this as unknown as Device);
@@ -394,7 +394,7 @@ export class MockDevice implements Partial<Device> {
         console.log('Mock: Headlight command complete');
       }
     });
-    
+
     await this.animationQueue;
   }
 
@@ -605,7 +605,7 @@ export class MockDevice implements Partial<Device> {
 
       const progress = i / steps;
       const currentPosition = fromPercentage + (toPercentage - fromPercentage) * progress;
-      
+
       if (i === steps) {
         mockStore.setValue(statusUUID, this.encodePercentageToValue(toPercentage).toString());
       } else {
@@ -625,7 +625,7 @@ export class MockDevice implements Partial<Device> {
   private async animateBlink(motionTime: number): Promise<void> {
     const leftStatus = parseInt(mockStore.getValue(LEFT_STATUS_UUID));
     const rightStatus = parseInt(mockStore.getValue(RIGHT_STATUS_UUID));
-    
+
     const opposite = leftStatus === ButtonStatus.UP ? ButtonStatus.DOWN : ButtonStatus.UP;
 
     await Promise.all([
@@ -668,7 +668,7 @@ export class MockDevice implements Partial<Device> {
 
   private async handleCustomButtonPressUpdate(value: string): Promise<void> {
     console.log(`Mock: Custom button press update - Value: ${value}`);
-    
+
     // Handle enable/disable commands
     if (value === "enable") {
       mockStore.setCustomButtonEnabled(true);
@@ -682,7 +682,7 @@ export class MockDevice implements Partial<Device> {
 
     try {
       const parsedValue = parseInt(value);
-      
+
       // Updating maxTime (multi-digit values)
       if (value.length > 1) {
         mockStore.setMaxTimeBetween(parsedValue);
@@ -711,7 +711,7 @@ export class MockDevice implements Partial<Device> {
           const currentArray = mockStore.getCustomButtonArray();
           currentArray[indexToUpdate] = parsedValue;
           mockStore.setCustomButtonArrayValue(indexToUpdate, parsedValue);
-          
+
           console.log(`Mock: Set button array[${indexToUpdate}] = ${parsedValue}`);
 
           // Handle array compaction when setting to 0
@@ -730,7 +730,7 @@ export class MockDevice implements Partial<Device> {
               currentArray[i] = nextValue;
               mockStore.setCustomButtonArrayValue(i, nextValue);
             }
-            
+
             console.log('Mock: Compacted button array after setting to 0');
             console.log('Mock: New array:', currentArray);
           }
@@ -777,7 +777,7 @@ export class MockDevice implements Partial<Device> {
 
     // Sync to average position
     const target = Math.round((left + right) / 2);
-    
+
     mockStore.setValue(BUSY_CHAR_UUID, '1');
     await Promise.all([
       this.animateStatus(LEFT_STATUS_UUID, target, motionTime),
@@ -862,11 +862,11 @@ export class MockBleManager implements Partial<BleManager> {
   async connectToDevice(deviceId: string): Promise<Device> {
     console.log(`Mock: Connecting to device ${deviceId}`);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     if (!this.mockDevice || this.mockDevice.id !== deviceId) {
       this.mockDevice = new MockDevice(deviceId);
     }
-    
+
     return this.mockDevice as unknown as Device;
   }
 

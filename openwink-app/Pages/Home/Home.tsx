@@ -13,12 +13,15 @@ import {
   ModuleUpdateModal,
   MainHeader
 } from "../../Components";
-import { getDeviceUUID, sleep } from "../../helper/Functions";
-import { OTA } from "../../helper/Handlers/OTA";
+import { getDeviceUUID } from "../../helper/Functions";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
-import { useBleCommand } from "../../Providers/BleCommandProvider";
-import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+
+import {
+  useUpdateManager,
+  ERROR_TYPE,
+  UPDATE_STATUS,
+} from "../../hooks/useUpdateManager";
 
 export function Home() {
 
@@ -26,17 +29,8 @@ export function Home() {
   const route = useRoute();
   const { colorTheme, theme } = useColorTheme();
 
-  const [moduleUpdateAvailable, setModuleUpdateAvailable] = useState(false as null | boolean);
   const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
-
-  const [fetchingModuleUpdateInfo, setFetchingModuleUpdateInfo] = useState(false);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
-  const [moduleUpdateCheckError, setModuleUpdateCheckError] = useState<string | null>(null);
-  const [updateSize, setUpdateSize] = useState(0);
-  const [updateVersion, setUpdateVersion] = useState("");
-  const [updateDescription, setUpdateDescription] = useState("");
-
-  const [installingFirmware, setInstallingFirmware] = useState(false);
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
@@ -44,16 +38,46 @@ export function Home() {
   const {
     disconnect: disconnectFromModule,
     isConnecting,
+    device,
     isScanning,
+    isConnected,
     requestPermissions,
     scanForModule,
   } = useBleConnection();
 
-  const { isConnected } = useBleMonitor();
-
   const {
-    startOTAService,
-  } = useBleCommand();
+    updateStatus,
+    updateData,
+    error,
+    stopUpdate,
+    checkUpdateAvailable,
+    startUpdate,
+  } = useUpdateManager({
+    onError: ({ errorType, errorMessage, errorTitle }) => {
+      Toast.show({
+        type: "error",
+        text1: errorTitle,
+        text2: errorMessage,
+        autoHide: true,
+        visibilityTime: 10000,
+      });
+    },
+    onSuccess: ({ successMessage, successTitle, successType }) => {
+      Toast.show({
+        type: "success",
+        text1: successTitle,
+        text2: successMessage,
+        autoHide: true,
+        visibilityTime: 10000,
+      });
+    },
+  });
+
+  const updatePanelVisible =
+    error === ERROR_TYPE.ERR_NONE &&
+    updateData !== null &&
+    updateStatus === UPDATE_STATUS.INSTALLING;
+
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
@@ -70,72 +94,12 @@ export function Home() {
   }
 
   const fetchModuleUpdate = async () => {
-    try {
-      setModuleUpdateCheckError(null); // Clear any previous errors
-      const available = await OTA.fetchUpdateAvailable();
-
-      setUpdateDescription(OTA.updateDescription);
-      setUpdateVersion(OTA.latestVersion);
-      setUpdateSize(OTA.getUpdateSize());
-
-      setFetchingModuleUpdateInfo(false);
-
-      if (available)
-        setModuleUpdateAvailable(true);
-      else
-        setModuleUpdateAvailable(false);
-    } catch (error) {
-      setFetchingModuleUpdateInfo(false);
-      setModuleUpdateAvailable(false);
-      setModuleUpdateCheckError("error");
-      
-      const errorMessage = error instanceof Error ? error.message : 'Failed to check for updates';
-      
-      Toast.show({
-        type: "error",
-        autoHide: true,
-        visibilityTime: 6000,
-        text1: "Update Check Failed",
-        text2: errorMessage
-      });
-    }
+    if (!device) return;
+    await checkUpdateAvailable();
   }
 
   const installModuleUpdate = async () => {
-    setInstallingFirmware(true);
-
-    const password = OTA.generateWifiPasskey();
-    await startOTAService(password);
-
-    const updateStatus = await OTA.updateFirmware();
-
-    setInstallingFirmware(false);
-
-    if (updateStatus) {
-      setModuleUpdateAvailable(false);
-      setFetchingModuleUpdateInfo(false);
-      Toast.show({
-        text1: "Update Success",
-        type: "success",
-        text2: "Open Wink firmware update was installed successfully. The module will now restart to apply the firmware.",
-        autoHide: true,
-        visibilityTime: 8000,
-      });
-      return disconnectFromModule(false);
-    } else {
-      setModuleUpdateAvailable(false);
-      setFetchingModuleUpdateInfo(false);
-      Toast.show({
-        type: "error",
-        autoHide: true,
-        visibilityTime: 8000,
-        text1: "Update Failed",
-        // TODO: if continued errors, suggest a bug report.
-        text2: "Something went wrong while installing firmware. Please reconnect to the module and try again."
-      });
-
-      return disconnectFromModule(false);
-    }
+    await startUpdate();
   }
 
   const scanForDevice = async () => {
@@ -154,13 +118,11 @@ export function Home() {
 
   useEffect(() => {
     (async () => {
-      if (isConnected) {
-        setFetchingModuleUpdateInfo(true);
-        await sleep(1000);
+      if (device !== null) {
         fetchModuleUpdate();
       }
     })();
-  }, [isConnected]);
+  }, [device]);
 
 
   return (
@@ -318,7 +280,10 @@ export function Home() {
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
-                      {fetchingAppUpdateInfo ? "Checking for app update" : "App is up to date"}
+                      {
+                        fetchingAppUpdateInfo ?
+                          "Checking for app update" :
+                          "App is up to date"}
                     </Text>
                   </View>
                   {
@@ -332,61 +297,75 @@ export function Home() {
             }
 
             {
-              // TODO: update to 'if update available for module'
-              installingFirmware ? (
+              // FIRST: Error Status should take priority
+              error !== ERROR_TYPE.ERR_NONE ? (
+                error === ERROR_TYPE.ERR_TIMEOUT ? (
+                  // Specific case for timeout during fetch
+                  <LongButton
+                    text="Failed to check for Module updates"
+                    onPress={() => { if (device !== null) fetchModuleUpdate() }}
+                    icons={{ names: [null, "alert-circle-outline"], size: [null, 18] }}
+                  />
+                ) : (
+                  <View style={theme.mainLongButtonPressableContainer}>
+                    <View style={theme.mainLongButtonPressableView}>
+                      <Text style={theme.mainLongButtonPressableText}>
+                        Failed to Install Firmware
+                      </Text>
+                    </View>
+
+                    <IonIcons style={theme.mainLongButtonPressableIcon} size={20} name="alert-circle-outline" color='#ff6b6b' />
+                  </View>
+                )
+              ) : (updateStatus === UPDATE_STATUS.IDLE && !device) ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Connect to Wink Module for updates
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                </View>
+              ) : updateStatus === UPDATE_STATUS.AVAILABLE ? (
+                <LongButton
+                  onPress={() => installModuleUpdate()}
+                  icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
+                  text="Install Firmware Update"
+                />
+              ) : updateStatus === UPDATE_STATUS.UP_TO_DATE ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Module is up to date
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
+                </View>
+              ) : updateStatus === UPDATE_STATUS.INSTALLING ? (
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
                       Installing Firmware Update
                     </Text>
                   </View>
-
                   <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
-              ) : moduleUpdateCheckError ? (
-                <Pressable
-                  style={({ pressed }) => pressed ? { ...theme.mainLongButtonPressableContainer, opacity: 0.7 } : theme.mainLongButtonPressableContainer}
-                  onPress={() => {
-                    if (isConnected) {
-                      setFetchingModuleUpdateInfo(true);
-                      setModuleUpdateCheckError(null);
-                      fetchModuleUpdate();
-                    }
-                  }}
-                >
-                  <View style={theme.mainLongButtonPressableView}>
-                    <Text style={[theme.mainLongButtonPressableText, { color: '#ff6b6b' }]}>
-                      Failed to check for Module updates
-                    </Text>
-                  </View>
-                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="alert-circle-outline" color={'#ff6b6b'} />
-                </Pressable>
-              ) : moduleUpdateAvailable ? (
-                <LongButton
-                  onPress={() => installModuleUpdate()}
-                  icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
-                  text="Install Firmware Update"
-                />
-              ) : (
+              ) : updateStatus === UPDATE_STATUS.FETCHING ? (
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
-                      {!isConnected ?
-                        "Connect to Wink Module for updates" :
-                        fetchingModuleUpdateInfo ?
-                          "Checking for Module software update" :
-                          "Module is up to date"
-                      }
+                      Checking for Module Update
                     </Text>
                   </View>
-                  {
-                    !isConnected ?
-                      <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} /> :
-                      fetchingModuleUpdateInfo ?
-                        <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :
-                        <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
-                  }
+                  <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
+              ) : (
+                // UNKNOWN STATE: SHOULD NOT REACH
+                <LongButton
+                  onPress={() => installModuleUpdate()}
+                  icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
+                  text="Unknown Update State: Report Here"
+                />
               )
             }
           </View>
@@ -403,11 +382,11 @@ export function Home() {
       />
 
       <ModuleUpdateModal
-        onRequestClose={() => setInstallingFirmware(false)}
-        visible={installingFirmware}
-        binSizeBytes={updateSize}
-        version={updateVersion}
-        description={updateDescription}
+        visible={updatePanelVisible}
+        binSizeBytes={updateData?.size!}
+        description={updateData?.description!}
+        version={updateData?.version!}
+        stopUpdate={stopUpdate}
       />
     </>
   );

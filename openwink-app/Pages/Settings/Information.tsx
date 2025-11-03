@@ -30,6 +30,7 @@ export function Information() {
     isConnecting,
     autoConnectEnabled,
     mac,
+    isConnected
   } = useBleConnection();
 
   const {
@@ -39,7 +40,6 @@ export function Information() {
   } = useBleCommand();
 
   const {
-    isConnected,
     firmwareVersion,
     leftStatus,
     rightStatus,

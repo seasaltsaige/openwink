@@ -58,7 +58,9 @@ export function ModuleSettings() {
     unpair,
   } = useBleConnection();
 
-  const { isConnected } = useBleMonitor();
+  const {
+    isConnected
+  } = useBleConnection();
 
   const {
     enterDeepSleep,

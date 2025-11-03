@@ -131,6 +131,28 @@ export function AppNavigator() {
   const { theme, colorTheme } = useColorTheme();
 
   const toastConfig: ToastConfig = {
+    error: (props) => (
+      <BaseToast
+        {...props}
+        text1Style={{
+          fontFamily: "IBMPlexSans_700Bold",
+          color: colorTheme.headerTextColor,
+          fontSize: 17
+        }}
+        text2Style={{
+          fontFamily: "IBMPlexSans_500Medium",
+          color: colorTheme.textColor,
+          fontSize: 13,
+        }}
+        text2NumberOfLines={4}
+        style={{
+          borderLeftColor: "red",
+          height: "auto",
+          paddingVertical: 10,
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+        }}
+      />
+    ),
     success: (props) => (
       <BaseToast
         {...props}
@@ -152,7 +174,8 @@ export function AppNavigator() {
           backgroundColor: colorTheme.backgroundSecondaryColor,
         }}
       />
-    )
+    ),
+
   }
 
   const { disconnect: disconnectFromModule } = useBleConnection();

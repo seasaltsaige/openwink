@@ -17,6 +17,7 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 import { HeadlightStatus } from "../../Components/HeadlightStatus";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
@@ -24,7 +25,10 @@ export function CustomCommands() {
   const { theme, colorTheme } = useColorTheme();
 
   const {
-    isConnected,
+    isConnected
+  } = useBleConnection();
+
+  const {
     headlightsBusy
   } = useBleMonitor();
 

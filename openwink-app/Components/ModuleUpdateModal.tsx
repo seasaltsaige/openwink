@@ -1,31 +1,31 @@
-import { ActivityIndicator, Modal, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
+import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
 
 interface IModuleUpdateModal {
   version: string;
   description: string;
   visible: boolean;
-  onRequestClose: () => void;
+  stopUpdate: () => Promise<void>
   binSizeBytes: number;
 }
 
 export function ModuleUpdateModal({
   version,
   description,
-  onRequestClose,
   visible,
   binSizeBytes,
+  stopUpdate,
 }: IModuleUpdateModal) {
 
   const { colorTheme } = useColorTheme();
   const { updateProgress, updatingStatus } = useBleMonitor();
 
-  const updateSizeMB = binSizeBytes / 1000 / 1000;
+  const updateSizeKB = binSizeBytes / 1000;
   return (
     <Modal
-      onRequestClose={onRequestClose}
       transparent
       animationType="none"
       visible={visible}
@@ -108,7 +108,7 @@ export function ModuleUpdateModal({
             fontSize: 14,
             textAlign: "center",
           }}>
-            ({((updateSizeMB * updateProgress) / 100).toFixed(2)}MB/{(updateSizeMB).toFixed(2)}MB) – v{version}
+            ({((updateSizeKB * updateProgress) / 100).toFixed(2)}KB/{(updateSizeKB).toFixed(2)}KB) – v{version}
           </Text>
 
           <Text style={{
@@ -120,6 +120,24 @@ export function ModuleUpdateModal({
           }}>
             {description}
           </Text>
+
+          <Pressable
+            onPress={stopUpdate}
+          >
+            {({ pressed }) =>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 17,
+                  fontFamily: "IBMPlexSans_500Medium",
+                  color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                  textDecorationLine: "underline"
+                }}
+              >
+                Cancel Update
+              </Text>
+            }
+          </Pressable>
         </View>
       </View>
     </Modal>

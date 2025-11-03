@@ -1,7 +1,6 @@
-import WifiManager from "react-native-wifi-reborn";
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
 import { UPDATE_URL } from "../Constants";
-import { generatePassword } from "../Functions";
+import { sleep } from "../Functions";
 
 type FirmwareType = `${number}.${number}.${number}`;
 
@@ -9,12 +8,14 @@ export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
   public static updateDescription: string = "";
-
-  private static readonly wifiSSID: string = "Wink Module: Update Access Point";
-  private static wifiPasskey: string;
   private static updateSizeBytes: number = 0;
+  // private static written: number = 0;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
+    this.setActiveVersion();
+    this.setLatestVersion(this.activeVersion);
+    this.updateDescription = "";
+    this.updateSizeBytes = 0;
     // Fetch latest software version from API using device MAC address as access code
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -38,49 +39,30 @@ export abstract class OTA {
       const json = await response.json();
       const version = json["version"] as FirmwareType;
       const description = json["description"] as string;
+      const size = json["size"] as number;
       this.updateDescription = description;
       this.setLatestVersion(version);
       this.setActiveVersion();
-
-      if (this.shouldUpdate()) {
-        const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
-          {
-            method: "GET",
-            headers: {
-              authorization: DeviceMACStore.getStoredMAC() ?? "",
-            }
-          }
-        );
-
-        if (!firmwareResponse.ok) {
-          throw new Error(`Failed to fetch firmware size: ${firmwareResponse.status} ${firmwareResponse.statusText}`);
-        }
-
-        const firmwareBlob = await firmwareResponse.blob();
-        const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
-
-        this.updateSizeBytes = blobWithType.size;
-
-      }
+      this.updateSizeBytes = size;
 
       return this.shouldUpdate();
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Update check timed out. Please check your internet connection and try again.');
       }
-      
+
       throw error;
     }
   }
 
-  public static generateWifiPasskey() {
-    this.wifiPasskey = generatePassword(15);
-    return this.wifiPasskey;
-  }
-
-  public static async updateFirmware() {
+  public static async updateFirmware(
+    mtu: number,
+    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>) => Promise<boolean>,
+    sendOTASize: (otaSize: number) => Promise<void>,
+    sendOTAComplete: () => Promise<void>,
+  ) {
     try {
       const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
         {
@@ -94,33 +76,29 @@ export abstract class OTA {
       if (!firmwareResponse.ok) return false;
 
       const firmwareBlob = await firmwareResponse.blob();
-      const blobWithType = firmwareBlob.slice(0, firmwareBlob.size, "application/octet-stream");
+      const uint8buffer = await this.blobToUint8Array(firmwareBlob);
+      const blobChunks: Uint8Array[] = [];
 
-      await WifiManager.connectToProtectedWifiSSID({
-        password: this.wifiPasskey,
-        ssid: this.wifiSSID,
-      });
+      for (let i = 0; i < uint8buffer.length; i += mtu) {
+        blobChunks.push(uint8buffer.slice(i, i + mtu));
+      }
+      const start = Date.now();
+      console.log("[DEBUG] OTA START");
+      await sendOTASize(firmwareBlob.size);
+      await sleep(25);
 
-      const updateStatusResponse = await fetch("http://module-update.local/update",
-        {
-          method: "POST",
-          body: blobWithType,
-          headers: {
-            "Content-Length": blobWithType.size.toString(),
-          },
-        },
-      );
-
-      if (updateStatusResponse.status == 200) {
-        // Update successful
-        FirmwareStore.setFirmwareVersion(this.latestVersion);
-        this.activeVersion = this.latestVersion;
-        return true;
-      } else {
-        // Update went wrong for some reason
-        return false;
+      for (const chunk of blobChunks) {
+        await sendOTAChunk(chunk);
       }
 
+      await sendOTAComplete();
+
+      const end = Date.now();
+      console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
+
+      this.activeVersion = this.latestVersion;
+
+      return true;
     } catch (err) {
       console.log(err);
       return false;
@@ -133,6 +111,17 @@ export abstract class OTA {
     return this.updateSizeBytes;
   }
 
+  // React Native does not implement Blob#arrayBuffer for some reason... don't ask me
+  private static async blobToUint8Array(blob: Blob) {
+    return new Promise<Uint8Array>((res, rej) => {
+      const reader = new FileReader();
+      reader.onloadend = (ev: ProgressEvent<FileReader>) => {
+        res(new Uint8Array(reader.result as ArrayBuffer));
+      }
+      reader.onerror = rej;
+      reader.readAsArrayBuffer(blob);
+    })
+  }
 
   private static setActiveVersion() {
     const storedFirmwareVersion = FirmwareStore.getFirmwareVersion();
