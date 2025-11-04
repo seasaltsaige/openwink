@@ -26,7 +26,7 @@ void button_task(void*)
     uint8_t button_pressed_value;
     for (;;)
     {
-        if (xQueueReceive(QueueHandler::button_queue, &button_pressed_value, portMAX_DELAY))
+        if (xQueueReceive(button_queue, &button_pressed_value, portMAX_DELAY))
         {
             auto current_input = static_cast<LEVEL>(button_pressed_value);
             printf("Button Press Received: %s\n", current_input == LEVEL::HIGH ? "High" : "Low");
@@ -52,7 +52,7 @@ void headlight_input_task(void*)
     for (;;)
     {
         bool status;
-        if (xQueueReceive(QueueHandler::headlight_input_queue, &status, portMAX_DELAY))
+        if (xQueueReceive(headlight_input_queue, &status, portMAX_DELAY))
         {
             printf("RECEIVED INPUT HEADLIGHT QUEUE");
         }
@@ -65,7 +65,7 @@ void headlight_output_task(void*)
     for (;;)
     {
         int receivedCommand;
-        if (xQueueReceive(QueueHandler::headlight_output_queue, &receivedCommand, portMAX_DELAY))
+        if (xQueueReceive(headlight_output_queue, &receivedCommand, portMAX_DELAY))
         {
             printf("RECEIVED OUTPUT QUEUE: %d\n", receivedCommand);
             HeadlightOutputHandler::send_command((HEADLIGHT_COMMAND)receivedCommand);

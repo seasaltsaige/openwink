@@ -56,7 +56,7 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 
     // HEADLIGHT_COMMAND command = static_cast<HEADLIGHT_COMMAND>(cmd_int);
     printf("Sending command to queue: %d\n", cmd_int);
-    xQueueSend(QueueHandler::headlight_output_queue, &cmd_int, (TickType_t)10);
+    xQueueSend(headlight_output_queue, &cmd_int, (TickType_t)10);
 }
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)

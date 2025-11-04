@@ -3,6 +3,7 @@
 #include "config/interrupt_conf.h"
 #include "config/tasks_conf.h"
 #include "handler/nvs.h"
+#include "handler/queue.h"
 #include "handler/wakeup.h"
 
 
@@ -14,6 +15,9 @@ extern "C" void app_main()
     INIT_intr();
     // Enable wakeup sources on startup; By default enables both GPIO wakeup AND Timer wakeup
     INIT_wakeup_sources();
+
+    // Initialize queues for commands/inputs
+    INIT_queues();
 
     // Initialize NVS for BLE / storing module customizations
     NVS::init();
