@@ -526,7 +526,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       fontFamily: "IBMPlexSans_700Bold",
       color: themeColors.headerTextColor,
       width: "auto",
-      marginRight: 10,
+      // marginRight: 10,
     },
     intervalInfoContainer: {
       backgroundColor: themeColors.backgroundPrimaryColor,

@@ -3,7 +3,7 @@ import { useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { HeaderWithBackButton } from "../../Components";
+import { AboutFooter, HeaderWithBackButton } from "../../Components";
 
 export function TermsOfUse() {
 
@@ -22,8 +22,12 @@ export function TermsOfUse() {
 
       <ScrollView contentContainerStyle={theme.contentContainer}>
 
+
+
+
       </ScrollView>
 
+      <AboutFooter />
     </SafeAreaView>
   )
 }
