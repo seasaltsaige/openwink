@@ -154,8 +154,8 @@ export const useUpdateManager = ({
 
         onError({
           errorType: ERROR_TYPE.ERR_TIMEOUT,
-          errorMessage: "Update timed out during download. Please try again.",
-          errorTitle: "Update Time Out"
+          errorMessage: "Failed to check update status. Please try again.",
+          errorTitle: "Update Timed Out"
         });
 
         setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);

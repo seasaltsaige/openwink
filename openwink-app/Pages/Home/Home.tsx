@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, DeviceMACStore, QuickLinksStore } from "../../Storage";
 import {
   EditQuickLinksModal,
   LongButton,
@@ -359,12 +359,18 @@ export function Home() {
                   </View>
                   <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
+              ) : updateStatus === UPDATE_STATUS.IDLE && isConnected ? (
+                <LongButton
+                  onPress={() => checkUpdateAvailable()}
+                  icons={{ names: [null, "repeat-outline"], size: [null, 20] }}
+                  text="Check for Module update"
+                />
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
                 <LongButton
                   onPress={() => installModuleUpdate()}
                   icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
-                  text="Unknown Update State: Report Here"
+                  text="Unknown Update State"
                 />
               )
             }

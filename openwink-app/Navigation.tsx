@@ -175,6 +175,28 @@ export function AppNavigator() {
         }}
       />
     ),
+    info: (props) => (
+      <BaseToast
+        {...props}
+        text1Style={{
+          fontFamily: "IBMPlexSans_700Bold",
+          color: colorTheme.headerTextColor,
+          fontSize: 17
+        }}
+        text2Style={{
+          fontFamily: "IBMPlexSans_500Medium",
+          color: colorTheme.textColor,
+          fontSize: 13,
+        }}
+        text2NumberOfLines={4}
+        style={{
+          borderLeftColor: "#d1ecf1",
+          height: "auto",
+          paddingVertical: 10,
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+        }}
+      />
+    )
 
   }
 
