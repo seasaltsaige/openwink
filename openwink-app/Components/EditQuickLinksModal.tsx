@@ -6,6 +6,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { SearchBarFilter } from ".";
+import { QuickLinksStore } from "../Storage";
 
 export type QuickLink = {
   navigation: {
@@ -114,6 +115,7 @@ interface IEditQuickLinksModal {
   close: () => void;
   initialLinks: (QuickLink)[];
   onUpdateLinks: (updatedLinks: (QuickLink)[]) => void;
+  resetToDefault: () => void;
 }
 
 export function EditQuickLinksModal({
@@ -121,7 +123,9 @@ export function EditQuickLinksModal({
   initialLinks,
   onUpdateLinks,
   visible,
+  resetToDefault,
 }: IEditQuickLinksModal) {
+  console.log(initialLinks);
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
 
   const { colorTheme, theme } = useColorTheme();
@@ -173,8 +177,10 @@ export function EditQuickLinksModal({
   }
 
   useEffect(() => setInitialValues(), []);
+  useEffect(() => {
+    setInitialValues();
+  }, [mappedInitialLinks]);
 
-  const resetToStart = () => setInitialValues();
   const __saveLinksOnClose = () => {
     onUpdateLinks(allLinks.filter(l => l.visible).map(l => ({ icon: l.icon, navigation: l.navigation, title: l.title })));
     close();
@@ -332,7 +338,7 @@ export function EditQuickLinksModal({
           >
             <Pressable
               hitSlop={10}
-              onPress={resetToStart}
+              onPress={resetToDefault}
             >
               {
                 ({ pressed }) =>

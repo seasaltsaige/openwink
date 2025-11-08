@@ -83,6 +83,10 @@ export function Home() {
     QuickLinksStore.setLinks(newQuickLinks);
     setQuickLinks(() => newQuickLinks);
   }
+  const resetQuickLinks = () => {
+    QuickLinksStore.reset();
+    setQuickLinks(() => QuickLinksStore.getLinks());
+  }
 
   const checkAppUpdate = async () => {
     // fetch request to get app update info
@@ -385,6 +389,7 @@ export function Home() {
         visible={quickLinksModalVisible}
         initialLinks={quickLinks}
         onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+        resetToDefault={() => resetQuickLinks()}
       />
 
       <ModuleUpdateModal
