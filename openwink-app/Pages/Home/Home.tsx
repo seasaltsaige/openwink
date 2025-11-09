@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, DeviceMACStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, QuickLinksStore, SleepyEyeStore } from "../../Storage";
 import {
   EditQuickLinksModal,
   LongButton,
@@ -22,6 +22,7 @@ import {
   ERROR_TYPE,
   UPDATE_STATUS,
 } from "../../hooks/useUpdateManager";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Home() {
 
@@ -44,6 +45,13 @@ export function Home() {
     requestPermissions,
     scanForModule,
   } = useBleConnection();
+
+  const {
+    setSleepyEyeValues,
+    setOEMButtonStatus,
+    updateButtonDelay,
+    updateWaveDelayMulti,
+  } = useBleCommand();
 
   const {
     updateStatus,
@@ -121,12 +129,18 @@ export function Home() {
   }, []);
 
   useEffect(() => {
+    setTimeout(() => {
+      setSleepyEyeValues(SleepyEyeStore.get("left"), SleepyEyeStore.get("right"));
+      setOEMButtonStatus(CustomOEMButtonStore.isEnabled() ? "enable" : "disable");
+      updateButtonDelay(CustomOEMButtonStore.getDelay());
+      updateWaveDelayMulti(CustomWaveStore.getMultiplier());
+      console.log("Updating state values...");
+    }, 2500);
+
     (async () => {
-      if (device !== null) {
-        fetchModuleUpdate();
-      }
+      fetchModuleUpdate();
     })();
-  }, [device]);
+  }, [isConnected]);
 
 
   return (

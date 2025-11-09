@@ -125,7 +125,6 @@ export function EditQuickLinksModal({
   visible,
   resetToDefault,
 }: IEditQuickLinksModal) {
-  console.log(initialLinks);
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
 
   const { colorTheme, theme } = useColorTheme();

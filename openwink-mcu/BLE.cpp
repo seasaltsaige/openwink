@@ -104,19 +104,29 @@ void BLE::initServiceCharacteristics() {
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
 
   longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
   clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
-  headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
-  headlightDelayChar->setValue(headlightMultiplier);
+  headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  headlightDelayChar->setValue(to_string(headlightMultiplier));
 
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
+  Serial.printf("Headlight Wave Delay = %f\n", headlightMultiplier);
   sleepSettingsChar->setValue(sleepCharStart);
+  string enabled = customButtonStatusEnabled ? "y" : "n";
+  string customButtonDataOnBoot = enabled + "-" + to_string(maxTimeBetween_ms) + "-";
+
+  for (int i = 0; i < 10; i++) {
+    customButtonDataOnBoot = customButtonDataOnBoot + to_string(customButtonPressArray[i]);
+    if (i != 9) customButtonDataOnBoot = customButtonDataOnBoot + "-";
+  }
+
+  customButtonChar->setValue(customButtonDataOnBoot);
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());

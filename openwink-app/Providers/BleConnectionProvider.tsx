@@ -322,10 +322,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Check if device has required service UUIDs
       if (scannedDevice.serviceUUIDs) {
+        console.log(scannedDevice.id);
         return (
-          scannedDevice.serviceUUIDs.includes(OTA_SERVICE_UUID) &&
-          scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID) &&
-          scannedDevice.serviceUUIDs.includes(MODULE_SETTINGS_SERVICE_UUID)
+          scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID)
         );
       }
 

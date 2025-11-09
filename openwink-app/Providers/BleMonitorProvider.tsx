@@ -22,9 +22,14 @@ import {
   OTA_SERVICE_UUID,
   MODULE_SETTINGS_SERVICE_UUID,
   FIRMWARE_UUID,
+  CUSTOM_BUTTON_UPDATE_UUID,
+  buttonBehaviorMapReversed,
+  HEADLIGHT_MOVEMENT_DELAY_UUID,
+  SLEEPY_SETTINGS_UUID,
 } from '../helper/Constants';
-import { FirmwareStore } from '../Storage';
+import { CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import { toProperCase } from '../helper/Functions';
+import { Presses } from '../helper/Types';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -330,7 +335,11 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Start monitoring all characteristics
   const startMonitoring = useCallback(
-    async (device: Device, onCustomCommandInterrupt?: () => void) => {
+    async (
+      device: Device,
+      onCustomCommandInterrupt?: () => void
+      
+    ) => {
       // Clean up any existing subscriptions first
       stopMonitoring();
 
@@ -448,6 +457,68 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           // additionally reset update progress
           setUpdateProgress(0);
         }
+
+
+
+        // SLEEPY_SETTINGS_UUID
+
+        const sleepyEyeSettings = await device.readCharacteristicForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          SLEEPY_SETTINGS_UUID,
+        );
+        if (sleepyEyeSettings.value) {
+          const value = base64.decode(sleepyEyeSettings.value);
+          console.log(value);
+          const parts = value.split("-");
+          const left = parts[0];
+          const right = parts[1];
+
+          SleepyEyeStore.set("left", parseFloat(left));
+          SleepyEyeStore.set("right", parseFloat(right));
+        }
+
+
+        const waveDelayMultiplier = await device.readCharacteristicForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          HEADLIGHT_MOVEMENT_DELAY_UUID,
+        );
+        if (waveDelayMultiplier.value) {
+          console.log(base64.decode(waveDelayMultiplier.value));
+
+          CustomWaveStore.setMultiplier(
+            parseFloat(base64.decode(waveDelayMultiplier.value))
+          );
+        }
+
+        // Sync Custom OEM Button Settings
+        const customButtonSettings = await device.readCharacteristicForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+        );
+        if (customButtonSettings.value) {
+          const value = base64.decode(customButtonSettings.value);
+          const customButtonData = value.split("-");
+          const enabled = customButtonData.shift() === "y" ? true : false;
+          console.log(enabled);
+          const maxDelay = parseFloat(customButtonData.shift()!);
+          console.log(maxDelay);
+
+          if (enabled) CustomOEMButtonStore.enable();
+          else CustomOEMButtonStore.disable();
+
+          CustomOEMButtonStore.setDelay(maxDelay);
+          CustomOEMButtonStore.remove(1);
+          for (let i = 2; i < 10; i++) {
+            const valueFromDevice = parseInt(customButtonData[i - 1]);
+            console.log(`Presses: ${i} -- Index: ${i - 1} -- Stored Value: ${valueFromDevice} -- Mapped: ${valueFromDevice === 0 ? "N/A" : buttonBehaviorMapReversed[i as Presses]}`);
+            if (valueFromDevice === 0)
+              CustomOEMButtonStore.remove(i as Presses);
+            else
+              CustomOEMButtonStore.set(i as Presses, buttonBehaviorMapReversed[i as Presses]);
+          }
+
+        }
+
       } catch (error) {
         console.error('Error reading initial values:', error);
         throw error;
