@@ -59,7 +59,7 @@ export function ModuleSettings() {
   } = useBleConnection();
 
   const {
-    isConnected
+    isConnected,
   } = useBleConnection();
 
   const {
@@ -118,6 +118,7 @@ export function ModuleSettings() {
   const forgetModulePairing = async () => {
     if (!isConnected) return;
     await unpair();
+    setConfirmationOpen(false);
 
     Toast.show({
       autoHide: true,
