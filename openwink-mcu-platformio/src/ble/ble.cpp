@@ -8,6 +8,10 @@
 
 using namespace std;
 
+#if !CONFIG_BT_NIMBLE_EXT_ADV
+#error Must enable extended advertising, see nimconfig.h file.
+#endif
+
 bool BLE::device_connected = false;
 
 NimBLEServer* BLE::server;
@@ -72,9 +76,9 @@ void BLE::startServices()
 
     otaService = server->createService(OTA_SERVICE_UUID);
 
-    // otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
-    // firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
-    // firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+    otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+    firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+    firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
 
     settingsService = server->createService(MODULE_SETTINGS_SERVICE_UUID);
@@ -112,13 +116,9 @@ void BLE::startAdvertising(string name)
 
     advertisement.setPrimaryPhy(BLE_HCI_LE_PHY_1M);
     advertisement.setSecondaryPhy(BLE_HCI_LE_PHY_2M);
-
     advertisement.addServiceUUID(NimBLEUUID(WINK_SERVICE_UUID));
-    advertisement.addServiceUUID(NimBLEUUID(OTA_SERVICE_UUID));
-    advertisement.addServiceUUID(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
+
     advertisement.setTxPower(ESP_PWR_LVL_P9);
-
-
     advertising = NimBLEDevice::getAdvertising();
     if (advertising->setInstanceData(0, advertisement))
     {
