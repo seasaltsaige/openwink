@@ -22,7 +22,6 @@ NimBLECharacteristic* BLE::leftStatusChar;
 NimBLECharacteristic* BLE::rightStatusChar;
 NimBLECharacteristic* BLE::sleepChar;
 NimBLECharacteristic* BLE::customCommandChar;
-NimBLECharacteristic* BLE::syncChar;
 
 NimBLEService* BLE::otaService;
 NimBLECharacteristic* BLE::otaUpdateChar;
@@ -66,11 +65,10 @@ void BLE::startServices()
     rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
     sleepChar = winkService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE_NR);
-    syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE_NR);
     // customCommandChar = winkService->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);
 
     winkChar->setCallbacks(new HeadlightMovementCharacteristicCallbacks());
-    // sleepChar
+    sleepChar->setCallbacks(new SleepyEyeCharacteristicCallbacks());
 
     otaService = server->createService(OTA_SERVICE_UUID);
 

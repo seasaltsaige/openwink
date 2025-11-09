@@ -1,13 +1,15 @@
 #include "ble/ble_callbacks.h"
 #include "ble/ble.h"
 #include "globals.h"
+#include "handler/headlight_input.h"
 #include "handler/headlight_output.h"
 #include "handler/queue.h"
 
 
-#include "NimBLEDevice.h"
-#include "esp_log.h"
-#include "esp_sleep.h"
+#include <NimBLEDevice.h>
+#include <esp_log.h>
+#include <esp_sleep.h>
+#include <esp_timer.h>
 #include <string>
 
 using namespace std;
@@ -61,18 +63,54 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 
 void SleepyEyeCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
 {
+    double left = HeadlightOutputHandler::leftSleepyEye / 100;
+    double right = HeadlightOutputHandler::rightSleepyEye / 100;
+
+    bool is_sleepy = true;
+
     // Already in sleepy eye if headlights are not in LOW or HIGH position, therefore, sync headlights
     if (HeadlightOutputHandler::HeadlightStatus::left != LOW && HeadlightOutputHandler::HeadlightStatus::left != HIGH && HeadlightOutputHandler::HeadlightStatus::right != LOW &&
     HeadlightOutputHandler::HeadlightStatus::right != HIGH)
     {
-        // TODO: Proceed with sync
+        left = 1 - (HeadlightOutputHandler::leftSleepyEye / 100);
+        right = 1 - (HeadlightOutputHandler::rightSleepyEye / 100);
+        is_sleepy = false;
     }
-    else
+
+    // If either headlight is in HIGH position, send both down to prepare for sleepy eye
+    if (is_sleepy && (HeadlightOutputHandler::HeadlightStatus::left == HIGH || HeadlightOutputHandler::HeadlightStatus::right == HIGH))
+        HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND::BOTH_DOWN);
+
+    int64_t timeStart = esp_timer_get_time() / 1000;
+
+    bool left_reached_position = false;
+    bool right_reached_position = false;
+
+    gpio_set_level(LEFT_UP_OUT, HIGH);
+    gpio_set_level(RIGHT_UP_OUT, HIGH);
+
+    while (!left_reached_position || !right_reached_position)
     {
-        // If either headlight is in HIGH position, send both down to prepare for sleepy eye
-        if (HeadlightOutputHandler::HeadlightStatus::left == HIGH || HeadlightOutputHandler::HeadlightStatus::right == HIGH)
-            HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND::BOTH_DOWN);
+        int64_t time_elapsed = (esp_timer_get_time() / 1000);
+        // Left check
+        if (!left_reached_position && ((time_elapsed - timeStart) >= (left * HeadlightInputHandler::headlight_delay_ms)))
+        {
+            left_reached_position = true;
+            gpio_set_level(LEFT_UP_OUT, LOW);
+        }
+
+        // Right check
+        if (!right_reached_position && ((time_elapsed - timeStart) >= (right * HeadlightInputHandler::headlight_delay_ms)))
+        {
+            right_reached_position = true;
+            gpio_set_level(RIGHT_UP_OUT, LOW);
+        }
     }
+
+    HeadlightOutputHandler::HeadlightStatus::left = HeadlightOutputHandler::leftSleepyEye + 10;
+    HeadlightOutputHandler::HeadlightStatus::right = HeadlightOutputHandler::rightSleepyEye + 10;
+
+    BLE::updateHeadlightStatus();
 }
 
 // ===== BEGIN WINK SERVICE CHARACTERISTIC CALLBACKS ===== //

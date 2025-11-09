@@ -46,7 +46,6 @@ class BLE
     static NimBLECharacteristic* rightStatusChar;
     static NimBLECharacteristic* sleepChar;
     static NimBLECharacteristic* customCommandChar;
-    static NimBLECharacteristic* syncChar;
 
     static NimBLEService* otaService;
     // OTA CHARACTERISTICS

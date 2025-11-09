@@ -21,7 +21,10 @@ class HeadlightOutputHandler
         static int right;
     };
 
+    // Number 0-100 representing percentage from fully down
     static double leftSleepyEye;
+
+    // Number 0-100 representing percentage from fully down
     static double rightSleepyEye;
 
     static void init()

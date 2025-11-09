@@ -7,6 +7,4 @@ extern QueueHandle_t button_queue;
 extern QueueHandle_t headlight_input_queue;
 extern QueueHandle_t headlight_output_queue;
 
-void INIT_queues();
-
 #endif

@@ -18,6 +18,9 @@ RTC_DATA_ATTR bool HeadlightOutputHandler::custom_button = false;
 RTC_DATA_ATTR int HeadlightOutputHandler::max_time_button_press_ms = 500;
 RTC_DATA_ATTR double HeadlightOutputHandler::wave_delay = 0.33;
 
+RTC_DATA_ATTR double HeadlightOutputHandler::rightSleepyEye = 50;
+RTC_DATA_ATTR double HeadlightOutputHandler::leftSleepyEye = 50;
+
 void HeadlightOutputHandler::set_pins_low()
 {
     gpio_set_level(LEFT_DOWN_OUT, LEVEL::LOW);
