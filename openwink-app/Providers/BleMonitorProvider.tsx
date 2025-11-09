@@ -338,7 +338,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     async (
       device: Device,
       onCustomCommandInterrupt?: () => void
-      
+
     ) => {
       // Clean up any existing subscriptions first
       stopMonitoring();
@@ -521,7 +521,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       } catch (error) {
         console.error('Error reading initial values:', error);
-        throw error;
+        // throw error;
       }
     },
     [parseAndSetStatus]

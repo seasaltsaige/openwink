@@ -204,9 +204,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           base64.encode(deviceUUID)
         );
 
-        // Once all is initialized and nothing failed, device has successfully connected.
-        setIsConnected(true);
-
         // Setup disconnect handler
         connection.onDisconnected(async (err, disconnectedDevice) => {
           if (err) {
@@ -250,11 +247,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const connection = await manager.connectToDevice(deviceId);
         await connection.discoverAllServicesAndCharacteristics();
 
-        // Store MAC and update state
-        DeviceMACStore.setMAC(connection.id);
-        setMac(connection.id);
-
-
         // Reset retry counter on successful connection
         retryCountRef.current = 0;
 
@@ -264,6 +256,12 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Negotiate MTU to maximum size if android device. 
         const negotiatedMTUConnection = await connection.requestMTU(517);
         setDevice(negotiatedMTUConnection);
+        // Store MAC and update state
+        DeviceMACStore.setMAC(connection.id);
+        setMac(connection.id);
+
+        // Once all is initialized and nothing failed, device has successfully connected.
+        setIsConnected(true);
 
         console.log(negotiatedMTUConnection.mtu);
 
