@@ -44,6 +44,7 @@ void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connIn
 // ===== END SERVER CALLBACK DEFS ===== //
 
 
+// ===== BEGIN WINK SERVICE CHARACTERISTIC CALLBACKS ===== //
 void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
 {
     string cmd = pCharacteristic->getValue();
@@ -54,10 +55,28 @@ void HeadlightMovementCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     if (cmd_int <= 0 || cmd_int >= 12)
         return;
 
-    // HEADLIGHT_COMMAND command = static_cast<HEADLIGHT_COMMAND>(cmd_int);
     printf("Sending command to queue: %d\n", cmd_int);
-    xQueueSend(headlight_output_queue, &cmd_int, (TickType_t)10);
+    xQueueSend(headlight_output_queue, &cmd_int, 0);
 }
+
+void SleepyEyeCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
+{
+    // Already in sleepy eye if headlights are not in LOW or HIGH position, therefore, sync headlights
+    if (HeadlightOutputHandler::HeadlightStatus::left != LOW && HeadlightOutputHandler::HeadlightStatus::left != HIGH && HeadlightOutputHandler::HeadlightStatus::right != LOW &&
+    HeadlightOutputHandler::HeadlightStatus::right != HIGH)
+    {
+        // TODO: Proceed with sync
+    }
+    else
+    {
+        // If either headlight is in HIGH position, send both down to prepare for sleepy eye
+        if (HeadlightOutputHandler::HeadlightStatus::left == HIGH || HeadlightOutputHandler::HeadlightStatus::right == HIGH)
+            HeadlightOutputHandler::send_command(HEADLIGHT_COMMAND::BOTH_DOWN);
+    }
+}
+
+// ===== BEGIN WINK SERVICE CHARACTERISTIC CALLBACKS ===== //
+
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo)
 {

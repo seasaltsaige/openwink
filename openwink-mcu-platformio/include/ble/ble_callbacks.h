@@ -14,6 +14,11 @@ class HeadlightMovementCharacteristicCallbacks : public NimBLECharacteristicCall
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 };
 
+class SleepyEyeCharacteristicCallbacks : public NimBLECharacteristicCallbacks
+{
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
+};
+
 class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks
 {
     void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId);

@@ -14,12 +14,15 @@ class HeadlightOutputHandler
     static bool custom_button;
     static double wave_delay;
     static int max_time_button_press_ms;
-    
+
     struct HeadlightStatus
     {
         static int left;
         static int right;
     };
+
+    static double leftSleepyEye;
+    static double rightSleepyEye;
 
     static void init()
     {
