@@ -760,10 +760,6 @@ export class MockDevice implements Partial<Device> {
 
     const delay = motionTime * motionDelay;
 
-    console.log(
-      `Mock: Animating ${direction} wave with motionTime=${motionTime}ms and delay=${delay}ms, motionDelayPercent=${motionDelayPercent}`,
-    );
-
     const firstStatus = parseInt(mockStore.getValue(firstUUID));
     const secondStatus = parseInt(mockStore.getValue(secondUUID));
     const oppositeFirst =
