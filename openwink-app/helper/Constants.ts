@@ -179,6 +179,7 @@ export enum BehaviorEnum {
 type HexNumber = `#${string}`;
 
 export interface ThemeColors {
+  primary: HexNumber;
   backgroundPrimaryColor: HexNumber;
   backgroundSecondaryColor: HexNumber;
   dropdownColor: HexNumber;
@@ -217,6 +218,7 @@ export namespace ColorTheme {
 
 
   export const crystalWhite: ThemeColors = {
+    primary: "#ffffff",
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
     bottomTabsBackground: "#ffffff",
@@ -232,6 +234,7 @@ export namespace ColorTheme {
   }
 
   export const brilliantBlack: ThemeColors = {
+    primary: "#550000",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
     bottomTabsBackground: "#1c1c1c",
@@ -247,6 +250,7 @@ export namespace ColorTheme {
   }
 
   export const classicRed: ThemeColors = {
+    primary: "#c8102e",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
@@ -262,6 +266,7 @@ export namespace ColorTheme {
   }
 
   export const sunburstYellow: ThemeColors = {
+    primary: "#ffcc00",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
@@ -277,6 +282,7 @@ export namespace ColorTheme {
   }
 
   export const marinerBlue: ThemeColors = {
+    primary: "#0033a0",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",
@@ -292,6 +298,7 @@ export namespace ColorTheme {
   }
 
   export const britishRacingGreen: ThemeColors = {
+    primary: "#004d26",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#1e1e1e",
     bottomTabsBackground: "#ffffff",

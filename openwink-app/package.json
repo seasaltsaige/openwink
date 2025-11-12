@@ -56,6 +56,7 @@
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.1.0",
     "react-native-sticky-range-slider": "^0.1.7",
+    "react-native-svg": "15.12.0",
     "react-native-toast-message": "^2.3.3",
     "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-wifi-reborn": "^4.13.0",

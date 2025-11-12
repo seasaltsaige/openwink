@@ -11,3 +11,4 @@ export * from "./AboutFooter";
 export * from "./EditQuickLinksModal";
 export * from "./ModuleUpdateModal";
 export * from "./InfoBox";
+export * from "./MiataHeadlights";
