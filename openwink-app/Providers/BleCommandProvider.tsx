@@ -26,6 +26,7 @@ import {
   ButtonStatus,
   buttonBehaviorMap,
   DefaultCommandValueEnglish,
+  HEADLIGHT_BYPASS_UUID,
 } from '../helper/Constants';
 import {
   CustomOEMButtonStore,
@@ -57,6 +58,7 @@ export type BleCommandContextType = {
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
   updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
+  setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
   // Wave configuration
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
@@ -68,6 +70,7 @@ export type BleCommandContextType = {
   // State
   activeCommandName: string | null;
   oemCustomButtonEnabled: boolean;
+  headlightBypass: boolean;
   buttonDelay: number;
   waveDelayMulti: number;
   leftSleepyEye: number;
@@ -100,6 +103,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Settings state
   const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
+  const [headlightBypass, setHeadlightBypass] = useState(false);
   const [buttonDelay, setButtonDelay] = useState(500);
   const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
@@ -515,6 +519,34 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [device]
   );
 
+  const setOEMButtonHeadlightBypass = useCallback(
+    async (bypass: boolean) => {
+      if (!device) {
+        console.warn('No device connected');
+        return;
+      }
+      try {
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          HEADLIGHT_BYPASS_UUID,
+          base64.encode(bypass ? "1" : "0"),
+        );
+
+        console.log("Pass write");
+
+        if (bypass)
+          CustomOEMButtonStore.enableBypass();
+        else CustomOEMButtonStore.disableBypass();
+
+        setHeadlightBypass(bypass);
+
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device]
+  )
+
   // Update button delay (debounce time)
   const updateButtonDelay = useCallback(
     async (delay: number) => {
@@ -671,6 +703,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     updateWaveDelayMulti,
     enterDeepSleep,
     resetModule,
+    setOEMButtonHeadlightBypass,
+    headlightBypass,
     activeCommandName,
     oemCustomButtonEnabled,
     buttonDelay,
