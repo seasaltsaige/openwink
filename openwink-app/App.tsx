@@ -15,6 +15,7 @@ import { BleConnectionProvider } from './Providers/BleConnectionProvider';
 
 import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
+import { OTAUpdateProvider } from './Providers/OTAUpdateProvider';
 
 export default function App() {
 
@@ -33,13 +34,15 @@ export default function App() {
         <BleMonitorProvider>
           <BleConnectionProvider>
             <BleCommandProvider>
-              <ThemeProvider>
-                <GestureHandlerRootView>
-                  <PortalProvider>
-                    <AppNavigator />
-                  </PortalProvider>
-                </GestureHandlerRootView>
-              </ThemeProvider>
+              <OTAUpdateProvider>
+                <ThemeProvider>
+                  <GestureHandlerRootView>
+                    <PortalProvider>
+                      <AppNavigator />
+                    </PortalProvider>
+                  </GestureHandlerRootView>
+                </ThemeProvider>
+              </OTAUpdateProvider>
             </BleCommandProvider>
           </BleConnectionProvider>
         </BleMonitorProvider>

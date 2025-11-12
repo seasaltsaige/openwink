@@ -59,7 +59,6 @@ void ButtonHandler::readOnWakeup() {
     if ((wakeupValue != initialButton)) {
       if (initialButton == 1) bothUp();
       else bothDown();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
       setAllOff();
     }
   }
@@ -97,7 +96,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     case 3:
       leftWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
       leftWink();
       break;
 
@@ -107,7 +105,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     case 5:
       rightWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
       rightWink();
       break;
 
@@ -117,7 +114,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     case 7:
       bothBlink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
       bothBlink();
       break;
 
@@ -130,7 +126,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       break;
   }
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
 
   BLE::updateHeadlightChars();
@@ -192,10 +187,7 @@ void ButtonHandler::handleDefaultBehavior(int buttonInput) {
     } else {
       bothDown();
     }
-
-    delay(HEADLIGHT_MOVEMENT_DELAY);
     setAllOff();
-
     BLE::setBusy(false);
     BLE::updateHeadlightChars();
   }

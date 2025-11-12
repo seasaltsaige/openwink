@@ -12,11 +12,11 @@ private:
   static bool resetArmed;
   static int resetPressCounter;
   static int buttonPressCounter;
-  static bool customCommandActive;
 
   static void handleButtonPressesResponse(int numberOfPresses);
 
 public:
+  static bool customCommandActive;
   static void init() {
     mainTimer = 0;
     buttonTimer = 0;

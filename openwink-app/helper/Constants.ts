@@ -13,7 +13,7 @@ export const LEFT_STATUS_UUID = "c4907f4a-fb0c-440c-bbf1-4836b0636478";
 export const RIGHT_STATUS_UUID = "784dd553-d837-4027-9143-280cb035163a";
 export const SLEEPY_EYE_UUID = "a8237fed-e0a4-4ecd-9881-9b5dbb3f5902";
 export const SYNC_UUID = "eceed349-998f-46a2-9835-4f2db7552381";
-export const CUSTOM_COMMAND_STATUS_UUID = "1313c33f-e793-422c-8c04-c82be9fe8a02";
+export const CUSTOM_COMMAND_UUID = "1313c33f-e793-422c-8c04-c82be9fe8a02";
 // END WINK CHARACTERISTICS
 
 // OTA CHARACTERISTICS //
@@ -38,8 +38,8 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 
 
 // export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-export const UPDATE_URL = "http://10.197.10.42:3000/.netlify/functions/api/update";
-// export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
+// export const UPDATE_URL = "http://10.197.10.42:3000/.netlify/functions/api/update";
+export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
 
 export const DEFAULT_COMMAND_DATA = [
   [

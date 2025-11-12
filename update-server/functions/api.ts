@@ -35,10 +35,15 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
 
 router.get("/", auth, async (req, res) => {
   const pathToUpdateJson = path.join(__dirname, "../files/update.json");
-
+  const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
   if (fs.existsSync(pathToUpdateJson)) {
     const file = fs.readFileSync(pathToUpdateJson, "ascii");
-    const data = JSON.parse(file);
+    const tempBin = fs.readFileSync(pathToUpdateBin, "binary");
+
+    const data = {
+      size: tempBin.length,
+      ...JSON.parse(file)
+    };
 
     res.status(200).json(data);
   } else
@@ -47,7 +52,6 @@ router.get("/", auth, async (req, res) => {
 
 router.get("/firmware", auth, async (req, res) => {
   const pathToUpdateBin = path.join(__dirname, "../files/update.bin");
-  console.log(pathToUpdateBin);
   if (fs.existsSync(pathToUpdateBin)) {
     res.status(200).contentType("application/octet-stream").sendFile(pathToUpdateBin);
   } else

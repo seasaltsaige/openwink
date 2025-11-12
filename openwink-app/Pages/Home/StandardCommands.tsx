@@ -9,6 +9,7 @@ import {
 import { HeaderWithBackButton, MiataHeadlights } from "../../Components";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
 type ParamList = {
   StandardCommands: {
@@ -22,11 +23,17 @@ export function StandardCommands() {
 
   const { back } = route.params;
 
-  const { sendDefaultCommand, sendSleepyEye, sendSyncCommand } =
-    useBleCommand();
+  const {
+    isConnected: deviceConnected
+  } = useBleConnection();
 
   const {
-    isConnected: deviceConnected,
+    sendDefaultCommand,
+    sendSleepyEye,
+    sendSyncCommand,
+  } = useBleCommand();
+
+  const {
     headlightsBusy,
     isSleepyEyeActive,
   } = useBleMonitor();
@@ -36,6 +43,13 @@ export function StandardCommands() {
 
   const canResetHeadlightPositions =
     deviceConnected && !headlightsBusy && !isSleepyEyeActive;
+
+  const getButtonBackgroundColor = (pressed: boolean) => {
+    if (!canSendMainCommands) {
+      return colorTheme.disabledButtonColor;
+    }
+    return pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor;
+  };
 
   return (
     <SafeAreaView style={theme.container}>
@@ -88,15 +102,12 @@ export function StandardCommands() {
                   theme.commandButton,
                   {
                     width: "30%",
-                    backgroundColor:
-                      !canSendMainCommands ? colorTheme.disabledButtonColor
-                      : pressed ? colorTheme.buttonColor
-                      : colorTheme.backgroundSecondaryColor,
+                    backgroundColor: getButtonBackgroundColor(pressed),
                   },
                 ]}
                 key={row.value}
                 onPress={() => sendDefaultCommand(row.value)}
-                disabled={!canSendMainCommands}
+                disabled={(!deviceConnected || headlightsBusy)}
               >
                 <Text style={theme.commandButtonText}>{row.name}</Text>
               </Pressable>

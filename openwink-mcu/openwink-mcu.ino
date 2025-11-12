@@ -33,11 +33,9 @@ void setup() {
 
   Storage::begin("oem-store");
   Storage::getFromStorage();
-
-  // Might not be necessary since deep sleep is more or less a reboot
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-
-  // Storage::clearWhitelist();
+  
+  BLE::init("OpenWink");
 
   ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
@@ -45,7 +43,6 @@ void setup() {
 
   setCpuFrequencyMhz(80);
 
-  BLE::init("OpenWink");
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
@@ -73,13 +70,18 @@ void motionInMonitorTask(void* params) {
 
 void loop() {
 
-  if (wifi_enabled)
-    handleHTTPClient();
+  if (otaUpdateRestartQueued) {
+    delay(100);
+    ESP.restart();
+  }
 
   if (queuedCommand != -1) {
     // handle sent command
     CommandHandler::handleQueuedCommand();
   }
+
+  if (queuedCustomCommand != "")
+    CommandHandler::handleQueuedCustomCommand();
 
   ButtonHandler::handleResetLogic();
   ButtonHandler::loopButtonHandler();

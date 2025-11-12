@@ -17,6 +17,8 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 import { MiataHeadlights } from "../../Components";
+import { useBleConnection } from "../../Providers/BleConnectionProvider";
+
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
 
@@ -29,7 +31,13 @@ type ParamList = {
 export function CustomCommands() {
   const { theme, colorTheme } = useColorTheme();
 
-  const { isConnected, headlightsBusy } = useBleMonitor();
+  const {
+    isConnected
+  } = useBleConnection();
+
+  const {
+    headlightsBusy
+  } = useBleMonitor();
 
   const { activeCommandName, customCommandInterrupt, sendCustomCommand } =
     useBleCommand();

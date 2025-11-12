@@ -3,13 +3,14 @@
 
 // #include "NimBLEConnInfo.h"
 // #include "NimBLECharacteristic.h"
-
+#include <string.h>
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
-#include <WebServer.h>
 
 extern double headlightMultiplier;
+extern bool otaUpdateRestartQueued;
 
+using namespace std;
 /**
   1 : Default (If UP, switch to DOWN; if DOWN, switch to UP)
   2 : Left Blink
@@ -26,14 +27,14 @@ extern int customButtonPressArray[10];
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;
-
-extern bool wifi_enabled;
+extern string queuedCustomCommand;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
   void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
   // void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
   void onPhyUpdate(NimBLEConnInfo &connInfo, uint8_t txPhy, uint8_t rxPhy) override;
+  void onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) override;
 };
 
 class LongTermSleepCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -68,7 +69,7 @@ class SleepSettingsCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class CustomStatusCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+class CustomCommandCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 

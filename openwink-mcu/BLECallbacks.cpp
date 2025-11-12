@@ -1,6 +1,6 @@
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
-#include <string>
+#include <string.h>
 #include <vector>
 #include "NimBLEDevice.h"
 #include <Arduino.h>
@@ -12,12 +12,8 @@
 #include "ButtonHandler.h"
 #include "esp_sleep.h"
 #include "Storage.h"
-
-#include <WiFi.h>
 #include <Update.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-
+#include <iostream>
 #include "esp_ota_ops.h"
 
 using namespace std;
@@ -28,9 +24,17 @@ RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 int queuedCommand = -1;
+string queuedCustomCommand = "";
 
-WebServer server(80);
-bool wifi_enabled = false;
+bool otaUpdateRestartQueued = false;
+
+const uint16_t MIN_INTERVAL = 48;
+const uint16_t MAX_INTERVAL = 48;
+const uint16_t LATENCY = 0;
+const uint16_t TIMEOUT = 200;
+
+
+bool connEstablishing = false;
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
 
@@ -42,6 +46,10 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   } else {
     Serial.println("PHY UPDATE FAILED");
   }
+
+  pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
+  pServer->setDataLen(connInfo.getConnHandle(), 251);
+  connEstablishing = false;
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -51,19 +59,14 @@ void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connIn
   BLE::start();
 }
 
-// void ServerCallbacks::onAuthenticationComplete(NimBLEConnInfo& connInfo) {
-//   if (connInfo.isBonded()) {
-//     Serial.println("Bonded successfully");
-//   } else {
-//     Serial.println("Not bonded, disconnecting from device.");
-//     BLE::disconnect(connInfo);
-//   }
-// }
-
 void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {
   Serial.printf("Phy Update Request Completed: %d, %d\n", txPhy, rxPhy);
 }
 
+
+void ServerCallbacks::onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) {
+  Serial.printf("MTU Update Completed, set to %d\n", MTU);
+}
 
 void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   printf("long term sleep written\n");
@@ -86,7 +89,9 @@ void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECon
   double percentageToUpLeft = 1 - (leftSleepyValue / 100);
   double percentageToUpRight = 1 - (rightSleepyValue / 100);
   unsigned long initialTime = millis();
-  bothUp();
+
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   bool leftStatusReached = false;
   bool rightStatusReached = false;
@@ -123,12 +128,13 @@ void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
 
   if (leftStatus == 1 || rightStatus == 1) {
     bothDown();
-    delay(HEADLIGHT_MOVEMENT_DELAY);
+    setAllOff();
   }
 
   unsigned long initialTime = millis();
 
-  bothUp();
+  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
 
   bool leftStatusReached = false;
   bool rightStatusReached = false;
@@ -243,13 +249,18 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 }
 
 
-void CustomStatusCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
 
-  if (value == "1")
-    ButtonHandler::setCustomCommandActive(true);
-  else
-    ButtonHandler::setCustomCommandActive(false);
+  // Set command active/not
+  if (value.length() == 1) {
+    if (stoi(value) == 1)
+      ButtonHandler::setCustomCommandActive(true);
+    else if (stoi(value) == 0)
+      ButtonHandler::setCustomCommandActive(false);
+    else ButtonHandler::setCustomCommandActive(false);
+  } else
+    queuedCustomCommand = value;
 }
 
 void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
@@ -292,122 +303,123 @@ void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
   }
 }
 
-void updateProgress(size_t progress, size_t size) {
-  static int last_progress = -1;
-  if (size > 0) {
-    progress = (progress * 100) / size;
-    progress = (progress > 100 ? 100 : progress);  //0-100
-    if (progress != last_progress) {
-      BLE::setFirmwarePercent(to_string(progress));
-      last_progress = progress;
-    }
-  }
-}
-
-// TODO: FIGURE OUT THE WEIRD UPDATE STATUS TEXT. IT IS NOT COMING THROUGH CORRECTLY.
-
-void setupUpdateServer() {
-  server.onNotFound([]() {
-    server.send(404, "text/plain", "Not Found");
-  });
-
-  server.on(
-    String("/update"), HTTP_POST,
-    [&]() {
-      if (Update.hasError()) {
-        server.send(500);
-        BLE::setFirmwareUpdateStatus("failed");
-      } else {
-
-        server.client().setNoDelay(true);
-        server.send(200);
-        BLE::setFirmwareUpdateStatus("success");
-        delay(100);
-        server.client().stop();
-        esp_ota_mark_app_valid_cancel_rollback();
-        ESP.restart();
-      }
-    },
-    [&]() {
-      HTTPRaw& raw = server.raw();
-
-      if (raw.status == RAW_START) {
-        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-        if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
-          Update.printError(Serial);
-        }
-        BLE::setFirmwareUpdateStatus("updating");
-      } else if (raw.status == RAW_ABORTED || Update.hasError()) {
-        if (raw.status == RAW_ABORTED) {
-
-          if (!Update.end(false)) {
-            Update.printError(Serial);
-            BLE::setFirmwareUpdateStatus("failed");
-          }
-
-          Serial.println("Update was aborted");
-        }
-      } else if (raw.status == RAW_WRITE) {
-        if (Update.write(raw.buf, raw.currentSize) != raw.currentSize) {
-          Update.printError(Serial);
-        }
-      } else if (raw.status == RAW_END) {
-        if (Update.end(true)) {  // true to set the size to the current progress
-          Serial.printf("Update Success: %u\nRebooting...\n", raw.totalSize);
-        } else {
-          Update.printError(Serial);
-        }
-      }
-      delay(0);
-    });
-
-  Update.onProgress(updateProgress);
-}
+bool updateInProgress = false;
+int buffTotalSize = 0;
+int buffSizeWritten = 0;
+int lastProgress = -1;
 
 void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
-  string pass = pChar->getValue();
-  const char* password = pass.c_str();
+  string charData = pChar->getValue();
+  size_t len = pChar->getLength();
 
-  const char* ssid = "Wink Module: Update Access Point";
+  if (charData == "START") {
+    NimBLEServer* server = NimBLEDevice::getServer();
 
-  printf("SSID: %s  -  PASSWORD: %s\n", ssid, password);
+    bool phy2mSuccess = server->updatePhy(info.getConnHandle(), BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
+    if (phy2mSuccess) {
+      Serial.println("Successfully updated PHY to 2M for OTA Update");
+    } else {
+      Serial.println("Failed to update PHY to 2M... Trying 1M");
+      bool phy1mSuccess = server->updatePhy(info.getConnHandle(), BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
+      if (phy1mSuccess) {
+        Serial.println("Successfully updated PHY to 1M for OTA Update");
+      } else {
+        Serial.println("Failed to update PHY to 1M.");
+      }
+    }
 
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid, password);
+    updateInProgress = true;
+    buffTotalSize = 0;
+    buffSizeWritten = 0;
+    BLE::setFirmwareUpdateStatus("updating");
+    Serial.println("OTA Update Started");
+    return;
+  } else if (charData == "HALT") {
+    updateInProgress = false;
+    buffTotalSize = 0;
+    buffSizeWritten = 0;
+    BLE::setFirmwareUpdateStatus("canceled");
+    Serial.println("OTA Update Canceled");
+    delay(25);
+    otaUpdateRestartQueued = true;
+    return;
+  }
 
-  Serial.println("Started Wifi AP");
 
-  delay(150);
+  // const uint8_t* = (const uint8_t*)charData.data();
 
-  setupUpdateServer();
+  if (updateInProgress) {
+    // Update in progress, but no file size written yet, needs to be set
+    if (buffTotalSize == 0) {
 
-  Serial.println("Started http server");
+      int fileSize = stoi(charData);
+      buffTotalSize = fileSize;
 
-  MDNS.begin("module-update");
+      Serial.printf("OTA File Size: %d\n", fileSize);
 
-  Serial.println("Started MDNS");
+      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+      if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
+        Update.printError(Serial);
+        updateInProgress = false;
+        BLE::setFirmwareUpdateStatus("failed");
+        Serial.println("OTA Update Failed to initialize");
+        return;
+      }
+    } else {
 
-  server.begin();
+      // handle finish ota update
+      // restart and apply firmware if update successful
+      if (charData == "DONE") {
+        if (buffTotalSize != buffSizeWritten) {
+          // Something went wrong, buff sizes do not match as expected
+          Serial.printf("OTA Size mismatch Total: %d - Received: %d\n", buffTotalSize, buffSizeWritten);
+          Update.end(false);
+        } else if (Update.end(true)) {
+          Serial.println("Update success");
+          BLE::setFirmwareUpdateStatus("success");
+          esp_ota_mark_app_valid_cancel_rollback();
+          otaUpdateRestartQueued = true;
+        } else {
+          Serial.println("OTA Update failed to finalize");
+          Update.printError(Serial);
+        }
+        updateInProgress = false;
+        return;
+      }
 
-  Serial.println("Started server");
+      uint8_t* toWriteData = const_cast<uint8_t*>((const uint8_t*)charData.data());
+      if (buffTotalSize > buffSizeWritten) {
+        size_t writtenSize = Update.write(toWriteData, len);
+        // Serial.printf("Wrote size: %zu\nTotal Written out of Total Size: (%d/%d)", writtenSize, buffSizeWritten, buffTotalSize);
+        if (writtenSize != len) {
+          // Something went wrong writting data, update void
+          updateInProgress = false;
+          BLE::setFirmwareUpdateStatus("failed");
+          Serial.println("OTA Update Failed");
+          return;
+        }
 
-  MDNS.addService("http", "tcp", 80);
-
-  Serial.println("Add MDNS service");
-
-  wifi_enabled = true;
-}
-
-void handleHTTPClient() {
-  server.handleClient();
+        buffSizeWritten += writtenSize;
+        int progress = (buffSizeWritten * 100) / buffTotalSize;
+        if (progress != lastProgress) {
+          lastProgress = progress;
+          Serial.printf("OTA Progress at %d\n", progress);
+          BLE::setFirmwarePercent(to_string(progress));
+        }
+      }
+    }
+  }
 }
 
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
   switch (reason) {
     case 0:
-      BLE::setDeviceConnected(true);
-      printf("Client connecting\n");
+      if (!connEstablishing) {
+        BLE::setDeviceConnected(true);
+        printf("Client connecting\n");
+        connEstablishing = true;
+      }
       return;
     default:
       printf("Default case");
