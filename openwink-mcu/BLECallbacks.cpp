@@ -248,6 +248,20 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   }
 }
 
+void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+
+  string received = pChar->getValue();
+  Serial.printf("Received: %s\n", received.c_str());
+  if (received == "1") {
+    Storage::setHeadlightBypass(true);
+    bypassHeadlightOverride = true;
+  } else {
+    Storage::setHeadlightBypass(false);
+    bypassHeadlightOverride = false;
+  }
+
+};
+
 
 void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();

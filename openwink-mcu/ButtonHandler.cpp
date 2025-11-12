@@ -9,17 +9,21 @@
 
 using namespace std;
 
-RTC_DATA_ATTR int initialButton = -1;
+
+
+RTC_DATA_ATTR int initialButton = 0;
+bool bypassHeadlightOverride = false;
+
 int motionButtonStatus = 0;
 unsigned long motionTimer = 0;
 
-unsigned long ButtonHandler::mainTimer;
-unsigned long ButtonHandler::buttonTimer;
-unsigned long ButtonHandler::resetTimer;
-int ButtonHandler::buttonPressCounter;
-int ButtonHandler::resetPressCounter;
-bool ButtonHandler::customCommandActive;
-bool ButtonHandler::resetArmed;
+unsigned long ButtonHandler::mainTimer = 0;
+unsigned long ButtonHandler::buttonTimer = 0;
+unsigned long ButtonHandler::resetTimer = 0;
+int ButtonHandler::buttonPressCounter = 0;
+int ButtonHandler::resetPressCounter = 0;
+bool ButtonHandler::customCommandActive = false;
+bool ButtonHandler::resetArmed = false;
 
 void ButtonHandler::setupGPIO() {
   // Outputs for headlight movement
@@ -132,86 +136,103 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   BLE::setBusy(false);
 }
 
-
-void ButtonHandler::handleCustomSequence(int buttonInput) {
-
-
-  if (buttonPressCounter == 0 && buttonInput != initialButton) {
-    buttonPressCounter = 1;
-    initialButton = buttonInput;
-    buttonTimer = millis();
-    return;
-  }
-
-  if (buttonPressCounter > 0) {
-
-    if ((millis() - buttonTimer) > maxTimeBetween_ms) {
-      handleButtonPressesResponse(buttonPressCounter - 1);
-      // buttonTimer = millis();
-      buttonPressCounter = 0;
-      return;
-    }
-
-    if (buttonInput != initialButton) {
-      buttonPressCounter++;
-      initialButton = buttonInput;
-
-      if (buttonPressCounter == 10) {
-        // Limit Reached - Only 10 items in array
-        handleButtonPressesResponse(9);
-        buttonPressCounter = 0;
-        return;
-      }
-
-      // reaches item in array not set (set to 0) means previous key is last set item
-      if (customButtonPressArray[buttonPressCounter - 1] == 0) {
-        // - 2 due to the fact that say, array is { 5, 3, 2, 8, 0, 0, 0, 0, 0, 0 };
-        // button presses is equal to 5. [buttonPressCounter - 1] gives position 4 (which is 0). 
-        // to get last entry that is not 0, must be buttonPressCounter - 2, which is 8
-        handleButtonPressesResponse(buttonPressCounter - 2);
-        buttonPressCounter = 0;
-        return;
-      }
-    }
-
-  }
-}
-
-void ButtonHandler::handleDefaultBehavior(int buttonInput) {
-  if (buttonInput != initialButton) {
-    BLE::setBusy(true);
-    initialButton = buttonInput;
-
-    if (buttonInput == 1) {
-      bothUp();
-    } else {
-      bothDown();
-    }
-    setAllOff();
-    BLE::setBusy(false);
-    BLE::updateHeadlightChars();
-  }
-}
+unsigned long debounceTimer = 0;
+const int DEBOUNCE_MS = 50;
+bool checkDebounce = false;
+bool debounceOccurred = false;
 
 void ButtonHandler::loopButtonHandler() {
-
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-
-  if (buttonInput != initialButton && awakeTime_ms == 0) {
-    awakeTime_ms = 5 * 1000 * 60;
-  }
 
   if (buttonInput != initialButton) {
     ButtonHandler::loopCustomCommandInterruptHandler();
   }
 
+  // Small pulse occurred --- THIS MEANS HEADLIGHTS ARE *ON*. THIS IS ONE PRESS
+  if (checkDebounce && (buttonInput != initialButton) && (millis() - debounceTimer) <= DEBOUNCE_MS) {
+    if (!bypassHeadlightOverride) {
+      Serial.println("Bypass not enabled");
+      checkDebounce = false;
+      debounceOccurred = false;
+      buttonPressCounter = 0;
+      return;
+    }
 
-  if (customButtonStatusEnabled) {
-    handleCustomSequence(buttonInput);
-  } else {
-    handleDefaultBehavior(buttonInput);
+
+    debounceOccurred = true;
+
+    Serial.println("Debounce occurred");
+    // if custom button turned on
+    if (customButtonStatusEnabled) {
+      // add to counter
+      buttonPressCounter++;
+
+      // if counter reaches array limit, execute last one
+      if (buttonPressCounter == 10) {
+        // Limit Reached - Only 10 items in array
+        handleButtonPressesResponse(9);
+        buttonPressCounter = 0;
+        // otherwise, if a 0 is seen, execute the one before it.
+      } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+        handleButtonPressesResponse(buttonPressCounter - 2);
+        buttonPressCounter = 0;
+      }
+    }
+    initialButton = buttonInput;
+    // since debounce just happened, state would need to switch again for this to recheck.
+    checkDebounce = false;
+    return;
   }
+
+  // if button input changes, set debounce timer and return
+  if (buttonInput != initialButton) {
+    Serial.println("Inputs differ");
+    debounceTimer = millis();
+    // button timer gets set every press (only affects non-headlight on / no-debounce state)
+    buttonTimer = millis();
+    // Set check for next loop through, debounce has not occurred yet, but need to check (if inputs differ when timer < 50ms)
+    debounceOccurred = false;
+    checkDebounce = true;
+  }
+
+  // IF debounce time has passed
+  if ((!debounceOccurred && checkDebounce) && (millis() - debounceTimer) > DEBOUNCE_MS) {
+    // no longer need to check debounce
+    checkDebounce = false;
+    Serial.println("Past debounce timer");
+    // checkDebounce being true means that button was pressed previously
+    if (customButtonStatusEnabled) {
+      // add to counter
+      buttonPressCounter++;
+      if (buttonPressCounter == 10) {
+        // Limit Reached - Only 10 items in array
+        handleButtonPressesResponse(9);
+        buttonPressCounter = 0;
+      } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+        handleButtonPressesResponse(buttonPressCounter - 2);
+        buttonPressCounter = 0;
+      }
+    } else {
+      if (initialButton == 0) {
+        bothDown();
+      } else {
+        bothUp();
+      }
+      setAllOff();
+      initialButton = !initialButton;
+    }
+
+    // if button has been pressed at least one time, and wait time has exceeded max, execute action
+  } else if (buttonPressCounter > 0 && customButtonStatusEnabled && (millis() - buttonTimer) > maxTimeBetween_ms) {
+    Serial.println("Past timer... executing command");
+    // Timeout has occurred, send command based on count
+    handleButtonPressesResponse(buttonPressCounter - 1);
+    buttonPressCounter = 0;
+  }
+
+  initialButton = buttonInput;
 }
+
 
 
 void ButtonHandler::handleBusyInput() {
@@ -232,7 +253,7 @@ void ButtonHandler::handleBusyInput() {
       // TODO: Set in storage if different
       // Set RTC DATA ATTR var value
       // Send notification for app to update value
-      BLE::setMotionInValue((int)timeOn + 25);
+      // BLE::setMotionInValue((int)timeOn + 25);
     }
   }
 }

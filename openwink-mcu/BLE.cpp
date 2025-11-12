@@ -3,6 +3,7 @@
 #include "NimBLECharacteristic.h"
 #include "NimBLEDevice.h"
 #include "NimBLELocalValueAttribute.h"
+#include "ButtonHandler.h"
 #include "NimBLEServer.h"
 #include "Storage.h"
 #include "constants.h"
@@ -50,6 +51,7 @@ NimBLECharacteristic *BLE::sleepSettingsChar;
 NimBLECharacteristic *BLE::unpairChar;
 NimBLECharacteristic *BLE::resetChar;
 NimBLECharacteristic *BLE::clientMacChar;
+NimBLECharacteristic *BLE::headlightBypassChar;
 
 bool BLE::deviceConnected = false;
 
@@ -111,9 +113,11 @@ void BLE::initServiceCharacteristics() {
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
   clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
   headlightDelayChar->setValue(headlightMultiplier);
+  headlightBypassChar->setValue(bypassHeadlightOverride);
 
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   sleepSettingsChar->setValue(sleepCharStart);
@@ -125,6 +129,7 @@ void BLE::initServiceCharacteristics() {
   unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
   resetChar->setCallbacks(new ResetCharacteristicCallbacks());
   clientMacChar->setCallbacks(new ClientMacCharacteristicCallbacks());
+  headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {
@@ -179,6 +184,7 @@ void BLE::setBusy(bool busy) {
     busyChar->setValue("0");
   }
   busyChar->notify();
+  // Serial.println("BUSY CALLED");
 }
 
 void BLE::setFirmwareUpdateStatus(string status) {
