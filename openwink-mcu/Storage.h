@@ -18,6 +18,7 @@ public:
   static void setMotionTiming(int time);
   static void setCustomButtonPressArray(int index, int value);
   static void setSleepyValues(int side, double value);
+  static void setHeadlightBypass(bool bypass);
   static void setWhitelist(string mac);
   static void clearWhitelist();
   static string getWhitelist();
