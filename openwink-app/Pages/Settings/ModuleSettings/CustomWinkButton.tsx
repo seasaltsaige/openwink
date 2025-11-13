@@ -140,8 +140,6 @@ export function CustomWinkButton() {
               {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
             </Text>
 
-            {/* TODO: Add tooltip for information about what this does */}
-
             <Tooltip
               isVisible={bypassToolTipOpen}
               onClose={() => setBypassToolTipOpen(false)}
@@ -177,10 +175,7 @@ export function CustomWinkButton() {
               hitSlop={10}
               disabled={!isConnected || !oemCustomButtonEnabled}
               circleColor={colorTheme.buttonTextColor}
-              onToggle={async (isOn) => {
-                console.log(isOn);
-                await setOEMButtonHeadlightBypass(isOn)
-              }}
+              onToggle={async (isOn) => await setOEMButtonHeadlightBypass(isOn)}
               labelStyle={theme.mainLongButtonPressableIcon}
             />
           </View>

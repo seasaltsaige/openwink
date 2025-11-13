@@ -532,8 +532,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           base64.encode(bypass ? "1" : "0"),
         );
 
-        console.log("Pass write");
-
         if (bypass)
           CustomOEMButtonStore.enableBypass();
         else CustomOEMButtonStore.disableBypass();

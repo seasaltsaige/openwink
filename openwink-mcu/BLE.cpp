@@ -184,7 +184,6 @@ void BLE::setBusy(bool busy) {
     busyChar->setValue("0");
   }
   busyChar->notify();
-  // Serial.println("BUSY CALLED");
 }
 
 void BLE::setFirmwareUpdateStatus(string status) {
