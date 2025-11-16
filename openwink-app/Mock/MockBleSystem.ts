@@ -696,7 +696,7 @@ export class MockDevice implements Partial<Device> {
       return;
     }
 
-    const steps = Math.abs(toPercentage - fromPercentage) / 10; // 10% steps
+    const steps = Math.ceil(Math.abs(toPercentage - fromPercentage) / 10); // 10% steps, rounded up
     const stepDuration = duration / steps;
 
     for (let i = 1; i <= steps; i++) {
