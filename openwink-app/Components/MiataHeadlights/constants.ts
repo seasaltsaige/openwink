@@ -22,5 +22,5 @@ export const HEADLIGHT_COORDS = {
 
   // Glow center
   glowCenter: { x: 60, y: 53 },
-  glowCenterClosed: { y: 140 },
+  glowCenterClosed: { y: 160 },
 } as const;
