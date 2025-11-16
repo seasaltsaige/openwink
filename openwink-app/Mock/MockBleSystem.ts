@@ -72,7 +72,7 @@ class MockCharacteristicStore {
       this.values.set(RIGHT_STATUS_UUID, "0");
       this.values.set(SOFTWARE_UPDATING_CHAR_UUID, "0");
       this.values.set(SOFTWARE_STATUS_CHAR_UUID, "idle");
-      this.values.set(HEADLIGHT_MOTION_IN_UUID, "750");
+      this.values.set(HEADLIGHT_MOTION_IN_UUID, "300");
       this.values.set(CUSTOM_COMMAND_UUID, "0");
       this.values.set(CLIENT_MAC_UUID, "0");
       this.values.set(FIRMWARE_UUID, "0.3.5");
@@ -411,6 +411,7 @@ export class MockDevice implements Partial<Device> {
                 ButtonStatus.UP,
                 headlightMotionDuration,
               ),
+              this.simulateDelay(100), // Slight delay for realism
               this.animateStatus(
                 RIGHT_STATUS_UUID,
                 ButtonStatus.UP,
@@ -426,6 +427,7 @@ export class MockDevice implements Partial<Device> {
                 ButtonStatus.DOWN,
                 headlightMotionDuration,
               ),
+              this.simulateDelay(100), // Slight delay for realism
               this.animateStatus(
                 RIGHT_STATUS_UUID,
                 ButtonStatus.DOWN,
@@ -520,6 +522,7 @@ export class MockDevice implements Partial<Device> {
               );
             }
           }
+          await this.simulateDelay(100); // Slight delay between commands
         }
       } catch (error) {
         console.error("Error executing custom command sequence:", error);
@@ -725,6 +728,7 @@ export class MockDevice implements Partial<Device> {
       currentStatus === ButtonStatus.UP ? ButtonStatus.DOWN : ButtonStatus.UP;
 
     await this.animateStatus(statusUUID, opposite, motionTime);
+    await this.simulateDelay(100); // Slight delay for realism
     await this.animateStatus(statusUUID, currentStatus, motionTime);
   }
 
@@ -737,10 +741,12 @@ export class MockDevice implements Partial<Device> {
 
     await Promise.all([
       this.animateStatus(LEFT_STATUS_UUID, opposite, motionTime),
+      this.simulateDelay(100), // Slight delay for realism
       this.animateStatus(RIGHT_STATUS_UUID, opposite, motionTime),
     ]);
     await Promise.all([
       this.animateStatus(LEFT_STATUS_UUID, leftStatus, motionTime),
+      this.simulateDelay(100), // Slight delay for realism
       this.animateStatus(RIGHT_STATUS_UUID, rightStatus, motionTime),
     ]);
   }
