@@ -73,6 +73,7 @@ class MockCharacteristicStore {
       this.values.set(SOFTWARE_UPDATING_CHAR_UUID, "0");
       this.values.set(SOFTWARE_STATUS_CHAR_UUID, "idle");
       this.values.set(HEADLIGHT_MOTION_IN_UUID, "300");
+      this.values.set(HEADLIGHT_MOVEMENT_DELAY_UUID, "0.5");
       this.values.set(CUSTOM_COMMAND_UUID, "0");
       this.values.set(CLIENT_MAC_UUID, "0");
       this.values.set(FIRMWARE_UUID, "0.3.5");
@@ -695,7 +696,7 @@ export class MockDevice implements Partial<Device> {
       return;
     }
 
-    const steps = 10;
+    const steps = Math.abs(toPercentage - fromPercentage) / 10; // 10% steps
     const stepDuration = duration / steps;
 
     for (let i = 1; i <= steps; i++) {
