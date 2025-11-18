@@ -2,6 +2,7 @@
 
 
 extern int initialButton;
+extern bool bypassHeadlightOverride;
 
 class ButtonHandler {
 
@@ -30,8 +31,6 @@ public:
 
   static void loopButtonHandler();
   static void loopCustomCommandInterruptHandler();
-  static void handleCustomSequence(int buttonInput);
-  static void handleDefaultBehavior(int buttonInput);
   static void handleBusyInput();
   static void updateButtonSleep();
   static void setCustomCommandActive(bool value);

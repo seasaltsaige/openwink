@@ -2,6 +2,7 @@
 #include "Storage.h"
 #include "constants.h"
 #include "BLECallbacks.h"
+#include "ButtonHandler.h"
 
 using namespace std;
 
@@ -12,10 +13,10 @@ void Storage::begin(const char *name) {
 }
 
 void Storage::getFromStorage() {
-  char key[15];  
+  char key[15];
 
   for (int i = 0; i < 10; i++) {
-    snprintf(key, sizeof(key), "presses-%d", i); 
+    snprintf(key, sizeof(key), "presses-%d", i);
     int val = storage.getUInt(key, customButtonPressArrayDefaults[i]);
     customButtonPressArray[i] = val;
   }
@@ -31,6 +32,10 @@ void Storage::getFromStorage() {
   const char *customOemKey = "oem-button-key";
   bool oem = storage.getBool(customOemKey, false);
   customButtonStatusEnabled = oem;
+
+  const char *headlightBypassKey = "headlight-bypass-key";
+  bool bypass = storage.getBool(headlightBypassKey, false);
+  bypassHeadlightOverride = bypass;
 
 
   const char *leftSleepyHeadlightKey = "sleepy-left";
@@ -56,7 +61,9 @@ void Storage::reset() {
   storage.remove(leftSleepyHeadlightKey);
   const char *rightSleepyHeadlightKey = "sleepy-right";
   storage.remove(rightSleepyHeadlightKey);
-  char pressesKey[15];  
+  const char *headlightBypassKey = "headlight-bypass-key";
+  storage.remove(headlightBypassKey);
+  char pressesKey[15];
 
   for (int i = 0; i < 10; i++) {
     snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
@@ -69,10 +76,9 @@ void Storage::reset() {
   leftSleepyValue = 50;
   rightSleepyValue = 50;
 
-  for (int i = 0; i < 10; i++) { 
+  for (int i = 0; i < 10; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
   }
-
 }
 
 void Storage::setCustomOEMButtonStatus(bool status) {
@@ -81,14 +87,21 @@ void Storage::setCustomOEMButtonStatus(bool status) {
 }
 
 void Storage::setCustomButtonPressArray(int index, int value) {
-  string key = "presses-" + to_string(index); 
+  string key = "presses-" + to_string(index);
   int storedVal = storage.getUInt(key.c_str(), customButtonPressArrayDefaults[index]);
-  if (storedVal != value) 
+  if (storedVal != value)
     storage.putUInt(key.c_str(), value);
 }
 
+void Storage::setHeadlightBypass(bool bypass) {
+  string key = "headlight-bypass-key";
+  bool storedValue = storage.getBool(key.c_str(), false);
+  if (storedValue != bypass)
+    storage.putBool(key.c_str(), bypass);
+}
+
 void Storage::setDelay(int delay) {
-  
+
   string delayKey = "delay-key";
   int storedDelay = storage.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
   if (delay != storedDelay)
@@ -96,7 +109,7 @@ void Storage::setDelay(int delay) {
 }
 
 void Storage::setHeadlightMulti(double multi) {
-  const char* headlightKey = "headlight-key";
+  const char *headlightKey = "headlight-key";
   storage.putDouble(headlightKey, multi);
 }
 
