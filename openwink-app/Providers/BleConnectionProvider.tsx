@@ -510,6 +510,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Forget stored MAC address
       DeviceMACStore.forgetMAC();
+      // Update state to ""
+      setMac("");
 
       await device.cancelConnection().catch((err) => {
         console.log('Disconnect after unpair:', err);
