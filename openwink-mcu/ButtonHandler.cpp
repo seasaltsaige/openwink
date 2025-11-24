@@ -1,15 +1,15 @@
-#include "esp32-hal-gpio.h"
-#include <Arduino.h>
 #include "ButtonHandler.h"
+
+#include <Arduino.h>
+
 #include "BLE.h"
-#include "Storage.h"
-#include "constants.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
+#include "Storage.h"
+#include "constants.h"
+#include "esp32-hal-gpio.h"
 
 using namespace std;
-
-
 
 RTC_DATA_ATTR int initialButton = 0;
 bool bypassHeadlightOverride = false;
@@ -24,6 +24,11 @@ int ButtonHandler::buttonPressCounter = 0;
 int ButtonHandler::resetPressCounter = 0;
 bool ButtonHandler::customCommandActive = false;
 bool ButtonHandler::resetArmed = false;
+
+unsigned long debounceTimer = 0;
+const int DEBOUNCE_MS = 50;
+bool checkDebounce = false;
+bool debounceOccurred = false;
 
 void ButtonHandler::setupGPIO() {
   // Outputs for headlight movement
@@ -49,20 +54,22 @@ void ButtonHandler::setCustomCommandActive(bool value) {
 }
 
 void ButtonHandler::readOnWakeup() {
-
   int wakeupValue = initialButton;
   initialButton = digitalRead(OEM_BUTTON_INPUT);
 
   if (customButtonStatusEnabled) {
     mainTimer = millis();
+    debounceTimer = millis();
     if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
       buttonTimer = millis();
     }
   } else {
     if ((wakeupValue != initialButton)) {
-      if (initialButton == 1) bothUp();
-      else bothDown();
+      if (initialButton == 1)
+        bothUp();
+      else
+        bothDown();
       setAllOff();
     }
   }
@@ -79,6 +86,8 @@ void ButtonHandler::readWakeUpReason() {
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   // Uses above array of items
   int response = customButtonPressArray[numberOfPresses];
+
+  Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
 
   BLE::setBusy(true);
 
@@ -136,15 +145,13 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   BLE::setBusy(false);
 }
 
-unsigned long debounceTimer = 0;
-const int DEBOUNCE_MS = 50;
-bool checkDebounce = false;
-bool debounceOccurred = false;
-
 void ButtonHandler::loopButtonHandler() {
   int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
   if (buttonInput != initialButton) {
+    // every time button is pressed, reset mainTimer to allow sleep to function
+    // correctly
+    mainTimer = millis();
     ButtonHandler::loopCustomCommandInterruptHandler();
   }
 
@@ -157,7 +164,6 @@ void ButtonHandler::loopButtonHandler() {
       buttonPressCounter = 0;
       return;
     }
-
 
     debounceOccurred = true;
 
@@ -179,7 +185,8 @@ void ButtonHandler::loopButtonHandler() {
       }
     }
     initialButton = buttonInput;
-    // since debounce just happened, state would need to switch again for this to recheck.
+    // since debounce just happened, state would need to switch again for this
+    // to recheck.
     checkDebounce = false;
     return;
   }
@@ -188,9 +195,11 @@ void ButtonHandler::loopButtonHandler() {
   if (buttonInput != initialButton) {
     Serial.println("Inputs differ");
     debounceTimer = millis();
-    // button timer gets set every press (only affects non-headlight on / no-debounce state)
+    // button timer gets set every press (only affects non-headlight on /
+    // no-debounce state)
     buttonTimer = millis();
-    // Set check for next loop through, debounce has not occurred yet, but need to check (if inputs differ when timer < 50ms)
+    // Set check for next loop through, debounce has not occurred yet, but need
+    // to check (if inputs differ when timer < 50ms)
     debounceOccurred = false;
     checkDebounce = true;
   }
@@ -222,7 +231,8 @@ void ButtonHandler::loopButtonHandler() {
       initialButton = !initialButton;
     }
 
-    // if button has been pressed at least one time, and wait time has exceeded max, execute action
+    // if button has been pressed at least one time, and wait time has exceeded
+    // max, execute action
   } else if (buttonPressCounter > 0 && customButtonStatusEnabled && (millis() - buttonTimer) > maxTimeBetween_ms) {
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
@@ -233,10 +243,7 @@ void ButtonHandler::loopButtonHandler() {
   initialButton = buttonInput;
 }
 
-
-
 void ButtonHandler::handleBusyInput() {
-
   int readStatus = digitalRead(OEM_HEADLIGHT_STATUS);
   if (readStatus != motionButtonStatus) {
     motionButtonStatus = readStatus;
@@ -259,9 +266,7 @@ void ButtonHandler::handleBusyInput() {
 }
 
 void ButtonHandler::updateButtonSleep() {
-
-  if (
-    !BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
+  if (!BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms && (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
 
     if (buttonInput == 1)
@@ -271,18 +276,18 @@ void ButtonHandler::updateButtonSleep() {
 
     Serial.println("Entering deep sleep...");
 
-    if (!BLE::getDeviceConnected())
-      esp_deep_sleep_start();
+    if (!BLE::getDeviceConnected()) esp_deep_sleep_start();
   }
 }
-
 
 void ButtonHandler::handleResetLogic() {
   if (resetPressCounter == 0 && initialButton != LOW) return;
 
   int buttonValue = digitalRead(OEM_BUTTON_INPUT);
   if (buttonValue == initialButton) return;
-  // TODO: Decide if unnecessary or not. Potentially sequence to arm, then maybe 5 presses in a row or something to confirm. (any delay withing 30 seconds total)
+  // TODO: Decide if unnecessary or not. Potentially sequence to arm, then maybe
+  // 5 presses in a row or something to confirm. (any delay withing 30 seconds
+  // total)
   resetArmed = true;
   // Initial Press (must be low state)
   if (resetPressCounter == 0) {
@@ -328,7 +333,8 @@ void ButtonHandler::handleResetLogic() {
       else if (buttonInput == 0)
         esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
 
-      Serial.println("Entering deep sleep from reset. Wake with gpio input/timer...");
+      Serial.println(
+        "Entering deep sleep from reset. Wake with gpio input/timer...");
       esp_deep_sleep_start();
 
     } else {

@@ -19,7 +19,9 @@ void Storage::getFromStorage() {
     snprintf(key, sizeof(key), "presses-%d", i);
     int val = storage.getUInt(key, customButtonPressArrayDefaults[i]);
     customButtonPressArray[i] = val;
+    Serial.printf("Index %d = %d :: ", i, val);
   }
+  Serial.println();
 
   const char *delayKey = "delay-key";
   int del = storage.getUInt(delayKey, maxTimeBetween_msDefault);
