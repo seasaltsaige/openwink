@@ -100,6 +100,9 @@ export function ModuleSettings() {
       text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
     });
 
+
+    setConfirmationOpen(false);
+
   }
 
   const putModuleToSleep = async () => {
@@ -113,6 +116,8 @@ export function ModuleSettings() {
       text1: "Sleep Successful",
       text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
     });
+
+    setConfirmationOpen(false);
   }
 
   const forgetModulePairing = async () => {
@@ -126,6 +131,8 @@ export function ModuleSettings() {
       text1: "Unpair Successful",
       text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
     });
+
+    setConfirmationOpen(false);
   }
 
 

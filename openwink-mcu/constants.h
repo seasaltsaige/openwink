@@ -14,7 +14,7 @@
 // Green wire in wiring harness, indicating busy when high
 #define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
 
-#define FIRMWARE_VERSION "0.3.5"
+#define FIRMWARE_VERSION "0.4.7"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
@@ -49,8 +49,8 @@
 #define SLEEPY_SETTINGS_UUID "bf133860-e47e-43e3-b1ed-cd87a1d9cb63"
 #define UNPAIR_UUID "c67c4fd1-21ce-4a75-bd16-629f990e575d"
 #define RESET_UUID "a55946b8-1978-4522-8a29-27d17e21b092"
-
 #define CLIENT_MAC_UUID "f61146f2-791d-4ef7-95aa-b565097f69c2"
+#define HEADLIGHT_BYPASS_UUID "ada2537e-0399-4d2a-9eab-0c7cb60d3500"
 // END SETTINGS CHARACTERISTICS //
 
 /** ---- END BLE UUID DEFINITIONS ---- **/

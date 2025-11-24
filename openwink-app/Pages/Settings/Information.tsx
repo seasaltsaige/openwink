@@ -68,7 +68,7 @@ export function Information() {
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({
-    "Module ID": mac,
+    "Module ID": mac || "Unpaired",
     "Firmware Version": `v${firmwareVersion}`,
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
     "Left Headlight Status": headlightStatus(isConnected, leftStatus),

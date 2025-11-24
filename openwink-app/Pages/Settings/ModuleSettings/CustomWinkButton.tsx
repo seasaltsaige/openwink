@@ -13,6 +13,7 @@ import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
+import Tooltip from "react-native-walkthrough-tooltip";
 
 const MIN = 100;
 const MAX = 750;
@@ -29,6 +30,8 @@ export function CustomWinkButton() {
   const {
     oemCustomButtonEnabled,
     setOEMButtonStatus,
+    headlightBypass,
+    setOEMButtonHeadlightBypass,
     buttonDelay,
     updateButtonDelay,
     updateOEMButtonPresets
@@ -39,10 +42,7 @@ export function CustomWinkButton() {
   //@ts-ignore
   const { back, backHumanReadable } = route.params;
 
-  const [intervalTooltipVisible, setIntervalTooltipVisible] = useState(false);
-  const [actionsTooltipVisible, setActionsTooltipVisible] = useState(false);
-  const [intervalValue, setIntervalValue] = useState(500);
-
+  const [bypassToolTipOpen, setBypassToolTipOpen] = useState(false);
 
   // Note: Should only include actions for 2 presses to 10 presses. 1 press can NOT be changed.
 
@@ -75,10 +75,6 @@ export function CustomWinkButton() {
   }, []);
 
   useFocusEffect(useCallback(() => {
-    const setValue = CustomOEMButtonStore.getDelay();
-    if (setValue !== null)
-      setIntervalValue(setValue);
-
     fetchActionsFromStorage();
   }, []));
 
@@ -135,6 +131,56 @@ export function CustomWinkButton() {
               labelStyle={theme.mainLongButtonPressableIcon}
             />
           </View>
+        </View>
+
+        <View style={theme.mainLongButtonPressableContainer}>
+
+          <View style={theme.mainLongButtonPressableView}>
+            <Text style={theme.mainLongButtonPressableText}>
+              {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
+            </Text>
+
+            <Tooltip
+              isVisible={bypassToolTipOpen}
+              onClose={() => setBypassToolTipOpen(false)}
+              content={
+                <Text style={theme.tooltipContainerText}>
+                  Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
+                  Note: Single press actions will result in no movement
+                </Text>
+              }
+              closeOnBackgroundInteraction
+              closeOnContentInteraction
+              placement="bottom"
+              contentStyle={theme.tooltipContainer}
+            >
+              <Pressable
+                hitSlop={20}
+                onPress={() => setBypassToolTipOpen(true)}
+              >
+                {
+                  ({ pressed }) => (
+                    <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
+                  )
+                }
+              </Pressable>
+            </Tooltip>
+          </View>
+
+          <View style={theme.mainLongButtonPressableIcon}>
+            <ToggleSwitch
+              onColor={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+              offColor={colorTheme.disabledButtonColor}
+              isOn={headlightBypass}
+              size="medium"
+              hitSlop={10}
+              disabled={!isConnected || !oemCustomButtonEnabled}
+              circleColor={colorTheme.buttonTextColor}
+              onToggle={async (isOn) => await setOEMButtonHeadlightBypass(isOn)}
+              labelStyle={theme.mainLongButtonPressableIcon}
+            />
+          </View>
+
         </View>
 
         <View style={theme.intervalInfoContainer}>

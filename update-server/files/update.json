@@ -1,4 +1,4 @@
 {
-  "version": "0.3.7",
-  "description": "Test Update"
+  "version": "0.4.6",
+  "description": "Debounce settings. Should be able to enable/disable bypass now."
 }

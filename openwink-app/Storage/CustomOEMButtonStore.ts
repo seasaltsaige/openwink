@@ -5,6 +5,7 @@ import Storage from "./Storage";
 const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
 const BUTTON_KEY = "oem-button-values";
 const BUTTON_DELAY_KEY = "oem-button-delay";
+const BYPASS_KEY = "headlight-bypass";
 
 const DEFAULT_DELAY = 500;
 
@@ -21,6 +22,21 @@ export abstract class CustomOEMButtonStore {
 
   static disable() {
     Storage.delete(CUSTOM_ENABLED_KEY);
+  }
+
+
+  static isBypassEnabled() {
+    if (Storage.getBoolean(BYPASS_KEY))
+      return true;
+    else return false;
+  }
+
+  static enableBypass() {
+    Storage.set(BYPASS_KEY, true);
+  }
+
+  static disableBypass() {
+    Storage.delete(BYPASS_KEY);
   }
 
   static set(presses: Presses, buttonValue: ButtonBehaviors): void {
