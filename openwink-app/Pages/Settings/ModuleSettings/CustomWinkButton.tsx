@@ -145,7 +145,8 @@ export function CustomWinkButton() {
               onClose={() => setBypassToolTipOpen(false)}
               content={
                 <Text style={theme.tooltipContainerText}>
-                  Enabling Headlight Bypass mode allows Custom Button Actions to still be used while your headlight lights are turned on.
+                  Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
+                  Note: Single press actions will result in no movement
                 </Text>
               }
               closeOnBackgroundInteraction
