@@ -318,10 +318,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       // Check if MAC matches
       if (targetMac && scannedDevice.id === targetMac) {
         return true;
-      }
 
-      // Check if device has required service UUIDs
-      if (scannedDevice.serviceUUIDs) {
+        // if there is no stored MAC address, and scanned device has required service uuids
+      } else if (scannedDevice.serviceUUIDs) {
         return (
           scannedDevice.serviceUUIDs.includes(OTA_SERVICE_UUID) &&
           scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID) &&
