@@ -38,6 +38,7 @@ export type BleMonitorContextType = {
   motionValue: number;
   startMonitoring: (device: Device) => Promise<void>;
   stopMonitoring: () => void;
+  updateFirmwareVersion: (version: string) => void;
 };
 
 export const BleMonitorContext = createContext<BleMonitorContextType | null>(null);
@@ -478,6 +479,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     motionValue,
     startMonitoring,
     stopMonitoring,
+    updateFirmwareVersion
   };
 
   return (

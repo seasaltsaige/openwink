@@ -29,6 +29,7 @@ import {
   HEADLIGHT_BYPASS_UUID,
 } from '../helper/Constants';
 import {
+  CommandOutput,
   CustomOEMButtonStore,
   CustomWaveStore,
   SleepyEyeStore,
@@ -56,7 +57,7 @@ export type BleCommandContextType = {
 
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
-  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
   setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
@@ -474,8 +475,12 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Update OEM button preset for specific number of presses
+  // TODO: Should allow setting of custom command sequences as well.
   const updateOEMButtonPresets = useCallback(
-    async (numPresses: Presses, to: ButtonBehaviors | 0) => {
+    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
+      // temp
+      // if (typeof to === "object") return;
+
       if (!device) {
         console.warn('No device connected');
         return;
@@ -485,9 +490,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Update local storage
         if (to === 0) {
           CustomOEMButtonStore.remove(numPresses);
-        } else {
+        } else
           CustomOEMButtonStore.set(numPresses, to);
-        }
+
 
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
@@ -499,12 +504,22 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Small delay to prevent overwrite
         await sleep(WRITE_OPERATION_DELAY);
 
-        // Send behavior for that number of presses
-        await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
-          base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
-        );
+        if (to === 0 || typeof to === "string") {
+          // Send behavior for that number of presses
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
+          );
+        } else {
+          // Parse to string, NOT including name, as it is unimportant for the module to know
+          const commandString = to.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(commandString!),
+          );
+        }
       } catch (error) {
         console.error('Error updating OEM button presets:', error);
 
@@ -560,6 +575,15 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       try {
         CustomOEMButtonStore.setDelay(delay);
+
+        // First write a '3' to set characteristic into update mode for delay
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+          base64.encode("delay"),
+        );
+
+        await sleep(WRITE_OPERATION_DELAY);
 
         await device.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
