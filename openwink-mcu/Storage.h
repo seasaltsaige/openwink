@@ -2,6 +2,8 @@
 
 #include <Preferences.h>
 #include <NimBLEDevice.h>
+#include <string>
+
 using namespace std;
 class Storage {
 private:
@@ -16,7 +18,7 @@ public:
   static void setHeadlightMulti(double multi);
   static void setDelay(int delay);
   static void setMotionTiming(int time);
-  static void setCustomButtonPressArray(int index, int value);
+  static void setCustomButtonPressArray(int index, string value);
   static void setSleepyValues(int side, double value);
   static void setHeadlightBypass(bool bypass);
   static void setWhitelist(string mac);

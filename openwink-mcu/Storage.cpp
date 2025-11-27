@@ -3,7 +3,7 @@
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "ButtonHandler.h"
-
+#include <string>
 using namespace std;
 
 Preferences Storage::storage;
@@ -15,11 +15,11 @@ void Storage::begin(const char *name) {
 void Storage::getFromStorage() {
   char key[15];
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 9; i++) {
     snprintf(key, sizeof(key), "presses-%d", i);
-    int val = storage.getUInt(key, customButtonPressArrayDefaults[i]);
-    customButtonPressArray[i] = val;
-    Serial.printf("Index %d = %d :: ", i, val);
+    String val = storage.getString(key, String(customButtonPressArrayDefaults[i].c_str()));
+    customButtonPressArray[i] = string(val.c_str());
+    Serial.printf("Index %d = %s :: ", i, val);
   }
   Serial.println();
 
@@ -88,11 +88,11 @@ void Storage::setCustomOEMButtonStatus(bool status) {
   storage.putBool(customOemKey, status);
 }
 
-void Storage::setCustomButtonPressArray(int index, int value) {
+void Storage::setCustomButtonPressArray(int index, string value) {
   string key = "presses-" + to_string(index);
-  int storedVal = storage.getUInt(key.c_str(), customButtonPressArrayDefaults[index]);
-  if (storedVal != value)
-    storage.putUInt(key.c_str(), value);
+  String storedVal = storage.getString(key.c_str(), String(customButtonPressArrayDefaults[index].c_str()));
+  if (string(storedVal.c_str()) != value)
+    storage.putString(key.c_str(), value.c_str());
 }
 
 void Storage::setHeadlightBypass(bool bypass) {
