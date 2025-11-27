@@ -206,7 +206,8 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     setCommand(() => lastCommandState);
   }
 
-  const canSave = command.name !== "" && command.command && command.command.length > 0;
+  // Command length needs to be longer than 1 comamnd, otherwise it doesnt make sense to create
+  const canSave = command.name !== "" && command.command && command.command.length > 1;
   const canUndo = commandName ? undoLog.length > 1 : undoLog.length > 0;
 
   const listRef = useRef<FlatList<CommandInput> | null>(null);
