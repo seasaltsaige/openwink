@@ -97,6 +97,12 @@ export const useUpdateManager = ({
       if (updateSuccessStatus) {
         setError(ERROR_TYPE.ERR_NONE);
         setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+
+        onSuccess({
+          successType: UPDATE_STATUS.UP_TO_DATE,
+          successMessage: "Module has been updated.",
+          successTitle: "Success"
+        });
       } else {
         // If update goes wrong, reset and check for update again.
         // Additionally check to make sure update was not halted
