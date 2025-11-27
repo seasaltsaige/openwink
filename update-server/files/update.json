@@ -1,4 +1,4 @@
 {
-  "version": "0.4.6",
-  "description": "Debounce settings. Should be able to enable/disable bypass now."
+  "version": "0.5.0",
+  "description": "OEM Button Sequences can now be assigned to Custom Commands, allowing for more unique hands free usage."
 }
