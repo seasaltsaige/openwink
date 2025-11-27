@@ -3,7 +3,8 @@
 
 // #include "NimBLEConnInfo.h"
 // #include "NimBLECharacteristic.h"
-#include <string.h>
+#include <vector>
+#include <string>
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
 
@@ -23,7 +24,7 @@ using namespace std;
   9 : Right Wave
  10 : ...
 **/
-extern int customButtonPressArray[10];
+extern vector<string> customButtonPressArray;
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;

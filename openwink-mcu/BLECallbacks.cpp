@@ -1,6 +1,6 @@
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
-#include <string.h>
+#include <string>
 #include <vector>
 #include "NimBLEDevice.h"
 #include <Arduino.h>
@@ -20,7 +20,8 @@ using namespace std;
 
 RTC_DATA_ATTR double headlightMultiplier = 1.0;
 
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+vector<string> customButtonPressArray(9, "0");
+
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 int queuedCommand = -1;
@@ -192,13 +193,15 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 }
 
 // 0 : onWrite expects value to be an index, 0-9
-// 1 : index has been read
+// 1 : index has been read -- now expects value to write
+// 3 : expects update of max time
 int customButtonPressUpdateState = 0;
 int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  Serial.printf("Value: %s\n", value);
+  Serial.printf("Custom Press Char Value: %s\n", value.c_str());
+
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;
@@ -208,43 +211,45 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     customButtonStatusEnabled = false;
     Storage::setCustomOEMButtonStatus(false);
     return;
+  } else if (value.compare("delay") == 0) {
+    customButtonPressUpdateState = 3;
+    return;
   }
 
-  int parsedValue = stoi(value);
-  // Updating maxTime
-  if (value.length() > 1) {
-    maxTimeBetween_ms = parsedValue;
-    Storage::setDelay(maxTimeBetween_ms);
-  } else {
-    if (customButtonPressUpdateState == 0) {
-      if (parsedValue > 9)
-        return;
-      indexToUpdate = parsedValue;
-      customButtonPressUpdateState = 1;
+  if (customButtonPressUpdateState == 0) {
+    int parsedValue = stoi(value);
+    if (parsedValue > 9)
+      return;
+    indexToUpdate = parsedValue;
+    customButtonPressUpdateState = 1;
 
-    } else {
-      customButtonPressUpdateState = 0;
-      if (indexToUpdate == 0) return;
+  } else if (customButtonPressUpdateState == 1) {
+    customButtonPressUpdateState = 0;
+    if (indexToUpdate == 0) return;
+    Serial.printf("%s\n", value.c_str());
+    customButtonPressArray[indexToUpdate] = value;
+    Storage::setCustomButtonPressArray(indexToUpdate, value);
 
-      customButtonPressArray[indexToUpdate] = parsedValue;
-
-      Storage::setCustomButtonPressArray(indexToUpdate, parsedValue);
-
-      if (parsedValue == 0) {
-        int maxIndexNotZero = 0;
-        for (int i = 0; i < 10; i++) {
-          if (customButtonPressArray[i] == 0) {
-            maxIndexNotZero = i;
-            break;
-          }
-        }
-
-        for (int i = maxIndexNotZero; i < 9; i++) {
-          customButtonPressArray[i] = customButtonPressArray[i + 1];
-          Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
+    if (value.compare("0") == 0) {
+      int maxIndexNotZero = 0;
+      for (int i = 0; i < 9; i++) {
+        if (customButtonPressArray[i].compare("0") == 0) {
+          maxIndexNotZero = i;
+          break;
         }
       }
+
+      for (int i = maxIndexNotZero; i < 8; i++) {
+        customButtonPressArray[i] = customButtonPressArray[i + 1];
+        Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
+      }
     }
+  } else if (customButtonPressUpdateState == 3) {
+    customButtonPressUpdateState = 0;
+
+    int parsedValue = stoi(value);
+    maxTimeBetween_ms = parsedValue;
+    Storage::setDelay(maxTimeBetween_ms);
   }
 }
 
@@ -259,7 +264,6 @@ void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar
     Storage::setHeadlightBypass(false);
     bypassHeadlightOverride = false;
   }
-
 };
 
 
