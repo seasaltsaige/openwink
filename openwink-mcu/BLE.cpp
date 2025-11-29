@@ -106,7 +106,7 @@ void BLE::initServiceCharacteristics() {
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
 
   longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR);
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
@@ -118,6 +118,8 @@ void BLE::initServiceCharacteristics() {
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
   headlightDelayChar->setValue(headlightMultiplier);
   headlightBypassChar->setValue(bypassHeadlightOverride);
+
+  customButtonChar->setValue(customButtonPressArray[1]);
 
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   sleepSettingsChar->setValue(sleepCharStart);

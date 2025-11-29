@@ -60,6 +60,7 @@ class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+  void onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class HeadlightBypassCharacteristicCallbacks : public NimBLECharacteristicCallbacks {

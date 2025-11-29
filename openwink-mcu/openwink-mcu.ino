@@ -43,7 +43,6 @@ void setup() {
 
   setCpuFrequencyMhz(80);
 
-
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   printf("Version %s\n", FIRMWARE_VERSION);

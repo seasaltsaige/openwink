@@ -252,6 +252,18 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     Storage::setDelay(maxTimeBetween_ms);
   }
 }
+int nextIndex = 2;
+void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  if (nextIndex == 9) {
+    nextIndex = 1;
+    return;
+  }
+
+  pChar->setValue(customButtonPressArray[nextIndex]);
+  nextIndex++;
+}
+
+
 
 void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
