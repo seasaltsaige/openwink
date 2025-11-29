@@ -1,6 +1,7 @@
 #pragma once
 
 #include "esp_sleep.h"
+#include <string>
 
 #define OUT_PIN_LEFT_DOWN 10
 #define OUT_PIN_LEFT_UP 11
@@ -14,7 +15,7 @@
 // Green wire in wiring harness, indicating busy when high
 #define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
 
-#define FIRMWARE_VERSION "0.4.7"
+#define FIRMWARE_VERSION "0.5.0"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
@@ -55,7 +56,7 @@
 
 /** ---- END BLE UUID DEFINITIONS ---- **/
 
-extern const int customButtonPressArrayDefaults[10];
+extern const std::string customButtonPressArrayDefaults[9];
 extern const int maxTimeBetween_msDefault;
 extern const int sleepTime_us;
 extern const int advertiseTime_ms;

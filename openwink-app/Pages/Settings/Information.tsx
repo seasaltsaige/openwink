@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { Pressable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -14,8 +15,8 @@ import {
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
-import { ButtonBehaviors, Presses } from "../../helper/Types";
+import { CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
@@ -82,22 +83,23 @@ export function Information() {
     "Press Interval": `${buttonDelay} ms`,
   }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
 
-  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors; }[]);
-  const buttonActions = useMemo(() => rawButtonActions.map(action => ({
-    behaviorHumanReadable: action.behavior,
-    presses: action.numberPresses,
-    behavior: buttonBehaviorMap[action.behavior],
-  })).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
+  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
+  const buttonActions = useMemo(() => rawButtonActions.map(action => {
+    if (typeof action.behavior === "string")
+      return {
+        behaviorHumanReadable: action.behavior,
+        presses: action.numberPresses,
+        behavior: buttonBehaviorMap[action.behavior],
+      }
+    else
+      return {
+        customCommand: action.behavior,
+        presses: action.numberPresses,
+      }
+  }).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
-  // const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
-  //   ...state,
-  //   [action.name]: !state[action.name],
-  // }), customCommands.reduce((accum, curr) => {
-  //   accum[curr.name] = false
-  //   return accum;
-  // }, {} as { [key: string]: boolean }));
 
 
   useFocusEffect(useCallback(() => {
@@ -173,9 +175,21 @@ export function Information() {
                     {countToEnglish[action.presses]}
                   </Text>
 
-                  <Text style={theme.infoBoxInnerContentText}>
-                    {action.behaviorHumanReadable}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", columnGap: 8, }}>
+
+                    <Text style={theme.infoBoxInnerContentText}>
+                      {
+                        action.customCommand ?
+                          action.customCommand.name :
+                          action.behaviorHumanReadable
+                      }
+                    </Text>
+                    {
+                      action.customCommand ?
+                        // TODO: Make pressable --> Open bottom drawer and show sequence
+                        <IonIcons name="sparkles-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
+                    }
+                  </View>
                 </View>
               ))
             }
@@ -202,7 +216,7 @@ export function Information() {
                       key={command.name}
                     >
                       <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6, width: "40%", height: "auto", }]}>
-                        {command.name}
+                        {command.name.length > 14 ? `${command.name.slice(0, 12)}...` : command.name}
                       </Text>
 
 
@@ -222,7 +236,7 @@ export function Information() {
                           command.command ? (
                             <Pressable
                               style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand(); }}
+                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand(); console.log(`pressed command ${command.name}`) }}
                               hitSlop={5}
                             >
                               {

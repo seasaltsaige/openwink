@@ -1,8 +1,9 @@
 import { Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
-import { CommandOutput, CustomCommandStore } from "../Storage";
+import { CustomCommandStore } from "../Storage";
 import { useColorTheme } from "../hooks/useColorTheme";
+import { CommandOutput } from "../helper/Types";
 interface ICustomCommandProps {
   command: CommandOutput;
   onEdit: () => void;

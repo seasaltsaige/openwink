@@ -22,6 +22,8 @@ import {
   ERROR_TYPE,
   UPDATE_STATUS,
 } from "../../hooks/useUpdateManager";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { OTA } from "../../helper/Handlers/OTA";
 
 export function Home() {
 
@@ -34,6 +36,8 @@ export function Home() {
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
+
+  const { updateFirmwareVersion } = useBleMonitor();
 
   const {
     disconnect: disconnectFromModule,
@@ -70,6 +74,8 @@ export function Home() {
         autoHide: true,
         visibilityTime: 10000,
       });
+
+      updateFirmwareVersion(OTA.latestVersion);
     },
   });
 

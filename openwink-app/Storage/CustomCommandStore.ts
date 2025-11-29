@@ -1,15 +1,6 @@
+import { CommandInput, CommandOutput } from "../helper/Types";
 import Storage from "./Storage";
-import { DefaultCommandValue } from "../helper/Constants";
 
-export interface CommandInput {
-  delay?: number;
-  transmitValue?: DefaultCommandValue;
-}
-
-export interface CommandOutput {
-  name: string;
-  command?: CommandInput[];
-}
 
 const COMMAND_STORE_KEY = "CUSTOM_COMMANDS";
 

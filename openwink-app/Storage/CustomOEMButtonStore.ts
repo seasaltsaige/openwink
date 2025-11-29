@@ -1,4 +1,4 @@
-import { ButtonBehaviors, Presses } from "../helper/Types";
+import { ButtonBehaviors, CommandOutput, Presses } from "../helper/Types";
 import { buttonBehaviorMap } from "../helper/Constants";
 import Storage from "./Storage";
 
@@ -39,8 +39,15 @@ export abstract class CustomOEMButtonStore {
     Storage.delete(BYPASS_KEY);
   }
 
-  static set(presses: Presses, buttonValue: ButtonBehaviors): void {
-    Storage.set(`${BUTTON_KEY}-${presses}`, `${buttonBehaviorMap[buttonValue]}_${buttonValue}`)
+  static set(presses: Presses, buttonValue: ButtonBehaviors | CommandOutput): void {
+    if (typeof buttonValue === "object") {
+      // Convert CommandOutput into string
+      const commandString = buttonValue.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+      if (commandString)
+        // Name is needed for display on app. Not needed for transmission to MCU
+        Storage.set(`${BUTTON_KEY}-${presses}`, `${buttonValue.name}-${commandString}`);
+    } else
+      Storage.set(`${BUTTON_KEY}-${presses}`, `${buttonBehaviorMap[buttonValue]}_${buttonValue}`);
   }
 
   static remove(presses: Presses): void {
@@ -55,7 +62,7 @@ export abstract class CustomOEMButtonStore {
 
   static getAll() {
 
-    const allCustomizations: { numberPresses: Presses, behavior: ButtonBehaviors }[] = [];
+    const allCustomizations: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }[] = [];
     const keys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
 
     for (const key of keys) {
@@ -64,12 +71,40 @@ export abstract class CustomOEMButtonStore {
 
       const numberOfPresses = parseInt(key.split("-")[3]) as Presses;
 
-      const [__, strBehavior] = storedValue.split("_").map((v, i) => i === 0 ? parseInt(v) : v) as [Presses, ButtonBehaviors];
+      // if contains _ ==> normal
+      // if contains - ==> custom cmd --> Parse string into CommandOutput
+      if (storedValue.includes("_")) {
+        const [__, strBehavior] = storedValue.split("_").map((v, i) => i === 0 ? parseInt(v) : v) as [Presses, ButtonBehaviors];
 
-      allCustomizations.push({
-        behavior: strBehavior,
-        numberPresses: numberOfPresses,
-      });
+        allCustomizations.push({
+          behavior: strBehavior,
+          numberPresses: numberOfPresses,
+        });
+
+      } else if (storedValue.includes("-")) {
+
+        const commandParts = storedValue.split("-");
+        const name = commandParts.splice(0, 1)[0];
+
+        const customCmd: CommandOutput = {
+          name,
+          command: [
+
+          ],
+        }
+
+        for (const cmdSection of commandParts) {
+          if (cmdSection.startsWith("d"))
+            customCmd.command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
+          else
+            customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
+        }
+
+        allCustomizations.push({
+          numberPresses: numberOfPresses,
+          behavior: customCmd,
+        });
+      }
     }
 
     return allCustomizations;

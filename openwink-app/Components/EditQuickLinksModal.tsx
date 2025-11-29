@@ -5,7 +5,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useColorTheme } from "../hooks/useColorTheme";
-import { SearchBarFilter } from ".";
+import { ModalBlurBackground, SearchBarFilter } from ".";
 
 export type QuickLink = {
   navigation: {
@@ -270,16 +270,7 @@ export function EditQuickLinksModal({
       animationType="fade"
       visible={visible}
     >
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${colorTheme.backgroundPrimaryColor}80`,
-        }}
-      >
+      <ModalBlurBackground>
         <View
           style={{
             alignItems: "center",
@@ -413,7 +404,7 @@ export function EditQuickLinksModal({
           </View>
 
         </View>
-      </View>
+      </ModalBlurBackground>
     </Modal>
   );
 }

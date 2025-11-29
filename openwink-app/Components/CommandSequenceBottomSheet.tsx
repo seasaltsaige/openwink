@@ -9,8 +9,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import Octicons from "@expo/vector-icons/Octicons";
 
 import { useColorTheme } from "../hooks/useColorTheme";
-import { CommandOutput } from "../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
+import { CommandOutput } from "../helper/Types";
 
 const COMMAND_TYPE_COLORS: {
   [key in DefaultCommandValue | "delay"]: `#${string}`

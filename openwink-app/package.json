@@ -61,7 +61,8 @@
     "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-wifi-reborn": "^4.13.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "expo-blur": "~14.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

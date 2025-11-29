@@ -1,6 +1,7 @@
 import { View, Modal, Pressable, Text } from "react-native";
 
 import { useColorTheme } from "../hooks/useColorTheme";
+import { ModalBlurBackground } from "./ModalBlurBackground";
 
 interface IConfirmationModalProps {
   animationType?: "slide" | "none" | "fade" | undefined;
@@ -35,16 +36,7 @@ export function ConfirmationModal({
       animationType={animationType}
       visible={visible}
     >
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${colorTheme.backgroundPrimaryColor}80`,
-        }}
-      >
+      <ModalBlurBackground>
         <View
           style={{
             width: "70%",
@@ -137,7 +129,7 @@ export function ConfirmationModal({
           </View>
 
         </View>
-      </View>
+      </ModalBlurBackground>
     </Modal>
   )
 }

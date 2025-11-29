@@ -5,6 +5,7 @@
 #include "BLE.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
+#include <string>
 #include "Storage.h"
 #include "constants.h"
 #include "esp32-hal-gpio.h"
@@ -85,59 +86,67 @@ void ButtonHandler::readWakeUpReason() {
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   // Uses above array of items
-  int response = customButtonPressArray[numberOfPresses];
+  string response = customButtonPressArray[numberOfPresses];
+
+  // check length --> if length 1, parse to int and proceed with default things,
+  // otherwise, will be modified custom command with guaranteed length of 2 or more,
+  // thus sending to CommandHandler to parse and execute.
 
   Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
 
   BLE::setBusy(true);
 
-  switch (response) {
-    case 1:
-      if (initialButton == 1) {
-        bothUp();
-      } else if (initialButton == 0) {
-        bothDown();
-      }
+  if (response.length() == 1) {
+    int parsed = stoi(response);
+    switch (parsed) {
+      case 1:
+        if (initialButton == 1) {
+          bothUp();
+        } else if (initialButton == 0) {
+          bothDown();
+        }
 
-      rightStatus = initialButton;
-      leftStatus = initialButton;
-      break;
+        rightStatus = initialButton;
+        leftStatus = initialButton;
+        break;
 
-    case 2:
-      leftWink();
-      break;
+      case 2:
+        leftWink();
+        break;
 
-    case 3:
-      leftWink();
-      leftWink();
-      break;
+      case 3:
+        leftWink();
+        leftWink();
+        break;
 
-    case 4:
-      rightWink();
-      break;
+      case 4:
+        rightWink();
+        break;
 
-    case 5:
-      rightWink();
-      rightWink();
-      break;
+      case 5:
+        rightWink();
+        rightWink();
+        break;
 
-    case 6:
-      bothBlink();
-      break;
+      case 6:
+        bothBlink();
+        break;
 
-    case 7:
-      bothBlink();
-      bothBlink();
-      break;
+      case 7:
+        bothBlink();
+        bothBlink();
+        break;
 
-    case 8:
-      leftWave();
-      break;
+      case 8:
+        leftWave();
+        break;
 
-    case 9:
-      rightWave();
-      break;
-  }
+      case 9:
+        rightWave();
+        break;
+    }
+  } else 
+    queuedCustomCommand = response;
 
   setAllOff();
 
@@ -179,7 +188,7 @@ void ButtonHandler::loopButtonHandler() {
         handleButtonPressesResponse(9);
         buttonPressCounter = 0;
         // otherwise, if a 0 is seen, execute the one before it.
-      } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+      } else if (customButtonPressArray[buttonPressCounter - 1] == "0") {
         handleButtonPressesResponse(buttonPressCounter - 2);
         buttonPressCounter = 0;
       }
@@ -217,7 +226,7 @@ void ButtonHandler::loopButtonHandler() {
         // Limit Reached - Only 10 items in array
         handleButtonPressesResponse(9);
         buttonPressCounter = 0;
-      } else if (customButtonPressArray[buttonPressCounter - 1] == 0) {
+      } else if (customButtonPressArray[buttonPressCounter - 1] == "0") {
         handleButtonPressesResponse(buttonPressCounter - 2);
         buttonPressCounter = 0;
       }

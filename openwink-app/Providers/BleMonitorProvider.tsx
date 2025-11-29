@@ -22,9 +22,12 @@ import {
   OTA_SERVICE_UUID,
   MODULE_SETTINGS_SERVICE_UUID,
   FIRMWARE_UUID,
+  CUSTOM_BUTTON_UPDATE_UUID,
+  buttonBehaviorMapReversed,
 } from '../helper/Constants';
-import { FirmwareStore } from '../Storage';
-import { toProperCase } from '../helper/Functions';
+import { CustomCommandStore, CustomOEMButtonStore, FirmwareStore } from '../Storage';
+import { sleep, toProperCase } from '../helper/Functions';
+import { CommandInput, CommandOutput, Presses } from '../helper/Types';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -38,6 +41,7 @@ export type BleMonitorContextType = {
   motionValue: number;
   startMonitoring: (device: Device) => Promise<void>;
   stopMonitoring: () => void;
+  updateFirmwareVersion: (version: string) => void;
 };
 
 export const BleMonitorContext = createContext<BleMonitorContextType | null>(null);
@@ -448,6 +452,72 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           // additionally reset update progress
           setUpdateProgress(0);
         }
+
+
+        // Read CUSTOM_BUTTON_UPDATE
+        // Syncs custom button sequence from mcu to app
+
+        // Fetch custom commands available; Used for displaying command name
+        // If command no longer exists, simply display Unknown/Unknown Command
+        const customCommands = CustomCommandStore.getAll();
+
+
+        for (let i = 1; i < 9; i++) {
+          const customButtonStatus = await device.readCharacteristicForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+          );
+          if (!customButtonStatus) break;
+
+          if (customButtonStatus.value) {
+            const decoded = base64.decode(customButtonStatus.value);
+
+            // Default Action
+            if (!decoded.includes("-")) {
+              if (decoded === "0")
+                CustomOEMButtonStore.remove(i as Presses);
+              else
+                CustomOEMButtonStore.set(i as Presses, buttonBehaviorMapReversed[parseInt(decoded) as Presses]);
+            } else {
+              // Custom Action. First needs to be parsed into a CommandOutput object
+              const actionsParts = decoded.split("-");
+
+              let commandFound = false;
+              outer: for (const cmd of customCommands) {
+                for (let j = 0; j < cmd.command!.length; j++) {
+                  const cmdPart = cmd.command![j];
+                  if (
+                    cmdPart.delay &&
+                    actionsParts[j].startsWith("d") &&
+                    cmdPart.delay === parseInt(actionsParts[j].slice(1))
+                  ) continue;
+                  else if (
+                    cmdPart.transmitValue &&
+                    cmdPart.transmitValue === parseInt(actionsParts[j])
+                  ) continue;
+                  else continue outer;
+                }
+                // If we get to here, we know a command was found
+                commandFound = true;
+                CustomOEMButtonStore.set(i as Presses, cmd);
+                break;
+              }
+
+              if (!commandFound) {
+                // No custom command found, parse mcu value to commandoutput, just with Unknown Name
+                const command: CommandInput[] = actionsParts.map(str => str.includes("d") ? ({ delay: parseInt(str.slice(1)) }) : ({ transmitValue: parseInt(str), }))
+                const output: CommandOutput = {
+                  name: "Unknown",
+                  command,
+                }
+
+                CustomOEMButtonStore.set(i as Presses, output);
+              }
+            }
+          }
+
+          await sleep(20);
+        }
       } catch (error) {
         console.error('Error reading initial values:', error);
         throw error;
@@ -478,6 +548,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     motionValue,
     startMonitoring,
     stopMonitoring,
+    updateFirmwareVersion
   };
 
   return (
