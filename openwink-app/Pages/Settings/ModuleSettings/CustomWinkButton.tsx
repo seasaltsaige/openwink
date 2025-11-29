@@ -9,11 +9,12 @@ import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../.
 import { ButtonBehaviors, Presses } from "../../../helper/Types";
 import { BehaviorEnum, countToEnglish, buttonBehaviorMap } from "../../../helper/Constants";
 import { sleep } from "../../../helper/Functions";
-import { TooltipHeader, HeaderWithBackButton } from "../../../Components";
+import { TooltipHeader, HeaderWithBackButton, ModalBlurBackground } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import Tooltip from "react-native-walkthrough-tooltip";
+import { BlurView } from "expo-blur";
 
 const MIN = 100;
 const MAX = 750;
@@ -466,8 +467,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
       hardwareAccelerated
       visible={props.visible}
     >
-      <View style={theme.modalBackground}>
-
+      <ModalBlurBackground>
         <View style={[theme.modalContentContainer, { justifyContent: "flex-start" }]}>
 
 
@@ -538,7 +538,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
                 <ScrollView
                   contentContainerStyle={{
-                    rowGap: 6,
+                    rowGap: 7,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: 'center',
@@ -555,10 +555,10 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                                 theme.mainLongButtonPressableContainerPressed :
                                 theme.mainLongButtonPressableContainer,
                               {
-                                // height: 40,
-                                // padding: ,
-                                paddingVertical: 8,
+                                paddingVertical: 6,
+                                paddingHorizontal: 0,
                                 width: "100%",
+                                borderRadius: 5,
                               }
                             ]
                           }
@@ -567,11 +567,11 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                         >
 
                           <View style={theme.mainLongButtonPressableView}>
-                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 15 }]}>
+                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 13.5 }]}>
                               {behavior}
                             </Text>
                           </View>
-                          <IonIcons size={20} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
+                          <IonIcons size={18} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
 
 
 
@@ -630,7 +630,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
                 <ScrollView
                   contentContainerStyle={{
-                    rowGap: 6,
+                    rowGap: 7,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: 'center',
@@ -648,8 +648,10 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                                 theme.mainLongButtonPressableContainerPressed :
                                 theme.mainLongButtonPressableContainer,
                               {
-                                paddingVertical: 8,
+                                paddingVertical: 6,
+                                paddingHorizontal: 0,
                                 width: "100%",
+                                borderRadius: 5,
                               }
                             ]
                           }
@@ -658,20 +660,20 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                         >
 
                           <View style={theme.mainLongButtonPressableView}>
-                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 15 }]}>
-                              {cmd.name.length > 13 ? `${cmd.name.slice(0, 11)}...` : cmd.name}
+                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 13.5 }]}>
+                              {cmd.name.length > 15 ? `${cmd.name.slice(0, 13)}...` : cmd.name}
                             </Text>
                           </View>
-                          <IonIcons size={20} color={colorTheme.textColor} name={(selectedAction && typeof selectedAction !== "string" && selectedAction.name === cmd.name) ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
-
-
-
+                          <IonIcons size={18} color={colorTheme.textColor} name={(selectedAction && typeof selectedAction !== "string" && selectedAction.name === cmd.name) ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
                         </Pressable>
                       ))
                     )
                       :
-                      <Text>
-
+                      <Text style={{
+                        color: colorTheme.textColor,
+                        fontFamily: "IBMPlexSans_500Medium"
+                      }}>
+                        No Actions Available
                       </Text>
 
                   }
@@ -742,7 +744,7 @@ function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
         </View>
 
-      </View>
+      </ModalBlurBackground>
     </Modal>
   )
 }
