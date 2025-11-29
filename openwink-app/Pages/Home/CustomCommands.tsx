@@ -11,13 +11,14 @@ import {
   HeaderWithBackButton,
   SearchBarFilter,
 } from "../../Components";
-import { CommandOutput, CustomCommandStore } from "../../Storage";
+import { CustomCommandStore } from "../../Storage";
 import { DefaultCommandValueEnglish } from "../../helper/Constants";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 import { MiataHeadlights } from "../../Components";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
+import { CommandOutput } from "../../helper/Types";
 
 
 const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
@@ -75,11 +76,11 @@ export function CustomCommands() {
   const getCommandTextColor = (command: CommandOutput) => {
     if (activeCommandName) {
       return activeCommandName === command.name ?
-          colorTheme.textColor
+        colorTheme.textColor
         : colorTheme.disabledButtonColor;
     }
     return canRunCommands ?
-        colorTheme.textColor
+      colorTheme.textColor
       : colorTheme.disabledButtonColor;
   };
 
@@ -131,11 +132,11 @@ export function CustomCommands() {
             filterables={commands}
             searchFilterKey="name"
             filters={FILTERS}
-            onFilterTextChange={() => {}}
+            onFilterTextChange={() => { }}
             onFilteredItemsUpdate={(filteredItems) =>
               setFilteredCommands(filteredItems)
             }
-            onFiltersChange={() => {}}
+            onFiltersChange={() => { }}
             placeholderText="Find command by name..."
             filterFn={({ filterType, itemsToFilter, selectedFilters }) => {
               if (selectedFilters.length < 1) return itemsToFilter;
@@ -247,13 +248,13 @@ export function CustomCommands() {
                           name={
                             command.name === displayedCommand?.name ?
                               "eye-off-outline"
-                            : "eye-outline"
+                              : "eye-outline"
                           }
                           size={23}
                           color={
                             pressed ?
                               colorTheme.buttonColor
-                            : colorTheme.headerTextColor
+                              : colorTheme.headerTextColor
                           }
                         />
                       )}
@@ -261,7 +262,7 @@ export function CustomCommands() {
                   </View>
                 </View>
               ))
-            : <Text
+              : <Text
                 style={{
                   color: colorTheme.headerTextColor,
                   fontSize: 22,

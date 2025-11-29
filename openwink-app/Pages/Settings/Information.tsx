@@ -15,8 +15,8 @@ import {
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
-import { ButtonBehaviors, Presses } from "../../helper/Types";
+import { CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";

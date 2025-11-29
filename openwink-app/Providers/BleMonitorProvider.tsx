@@ -25,10 +25,9 @@ import {
   CUSTOM_BUTTON_UPDATE_UUID,
   buttonBehaviorMapReversed,
 } from '../helper/Constants';
-import { CommandOutput, CustomCommandStore, CustomOEMButtonStore, FirmwareStore } from '../Storage';
+import { CustomCommandStore, CustomOEMButtonStore, FirmwareStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
-import { Presses } from '../helper/Types';
-import { CommandInput } from './BleCommandProvider';
+import { CommandInput, CommandOutput, Presses } from '../helper/Types';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;

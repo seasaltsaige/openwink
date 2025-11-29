@@ -15,8 +15,9 @@ import {
   ConfirmationModal,
   ComponentModal
 } from "../../../Components";
-import { CommandInput, CommandOutput, CustomCommandStore } from "../../../Storage";
+import { CustomCommandStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
+import { CommandInput, CommandOutput } from "../../../helper/Types";
 
 
 export enum ModifyType {

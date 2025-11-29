@@ -29,20 +29,14 @@ import {
   HEADLIGHT_BYPASS_UUID,
 } from '../helper/Constants';
 import {
-  CommandOutput,
   CustomOEMButtonStore,
   CustomWaveStore,
   SleepyEyeStore,
 } from '../Storage';
 import { sleep } from '../helper/Functions';
-import { ButtonBehaviors, Presses } from '../helper/Types';
+import { ButtonBehaviors, CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { useBleConnection } from './BleConnectionProvider';
 import { useBleMonitor } from './BleMonitorProvider';
-
-export type CommandInput = {
-  delay?: number;
-  transmitValue?: number;
-};
 
 export type BleCommandContextType = {
   // Command execution
