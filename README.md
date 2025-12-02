@@ -26,7 +26,7 @@ An open sourced alternative to the popular Mazda Miata MX-5 [Wink/Sleepy Eye Mod
   - [Controller Application](#controller-application)
   - [Wink Module](#wink-module)
 - [Purchasing](#purchasing)
-  - [Support the Project](#support-the-project-)
+  - [Support the Project](#support-the-project-buymeacoffee)
 - [Contributing](#contributing-)
 - [Development Roadmap](#development-roadmap)
 - [License](#license-)
@@ -62,7 +62,7 @@ This project serves as an open source (though purchasable) alternative to the po
 - **Custom Commands**: Create, save, and run a collection of commands,allowing for unique, custom headlight animations.
 - **App Theme**: Minimal UI with additional theme customization to match NA Miata color themes.
 - **Transparent Storage**: All data and settings stored on the app can be easily accessed and deleted in the App Settings.
-- **OEM Button**: Assign custom actions for the OEM Retractor Button (from 2-10 sequential presses), executing pre-defined actions with configurable timing between presses, allowing for app-like actions without relying on the app. 
+- **OEM Button**: Assign custom actions for the OEM Retractor Button (from 2-9 sequential presses), executing pre-defined actions with configurable timing between presses, allowing for app-like actions without relying on the app. 
 - Built in firmware updates for Wink Module, utilizing the Update Server and a local WiFi AP.
 
 ### Wink Module
