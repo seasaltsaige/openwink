@@ -1,4 +1,4 @@
 {
-  "version": "0.5.0",
-  "description": "OEM Button Sequences can now be assigned to Custom Commands, allowing for more unique hands free usage."
+  "version": "0.5.4",
+  "description": "Update headlight movement duration from 600ms to 580ms."
 }
