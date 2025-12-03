@@ -15,26 +15,28 @@ This directory contains the code base which serves as the remote for the Wink Mo
 - [Core Libraries](#core-libraries-used)
 - [Getting Started](#getting-started)
   - [Development](#creating-a-development-artifact)
+    - [iOS Development](#creating-a-development-build-for-ios-without-a-developer-account)
   - [Preview](#creating-a-preview-artifact)
 - [About the App](#about-the-app)
 - [Contributing](#contributing)
   - [Vulnerabilities](#vulnerabilities)
 
 ## App Preview
+<img src="../docs/media/app/Preview.png" width="200" alt="App Preview Image" />
 
-<img src="../docs/media/AppPreview_beta.png" width="200" alt="App Preview Image" />
+See more about the current state of the app in the app [Gallery](../docs/media/app/gallery.md)!
 
 ## Core Libraries Used
 ```bash
 > react-native
 > expo
 > expo-font
+> expo-blur
 > @react-navigation/bottom-tabs
 > @react-navigation/native-stack
 > react-native-ble-plx
-> react-native-wifi-reborn
 ```
-This react native project is managed by Expo and EAS, allowing for quicker development using the expo-dev-client. Bluetooth Low Energy and WiFi functionality is provided through `react-native-ble-plx` and `react-native-wifi-reborn` respectively.
+This react native project is managed by Expo and EAS, allowing for quicker development using the expo-dev-client. Bluetooth Low Energy functionality is provided through `react-native-ble-plx`.
 
 ## Getting Started
 
@@ -170,8 +172,9 @@ Happy Winking!
 This is an Expo managed React Native application. Utilizing expo has increased productivity significantly due to the increased speed of feedback thanks to the development client build distribution.
 
 ### File Structure
+Currently not up to date... 
 ```bash
-winkduino-app
+openwink-app
 │
 ├── assets # Contains all image assets used in the app
 │   ├── adaptive-icon.png
@@ -179,22 +182,45 @@ winkduino-app
 │   ├── icon.png
 │   └── splash-icon.png # All icons need updating: See issue #20
 ├── Components # Contains components used throughout the app
+│   ├── MiataHeadlights
+│   │   ├── constants.ts
+│   │   ├── Headlight.tsx
+│   │   ├── index.ts
+│   │   ├── Miata.tsx
+│   │   └── MiataHeadlights.tsx
+│   ├── AboutFooter.tsx
+│   ├── CommandSequenceBottomSheet.tsx
+│   ├── ComponentModal.tsx
+│   ├── CustomButtonActionModal.tsx
+│   ├── CustomCommand.tsx
+│   ├── EditQuickLinksModal.tsx
 │   ├── HeaderWithBackButton.tsx
 │   ├── index.ts
+│   ├── InfoBox.tsx
 │   ├── LongButton.tsx
 │   ├── MainHeader.tsx
+│   ├── ModalBlurBackground.tsx
+│   ├── ModuleUpdateModal.tsx
+│   ├── SearchBarFilter.tsx
 │   └── TooltipHeader.tsx
 ├── helper # Contains helper functions and constants
+│   ├── Handlers
+│   │   ├── App.ts
+│   │   └── OTA.ts
 │   ├── Constants.ts
 │   ├── Functions.ts
 │   └── Types.ts
 ├── hooks # Custom hooks used to communicate BLE status and App Theming 
-│   ├── useBLE.ts
 │   ├── useColorTheme.ts
-│   └── useErrorHandler.ts
+│   └── useUpdateManager.ts
+├── Mock
+│   └── MockBleSystem.ts
 ├── Pages # The main page routes of the app
 │   ├── Home
-│   │   ├── CreateCustomCommand.tsx
+│   │   ├── CreateCustomCommand
+│   │   │   ├── CreateCustomCommand.tsx
+│   │   │   ├── MainView.tsx
+│   │   │   └── ModifyView.tsx
 │   │   ├── CustomCommands.tsx
 │   │   ├── Home.tsx
 │   │   └── StandardCommands.tsx
@@ -205,25 +231,35 @@ winkduino-app
 │   │   │   ├── SleepyEyeSettings.tsx
 │   │   │   └── WaveDelaySettings.tsx
 │   │   ├── AppTheme.tsx
+│   │   ├── DeveloperSettings.tsx
 │   │   ├── Information.tsx
 │   │   ├── Settings.tsx
 │   │   └── TermsOfUse.tsx
 │   ├── HowToUse.tsx
 │   └── index.ts
 ├── Providers # Used in conjunction with `hooks` to provide said data
-│   ├── BleProvider.tsx
+│   ├── BleCommandProvider.tsx
+│   ├── BleConnectionProvider.tsx
+│   ├── BleMonitorProvider.tsx
+│   ├── OTAUpdateProvider.tsx
 │   └── ThemeProvider.tsx # See issue #21
-├── Storage # Helper class functions that interface with AsyncStorage (see issue #7)
+├── Storage # Helper abstract classes/static functions that interface with MMKV to store device settings
 │   ├── AutoConnectStore.ts
 │   ├── CustomCommandStore.ts
 │   ├── CustomOEMButtonStore.ts
 │   ├── CustomWaveStore.ts
 │   ├── DeviceMACStore.ts
+│   ├── DeviceUUIDStore.ts
 │   ├── FirmwareStore.ts
 │   ├── index.ts
+│   ├── MockBleStore.ts
+│   ├── QuickLinksStore.ts
 │   ├── SleepyEyeStore.ts
+│   ├── Storage.ts
 │   └── ThemeStore.ts
-├── app.json # Contains Expo app information for build artifacts
+├── .env.template # Template environment variable file. Rename to .env to use!
+├── .gitignore # Don't get rid of this!
+├── app.config.ts # Contains Expo app information for build artifacts
 ├── App.tsx # Root view
 ├── eas.json 
 ├── index.ts # App entry point
