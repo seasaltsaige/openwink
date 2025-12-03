@@ -520,7 +520,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       } catch (error) {
         console.error('Error reading initial values:', error);
-        throw error;
+        // throw error;
       }
     },
     [parseAndSetStatus]

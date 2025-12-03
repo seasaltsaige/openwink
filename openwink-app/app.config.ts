@@ -42,7 +42,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "react-native-ble-plx",
-    "react-native-wifi-reborn",
     "expo-font",
     "expo-build-properties",
     [
