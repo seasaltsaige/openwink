@@ -1,4 +1,4 @@
 {
-  "version": "0.5.4",
-  "description": "Update headlight movement duration from 600ms to 580ms."
+  "version": "0.5.5",
+  "description": "Update headlight movement duration from 580ms to 600ms. 580ms was slightly too short when headlights are off. Motion In would fix this!"
 }
