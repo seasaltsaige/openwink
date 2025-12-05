@@ -5,6 +5,7 @@ A collection of the current state of the compiled application.
 
 - [Home Screen](#home-screen)
   - [Quick Links](#quick-links)
+  - [Firmware Update](#)
   - [Default Commands](#default-commands)
   - [Custom Commands](#custom-command-view)
 - [Settings](#settings)
@@ -24,6 +25,11 @@ The main home screen in its default state, after connecting to the module.
 <img src="./Quick_Links.png" width="200" alt="App Preview Image">
 
 Quick Links display which allows the user to customize which settings pages are displayed on the home screen, which quickens navigation by avoiding 3+ clicks to find a setting; improving user experience.
+
+### Firmware Update Panel
+<img src="./Firmware_Update.png" width="200" alt="App Preview Image">
+
+The firmware update panel will display while you are installing a firmware update on the Wink Module. It will display the current update status, version number, and a brief description of what was added/changed in the update.
 
 ### Default Commands
 <img src="./Default_Commands_DOWN.png" width="200" alt="App Preview Image">
