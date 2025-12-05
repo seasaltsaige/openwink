@@ -113,23 +113,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activeCommandName, setActiveCommandName] = useState<string | null>(null);
   const activeCommandNameRef = useRef<string | null>(null);
 
-
-  const swapLeftRight = useCallback(
-    async () => {
-      try {
-        await device?.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SWAP_ORIENTATION_UUID,
-          base64.encode(leftRightSwapped ? "0" : "1"),
-        );
-        setLeftRightSwapped((v) => !v);
-        HeadlightOrientationStore.toggle();
-        // TODO: Write to storage
-      } catch (err) {
-
-      }
-    }, [device]);
-
   const updateActiveCommandName = (name: string | null) => {
     setActiveCommandName(name);
     activeCommandNameRef.current = name;
@@ -725,6 +708,21 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
     }
   }, [device]);
+
+  const swapLeftRight = useCallback(
+    async () => {
+      try {
+        await device?.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          SWAP_ORIENTATION_UUID,
+          base64.encode(leftRightSwapped ? "0" : "1"),
+        );
+        setLeftRightSwapped((v) => !v);
+        HeadlightOrientationStore.toggle();
+      } catch (err) {
+        console.log(err);
+      }
+    }, [device]);
 
   const value: BleCommandContextType = {
     sendDefaultCommand,

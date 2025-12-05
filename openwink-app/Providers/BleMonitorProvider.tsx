@@ -24,10 +24,12 @@ import {
   FIRMWARE_UUID,
   CUSTOM_BUTTON_UPDATE_UUID,
   buttonBehaviorMapReversed,
+  SWAP_ORIENTATION_UUID,
 } from '../helper/Constants';
 import { CustomCommandStore, CustomOEMButtonStore, FirmwareStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
 import { CommandInput, CommandOutput, Presses } from '../helper/Types';
+import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -460,8 +462,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Fetch custom commands available; Used for displaying command name
         // If command no longer exists, simply display Unknown/Unknown Command
         const customCommands = CustomCommandStore.getAll();
-
-
         for (let i = 1; i < 9; i++) {
           const customButtonStatus = await device.readCharacteristicForService(
             MODULE_SETTINGS_SERVICE_UUID,
@@ -517,6 +517,18 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
 
           await sleep(20);
+        }
+
+        const swapStatus = await device.readCharacteristicForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          SWAP_ORIENTATION_UUID,
+        );
+        if (swapStatus.value) {
+          const swapValue = base64.decode(swapStatus.value);
+          if (swapValue === "1")
+            HeadlightOrientationStore.enable();
+          else
+            HeadlightOrientationStore.disable();
         }
       } catch (error) {
         console.error('Error reading initial values:', error);
