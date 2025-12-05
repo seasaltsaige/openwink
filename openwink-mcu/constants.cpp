@@ -13,3 +13,8 @@ int awakeTime_ms = 0;
 RTC_DATA_ATTR int HEADLIGHT_MOVEMENT_DELAY = 600;
 RTC_DATA_ATTR double leftSleepyValue = 50;
 RTC_DATA_ATTR double rightSleepyValue = 50;
+
+int OUT_PIN_LEFT_DOWN = 10;
+int OUT_PIN_LEFT_UP = 11;
+int OUT_PIN_RIGHT_DOWN = 12;
+int OUT_PIN_RIGHT_UP = 13;
