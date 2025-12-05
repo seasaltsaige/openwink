@@ -47,6 +47,21 @@ void Storage::getFromStorage() {
   leftSleepyValue = left;
   rightSleepyValue = right;
 
+  string orientationKey = "headlight-orientation-key";
+  bool storedOrientationValue = storage.getBool(orientationKey.c_str(), false);
+
+  if (storedOrientationValue) {
+    OUT_PIN_LEFT_DOWN = 12;
+    OUT_PIN_LEFT_UP = 13;
+    OUT_PIN_RIGHT_DOWN = 10;
+    OUT_PIN_RIGHT_UP = 11;
+  } else {
+    OUT_PIN_LEFT_DOWN = 10;
+    OUT_PIN_LEFT_UP = 11;
+    OUT_PIN_RIGHT_DOWN = 12;
+    OUT_PIN_RIGHT_UP = 13;
+  }
+
   // const char *motionKey = "motion-key";
   // int motion = storage.getInt(motionKey, 750);
   // HEADLIGHT_MOVEMENT_DELAY = motion;
@@ -65,6 +80,9 @@ void Storage::reset() {
   storage.remove(rightSleepyHeadlightKey);
   const char *headlightBypassKey = "headlight-bypass-key";
   storage.remove(headlightBypassKey);
+  const char *orientationKey = "headlight-orientation-key";
+  storage.remove(orientationKey);
+
   char pressesKey[15];
 
   for (int i = 0; i < 10; i++) {
@@ -77,6 +95,10 @@ void Storage::reset() {
   headlightMultiplier = 1.0;
   leftSleepyValue = 50;
   rightSleepyValue = 50;
+  OUT_PIN_LEFT_DOWN = 10;
+  OUT_PIN_LEFT_UP = 11;
+  OUT_PIN_RIGHT_DOWN = 12;
+  OUT_PIN_RIGHT_UP = 13;
 
   for (int i = 0; i < 10; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
@@ -100,6 +122,34 @@ void Storage::setHeadlightBypass(bool bypass) {
   bool storedValue = storage.getBool(key.c_str(), false);
   if (storedValue != bypass)
     storage.putBool(key.c_str(), bypass);
+}
+
+// TRUE = OUTSIDE
+// FALSE (DEFAULT) = CABIN
+void Storage::setHeadlightOrientation(bool orientation) {
+  string key = "headlight-orientation-key";
+  bool storedValue = storage.getBool(key.c_str(), false);
+  if (storedValue != orientation)
+    storage.putBool(key.c_str(), orientation);
+
+
+  if (orientation) {
+    OUT_PIN_LEFT_DOWN = 12;
+    OUT_PIN_LEFT_UP = 13;
+    OUT_PIN_RIGHT_DOWN = 10;
+    OUT_PIN_RIGHT_UP = 11;
+  } else {
+    OUT_PIN_LEFT_DOWN = 10;
+    OUT_PIN_LEFT_UP = 11;
+    OUT_PIN_RIGHT_DOWN = 12;
+    OUT_PIN_RIGHT_UP = 13;
+  }
+}
+
+bool Storage::getHeadlightOrientation() {
+  string key = "headlight-orientation-key";
+  bool storedValue = storage.getBool(key.c_str(), false);
+  return storedValue;
 }
 
 void Storage::setDelay(int delay) {
