@@ -90,7 +90,7 @@ const ROUTES: RouteType[] = [
   {
     display: "Module Settings",
     icon: "speedometer-outline",
-    title: "Set Up Custom Wink Button",
+    title: "Customize Button Actions",
     navigation: {
       back: "Home",
       backHumanReadable: "Home",

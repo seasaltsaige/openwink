@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@expo/vector-icons/Octicons";
@@ -21,6 +21,7 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { HeadlightOrientationStore } from "../../../Storage/HeadlightOrientationStore";
+import Tooltip from "react-native-walkthrough-tooltip";
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -38,7 +39,7 @@ const moduleSettingsData: Array<{
       pageSymbol: "eye-outline"
     },
     {
-      pageName: "Set Up Custom Wink Buton",
+      pageName: "Customize Button Actions",
       navigationName: "CustomWinkButton",
       pageSymbol: "speedometer-outline",
     },
@@ -81,6 +82,8 @@ export function ModuleSettings() {
   // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
   const [autoConnectOn, setAutoConnectOn] = useState(autoConnectEnabled);
   const [swapOn, setSwapOn] = useState(leftRightSwapped);
+
+  const [swapTooltipOpen, setSwapTooltipOpen] = useState(false);
 
 
   const deleteStoredModuleData = async () => {
@@ -178,53 +181,81 @@ export function ModuleSettings() {
 
         <View style={[theme.homeScreenButtonsContainer, { rowGap: 15 }]}>
 
+          <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", marginTop: -15, marginBottom: 10, }}>
+            <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0 }]}>
+              <View style={theme.mainLongButtonPressableView}>
+                <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} />
 
-          <View style={theme.mainLongButtonPressableContainer}>
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} />
+                <Text style={theme.mainLongButtonPressableText}>
+                  Auto Connect
+                </Text>
+              </View>
 
-              <Text style={theme.mainLongButtonPressableText}>
-                Auto Connect
-              </Text>
+              <View style={theme.mainLongButtonPressableIcon}>
+
+                <ToggleSwitch
+                  onColor={colorTheme.buttonColor}
+                  offColor={colorTheme.disabledButtonColor}
+                  isOn={autoConnectOn}
+                  size="medium"
+                  hitSlop={10}
+                  circleColor={colorTheme.buttonTextColor}
+                  onToggle={(isOn) => { togglePress(!!isOn) }}
+                />
+
+              </View>
             </View>
 
-            <View style={theme.mainLongButtonPressableIcon}>
 
-              <ToggleSwitch
-                onColor={colorTheme.buttonColor}
-                offColor={colorTheme.disabledButtonColor}
-                isOn={autoConnectOn}
-                size="medium"
-                hitSlop={10}
-                circleColor={colorTheme.buttonTextColor}
-                onToggle={(isOn) => { togglePress(!!isOn) }}
-              />
+            {/* Disable when no device connected */}
+            <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0 }]}>
+              <View style={theme.mainLongButtonPressableView}>
+                <Octicons name="arrow-switch" size={23} color={colorTheme.headerTextColor} />
+                <Text style={theme.mainLongButtonPressableText}>
+                  Swap Left and Right
+                </Text>
+                <Tooltip
+                  isVisible={swapTooltipOpen}
+                  onClose={() => setSwapTooltipOpen(false)}
+                  content={
+                    <Text style={theme.tooltipContainerText}>
+                      When enabled, Left and Right reference is taken from outside the car, looking at the front.{"\n"}
+                      When disabled, Left and Right reference is taken from inside the cabin.{"\n"}
+                      Currently, reference is from {!swapOn ? "the cabin" : "outside"}.
+                    </Text>
+                  }
+                  closeOnBackgroundInteraction
+                  closeOnContentInteraction
+                  placement="bottom"
+                  contentStyle={theme.tooltipContainer}
+                >
+                  <Pressable
+                    hitSlop={20}
+                    onPress={() => setSwapTooltipOpen(true)}
+                  >
+                    {
+                      ({ pressed }) => (
+                        <IonIcons style={{ marginTop: 2 }} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
+                      )
+                    }
+                  </Pressable>
+                </Tooltip>
+              </View>
 
+              <View style={theme.mainLongButtonPressableIcon}>
+                <ToggleSwitch
+                  disabled={!isConnected}
+                  onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                  offColor={colorTheme.disabledButtonColor}
+                  isOn={swapOn}
+                  size="medium"
+                  hitSlop={10}
+                  circleColor={colorTheme.buttonTextColor}
+                  onToggle={(isOn) => { toggleSwap(!!isOn) }}
+                />
+              </View>
             </View>
-          </View>
 
-
-          {/* Disable when no device connected */}
-          <View style={theme.mainLongButtonPressableContainer}>
-            <View style={theme.mainLongButtonPressableView}>
-              <Octicons name="arrow-switch" size={23} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Swap Left and Right
-              </Text>
-            </View>
-
-            <View style={theme.mainLongButtonPressableIcon}>
-              <ToggleSwitch
-                disabled={!isConnected}
-                onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
-                offColor={colorTheme.disabledButtonColor}
-                isOn={swapOn}
-                size="medium"
-                hitSlop={10}
-                circleColor={colorTheme.buttonTextColor}
-                onToggle={(isOn) => { toggleSwap(!!isOn) }}
-              />
-            </View>
           </View>
 
 
