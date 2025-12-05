@@ -276,7 +276,17 @@ void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar
     Storage::setHeadlightBypass(false);
     bypassHeadlightOverride = false;
   }
-};
+}
+
+void HeadlightOrientationCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+
+  string received = pChar->getValue();
+
+  if (received == "0")
+    Storage::setHeadlightOrientation(false);
+  else if (received == "1")
+    Storage::setHeadlightOrientation(true);
+}
 
 
 void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {

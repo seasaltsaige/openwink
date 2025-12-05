@@ -34,7 +34,7 @@ class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
   void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
   // void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
-  void onPhyUpdate(NimBLEConnInfo &connInfo, uint8_t txPhy, uint8_t rxPhy) override;
+  void onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) override;
   void onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) override;
 };
 
@@ -64,6 +64,10 @@ class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCall
 };
 
 class HeadlightBypassCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class HeadlightOrientationCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
