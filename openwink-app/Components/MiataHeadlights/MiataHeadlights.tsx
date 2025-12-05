@@ -3,10 +3,12 @@ import Miata from "./Miata";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { Headlight } from "./Headlight";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export const MiataHeadlights = () => {
   const { themeName, colorTheme } = useColorTheme();
   const { leftStatus, rightStatus } = useBleMonitor();
+  const { leftRightSwapped } = useBleCommand();
 
   const statusToPercent = (headlightStatus: number) => {
     if (headlightStatus === 0) return 0; // Closed
@@ -17,7 +19,7 @@ export const MiataHeadlights = () => {
   const panelColor =
     themeName === "brilliantBlack" ?
       colorTheme.backgroundPrimaryColor
-    : colorTheme.primary;
+      : colorTheme.primary;
 
   const strokeColor =
     themeName === "brilliantBlack" ? colorTheme.primary : "#000000";
@@ -56,12 +58,12 @@ export const MiataHeadlights = () => {
         }}
       >
         <Headlight
-          percent={statusToPercent(leftStatus)}
+          percent={leftRightSwapped ? statusToPercent(leftStatus) : statusToPercent(rightStatus)}
           themeColor={panelColor}
           scale={0.31}
         />
         <Headlight
-          percent={statusToPercent(rightStatus)}
+          percent={leftRightSwapped ? statusToPercent(rightStatus) : statusToPercent(leftStatus)}
           themeColor={panelColor}
           mirrored={true}
           scale={0.31}

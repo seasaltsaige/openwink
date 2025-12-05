@@ -52,6 +52,7 @@ NimBLECharacteristic *BLE::unpairChar;
 NimBLECharacteristic *BLE::resetChar;
 NimBLECharacteristic *BLE::clientMacChar;
 NimBLECharacteristic *BLE::headlightBypassChar;
+NimBLECharacteristic *BLE::headlightOrientationChar;
 
 bool BLE::deviceConnected = false;
 
@@ -114,10 +115,14 @@ void BLE::initServiceCharacteristics() {
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
   clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+
+  // TODO: set headlight orientation from storage
 
   headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
   headlightDelayChar->setValue(headlightMultiplier);
   headlightBypassChar->setValue(bypassHeadlightOverride);
+  headlightOrientationChar->setValue(Storage::getHeadlightOrientation());
 
   customButtonChar->setValue(customButtonPressArray[1]);
 
@@ -132,6 +137,7 @@ void BLE::initServiceCharacteristics() {
   resetChar->setCallbacks(new ResetCharacteristicCallbacks());
   clientMacChar->setCallbacks(new ClientMacCharacteristicCallbacks());
   headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
+  headlightOrientationChar->setCallbacks(new HeadlightOrientationCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {

@@ -1,4 +1,4 @@
 {
-  "version": "0.5.5",
-  "description": "Update headlight movement duration from 580ms to 600ms. 580ms was slightly too short when headlights are off. Motion In would fix this!"
+  "version": "0.6.0",
+  "description": "New Feature! Headlight Orientation. You can now choose which orientation left/right headlights reference, allowing you to make sense of the motion in an intuative way to you."
 }

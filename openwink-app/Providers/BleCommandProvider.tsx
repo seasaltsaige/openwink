@@ -27,6 +27,7 @@ import {
   buttonBehaviorMap,
   DefaultCommandValueEnglish,
   HEADLIGHT_BYPASS_UUID,
+  SWAP_ORIENTATION_UUID,
 } from '../helper/Constants';
 import {
   CustomOEMButtonStore,
@@ -37,6 +38,7 @@ import { sleep } from '../helper/Functions';
 import { ButtonBehaviors, CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { useBleConnection } from './BleConnectionProvider';
 import { useBleMonitor } from './BleMonitorProvider';
+import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
 
 export type BleCommandContextType = {
   // Command execution
@@ -61,11 +63,13 @@ export type BleCommandContextType = {
   // Module management
   enterDeepSleep: () => Promise<void>;
   resetModule: () => Promise<void>;
+  swapLeftRight: () => Promise<void>;
 
   // State
   activeCommandName: string | null;
   oemCustomButtonEnabled: boolean;
   headlightBypass: boolean;
+  leftRightSwapped: boolean;
   buttonDelay: number;
   waveDelayMulti: number;
   leftSleepyEye: number;
@@ -103,13 +107,11 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
+  const [leftRightSwapped, setLeftRightSwapped] = useState(false);
 
   // Track command execution
   const [activeCommandName, setActiveCommandName] = useState<string | null>(null);
   const activeCommandNameRef = useRef<string | null>(null);
-
-
-
 
   const updateActiveCommandName = (name: string | null) => {
     setActiveCommandName(name);
@@ -147,6 +149,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Load persisted settings on mount
   useEffect(() => {
+    // TODO: Realistically these should be loaded from the MCU, as it should be the source of truth.
     const isOEMEnabled = CustomOEMButtonStore.isEnabled();
     setOemCustomButtonEnabled(isOEMEnabled);
 
@@ -706,6 +709,21 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [device]);
 
+  const swapLeftRight = useCallback(
+    async () => {
+      try {
+        await device?.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          SWAP_ORIENTATION_UUID,
+          base64.encode(leftRightSwapped ? "0" : "1"),
+        );
+        setLeftRightSwapped((v) => !v);
+        HeadlightOrientationStore.toggle();
+      } catch (err) {
+        console.log(err);
+      }
+    }, [device]);
+
   const value: BleCommandContextType = {
     sendDefaultCommand,
     sendCustomCommand,
@@ -720,6 +738,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     enterDeepSleep,
     resetModule,
     setOEMButtonHeadlightBypass,
+    swapLeftRight,
+    leftRightSwapped,
     headlightBypass,
     activeCommandName,
     oemCustomButtonEnabled,

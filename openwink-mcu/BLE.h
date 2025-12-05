@@ -47,6 +47,7 @@ private:
   static NimBLECharacteristic* unpairChar;
   static NimBLECharacteristic* resetChar;
   static NimBLECharacteristic* headlightBypassChar;
+  static NimBLECharacteristic* headlightOrientationChar;
 
   static NimBLECharacteristic* clientMacChar;
 

@@ -21,6 +21,10 @@ public:
   static void setCustomButtonPressArray(int index, string value);
   static void setSleepyValues(int side, double value);
   static void setHeadlightBypass(bool bypass);
+  static void setHeadlightOrientation(bool orientation);
+  static bool getHeadlightOrientation();
+
+
   static void setWhitelist(string mac);
   static void clearWhitelist();
   static string getWhitelist();

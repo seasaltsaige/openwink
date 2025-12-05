@@ -127,76 +127,82 @@ export function CustomWinkButton() {
           deviceStatus
         />
 
-        {/* MAIN Custom Retractor Button Toggle */}
-        <View style={theme.mainLongButtonPressableContainer}>
+        <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "space-evenly" }}>
+          {/* MAIN Custom Retractor Button Toggle */}
+          <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0 }]}>
 
-          <View style={theme.mainLongButtonPressableView}>
-            <Text style={theme.mainLongButtonPressableText}>
-              {oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button
-            </Text>
+            <View style={theme.mainLongButtonPressableView}>
+              <Text style={theme.mainLongButtonPressableText}>
+                {oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button
+              </Text>
+            </View>
+
+            <View style={theme.mainLongButtonPressableIcon}>
+              <ToggleSwitch
+                onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                offColor={colorTheme.disabledButtonColor}
+                isOn={oemCustomButtonEnabled}
+                size="medium"
+                hitSlop={10}
+                disabled={!isConnected}
+                circleColor={colorTheme.buttonTextColor}
+                onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
+                labelStyle={theme.mainLongButtonPressableIcon}
+              />
+            </View>
           </View>
 
-          <View style={theme.mainLongButtonPressableIcon}>
-            <ToggleSwitch
-              onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
-              offColor={colorTheme.disabledButtonColor}
-              isOn={oemCustomButtonEnabled}
-              size="medium"
-              hitSlop={10}
-              disabled={!isConnected}
-              circleColor={colorTheme.buttonTextColor}
-              onToggle={async (isOn) => await setOEMButtonStatus(isOn ? "enable" : "disable")}
-              labelStyle={theme.mainLongButtonPressableIcon}
-            />
-          </View>
-        </View>
+          <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0, margin: 0 }]}>
 
-        <View style={theme.mainLongButtonPressableContainer}>
+            <View style={theme.mainLongButtonPressableView}>
+              <Text style={theme.mainLongButtonPressableText}>
+                {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
+              </Text>
 
-          <View style={theme.mainLongButtonPressableView}>
-            <Text style={theme.mainLongButtonPressableText}>
-              {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
-            </Text>
-
-            <Tooltip
-              isVisible={bypassToolTipOpen}
-              onClose={() => setBypassToolTipOpen(false)}
-              content={
-                <Text style={theme.tooltipContainerText}>
-                  Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
-                  Note: Single press actions will result in no movement
-                </Text>
-              }
-              closeOnBackgroundInteraction
-              closeOnContentInteraction
-              placement="bottom"
-              contentStyle={theme.tooltipContainer}
-            >
-              <Pressable
-                hitSlop={20}
-                onPress={() => setBypassToolTipOpen(true)}
-              >
-                {
-                  ({ pressed }) => (
-                    <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
-                  )
+              <Tooltip
+                isVisible={bypassToolTipOpen}
+                onClose={() => setBypassToolTipOpen(false)}
+                content={
+                  <Text style={theme.tooltipContainerText}>
+                    Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
+                    Note: Single press actions will result in no movement
+                  </Text>
                 }
-              </Pressable>
-            </Tooltip>
-          </View>
+                closeOnBackgroundInteraction
+                closeOnContentInteraction
+                placement="bottom"
+                contentStyle={theme.tooltipContainer}
+              >
+                <Pressable
+                  hitSlop={20}
+                  onPress={() => setBypassToolTipOpen(true)}
+                >
+                  {
+                    ({ pressed }) => (
+                      <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
+                    )
+                  }
+                </Pressable>
+              </Tooltip>
+            </View>
 
-          <View style={theme.mainLongButtonPressableIcon}>
-            <ToggleSwitch
-              onColor={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
-              offColor={colorTheme.disabledButtonColor}
-              isOn={headlightBypass}
-              size="medium"
-              hitSlop={10}
-              disabled={!isConnected || !oemCustomButtonEnabled}
-              circleColor={colorTheme.buttonTextColor}
-              onToggle={async (isOn) => await setOEMButtonHeadlightBypass(isOn)}
-              labelStyle={theme.mainLongButtonPressableIcon}
-            />
+
+
+            <View style={theme.mainLongButtonPressableIcon}>
+              <ToggleSwitch
+                onColor={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                offColor={colorTheme.disabledButtonColor}
+                isOn={headlightBypass}
+                size="medium"
+                hitSlop={10}
+                disabled={!isConnected || !oemCustomButtonEnabled}
+                circleColor={colorTheme.buttonTextColor}
+                onToggle={async (isOn) => await setOEMButtonHeadlightBypass(isOn)}
+                labelStyle={theme.mainLongButtonPressableIcon}
+              />
+            </View>
+
+
           </View>
 
         </View>

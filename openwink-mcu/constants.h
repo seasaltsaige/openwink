@@ -3,10 +3,10 @@
 #include "esp_sleep.h"
 #include <string>
 
-#define OUT_PIN_LEFT_DOWN 10
-#define OUT_PIN_LEFT_UP 11
-#define OUT_PIN_RIGHT_DOWN 12
-#define OUT_PIN_RIGHT_UP 13
+extern int OUT_PIN_LEFT_DOWN;
+extern int OUT_PIN_LEFT_UP;
+extern int OUT_PIN_RIGHT_DOWN;
+extern int OUT_PIN_RIGHT_UP;
 
 // Using Right Headlight Up Wire
 // Meaning up should be 1, down should be 0
@@ -15,7 +15,7 @@
 // Green wire in wiring harness, indicating busy when high
 #define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
 
-#define FIRMWARE_VERSION "0.5.5"
+#define FIRMWARE_VERSION "0.6.0"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
@@ -52,6 +52,8 @@
 #define RESET_UUID "a55946b8-1978-4522-8a29-27d17e21b092"
 #define CLIENT_MAC_UUID "f61146f2-791d-4ef7-95aa-b565097f69c2"
 #define HEADLIGHT_BYPASS_UUID "ada2537e-0399-4d2a-9eab-0c7cb60d3500"
+#define SWAP_ORIENTATION_UUID "3ddd922d-14ca-4785-9cd0-39a530e8b14d"
+
 // END SETTINGS CHARACTERISTICS //
 
 /** ---- END BLE UUID DEFINITIONS ---- **/
