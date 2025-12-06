@@ -472,11 +472,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Update OEM button preset for specific number of presses
-  // TODO: Should allow setting of custom command sequences as well.
   const updateOEMButtonPresets = useCallback(
     async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
-      // temp
-      // if (typeof to === "object") return;
 
       if (!device) {
         console.warn('No device connected');

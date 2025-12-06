@@ -397,6 +397,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const readInitialValues = useCallback(
     async (device: Device) => {
       try {
+        // TODO: ACTUALLY READ SETTINGS
+
+
         // Read LEFT_STATUS
         const leftInitStatus = await device.readCharacteristicForService(
           WINK_SERVICE_UUID,
@@ -477,7 +480,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               if (decoded === "0")
                 CustomOEMButtonStore.remove(i as Presses);
               else
-                CustomOEMButtonStore.set(i as Presses, buttonBehaviorMapReversed[parseInt(decoded) as Presses]);
+                //@ts-ignore (not presses lol)
+                CustomOEMButtonStore.set(i as Presses, buttonBehaviorMapReversed[parseInt(decoded)]);
             } else {
               // Custom Action. First needs to be parsed into a CommandOutput object
               const actionsParts = decoded.split("-");
