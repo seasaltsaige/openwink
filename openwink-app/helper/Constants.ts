@@ -129,6 +129,7 @@ export const buttonBehaviorMap = {
   "Both Blink x2": 7,
   "Left Wave": 8,
   "Right Wave": 9,
+  "Sleepy Eye": 10,
 } as const;
 
 export const buttonBehaviorMapReversed = {
@@ -141,6 +142,7 @@ export const buttonBehaviorMapReversed = {
   7: "Both Blink x2",
   8: "Left Wave",
   9: "Right Wave",
+  10: "Sleepy Eye",
 } as const;
 
 export enum ButtonStatus {
@@ -175,6 +177,7 @@ export enum BehaviorEnum {
   BOTH_BLINK_X2,
   LEFT_WAVE,
   RIGHT_WAVE,
+  SLEEPY_EYE,
 }
 
 type HexNumber = `#${string}`;
