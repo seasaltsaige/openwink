@@ -13,4 +13,7 @@ void leftWink();
 void rightWink();
 void leftWave();
 void rightWave();
-void updateHeadlightChars();
+
+bool isSleepy();
+void sleepyEye(bool left, bool right);
+void sleepyReset(bool left, bool right);
