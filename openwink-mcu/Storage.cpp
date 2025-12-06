@@ -15,11 +15,10 @@ void Storage::begin(const char *name) {
 void Storage::getFromStorage() {
   char key[15];
 
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < 20; i++) {
     snprintf(key, sizeof(key), "presses-%d", i);
     String val = storage.getString(key, String(customButtonPressArrayDefaults[i].c_str()));
     customButtonPressArray[i] = string(val.c_str());
-    Serial.printf("Index %d = %s :: ", i, val);
   }
   Serial.println();
 
@@ -47,7 +46,7 @@ void Storage::getFromStorage() {
   leftSleepyValue = left;
   rightSleepyValue = right;
 
-  string orientationKey = "headlight-orientation-key";
+  string orientationKey = "orien-key";
   bool storedOrientationValue = storage.getBool(orientationKey.c_str(), false);
 
   if (storedOrientationValue) {
@@ -80,7 +79,7 @@ void Storage::reset() {
   storage.remove(rightSleepyHeadlightKey);
   const char *headlightBypassKey = "headlight-bypass-key";
   storage.remove(headlightBypassKey);
-  const char *orientationKey = "headlight-orientation-key";
+  const char *orientationKey = "orien-key";
   storage.remove(orientationKey);
 
   char pressesKey[15];
@@ -100,7 +99,7 @@ void Storage::reset() {
   OUT_PIN_RIGHT_DOWN = 12;
   OUT_PIN_RIGHT_UP = 13;
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 9; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
   }
 }
@@ -127,10 +126,8 @@ void Storage::setHeadlightBypass(bool bypass) {
 // TRUE = OUTSIDE
 // FALSE (DEFAULT) = CABIN
 void Storage::setHeadlightOrientation(bool orientation) {
-  string key = "headlight-orientation-key";
-  bool storedValue = storage.getBool(key.c_str(), false);
-  if (storedValue != orientation)
-    storage.putBool(key.c_str(), orientation);
+  string key = "orien-key";
+  storage.putBool(key.c_str(), orientation);
 
 
   if (orientation) {
@@ -147,8 +144,8 @@ void Storage::setHeadlightOrientation(bool orientation) {
 }
 
 bool Storage::getHeadlightOrientation() {
-  string key = "headlight-orientation-key";
-  bool storedValue = storage.getBool(key.c_str(), false);
+  string orien_key = "orien-key";
+  bool storedValue = storage.getBool(orien_key.c_str(), false);
   return storedValue;
 }
 
