@@ -84,7 +84,7 @@ void ButtonHandler::readWakeUpReason() {
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
-  if (numberOfPresses != 11 && numberOfPresses != 19) {
+  if (customButtonPressArray[numberOfPresses] == "0" && numberOfPresses != 11 && numberOfPresses != 19) {
     for (int i = 0; i < 9; i++) {
       if (customButtonPressArray[i] == "0") {
         numberOfPresses = i - 1;
@@ -155,7 +155,8 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     bool wasSleepy = false;
     if (isSleepy()) {
       sleepyReset(true, true);
-      wasSleepy = true;
+      if (parsed != 1)
+        wasSleepy = true;
     }
 
     BLE::setBusy(true);

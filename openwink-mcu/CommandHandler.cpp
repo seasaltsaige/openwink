@@ -27,16 +27,17 @@ void CommandHandler::parseCustomCommand(string command) {
 }
 
 void CommandHandler::handleQueuedCommand() {
+  BLE::setBusy(true);
+  int command = queuedCommand;
 
-  
   bool wasSleepy = false;
   if (isSleepy()) {
-    wasSleepy = true;
+    if (command != 1 && command != 2)
+      wasSleepy = true;
     sleepyReset(true, true);
   }
 
-  BLE::setBusy(true);
-  int command = queuedCommand;
+
   queuedCommand = -1;
 
   switch (command) {
@@ -112,7 +113,7 @@ void CommandHandler::handleQueuedCommand() {
       break;
   }
 
-  if (wasSleepy) 
+  if (wasSleepy)
     sleepyEye(true, true);
 
   setAllOff();
