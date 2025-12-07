@@ -22,12 +22,12 @@ export function SleepyEyeSettings() {
   const {
     leftStatus,
     rightStatus,
+    leftSleepyEye,
+    rightSleepyEye,
   } = useBleMonitor();
 
   const {
-    leftSleepyEye,
-    rightSleepyEye,
-    setSleepyEyeValues
+    setSleepyEyeValues,
   } = useBleCommand();
 
   const route = useRoute();

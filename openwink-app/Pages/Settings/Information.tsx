@@ -20,7 +20,6 @@ import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
-import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Information() {
 
@@ -35,15 +34,12 @@ export function Information() {
   } = useBleConnection();
 
   const {
-    oemCustomButtonEnabled,
-    waveDelayMulti,
-    buttonDelay,
-  } = useBleCommand();
-
-  const {
     firmwareVersion,
     leftStatus,
     rightStatus,
+    oemCustomButtonEnabled,
+    waveDelayMulti,
+    buttonDelay,
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);

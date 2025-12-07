@@ -19,7 +19,8 @@ export function WaveDelaySettings() {
 
   const { colorTheme, theme } = useColorTheme();
 
-  const { waveDelayMulti, updateWaveDelayMulti } = useBleCommand();
+  const { updateWaveDelayMulti } = useBleCommand();
+  const { waveDelayMulti } = useBleMonitor();
   const {
     isConnected
   } = useBleConnection();
