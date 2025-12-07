@@ -185,8 +185,16 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
 }
 int nextIndex = 1;
 void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  // if 9 index read delay
   if (nextIndex == 9) {
+    pChar->setValue(to_string(maxTimeBetween_ms));
+    nextIndex++;
+    return;
+    // if 10 index read status
+  } else if (nextIndex == 10) {
+    pChar->setValue(customButtonStatusEnabled ? "true" : "false");
     nextIndex = 1;
+    return;
   }
 
   pChar->setValue(customButtonPressArray[nextIndex]);
