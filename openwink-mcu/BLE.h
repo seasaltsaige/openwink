@@ -71,7 +71,7 @@ public:
       headlightOrientationChar->setValue("1");
     else 
       headlightOrientationChar->setValue("0");
-    // headlightOrientationChar->notify();
+    headlightOrientationChar->notify();
   }
   static void setCustomStatus(int value) {
     if (value == 0)

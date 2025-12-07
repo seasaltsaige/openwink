@@ -108,24 +108,22 @@ void BLE::initServiceCharacteristics() {
 
   longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
   customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
   clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-  headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
-  // TODO: set headlight orientation from storage
 
-  headlightMotionChar->setValue(HEADLIGHT_MOVEMENT_DELAY);
-  headlightDelayChar->setValue(headlightMultiplier);
-  headlightBypassChar->setValue(bypassHeadlightOverride);
-  headlightOrientationChar->setValue(Storage::getHeadlightOrientation());
+  headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  headlightDelayChar->setValue(to_string(headlightMultiplier));
+  headlightBypassChar->setValue(bypassHeadlightOverride ? "true" : "false");
+  headlightOrientationChar->setValue(Storage::getHeadlightOrientation() ? "1" : "0");
 
   customButtonChar->setValue(customButtonPressArray[1]);
-
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   sleepSettingsChar->setValue(sleepCharStart);
 
