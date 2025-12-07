@@ -1,4 +1,4 @@
 {
-  "version": "0.6.0",
-  "description": "New Feature! Headlight Orientation. You can now choose which orientation left/right headlights reference, allowing you to make sense of the motion in an intuative way to you."
+  "version": "0.7.0",
+  "description": "You are now able to utilize the Dash Button to enter Sleepy Eye mode, along with swap headlight orientation!"
 }
