@@ -20,7 +20,7 @@ using namespace std;
 
 RTC_DATA_ATTR double headlightMultiplier = 1.0;
 
-vector<string> customButtonPressArray(9, "0");
+vector<string> customButtonPressArray(20, "0");
 
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
@@ -84,81 +84,12 @@ void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
 }
 
 void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  // if headlights are fully up or down, ignore command
-  if ((leftStatus == 1 || leftStatus == 0) && (rightStatus == 1 || rightStatus == 0)) return;
-
-  double percentageToUpLeft = 1 - (leftSleepyValue / 100);
-  double percentageToUpRight = 1 - (rightSleepyValue / 100);
-  unsigned long initialTime = millis();
-
-  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-  bool leftStatusReached = false;
-  bool rightStatusReached = false;
-
-  while (!leftStatusReached || !rightStatusReached) {
-    unsigned long timeElapsed = (millis() - initialTime);
-    if (!leftStatusReached && timeElapsed >= (percentageToUpLeft * HEADLIGHT_MOVEMENT_DELAY)) {
-      leftStatusReached = true;
-      digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    }
-    if (!rightStatusReached && timeElapsed >= (percentageToUpRight * HEADLIGHT_MOVEMENT_DELAY)) {
-      rightStatusReached = true;
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    }
-  }
-
-  setAllOff();
-
-  leftStatus = 1;
-  rightStatus = 1;
-
-  BLE::updateHeadlightChars();
+  sleepyReset(true, true);
 }
 
 // Send sleep command
 void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-
-  // If not a full step (fully down or fully up) return; as it is already sleepy
-  if ((leftStatus != 1 && leftStatus != 0) || (rightStatus != 1 && rightStatus != 0))
-    return;
-
-  double left = leftSleepyValue / 100;
-  double right = rightSleepyValue / 100;
-
-  if (leftStatus == 1 || rightStatus == 1) {
-    bothDown();
-    setAllOff();
-  }
-
-  unsigned long initialTime = millis();
-
-  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-  bool leftStatusReached = false;
-  bool rightStatusReached = false;
-
-  // Delay loop for both headlights
-  while (!leftStatusReached || !rightStatusReached) {
-    unsigned long timeElapsed = (millis() - initialTime);
-    if (!leftStatusReached && timeElapsed >= (left * HEADLIGHT_MOVEMENT_DELAY)) {
-      leftStatusReached = true;
-      digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    }
-    if (!rightStatusReached && timeElapsed >= (right * HEADLIGHT_MOVEMENT_DELAY)) {
-      rightStatusReached = true;
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    }
-  }
-
-  setAllOff();
-
-  leftStatus = leftSleepyValue + 10;
-  rightStatus = rightSleepyValue + 10;
-
-  BLE::updateHeadlightChars();
+  sleepyEye(true, true);
 }
 
 // Updates headlight status
@@ -252,9 +183,16 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     Storage::setDelay(maxTimeBetween_ms);
   }
 }
-int nextIndex = 2;
+int nextIndex = 1;
 void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  // if 9 index read delay
   if (nextIndex == 9) {
+    pChar->setValue(to_string(maxTimeBetween_ms));
+    nextIndex++;
+    return;
+    // if 10 index read status
+  } else if (nextIndex == 10) {
+    pChar->setValue(customButtonStatusEnabled ? "true" : "false");
     nextIndex = 1;
     return;
   }

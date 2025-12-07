@@ -67,13 +67,6 @@ export type BleCommandContextType = {
 
   // State
   activeCommandName: string | null;
-  oemCustomButtonEnabled: boolean;
-  headlightBypass: boolean;
-  leftRightSwapped: boolean;
-  buttonDelay: number;
-  waveDelayMulti: number;
-  leftSleepyEye: number;
-  rightSleepyEye: number;
 };
 
 export const BleCommandContext = createContext<BleCommandContextType | null>(null);
@@ -98,16 +91,20 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     leftStatus,
     rightStatus,
     motionValue,
+    leftRightSwapped,
+    waveDelayMulti,
+
+
+    setLeftSleepyEye,
+    setRightSleepyEye,
+    setOemCustomButtonEnabled,
+    setButtonDelay,
+    setWaveDelayMulti,
+    setLeftRightSwapped,
+    setHeadlightBypass,
   } = useBleMonitor();
 
-  // Settings state
-  const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
-  const [headlightBypass, setHeadlightBypass] = useState(false);
-  const [buttonDelay, setButtonDelay] = useState(500);
-  const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
-  const [leftSleepyEye, setLeftSleepyEye] = useState(50);
-  const [rightSleepyEye, setRightSleepyEye] = useState(50);
-  const [leftRightSwapped, setLeftRightSwapped] = useState(false);
+
 
   // Track command execution
   const [activeCommandName, setActiveCommandName] = useState<string | null>(null);
@@ -472,11 +469,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Update OEM button preset for specific number of presses
-  // TODO: Should allow setting of custom command sequences as well.
   const updateOEMButtonPresets = useCallback(
     async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
-      // temp
-      // if (typeof to === "object") return;
 
       if (!device) {
         console.warn('No device connected');
@@ -739,14 +733,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     resetModule,
     setOEMButtonHeadlightBypass,
     swapLeftRight,
-    leftRightSwapped,
-    headlightBypass,
     activeCommandName,
-    oemCustomButtonEnabled,
-    buttonDelay,
-    waveDelayMulti,
-    leftSleepyEye,
-    rightSleepyEye,
   };
 
   return <BleCommandContext.Provider value={value}>{children}</BleCommandContext.Provider>;

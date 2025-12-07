@@ -20,9 +20,7 @@ unsigned long motionTimer = 0;
 
 unsigned long ButtonHandler::mainTimer = 0;
 unsigned long ButtonHandler::buttonTimer = 0;
-unsigned long ButtonHandler::resetTimer = 0;
 int ButtonHandler::buttonPressCounter = 0;
-int ButtonHandler::resetPressCounter = 0;
 bool ButtonHandler::customCommandActive = false;
 bool ButtonHandler::resetArmed = false;
 
@@ -85,6 +83,17 @@ void ButtonHandler::readWakeUpReason() {
 }
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
+
+  if (customButtonPressArray[numberOfPresses] == "0" && numberOfPresses != 11 && numberOfPresses != 19) {
+    for (int i = 0; i < 9; i++) {
+      if (customButtonPressArray[i] == "0") {
+        numberOfPresses = i - 1;
+        break;
+      }
+    }
+    if (numberOfPresses >= 9) numberOfPresses = 8;
+  }
+
   // Uses above array of items
   string response = customButtonPressArray[numberOfPresses];
 
@@ -93,11 +102,65 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   // thus sending to CommandHandler to parse and execute.
 
   Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
+  Serial.printf("Preset Value: %s\n", response.c_str());
 
-  BLE::setBusy(true);
+  if (response == "10") {
+    if (isSleepy())
+      sleepyReset(true, true);
+    else
+      sleepyEye(true, true);
+
+    return;
+  } else if (response == "12") {
+    bool swap = Storage::getHeadlightOrientation();
+    Storage::setHeadlightOrientation(!swap);
+    BLE::setSwapStatus(!swap);
+    BLE::setBusy(true);
+    leftWink();
+    setAllOff();
+    BLE::setBusy(false);
+
+    return;
+  } else if (response == "20") {
+
+    Storage::reset();
+
+    // reset sequence to visually indicate reset success
+    leftWink();
+    setAllOff();
+    rightWink();
+    setAllOff();
+    bothBlink();
+    setAllOff();
+
+    Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
+
+    // reset wakeup sources
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+    // enable sleep timer
+    esp_sleep_enable_timer_wakeup(sleepTime_us);
+
+    int buttonInput = digitalRead(OEM_BUTTON_INPUT);
+    // enable gpio wakeup, depending on current state
+    if (buttonInput == 1)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+    else if (buttonInput == 0)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+    return;
+  }
 
   if (response.length() == 1) {
     int parsed = stoi(response);
+    bool wasSleepy = false;
+    if (isSleepy()) {
+      sleepyReset(true, true);
+      if (parsed != 1)
+        wasSleepy = true;
+    }
+
+    BLE::setBusy(true);
+
     switch (parsed) {
       case 1:
         if (initialButton == 1) {
@@ -110,6 +173,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
         leftStatus = initialButton;
         break;
 
+      // TODO: If in sleepy eye, exit, execute, re-enter SAME WITH OTHER WAYS OF EXECUTING COMMANDS
       case 2:
         leftWink();
         break;
@@ -145,7 +209,10 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
         rightWave();
         break;
     }
-  } else 
+
+    if (wasSleepy)
+      sleepyEye(true, true);
+  } else
     queuedCustomCommand = response;
 
   setAllOff();
@@ -177,22 +244,7 @@ void ButtonHandler::loopButtonHandler() {
     debounceOccurred = true;
 
     Serial.println("Debounce occurred");
-    // if custom button turned on
-    if (customButtonStatusEnabled) {
-      // add to counter
-      buttonPressCounter++;
-
-      // if counter reaches array limit, execute last one
-      if (buttonPressCounter == 10) {
-        // Limit Reached - Only 10 items in array
-        handleButtonPressesResponse(9);
-        buttonPressCounter = 0;
-        // otherwise, if a 0 is seen, execute the one before it.
-      } else if (customButtonPressArray[buttonPressCounter - 1] == "0") {
-        handleButtonPressesResponse(buttonPressCounter - 2);
-        buttonPressCounter = 0;
-      }
-    }
+    buttonPressCounter++;
     initialButton = buttonInput;
     // since debounce just happened, state would need to switch again for this
     // to recheck.
@@ -222,15 +274,8 @@ void ButtonHandler::loopButtonHandler() {
     if (customButtonStatusEnabled) {
       // add to counter
       buttonPressCounter++;
-      if (buttonPressCounter == 10) {
-        // Limit Reached - Only 10 items in array
-        handleButtonPressesResponse(9);
-        buttonPressCounter = 0;
-      } else if (customButtonPressArray[buttonPressCounter - 1] == "0") {
-        handleButtonPressesResponse(buttonPressCounter - 2);
-        buttonPressCounter = 0;
-      }
     } else {
+      buttonPressCounter++;
       if (initialButton == 0) {
         bothDown();
       } else {
@@ -240,12 +285,17 @@ void ButtonHandler::loopButtonHandler() {
       initialButton = !initialButton;
     }
 
+    Serial.printf("Press Count: %d\n", buttonPressCounter);
+
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
-  } else if (buttonPressCounter > 0 && customButtonStatusEnabled && (millis() - buttonTimer) > maxTimeBetween_ms) {
+  } else if (buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) {
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
-    handleButtonPressesResponse(buttonPressCounter - 1);
+
+    if (customButtonStatusEnabled || (!customButtonStatusEnabled && (buttonPressCounter == 12 || buttonPressCounter == 20)))
+      handleButtonPressesResponse(buttonPressCounter - 1);
+
     buttonPressCounter = 0;
   }
 
@@ -286,71 +336,5 @@ void ButtonHandler::updateButtonSleep() {
     Serial.println("Entering deep sleep...");
 
     if (!BLE::getDeviceConnected()) esp_deep_sleep_start();
-  }
-}
-
-void ButtonHandler::handleResetLogic() {
-  if (resetPressCounter == 0 && initialButton != LOW) return;
-
-  int buttonValue = digitalRead(OEM_BUTTON_INPUT);
-  if (buttonValue == initialButton) return;
-  // TODO: Decide if unnecessary or not. Potentially sequence to arm, then maybe
-  // 5 presses in a row or something to confirm. (any delay withing 30 seconds
-  // total)
-  resetArmed = true;
-  // Initial Press (must be low state)
-  if (resetPressCounter == 0) {
-    Serial.println("Reset Press 1.");
-    resetTimer = millis();
-    resetPressCounter++;
-  } else {
-    // presss 2, and 3
-    if (resetPressCounter < 3 && (millis() - resetTimer) > 3500 && (millis() - resetTimer) < 6500) {
-      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
-      resetTimer = millis();
-      resetPressCounter++;
-      // last press 4
-    } else if (resetPressCounter == 3 && (millis() - resetTimer) > 5500 && (millis() - resetTimer) < 8500) {
-      // Reset activated
-      Serial.printf("Reset Press %d.\n", resetPressCounter + 1);
-      Storage::clearWhitelist();
-      NimBLEDevice::deleteAllBonds();
-      // reset sequence to visually indicate reset success
-      leftWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-
-      rightWink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-
-      bothBlink();
-      delay(HEADLIGHT_MOVEMENT_DELAY);
-      setAllOff();
-
-      Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
-
-      // reset wakeup sources
-      esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-      // enable sleep timer
-      esp_sleep_enable_timer_wakeup(sleepTime_us);
-
-      int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-      // enable gpio wakeup, depending on current state
-      if (buttonInput == 1)
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
-      else if (buttonInput == 0)
-        esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
-
-      Serial.println(
-        "Entering deep sleep from reset. Wake with gpio input/timer...");
-      esp_deep_sleep_start();
-
-    } else {
-      // Something pressed incorrectly (timing perhaps) resets reset sequence.
-      resetTimer = 0;
-      resetPressCounter = 0;
-      resetArmed = false;
-    }
   }
 }

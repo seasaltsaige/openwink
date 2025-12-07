@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -20,8 +20,8 @@ import { ConfirmationModal, LongButton, HeaderWithBackButton } from "../../../Co
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
-import { HeadlightOrientationStore } from "../../../Storage/HeadlightOrientationStore";
 import Tooltip from "react-native-walkthrough-tooltip";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -54,21 +54,21 @@ export function ModuleSettings() {
     manager,
     isScanning,
     isConnecting,
-    scanForModule,
+    isConnected,
     autoConnectEnabled,
+    scanForModule,
     setAutoConnect,
     unpair,
   } = useBleConnection();
 
   const {
-    isConnected,
-  } = useBleConnection();
+    leftRightSwapped,
+  } = useBleMonitor();
 
   const {
     enterDeepSleep,
     resetModule,
     swapLeftRight,
-    leftRightSwapped
   } = useBleCommand();
 
   const route = useRoute();
@@ -79,12 +79,14 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
   const [autoConnectOn, setAutoConnectOn] = useState(autoConnectEnabled);
   const [swapOn, setSwapOn] = useState(leftRightSwapped);
 
   const [swapTooltipOpen, setSwapTooltipOpen] = useState(false);
 
+  useEffect(() => {
+    setSwapOn(leftRightSwapped);
+  }, [leftRightSwapped]);
 
   const deleteStoredModuleData = async () => {
 

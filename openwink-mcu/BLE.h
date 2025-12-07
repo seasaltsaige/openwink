@@ -66,6 +66,13 @@ public:
   static void setFirmwareUpdateStatus(string status);
   static void setFirmwarePercent(string stringPercentage);
   static void setMotionInValue(int value);
+  static void setSwapStatus(bool swap) {
+    if (swap)
+      headlightOrientationChar->setValue("1");
+    else 
+      headlightOrientationChar->setValue("0");
+    headlightOrientationChar->notify();
+  }
   static void setCustomStatus(int value) {
     if (value == 0)
       customCommandChar->setValue("0");

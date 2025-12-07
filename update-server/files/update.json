@@ -1,4 +1,4 @@
 {
-  "version": "0.6.0",
-  "description": "New Feature! Headlight Orientation. You can now choose which orientation left/right headlights reference, allowing you to make sense of the motion in an intuative way to you."
+  "version": "0.7.1",
+  "description": "Settings are now synced on start, and monitered correctly."
 }

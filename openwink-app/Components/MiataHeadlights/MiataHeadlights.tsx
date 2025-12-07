@@ -7,8 +7,11 @@ import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export const MiataHeadlights = () => {
   const { themeName, colorTheme } = useColorTheme();
-  const { leftStatus, rightStatus } = useBleMonitor();
-  const { leftRightSwapped } = useBleCommand();
+  const {
+    leftStatus,
+    rightStatus,
+    leftRightSwapped
+  } = useBleMonitor();
 
   const statusToPercent = (headlightStatus: number) => {
     if (headlightStatus === 0) return 0; // Closed

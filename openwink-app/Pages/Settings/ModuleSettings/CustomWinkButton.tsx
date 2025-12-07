@@ -14,6 +14,7 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import Tooltip from "react-native-walkthrough-tooltip";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const MIN = 100;
 const MAX = 750;
@@ -24,14 +25,17 @@ export function CustomWinkButton() {
 
   const { colorTheme, theme } = useColorTheme();
   const {
-    oemCustomButtonEnabled,
     setOEMButtonStatus,
-    headlightBypass,
     setOEMButtonHeadlightBypass,
-    buttonDelay,
     updateButtonDelay,
     updateOEMButtonPresets
   } = useBleCommand();
+
+  const {
+    buttonDelay,
+    headlightBypass,
+    oemCustomButtonEnabled,
+  } = useBleMonitor();
 
   const navigation = useNavigation();
   const route = useRoute();
