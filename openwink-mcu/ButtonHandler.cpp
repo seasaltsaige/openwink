@@ -84,13 +84,14 @@ void ButtonHandler::readWakeUpReason() {
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
-  if (buttonPressCounter >= 9 && buttonPressCounter != 12 && buttonPressCounter != 20) {
+  if (numberOfPresses != 11 && numberOfPresses != 19) {
     for (int i = 0; i < 9; i++) {
       if (customButtonPressArray[i] == "0") {
-        buttonPressCounter = i - 1;
+        numberOfPresses = i - 1;
+        break;
       }
     }
-    if (buttonPressCounter >= 9) buttonPressCounter = 8;
+    if (numberOfPresses >= 9) numberOfPresses = 8;
   }
 
   // Uses above array of items
