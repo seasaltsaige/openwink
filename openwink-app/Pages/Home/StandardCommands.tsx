@@ -39,7 +39,7 @@ export function StandardCommands() {
   } = useBleMonitor();
 
   const canSendMainCommands =
-    deviceConnected && !headlightsBusy && isSleepyEyeActive;
+    deviceConnected && !headlightsBusy;
 
   const canResetHeadlightPositions =
     deviceConnected && !headlightsBusy && !isSleepyEyeActive;
@@ -76,8 +76,8 @@ export function StandardCommands() {
                       {
                         backgroundColor:
                           !canSendMainCommands ? colorTheme.disabledButtonColor
-                          : pressed ? colorTheme.buttonColor
-                          : colorTheme.backgroundSecondaryColor,
+                            : pressed ? colorTheme.buttonColor
+                              : colorTheme.backgroundSecondaryColor,
                       },
                     ]}
                     key={`${val.value}-${j}`}
@@ -136,8 +136,8 @@ export function StandardCommands() {
                     width: "48%",
                     backgroundColor:
                       !canSendMainCommands ? colorTheme.disabledButtonColor
-                      : pressed ? colorTheme.buttonColor
-                      : colorTheme.backgroundSecondaryColor,
+                        : pressed ? colorTheme.buttonColor
+                          : colorTheme.backgroundSecondaryColor,
                   },
                 ]}
                 key={98}
@@ -154,8 +154,8 @@ export function StandardCommands() {
                     width: "48%",
                     backgroundColor:
                       !canSendMainCommands ? colorTheme.disabledButtonColor
-                      : pressed ? colorTheme.buttonColor
-                      : colorTheme.backgroundSecondaryColor,
+                        : pressed ? colorTheme.buttonColor
+                          : colorTheme.backgroundSecondaryColor,
                   },
                 ]}
                 key={99}
@@ -189,8 +189,8 @@ export function StandardCommands() {
                       width: "48%",
                       backgroundColor:
                         !canSendMainCommands ? colorTheme.disabledButtonColor
-                        : pressed ? colorTheme.buttonColor
-                        : colorTheme.backgroundSecondaryColor,
+                          : pressed ? colorTheme.buttonColor
+                            : colorTheme.backgroundSecondaryColor,
                     },
                   ]}
                   key={105}
@@ -208,8 +208,8 @@ export function StandardCommands() {
                       backgroundColor:
                         !canResetHeadlightPositions ?
                           colorTheme.disabledButtonColor
-                        : pressed ? colorTheme.buttonColor
-                        : colorTheme.backgroundSecondaryColor,
+                          : pressed ? colorTheme.buttonColor
+                            : colorTheme.backgroundSecondaryColor,
                     },
                   ]}
                   key={106}
