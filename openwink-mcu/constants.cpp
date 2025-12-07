@@ -4,8 +4,9 @@
 
 #include "esp_attr.h"
 
-const std::string customButtonPressArrayDefaults[9] = { "1", "0", "0", "0", "0",
-                                                        "0", "0", "0", "0" };
+const std::string customButtonPressArrayDefaults[20] = { "1", "0", "0", "0", "0", "0", "0", "0", "0",  
+                                                                // swap                                 
+                                                        "0", "0", "12", "0", "0", "0", "0", "0", "0", "0", "20"};
 const int maxTimeBetween_msDefault = 500;
 const int sleepTime_us = 15 * 1000 * 1000;
 const int advertiseTime_ms = 750;
