@@ -1,4 +1,4 @@
 {
-  "version": "0.7.0",
-  "description": "You are now able to utilize the Dash Button to enter Sleepy Eye mode, along with swap headlight orientation!"
+  "version": "0.7.1",
+  "description": "Settings are now synced on start, and monitered correctly."
 }
