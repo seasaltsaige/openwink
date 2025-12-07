@@ -34,7 +34,7 @@ void setup() {
   Storage::begin("oem-store");
   Storage::getFromStorage();
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-  
+
   BLE::init("OpenWink");
 
   ButtonHandler::setupGPIO();
@@ -57,7 +57,6 @@ void setup() {
   //   1,
   //   nullptr,
   //   1);
-
 }
 
 void motionInMonitorTask(void* params) {
@@ -81,8 +80,6 @@ void loop() {
 
   if (queuedCustomCommand != "")
     CommandHandler::handleQueuedCustomCommand();
-
-  ButtonHandler::handleResetLogic();
   ButtonHandler::loopButtonHandler();
   ButtonHandler::updateButtonSleep();
 }
