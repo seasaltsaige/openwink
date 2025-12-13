@@ -73,7 +73,7 @@ This project serves as an open source (though purchasable) alternative to the po
 - Open source firmware developed in C++, allowing for custom modification and community contributions.
 
 ## Purchasing
-For more information about purchasing a pre-made module, please visit [miatawink.tech](https://miatawink.tech/).
+Coming Soon...
 
 
 ### Support the Project [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/seasaltsaige)
