@@ -37,10 +37,6 @@ void setup() {
 
   BLE::init("OpenWink");
 
-  ButtonHandler::setupGPIO();
-  ButtonHandler::readWakeUpReason();
-  ButtonHandler::readOnWakeup();
-
   setCpuFrequencyMhz(80);
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
@@ -57,6 +53,11 @@ void setup() {
   //   1,
   //   nullptr,
   //   1);
+
+  
+  ButtonHandler::setupGPIO();
+  ButtonHandler::readWakeUpReason();
+  ButtonHandler::readOnWakeup();
 }
 
 void motionInMonitorTask(void* params) {
@@ -77,9 +78,9 @@ void loop() {
     // handle sent command
     CommandHandler::handleQueuedCommand();
   }
-
   if (queuedCustomCommand != "")
     CommandHandler::handleQueuedCustomCommand();
+
   ButtonHandler::loopButtonHandler();
   ButtonHandler::updateButtonSleep();
 }
