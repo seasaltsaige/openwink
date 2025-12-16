@@ -1,4 +1,4 @@
 {
-  "version": "0.7.1",
-  "description": "Settings are now synced on start, and monitered correctly."
+  "version": "0.7.3",
+  "description": "Bug Fix: Custom Button Sequence on wake should hopefully function more consistently now."
 }
