@@ -239,7 +239,8 @@ export function EditQuickLinksModal({
                   {item.title}
                 </Text>
                 <Text style={{
-                  color: item.visible ? colorTheme.disabledButtonColor : `${colorTheme.disabledButtonColor}80`
+                  color: item.visible ? colorTheme.disabledButtonColor : `${colorTheme.disabledButtonColor}80`,
+                  fontFamily: "IBMPlexSans_400Regular"
                 }}>
                   {item.visible ? "Visible on home page" : "Hidden from home page"}
                 </Text>
