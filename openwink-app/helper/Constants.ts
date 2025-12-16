@@ -317,3 +317,6 @@ export namespace ColorTheme {
     textColor: "#ffffff",
   }
 }
+
+// TODO: Update to be adaptive with screen width
+export const SVG_WIDTH = 300;
