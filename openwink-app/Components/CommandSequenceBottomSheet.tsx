@@ -58,7 +58,7 @@ export function CommandSequenceBottomSheet({
       onClose={close}
       enablePanDownToClose
       backgroundStyle={{ backgroundColor: colorTheme.backgroundSecondaryColor }}
-      handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
+      handleIndicatorStyle={{ backgroundColor: colorTheme.headerTextColor, width: "15%", marginTop: 5 }}
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView
