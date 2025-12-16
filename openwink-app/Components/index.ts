@@ -14,3 +14,5 @@ export * from "./InfoBox";
 export * from "./MiataHeadlights";
 export * from "./ModalBlurBackground";
 export * from "./CustomButtonActionModal";
+export * from "./InfoPageHeader";
+export * from "./AccordionDropdown";
