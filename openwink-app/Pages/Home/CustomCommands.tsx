@@ -37,7 +37,9 @@ export function CustomCommands() {
   } = useBleConnection();
 
   const {
-    headlightsBusy
+    headlightsBusy,
+    leftStatus,
+    rightStatus
   } = useBleMonitor();
 
   const { activeCommandName, customCommandInterrupt, sendCustomCommand } =
@@ -115,7 +117,10 @@ export function CustomCommands() {
       />
 
       <View style={theme.contentContainer}>
-        <MiataHeadlights />
+        <MiataHeadlights
+          leftStatus={leftStatus}
+          rightStatus={rightStatus}
+        />
         <View
           style={{
             flexDirection: "row",
