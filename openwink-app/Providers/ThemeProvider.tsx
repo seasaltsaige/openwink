@@ -540,12 +540,6 @@ function createThemeStyles(themeColors: ThemeColors) {
     },
     tooltipContainer: {
       backgroundColor: themeColors.backgroundSecondaryColor,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "auto",
-      width: "auto",
       borderRadius: 7
     },
     tooltipContainerText: {
