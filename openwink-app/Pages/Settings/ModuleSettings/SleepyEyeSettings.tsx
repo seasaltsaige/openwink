@@ -5,7 +5,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import VerticalSlider from "rn-vertical-slider-matyno";
 
-import { TooltipHeader, HeaderWithBackButton, MiataHeadlights } from "../../../Components";
+import { TooltipHeader, HeaderWithBackButton, MiataHeadlights, SettingsToolbar } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
@@ -81,8 +81,6 @@ export function SleepyEyeSettings() {
       );
     }, [disabledStatus])
   );
-
-  console.log(tutorialWalkthroughIndex);
 
 
   const up = useAnimatedStyle(() => ({
@@ -751,6 +749,7 @@ export function SleepyEyeSettings() {
               justifyContent: "center",
               alignItems: "center",
               columnGap: 10,
+              marginBottom: 10,
             }}
             hitSlop={10}
             onPress={() => setCoarseAdjust((old) => !old)}
@@ -782,40 +781,6 @@ export function SleepyEyeSettings() {
           </Pressable>
         </Tooltip>
       </View>
-
-
-      <View style={theme.rangeSliderButtonsView}>
-        {/* RESET */}
-        <Pressable
-          style={({ pressed }) => disabledStatus ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-          disabled={disabledStatus || tutorialWalkthroughIndex !== -1}
-          onPress={() => {
-            setSleepyEyeValues(50, 50);
-            dispatchHeadlightPosition({ side: "left", percentage: 50 });
-            dispatchHeadlightPosition({ side: "right", percentage: 50 });
-          }}
-        // onPress={() => { updateButtonDelay(500); setMin(500); }}
-        >
-          <Text style={theme.rangeSliderButtonsText}>
-            Reset Value
-          </Text>
-          <IonIcons size={22} name="reload-outline" color={colorTheme.textColor} />
-        </Pressable>
-
-        {/* SAVE */}
-        <Pressable
-          style={({ pressed }) => disabledStatus ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons}
-          disabled={disabledStatus}
-          onPress={() => setSleepyEyeValues(headlightPosition.left, headlightPosition.right)}
-        // onPress={() => updateButtonDelay(min)}
-        >
-          <Text style={theme.rangeSliderButtonsText}>
-            Save Value
-          </Text>
-          <IonIcons size={22} name="download-outline" color={colorTheme.textColor} />
-        </Pressable>
-      </View>
-
 
       <TooltipHeader
         useModal={false}
@@ -879,6 +844,19 @@ export function SleepyEyeSettings() {
         }
 
       </View>
+
+
+      <SettingsToolbar
+        disabled={disabledStatus}
+        reset={() => {
+          setSleepyEyeValues(50, 50);
+          dispatchHeadlightPosition({ side: "left", percentage: 50 });
+          dispatchHeadlightPosition({ side: "right", percentage: 50 });
+        }}
+        save={() => setSleepyEyeValues(headlightPosition.left, headlightPosition.right)}
+        resetText="Reset Value"
+        saveText="Save Value"
+      />
 
     </SafeAreaView>
   )
