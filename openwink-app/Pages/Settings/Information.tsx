@@ -40,6 +40,7 @@ export function Information() {
     oemCustomButtonEnabled,
     waveDelayMulti,
     buttonDelay,
+    leftRightSwapped,
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -74,6 +75,7 @@ export function Information() {
 
   const deviceSettings = useMemo(() => ({
     "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
+    "Headlight Orientation": leftRightSwapped ? "External" : "Internal",
     "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
     "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(2)} ms`,
     "Press Interval": `${buttonDelay} ms`,
