@@ -256,31 +256,32 @@ export namespace ColorTheme {
   export const classicRed: ThemeColors = {
     primary: "#c8102e",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#c8102e", // Classic Red
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
+  // TODO: Needs work on pill color
   export const sunburstYellow: ThemeColors = {
     primary: "#ffcc00",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#b0b0b069",
+    dropdownColor: "#2F2F32",
     buttonColor: "#ffcc00", // Sunburst Yellow
     disabledButtonColor: "#878787",
     buttonTextColor: "#141414",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
@@ -288,15 +289,15 @@ export namespace ColorTheme {
   export const marinerBlue: ThemeColors = {
     primary: "#0033a0",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#0033a0", // Marina Blue
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
@@ -304,15 +305,15 @@ export namespace ColorTheme {
   export const britishRacingGreen: ThemeColors = {
     primary: "#004d26",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#004d26", // British Racing Green
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
