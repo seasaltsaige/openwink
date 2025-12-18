@@ -45,26 +45,9 @@ void setup() {
 
   BLE::start();
 
-  // xTaskCreatePinnedToCore(
-  //   motionInMonitorTask,
-  //   "MotionInTask",
-  //   4096,
-  //   nullptr,
-  //   1,
-  //   nullptr,
-  //   1);
-
-  
   ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();
-}
-
-void motionInMonitorTask(void* params) {
-  for (;;) {
-    ButtonHandler::handleBusyInput();
-    vTaskDelay(pdMS_TO_TICKS(10));
-  }
 }
 
 void loop() {

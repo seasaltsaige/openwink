@@ -15,7 +15,7 @@ extern int OUT_PIN_RIGHT_UP;
 // Green wire in wiring harness, indicating busy when high
 #define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
 
-#define FIRMWARE_VERSION "0.7.4"
+#define FIRMWARE_VERSION "0.7.6"
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
