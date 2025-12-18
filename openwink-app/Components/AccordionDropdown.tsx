@@ -48,6 +48,7 @@ export function AccordionDropdown({
                   fontFamily: "IBMPlexSans_500Medium",
                   fontSize: 18,
                   color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                  width: "90%",
                 }}
               >
                 {headerText}
