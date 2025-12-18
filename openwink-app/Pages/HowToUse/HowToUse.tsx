@@ -5,13 +5,13 @@ import { MainHeader } from "../../Components";
 import { InfoPageHeader } from "../../Components/InfoPageHeader";
 import { ScrollView } from "react-native-gesture-handler";
 import { AppUsageGuide } from "./AppUsageGuide/AppUsageGuide";
-import { Troubleshooting } from "./Troubleshooting";
+import { Troubleshooting } from "./Troubleshooting/Troubleshooting";
 import { useState } from "react";
-import { ModuleUsageGuide } from "./ModuleUsageGuide";
+import { AboutTheMod } from "./AboutTheMod/AboutTheMod";
 
 const pages = [
   "App Usage",
-  "Module Usage",
+  // "About the Mod",
   "Troubleshooting",
 ] as const;
 
@@ -44,8 +44,8 @@ export function HowToUse() {
           {
             selectedPage === "App Usage" ? (
               <AppUsageGuide />
-            ) : selectedPage === "Module Usage" ? (
-              <ModuleUsageGuide />
+              // ) : selectedPage === "About the Mod" ? (
+              //   <AboutTheMod />
             ) : selectedPage === "Troubleshooting" ? (
               <Troubleshooting />
             ) : <></>
