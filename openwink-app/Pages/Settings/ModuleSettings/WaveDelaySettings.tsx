@@ -70,13 +70,13 @@ export function WaveDelaySettings() {
     );
 
     rightWaveStatus.value = withDelay(
-      motionValue * waveDelayMulti,
+      motionValue * (min / 100),
       withSequence(
         withTiming(0, { duration: motionValue, easing: Easing.linear }),
         withTiming(100, { duration: motionValue, easing: Easing.linear }),
       )
     );
-  }, [waveDelayMulti]);
+  }, [min]);
 
   useAnimatedReaction(
     () => leftWaveStatus.value,
@@ -203,7 +203,7 @@ export function WaveDelaySettings() {
               )}
               key={key}
               disabled={!isConnected}
-              onPress={() => updateWaveDelayMulti(obj.value)}
+              onPress={() => setMin(obj.value * 100)}
             >
               <Text style={theme.rangeSliderButtonsText}>
                 {obj.name}
