@@ -433,7 +433,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           visible={confirmationVisible}
           onRequestClose={() => setConfirmationVisible(false)}
           onConfirm={discardChanges}
-          animationType="slide"
+          animationType="fade"
           header={"Are you sure?"}
           body={
             `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
