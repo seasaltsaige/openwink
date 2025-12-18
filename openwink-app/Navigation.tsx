@@ -29,9 +29,10 @@ import { useBleConnection } from "./Providers/BleConnectionProvider";
 const Tab = createBottomTabNavigator();
 
 const withStatusBar = (Component: React.FC, backgroundColor: string) => {
+  const { themeName } = useColorTheme();
   return (props: any) => (
     <View style={{ flex: 1, backgroundColor }}>
-      <StatusBar backgroundColor={backgroundColor} barStyle="light-content" />
+      <StatusBar backgroundColor={backgroundColor} barStyle={themeName === "crystalWhite" ? 'dark-content' : 'light-content'} />
       <Component {...props} />
     </View>
   );
