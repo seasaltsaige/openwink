@@ -37,10 +37,6 @@ void setup() {
 
   BLE::init("OpenWink");
 
-  ButtonHandler::setupGPIO();
-  ButtonHandler::readWakeUpReason();
-  ButtonHandler::readOnWakeup();
-
   setCpuFrequencyMhz(80);
 
   esp_sleep_enable_timer_wakeup(sleepTime_us);
@@ -49,21 +45,9 @@ void setup() {
 
   BLE::start();
 
-  // xTaskCreatePinnedToCore(
-  //   motionInMonitorTask,
-  //   "MotionInTask",
-  //   4096,
-  //   nullptr,
-  //   1,
-  //   nullptr,
-  //   1);
-}
-
-void motionInMonitorTask(void* params) {
-  for (;;) {
-    ButtonHandler::handleBusyInput();
-    vTaskDelay(pdMS_TO_TICKS(10));
-  }
+  ButtonHandler::setupGPIO();
+  ButtonHandler::readWakeUpReason();
+  ButtonHandler::readOnWakeup();
 }
 
 void loop() {
@@ -77,9 +61,9 @@ void loop() {
     // handle sent command
     CommandHandler::handleQueuedCommand();
   }
-
   if (queuedCustomCommand != "")
     CommandHandler::handleQueuedCustomCommand();
+
   ButtonHandler::loopButtonHandler();
   ButtonHandler::updateButtonSleep();
 }

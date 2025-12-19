@@ -93,7 +93,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
   const [leftRightSwapped, setLeftRightSwapped] = useState(false);
-  const [motionValue, setMotionValue] = useState(750);
+  const [motionValue, setMotionValue] = useState(600);
 
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);

@@ -29,9 +29,10 @@ import { useBleConnection } from "./Providers/BleConnectionProvider";
 const Tab = createBottomTabNavigator();
 
 const withStatusBar = (Component: React.FC, backgroundColor: string) => {
+  const { themeName } = useColorTheme();
   return (props: any) => (
     <View style={{ flex: 1, backgroundColor }}>
-      <StatusBar backgroundColor={backgroundColor} barStyle="light-content" />
+      <StatusBar backgroundColor={backgroundColor} barStyle={themeName === "crystalWhite" ? 'dark-content' : 'light-content'} />
       <Component {...props} />
     </View>
   );
@@ -86,10 +87,19 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
             onLongPress={onLongPress}
           >
             <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
-              <Ionicons name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor} />
+              <Ionicons
+                style={{
+                  height: "100%",
+                  verticalAlign: "middle",
+                }}
+                name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor} />
               {
                 isFocused ? (
-                  <Text style={theme.bottomTabsPillFocusedText}>
+                  <Text style={[theme.bottomTabsPillFocusedText, {
+                    marginTop: (route.name !== "Home" && isFocused) ? -2 : 0,
+                    height: "100%",
+                    verticalAlign: "middle",
+                  }]}>
                     {route.name}
                   </Text>
                 ) : <></>

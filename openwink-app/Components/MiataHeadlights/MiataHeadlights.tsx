@@ -5,11 +5,26 @@ import { useColorTheme } from "../../hooks/useColorTheme";
 import { Headlight } from "./Headlight";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 
-export const MiataHeadlights = () => {
+interface IMiataHeadlightsParams {
+  leftStatus: number;
+  rightStatus: number;
+  width?: number;
+  headlightScale?: number;
+  headlightPadding?: {
+    bottom: number;
+    horizontal: number;
+  }
+}
+
+export const MiataHeadlights = ({
+  leftStatus,
+  rightStatus,
+  headlightPadding,
+  headlightScale,
+  width = 240
+}: IMiataHeadlightsParams) => {
   const { themeName, colorTheme } = useColorTheme();
   const {
-    leftStatus,
-    rightStatus,
     leftRightSwapped
   } = useBleMonitor();
 
@@ -21,7 +36,7 @@ export const MiataHeadlights = () => {
 
   const panelColor =
     themeName === "brilliantBlack" ?
-      colorTheme.backgroundPrimaryColor
+      colorTheme.backgroundSecondaryColor
       : colorTheme.primary;
 
   const strokeColor =
@@ -30,12 +45,13 @@ export const MiataHeadlights = () => {
   return (
     <View
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        marginVertical: 0,
-        width: "100%",
+        // marginVertical: 0,
+        // width: "100%",
       }}
     >
       <Miata
@@ -45,8 +61,13 @@ export const MiataHeadlights = () => {
         outlineFill={"#000000"}
         runningLightFill="#FE7508"
         runningLightStroke={strokeColor}
-        runningLightStrokeWidth={0.3}
+        runningLightStrokeWidth={0.4}
+        haloColor={colorTheme.disabledButtonColor}
+        width={width}
+      // height={100}
       />
+
+      {/* Cursed fuckery... to make it work on the info screen... I did not make this SVG system initially so... */}
 
       {/* Headlights */}
       <View
@@ -54,22 +75,30 @@ export const MiataHeadlights = () => {
           position: "absolute",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 44,
-          paddingBottom: 49,
-          width: 366,
+          justifyContent: width === 240 ? "space-evenly" : "center",
+          // columnGap: -10,
+          paddingHorizontal: headlightPadding?.horizontal || 44,
+          paddingBottom: headlightPadding?.bottom || 49,
+          // paddingBottom: 200,
+          width: 366 / (((width || 240) / 240)),
+          // backgroundColor: "pink"
         }}
       >
         <Headlight
           percent={leftRightSwapped ? statusToPercent(leftStatus) : statusToPercent(rightStatus)}
           themeColor={panelColor}
-          scale={0.31}
+          scale={headlightScale || 0.31}
         />
+        {
+          width !== 240 ?
+            <View style={{ marginHorizontal: -19, marginRight: -17 }} />
+            : <></>
+        }
         <Headlight
           percent={leftRightSwapped ? statusToPercent(rightStatus) : statusToPercent(leftStatus)}
           themeColor={panelColor}
           mirrored={true}
-          scale={0.31}
+          scale={headlightScale || 0.31}
         />
       </View>
     </View>

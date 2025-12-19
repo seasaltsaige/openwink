@@ -295,26 +295,6 @@ export function CustomWinkButton() {
 
           {/* SINGLE PRESS INFO + Create New */}
           <View style={theme.rangeSliderButtonsView}>
-
-            {/* <Pressable
-              style={({ pressed }) => [(!isConnected || !oemCustomButtonEnabled) ? theme.rangeSliderButtonsDisabled : pressed ? theme.rangeSliderButtonsPressed : theme.rangeSliderButtons, { columnGap: 15, width: "auto" }]}
-              disabled={(!isConnected || !oemCustomButtonEnabled)}
-              onPress={() => {
-                setAction({
-                  behavior: BehaviorEnum.DEFAULT,
-                  behaviorHumanReadable: "Default Behavior",
-                  presses: 1,
-                });
-                setModalType("view");
-                setModalVisible(true);
-              }}
-            >
-              <Text style={theme.rangeSliderButtonsText}>
-                Single Press
-              </Text>
-              <IonIcons size={22} name="ellipsis-horizontal" color={colorTheme.textColor} />
-            </Pressable> */}
-
             <Pressable
               style={({ pressed }) => [
                 (!isConnected || !oemCustomButtonEnabled || actions.length >= 8) ?
@@ -366,47 +346,60 @@ export function CustomWinkButton() {
             >
 
               {
-                actions.map((action) => (
-                  <View style={theme.mainLongButtonPressableContainer} key={action.presses}>
-                    <View style={theme.mainLongButtonPressableView}>
-                      <Text style={[theme.mainLongButtonPressableText, { fontSize: 16 }]}>
-                        {
-                          countToEnglish[action.presses]
-                        }
-                      </Text>
-                    </View>
-                    <View style={theme.buttonActionPressable}>
-                      <Pressable
-                        disabled={(!isConnected || !oemCustomButtonEnabled)}
-                        onPress={() => {
-                          setModalType("edit");
-                          setAction(action);
-                          setModalVisible(true);
-                        }}
-                        hitSlop={5}
-                      >
-                        {
-                          ({ pressed }) => (
-                            <View style={theme.buttonActionPressableView}>
-                              <Text style={[
-                                theme.buttonActionPressableText,
-                                {
-                                  color: (!isConnected || !oemCustomButtonEnabled) ?
-                                    colorTheme.disabledButtonColor :
-                                    pressed ? colorTheme.buttonColor :
-                                      colorTheme.textColor
-                                }]}>
-                                Edit
-                              </Text>
-                              <IonIcons color={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
+                actions.length > 0 ?
+                  actions.map((action) => (
+                    <View style={theme.mainLongButtonPressableContainer} key={action.presses}>
+                      <View style={theme.mainLongButtonPressableView}>
+                        <Text style={[theme.mainLongButtonPressableText, { fontSize: 16 }]}>
+                          {
+                            countToEnglish[action.presses]
+                          }
+                        </Text>
+                      </View>
+                      <View style={theme.buttonActionPressable}>
+                        <Pressable
+                          disabled={(!isConnected || !oemCustomButtonEnabled)}
+                          onPress={() => {
+                            setModalType("edit");
+                            setAction(action);
+                            setModalVisible(true);
+                          }}
+                          hitSlop={5}
+                        >
+                          {
+                            ({ pressed }) => (
+                              <View style={theme.buttonActionPressableView}>
+                                <Text style={[
+                                  theme.buttonActionPressableText,
+                                  {
+                                    color: (!isConnected || !oemCustomButtonEnabled) ?
+                                      colorTheme.disabledButtonColor :
+                                      pressed ? colorTheme.buttonColor :
+                                        colorTheme.textColor
+                                  }]}>
+                                  Edit
+                                </Text>
+                                <IonIcons color={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
 
-                            </View>
-                          )
-                        }
-                      </Pressable>
+                              </View>
+                            )
+                          }
+                        </Pressable>
+                      </View>
                     </View>
-                  </View>
-                ))
+                  ))
+                  : (
+                    <Text
+                      style={{
+                        fontSize: 19,
+                        fontFamily: "IBMPlexSans_700Bold",
+                        color: colorTheme.headerTextColor,
+                        textAlign: "center"
+                      }}
+                    >
+                      No Actions Exist{"\n"}Add one above
+                    </Text>
+                  )
               }
             </ScrollView>
           </View>

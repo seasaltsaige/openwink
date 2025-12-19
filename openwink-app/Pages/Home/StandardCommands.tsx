@@ -36,6 +36,8 @@ export function StandardCommands() {
   const {
     headlightsBusy,
     isSleepyEyeActive,
+    leftStatus,
+    rightStatus,
   } = useBleMonitor();
 
   const canSendMainCommands =
@@ -61,7 +63,10 @@ export function StandardCommands() {
       />
 
       <View style={theme.contentContainer}>
-        <MiataHeadlights />
+        <MiataHeadlights
+          leftStatus={leftStatus}
+          rightStatus={rightStatus}
+        />
 
         <View style={theme.defaultCommandSectionContainer}>
           <Text style={theme.commandSectionHeader}>Manual</Text>

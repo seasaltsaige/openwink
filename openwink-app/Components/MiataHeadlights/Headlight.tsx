@@ -122,6 +122,8 @@ export const Headlight = ({
   // Clamp percent between 0 and 100
   const clampedPercent = Math.max(0, Math.min(100, percent));
 
+  // const scaledScale = scale / 0.30;
+
   const position = (start: number, stop: number, percent: number) =>
     start - (percent / 100) * (start - stop);
 
@@ -147,12 +149,14 @@ export const Headlight = ({
 
   return (
     <Svg
-      height="120"
-      width="140"
+      // height={`${120 * scaledScale}`}
+      // width={`${140 * scaledScale}`}
+      height={120}
+      width={140}
       style={
         mirrored ?
           { transform: [{ scaleX: -1 }, { scale: scale }] }
-        : { transform: [{ scale: scale }] }
+          : { transform: [{ scale: scale }] }
       }
     >
       <Defs>

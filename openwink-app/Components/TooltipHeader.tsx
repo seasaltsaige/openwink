@@ -7,21 +7,32 @@ import { useColorTheme } from "../hooks/useColorTheme";
 interface ITooltipHeaderProps {
   tooltipContent: React.ReactElement<any, string | React.JSXElementConstructor<any>>;
   tooltipTitle: string;
+  useModal?: boolean;
+
+  parentControl?: {
+    tooltipOpen: boolean;
+    setTooltipOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  }
 }
 
-export function TooltipHeader({ tooltipContent, tooltipTitle }: ITooltipHeaderProps) {
+export function TooltipHeader({
+  tooltipContent,
+  tooltipTitle,
+  useModal = true,
+  parentControl
+}: ITooltipHeaderProps) {
   const { theme, colorTheme } = useColorTheme();
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
+
   return (
     <Tooltip
-      isVisible={tooltipOpen}
-      onClose={() => setTooltipOpen(false)}
+      isVisible={parentControl ? parentControl.tooltipOpen : tooltipOpen}
+      onClose={() => parentControl ? parentControl.setTooltipOpen(false) : setTooltipOpen(false)}
       content={tooltipContent}
-      closeOnBackgroundInteraction
-      closeOnContentInteraction
       placement="bottom"
       contentStyle={theme.tooltipContainer}
+      useReactNativeModal={useModal}
     >
 
       <View style={theme.tooltipContainerView}>
@@ -31,7 +42,7 @@ export function TooltipHeader({ tooltipContent, tooltipTitle }: ITooltipHeaderPr
 
         <Pressable
           hitSlop={20}
-          onPress={() => setTooltipOpen(true)}
+          onPress={() => parentControl ? parentControl.setTooltipOpen(true) : setTooltipOpen(true)}
         >
           {
             ({ pressed }) => (

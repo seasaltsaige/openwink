@@ -25,7 +25,7 @@ bool ButtonHandler::customCommandActive = false;
 bool ButtonHandler::resetArmed = false;
 
 unsigned long debounceTimer = 0;
-const int DEBOUNCE_MS = 50;
+const int DEBOUNCE_MS = 35;
 bool checkDebounce = false;
 bool debounceOccurred = false;
 
@@ -58,13 +58,16 @@ void ButtonHandler::readOnWakeup() {
 
   if (customButtonStatusEnabled) {
     mainTimer = millis();
-    debounceTimer = millis();
     if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
+      Serial.printf("Wakeup button press: %d\n", buttonPressCounter);
       buttonTimer = millis();
+      debounceTimer = millis();
     }
   } else {
+    Serial.printf("Custom not enabled\n");
     if ((wakeupValue != initialButton)) {
+      buttonPressCounter++;
       if (initialButton == 1)
         bothUp();
       else
@@ -232,7 +235,7 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // Small pulse occurred --- THIS MEANS HEADLIGHTS ARE *ON*. THIS IS ONE PRESS
-  if (checkDebounce && (buttonInput != initialButton) && (millis() - debounceTimer) <= DEBOUNCE_MS) {
+  if (checkDebounce && (buttonInput != initialButton) && (millis() - buttonTimer) <= DEBOUNCE_MS) {
     if (!bypassHeadlightOverride) {
       Serial.println("Bypass not enabled");
       checkDebounce = false;
@@ -266,7 +269,7 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // IF debounce time has passed
-  if ((!debounceOccurred && checkDebounce) && (millis() - debounceTimer) > DEBOUNCE_MS) {
+  if ((!debounceOccurred && checkDebounce) && (millis() - buttonTimer) > DEBOUNCE_MS) {
     // no longer need to check debounce
     checkDebounce = false;
     Serial.println("Past debounce timer");
