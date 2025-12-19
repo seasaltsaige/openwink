@@ -1,14 +1,14 @@
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../../helper/Constants";
+import { useSvgWidth } from "../../../helper/Constants";
 
 export function CreateCustomCommandToolbarSVG() {
   const { colorTheme } = useColorTheme();
-
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.180556}
+      width={svgWidth}
+      height={svgWidth * 0.180556}
       viewBox="0 0 1080 195"
       fill="none"
     >

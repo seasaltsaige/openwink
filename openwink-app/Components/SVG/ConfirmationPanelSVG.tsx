@@ -1,13 +1,14 @@
 import Svg, { G, Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../helper/Constants";
+import { useSvgWidth } from "../../helper/Constants";
 
 export function ConfirmationPanelSVG() {
   const { colorTheme } = useColorTheme();
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.66296296}
+      width={svgWidth}
+      height={svgWidth * 0.66296296}
       viewBox="0 0 1080 716"
       fill="none"
     >

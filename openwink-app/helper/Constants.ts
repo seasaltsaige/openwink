@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import { Dimensions } from "react-native";
+
+
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
 export const WINK_SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -320,4 +324,13 @@ export namespace ColorTheme {
 }
 
 // TODO: Update to be adaptive with screen width
-export const SVG_WIDTH = 300;
+const SVG_WIDTH = 300;
+const SCALE_BY = 411.42857142857144;
+
+export const useSvgWidth = () => {
+  const [svgWidth, setSvgWidth] = useState(0);
+  useEffect(() => {
+    setSvgWidth(SVG_WIDTH * (Dimensions.get("window").width / SCALE_BY));
+  }, []);
+  return svgWidth;
+}

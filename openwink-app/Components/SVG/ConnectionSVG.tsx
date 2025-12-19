@@ -1,14 +1,14 @@
 import Svg, { G, Rect, Path, Defs, ClipPath } from "react-native-svg"
 import { useColorTheme } from "../../hooks/useColorTheme"
-import { SVG_WIDTH } from "../../helper/Constants";
+import { useSvgWidth } from "../../helper/Constants";
 
 export function ConnectionSVG() {
   const { colorTheme } = useColorTheme();
-
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.156576}
+      width={svgWidth}
+      height={svgWidth * 0.156576}
       viewBox="0 0 958 150"
     >
       <Rect width={958} height={150} rx={10} fill={colorTheme.backgroundPrimaryColor} />

@@ -1,13 +1,14 @@
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../../helper/Constants";
+import { useSvgWidth } from "../../../helper/Constants";
 
 export function EditPressIntervalSVG() {
   const { colorTheme } = useColorTheme();
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.30092593}
+      width={svgWidth}
+      height={svgWidth * 0.30092593}
       viewBox="0 0 1080 325"
       fill="none"
     >

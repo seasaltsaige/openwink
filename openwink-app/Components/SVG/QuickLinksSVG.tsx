@@ -1,14 +1,14 @@
 import Svg, { Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../helper/Constants";
+import { useSvgWidth } from "../../helper/Constants";
 
 export function QuickLinksSVG() {
   const { colorTheme } = useColorTheme();
-
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 1.093621}
+      width={svgWidth}
+      height={svgWidth * 1.093621}
       viewBox="0 0 972 1063"
       fill="none"
     >

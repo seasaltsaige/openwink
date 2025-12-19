@@ -1,13 +1,14 @@
 import Svg, { Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../../helper/Constants";
+import { useSvgWidth } from "../../../helper/Constants";
 
 export function CustomCommandSequenceSVG() {
   const { colorTheme } = useColorTheme();
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.4981481}
+      width={svgWidth}
+      height={svgWidth * 0.4981481}
       viewBox="0 0 1080 538"
       fill="none"
     >

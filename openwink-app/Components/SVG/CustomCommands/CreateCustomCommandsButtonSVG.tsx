@@ -1,14 +1,14 @@
 import Svg, { ClipPath, Defs, G, Path, Rect } from "react-native-svg";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { SVG_WIDTH } from "../../../helper/Constants";
+import { useSvgWidth } from "../../../helper/Constants";
 
 export function CreateCustomCommandButtonSVG() {
   const { colorTheme } = useColorTheme();
-
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.160667}
+      width={svgWidth}
+      height={svgWidth * 0.160667}
       viewBox="0 0 1139 183"
       fill="none"
     >

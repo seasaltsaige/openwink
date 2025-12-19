@@ -1,14 +1,14 @@
-import * as React from "react"
 import Svg, { Rect, Path } from "react-native-svg"
 import { useColorTheme } from "../../hooks/useColorTheme"
-import { SVG_WIDTH } from "../../helper/Constants";
+import { useSvgWidth } from "../../helper/Constants";
 
 export function SleepyQuickAdjustSVG() {
   const { colorTheme } = useColorTheme();
+  const svgWidth = useSvgWidth();
   return (
     <Svg
-      width={SVG_WIDTH}
-      height={SVG_WIDTH * 0.6342593}
+      width={svgWidth}
+      height={svgWidth * 0.6342593}
       viewBox="0 0 1080 685"
       fill="none"
     >
