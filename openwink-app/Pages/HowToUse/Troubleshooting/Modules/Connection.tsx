@@ -43,7 +43,7 @@ export function Connection() {
               fontSize: 14,
             }}
           >
-            2. Ensure you are within a reasonable distance from the car, ~10 feet (~3.05 meters) should be more than close enough. If the issue persists, attempt to open the hood of the car, reducing blockage by the car panels.
+            2. Ensure you are within a reasonable distance from the car, ~10 feet (~3 meters) should be more than close enough. If the issue persists, attempt to open the hood of the car, reducing blockage by the car panels.
           </Text>
 
 
@@ -81,7 +81,7 @@ export function Connection() {
               fontSize: 14,
             }}
           >
-            5. Disconnect the module connector, and reseat the connector to fully power cycle the module.
+            5. Disconnect the module connector, and unplug and reconnect the connector to fully power cycle the module.
           </Text>
 
           <Text
@@ -93,7 +93,7 @@ export function Connection() {
               fontSize: 14,
             }}
           >
-            6. Press the retractor button twenty (20) times in a row to factory reset the module. This should reset any potential settings which could have been conflicting with connection.
+            6. Press the retractor button twenty (20) times in a row to factory reset the module. This should reset any potential settings which could be interfering with connectivity.
           </Text>
 
 
