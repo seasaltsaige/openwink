@@ -37,34 +37,38 @@ export function CreateCustomCommands() {
           </Text>
           <CreateCustomCommandButtonSVG />
 
-          <Text
-            style={{
-              color: `${colorTheme.headerTextColor}99`,
-              fontFamily: "IBMPlexSans_400Regular",
-              width: "100%",
-              textAlign: "left",
-              fontSize: 15,
-            }}
-          >
-            In the following page, in section 1, you are able to give your command a memorable name, followed by section 2, which allows you to add components to the command. Components are default commands, which can be edited or reordered in section 3, using the drag bars.
-          </Text>
-
           <CreateCustomCommandMainSVG />
 
           <Text
             style={{
               color: `${colorTheme.headerTextColor}99`,
               fontFamily: "IBMPlexSans_400Regular",
-              width: "100%",
+              width: "90%",
               textAlign: "left",
               fontSize: 15,
             }}
           >
-            Finally, using the toolbar visible at the bottom of the page, you can save your command once you are happy with the actions by pressing the icon labeled 1. If you make a mistake, you can undo your changes with the icon labeled 2. If you decide to, you are able to cancel using the discard button labeled 3.
+            1. Command name input.{"\n\n"}
+            2. Add command components, customizing your preferred sequence.{"\n\n"}
+            3. Components are default commands, which can be edited or reordered, using the drag bars.{"\n\n"}
           </Text>
 
           <CreateCustomCommandToolbarSVG />
 
+          <Text
+            style={{
+              color: `${colorTheme.headerTextColor}99`,
+              fontFamily: "IBMPlexSans_400Regular",
+              width: "90%",
+              textAlign: "left",
+              fontSize: 15,
+            }}
+          >
+            {/* Am i stupid? this is just wrong lmao */}
+            1. Save your command once you have created your desired sequence.{"\n\n"}
+            2. If you make a mistake, you can undo changes.{"\n\n"}
+            3. If you change your mind, you are able to cancel using the discard button.
+          </Text>
         </>
       }
     />
