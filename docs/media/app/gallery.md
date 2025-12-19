@@ -8,6 +8,9 @@ A collection of the current state of the compiled application.
   - [Firmware Update](#)
   - [Default Commands](#default-commands)
   - [Custom Commands](#custom-command-view)
+- [Help](#help)
+  - [App Usage](#app-usage)
+  - [Troubleshooting](#troubleshooting)
 - [Settings](#settings)
   - [System Info](#system-info)
   - [Module Settings](#module-settings)
@@ -47,6 +50,18 @@ Custom Commands can be created and executed from the Custom Commands page, allow
 
 As mentioned previously, you are able to create and edit all of your custom commands through a fairly straight forward UI, allowing you to add components, drag them around to reorder, and add a memorable name.
 
+## Help
+
+### App Usage
+<img src="./Help_App.png.png" width="200" alt="App Preview Image">
+
+The App Usage help page describes how to use different features and settings within the app. Most things should be somewhat self explanatory, and more complicated actions have help built into the page, but if that is not enough, this page serves to provide further explanations.
+
+### Troubleshooting
+<img src="./Help_Trouble.png.png.png" width="200" alt="App Preview Image">
+
+These are currently some guesses as to what could go wrong with the module, and will be updated as things evolve. Possible error paths and potential solutions to help troubleshoot.
+
 ## Settings
 <img src="./Settings.png" width="200" alt="App Preview Image">
 
@@ -70,13 +85,13 @@ This page allows you to customize the percent delay for when the second headligh
 #### Sleepy Eye
 <img src="./Sleepy_Eye.png" width="200" alt="App Preview Image">
 
-This page allows you to customize the precise positioning of each headlight while in 'Sleepy Eye' mode. Both headlights are individually settable, from 0% raised to 100% raised. The relative percentage is based on how far up it will be raised from retracted; ie: 25% means slightly raised, 50% is half-way, and 75% is almost fully up.
+This page allows you to customize the precise positioning of each headlight while in 'Sleepy Eye' mode. Both headlights are individually settable, from 0% raised to 100% raised. The relative percentage is based on how far up it will be raised from retracted; i.e.: 25% means slightly raised, 50% is half-way, and 75% is almost fully up.
 
 #### Custom Dash Button
 <img src="./Button_Sequence.png" width="200" alt="App Preview Image">
 <img src="./Button_Sequence_Edit.png" width="200" alt="App Preview Image">
 
-This page allows customization of the oem dash button behaviors. By default, the setting is not enabled, but can easily be turned on as seen in the image. Additionally, I have added a setting which allows you to get around the limitation which MX-5 Tech claims prevents you from opperating the headlights with the dash button while your lights are turned on. This setting can potentially be dangerous at night, so use it with caution. If option is turned on, but the main setting is turned off, this does nothing. 
+This page allows customization of the OEM dash button behaviors. By default, the setting is not enabled, but can easily be turned on as seen in the image. Additionally, I have added a setting which allows you to get around the limitation which MX-5 Tech claims prevents you from operating the headlights with the dash button while your lights are turned on. This setting can potentially be dangerous at night, so use it with caution. If option is turned on, but the main setting is turned off, this does nothing. 
 
 You are also able to customize the delay between button presses, allowing you to tune how fast you need to press the button in order to activate a sequence. A shorter time means faster activation when you reach your count, but you need to be quicker. A longer time is the opposite, more delay when done pressing, but more lenient.
 
