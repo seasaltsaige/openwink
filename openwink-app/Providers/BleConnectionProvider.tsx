@@ -193,6 +193,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         // Send APP UUID to module to ensure compatability
         const deviceUUID = getDeviceUUID();
+
+        // TODO: Write with response
         await connection.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
           CLIENT_MAC_UUID,
