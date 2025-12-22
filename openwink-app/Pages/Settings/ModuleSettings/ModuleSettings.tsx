@@ -343,7 +343,7 @@ export function ModuleSettings() {
           else deleteStoredModuleData();
         }}
         animationType="fade"
-        disableConfirmation={!isConnected}
+        disableConfirmation={confirmationType === "sleep" && !isConnected}
       />
 
     </>
