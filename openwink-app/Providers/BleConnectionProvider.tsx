@@ -96,8 +96,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Track retry attempts to prevent infinite loops
-  const retryCountRef = useRef(0);
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
 
@@ -193,16 +191,17 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const setupConnection = useCallback(
     async (connection: Device) => {
       try {
-        // Setup monitoring first
-        await startMonitoring(connection);
-
-        // Send device UUID to module
+        // Send APP UUID to module to ensure compatability
         const deviceUUID = getDeviceUUID();
         await connection.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
           CLIENT_MAC_UUID,
           base64.encode(deviceUUID)
         );
+
+
+        // Setup monitoring first
+        await startMonitoring(connection);
 
         // Once all is initialized and nothing failed, device has successfully connected.
         setIsConnected(true);
@@ -236,7 +235,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Connect to a specific device with retry logic
   const connectToDevice = useCallback(
-    async (deviceId: string, retryAttempt = 0) => {
+    async (deviceId: string) => {
       if (isConnecting || device) {
         console.log('Already connecting or connected');
         return;
@@ -245,7 +244,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsConnecting(true);
 
       try {
-        console.log(`Connecting to device ${deviceId} (attempt ${retryAttempt + 1})`);
+        console.log(`Connecting to device ${deviceId}`);
 
         const connection = await manager.connectToDevice(deviceId);
         await connection.discoverAllServicesAndCharacteristics();
@@ -254,10 +253,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         DeviceMACStore.setMAC(connection.id);
         setMac(connection.id);
 
-
-        // Reset retry counter on successful connection
-        retryCountRef.current = 0;
-
         // Setup monitoring and handlers
         await setupConnection(connection);
 
@@ -265,7 +260,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const negotiatedMTUConnection = await connection.requestMTU(517);
         setDevice(negotiatedMTUConnection);
 
-        console.log(negotiatedMTUConnection.mtu);
 
         setIsConnecting(false);
 
@@ -276,37 +270,22 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           visibilityTime: 3000,
         });
       } catch (error) {
-        console.error(`Connection attempt ${retryAttempt + 1} failed:`, error);
         setDevice(null);
         setIsConnecting(false);
 
-        // Retry logic with exponential backoff
-        if (retryAttempt < MAX_RETRIES) {
-          const delay = Math.min(
-            INITIAL_RETRY_DELAY * Math.pow(2, retryAttempt),
-            MAX_RETRY_DELAY
-          );
+        Toast.show({
+          type: 'error',
+          text1: 'Connection Failed',
+          text2: 'Could not connect to module. Please try again.',
+          visibilityTime: 5000,
+        });
 
-          console.log(`Retrying connection in ${delay}ms...`);
-          await sleep(delay);
-          await connectToDevice(deviceId, retryAttempt + 1);
-        } else {
-          // Max retries reached
-          console.error('Max connection retries reached');
-
-          Toast.show({
-            type: 'error',
-            text1: 'Connection Failed',
-            text2: 'Could not connect to module. Please try again.',
-            visibilityTime: 5000,
-          });
-
-          // If auto-connect is enabled, start scanning again
-          if (autoConnectRef.current) {
-            setIsScanning(true);
-            await scanForModule();
-          }
+        // If auto-connect is enabled, start scanning again
+        if (autoConnectRef.current) {
+          setIsScanning(true);
+          await scanForModule();
         }
+
       }
     },
     [device, isConnecting, manager, setupConnection]
@@ -316,19 +295,18 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const isValidDevice = useCallback(
     (scannedDevice: Device, targetMac: string | null): boolean => {
       // Check if MAC matches
-      if (targetMac && scannedDevice.id === targetMac) {
+      if (targetMac && scannedDevice.id === targetMac)
         return true;
 
-        // if there is no stored MAC address, and scanned device has required service uuids
-      } else if (scannedDevice.serviceUUIDs) {
+      // if there is no stored MAC address, and scanned device has required service uuids
+      else if (scannedDevice.serviceUUIDs && targetMac === null)
         return (
           scannedDevice.serviceUUIDs.includes(OTA_SERVICE_UUID) &&
           scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID) &&
           scannedDevice.serviceUUIDs.includes(MODULE_SETTINGS_SERVICE_UUID)
         );
-      }
-
-      return false;
+      else
+        return false;
     },
     []
   );
@@ -369,20 +347,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Restart scan if auto-connect is enabled
         if (autoConnectRef.current) {
           console.log('Auto-connect enabled, restarting scan...');
-
-          // Increment retry counter to track reconnection attempts
-          retryCountRef.current++;
-
-          // Add exponential backoff for repeated scan failures
-          if (retryCountRef.current > 3) {
-            const delay = Math.min(
-              INITIAL_RETRY_DELAY * Math.pow(2, retryCountRef.current - 3),
-              MAX_RETRY_DELAY
-            );
-            console.log(`Backing off for ${delay}ms before next scan...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-          }
-
           await scanForModule();
         } else {
           Toast.show({
@@ -489,9 +453,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     console.log('Auto-connect:', enabled);
     setAutoConnectEnabled(enabled);
     AutoConnectStore.set(enabled);
-
-    // Reset retry counter when toggling auto-connect
-    retryCountRef.current = 0;
   }, []);
 
   // Unpair from module (forgets device MAC)
@@ -501,38 +462,32 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    try {
-      await device.writeCharacteristicWithoutResponseForService(
-        MODULE_SETTINGS_SERVICE_UUID,
-        UNPAIR_UUID,
-        base64.encode('0')
-      );
+    if (device !== null) {
+      try {
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          UNPAIR_UUID,
+          base64.encode('0')
+        );
 
-      // Forget stored MAC address
-      DeviceMACStore.forgetMAC();
-      // Update state to ""
-      setMac("");
-
-      await device.cancelConnection().catch((err) => {
-        console.log('Disconnect after unpair:', err);
-      });
-
-      Toast.show({
-        type: 'success',
-        text1: 'Module Unpaired',
-        text2: 'Successfully unpaired from module.',
-        visibilityTime: 3000,
-      });
-    } catch (error) {
-      console.error('Error unpairing:', error);
-
-      Toast.show({
-        type: 'error',
-        text1: 'Unpair Failed',
-        text2: 'Failed to unpair from module.',
-        visibilityTime: 3000,
-      });
+        await device.cancelConnection().catch((err) => {
+          console.log('Disconnect after unpair:', err);
+        });
+      } catch (err) {
+        console.log("Error sending unpair to mcu: ", err);
+      }
     }
+
+    // Always remove from app, allows unpair when not connected
+    DeviceMACStore.forgetMAC();
+    setMac("");
+
+    Toast.show({
+      type: 'success',
+      text1: 'Module Unpaired',
+      text2: 'Successfully unpaired from module.',
+      visibilityTime: 3000,
+    });
   }, [device]);
 
   // Cleanup on unmount
