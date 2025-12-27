@@ -13,7 +13,6 @@ import {
   ModuleUpdateModal,
   MainHeader
 } from "../../Components";
-import { getDeviceUUID } from "../../helper/Functions";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
@@ -114,7 +113,6 @@ export function Home() {
   }
 
   useEffect(() => {
-    getDeviceUUID();
     const autoConn = AutoConnectStore.get();
     if (autoConn && !isConnected) scanForDevice();
     (async () => {
