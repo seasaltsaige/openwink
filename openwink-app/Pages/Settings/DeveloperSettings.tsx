@@ -9,7 +9,7 @@ import * as Application from "expo-application";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { HeaderWithBackButton, InfoBox, TooltipHeader } from "../../Components";
 import { MockBleStore } from "../../Storage";
-import { getDeviceUUID } from "../../helper/Functions";
+import { getDevicePasskey } from "../../helper/Functions";
 
 export function DeveloperSettings() {
   const { colorTheme, theme } = useColorTheme();
@@ -21,7 +21,7 @@ export function DeveloperSettings() {
   const isSimulator = DeviceInfo.isEmulatorSync();
 
   const devInfo = useMemo(() => ({
-    "Application ID": getDeviceUUID(),
+    "Application ID": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Platform": DeviceInfo.getSystemName(),
     "Is Emulator": isSimulator ? 'Yes' : 'No',
@@ -46,7 +46,7 @@ export function DeveloperSettings() {
 
     setMockBleEnabled(value);
     MockBleStore.set(value);
-    
+
     // Show restart alert
     Alert.alert(
       "Restart Required",
@@ -95,7 +95,7 @@ export function DeveloperSettings() {
               </Text>
             }
           />
-          
+
           {isSimulator && (
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, padding: 12, backgroundColor: colorTheme.backgroundSecondaryColor, borderRadius: 8 }}>
               <IonIcons name="information-circle" size={18} color={colorTheme.textColor} style={{ marginRight: 8 }} />
@@ -135,7 +135,7 @@ export function DeveloperSettings() {
             <Text style={theme.subSettingHeaderText}>
               Mock BLE State
             </Text>
-            
+
             <Pressable
               style={({ pressed }) => [
                 {

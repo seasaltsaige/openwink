@@ -7,7 +7,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
-import { getDeviceUUID } from "../../helper/Functions";
+import { getDevicePasskey } from "../../helper/Functions";
 import { CommandSequenceBottomSheet, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
@@ -60,14 +60,14 @@ export function Information() {
   );
 
   const appInfo = useMemo(() => ({
-    "Application ID": getDeviceUUID(),
+    "App Passkey": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({
     "Module ID": mac || "Unpaired",
-    "Firmware Version": `v${firmwareVersion}`,
+    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
     "Left Headlight Status": headlightStatus(isConnected, leftStatus),
     "Right Headlight Status": headlightStatus(isConnected, rightStatus),
