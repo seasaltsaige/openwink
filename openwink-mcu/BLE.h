@@ -49,7 +49,7 @@ private:
   static NimBLECharacteristic* headlightBypassChar;
   static NimBLECharacteristic* headlightOrientationChar;
 
-  static NimBLECharacteristic* clientMacChar;
+  static NimBLECharacteristic* passkeyChar;
 
   static bool deviceConnected;
 

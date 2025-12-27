@@ -50,7 +50,7 @@ NimBLECharacteristic *BLE::headlightMotionChar;
 NimBLECharacteristic *BLE::sleepSettingsChar;
 NimBLECharacteristic *BLE::unpairChar;
 NimBLECharacteristic *BLE::resetChar;
-NimBLECharacteristic *BLE::clientMacChar;
+NimBLECharacteristic *BLE::passkeyChar;
 NimBLECharacteristic *BLE::headlightBypassChar;
 NimBLECharacteristic *BLE::headlightOrientationChar;
 
@@ -113,7 +113,7 @@ void BLE::initServiceCharacteristics() {
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  passkeyChar = settingsService->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
@@ -133,7 +133,7 @@ void BLE::initServiceCharacteristics() {
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
   unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
   resetChar->setCallbacks(new ResetCharacteristicCallbacks());
-  clientMacChar->setCallbacks(new ClientMacCharacteristicCallbacks());
+  passkeyChar->setCallbacks(new PassKeyCharacteristicCallbacks());
   headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
   headlightOrientationChar->setCallbacks(new HeadlightOrientationCharacteristicCallbacks());
 }
