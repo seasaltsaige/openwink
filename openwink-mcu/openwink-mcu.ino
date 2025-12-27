@@ -52,6 +52,11 @@ void setup() {
 
 void loop() {
 
+  if (auth_status != AuthState::UNCLAIMED && auth_status != AuthState::AUTHENTICATED && (millis() > (authTimer + AUTH_TIME_MS))) {
+    NimBLEDevice::getServer()->disconnect(authConnInfo);
+    authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+  }
+
   if (otaUpdateRestartQueued) {
     delay(100);
     ESP.restart();
