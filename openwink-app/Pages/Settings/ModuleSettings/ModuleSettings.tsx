@@ -131,7 +131,6 @@ export function ModuleSettings() {
   }
 
   const forgetModulePairing = async () => {
-    if (!isConnected) return;
     await unpair();
 
     Toast.show({
