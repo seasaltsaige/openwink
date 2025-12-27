@@ -4,6 +4,10 @@
 #include <NimBLEDevice.h>
 #include <string>
 
+#include "esp_system.h"
+void generateToken(char out[21]);
+
+
 using namespace std;
 class Storage {
 private:
@@ -25,7 +29,8 @@ public:
   static bool getHeadlightOrientation();
 
 
-  static void setWhitelist(string mac);
-  static void clearWhitelist();
-  static string getWhitelist();
+  static void setBond(string passkey);
+  static void resetBond();
+  static string getBond();
+  static bool hasBond();
 };
