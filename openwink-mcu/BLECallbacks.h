@@ -1,3 +1,4 @@
+#include <stdint.h>
 #pragma once
 
 
@@ -10,6 +11,17 @@
 
 extern double headlightMultiplier;
 extern bool otaUpdateRestartQueued;
+
+enum AuthState {
+  UNCLAIMED,
+  WAIT_CLAIM,
+  WAIT_TOKEN,
+  AUTHENTICATED
+};
+
+extern uint32_t authTimer;
+extern enum AuthState auth_status;
+extern uint16_t authConnInfo;
 
 using namespace std;
 /**
@@ -91,7 +103,7 @@ class ResetCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class ClientMacCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+class PassKeyCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 

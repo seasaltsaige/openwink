@@ -37,6 +37,10 @@ const uint16_t TIMEOUT = 200;
 
 bool connEstablishing = false;
 
+enum AuthState auth_status = AuthState::UNCLAIMED;
+uint32_t authTimer = 0;
+uint16_t authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
 
   BLE::setDeviceConnected(true);
@@ -51,6 +55,11 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
   pServer->setDataLen(connInfo.getConnHandle(), 251);
   connEstablishing = false;
+
+  Serial.printf("Starting AUTH Sequence\n");
+  authTimer = millis();
+  auth_status = Storage::hasBond() ? WAIT_TOKEN : WAIT_CLAIM;
+  authConnInfo = connInfo.getConnHandle();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -242,8 +251,9 @@ void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
 }
 
 void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  Storage::clearWhitelist();
-  // NimBLEDevice::deleteAllBonds();
+
+  if (Storage::hasBond())
+    Storage::resetBond();
   BLE::disconnect(info);
 };
 
@@ -261,24 +271,34 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
 };
 
 // TODO: Timer based check, auto disconnect if characteristic not set/bonded
-void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  string storedMac = Storage::getWhitelist();
 
-  if (storedMac.length() == 0) {
-    // Set bond, let client know bond happened
-    Storage::setWhitelist(value);
-    pChar->setValue("5");
+  Serial.printf("Characteristic Written: %s\n", value.c_str());
+
+  if (auth_status == AuthState::WAIT_CLAIM && value == "CLAIM") {
+    char passkey[33];
+    generateToken(passkey);
+
+    string key = string(passkey);
+    Storage::setBond(key);
+
+    pChar->setValue(key);
     pChar->notify();
-  } else {
-    // check if mac checks out
-    if (value == storedMac) {
-      pChar->setValue("1");
-      pChar->notify();
-    } else {
-      BLE::disconnect(info);
+
+    auth_status = AuthState::AUTHENTICATED;
+
+    return;
+  } else if (auth_status == AuthState::WAIT_TOKEN) {
+    // Waiting for token write
+    if (value == Storage::getBond()) {
+      auth_status = AuthState::AUTHENTICATED;
+      return;
     }
   }
+
+  BLE::disconnect(info);
+
 }
 
 bool updateInProgress = false;
