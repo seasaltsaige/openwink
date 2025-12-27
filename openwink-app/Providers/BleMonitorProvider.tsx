@@ -17,7 +17,7 @@ import {
   SOFTWARE_STATUS_CHAR_UUID,
   HEADLIGHT_MOTION_IN_UUID,
   CUSTOM_COMMAND_UUID,
-  CLIENT_MAC_UUID,
+  PASSKEY_UUID,
   WINK_SERVICE_UUID,
   OTA_SERVICE_UUID,
   MODULE_SETTINGS_SERVICE_UUID,
@@ -33,6 +33,7 @@ import { CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStor
 import { sleep, toProperCase } from '../helper/Functions';
 import { CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
+import Storage from '../Storage/Storage';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -54,6 +55,7 @@ export type BleMonitorContextType = {
 
   startMonitoring: (device: Device) => Promise<void>;
   stopMonitoring: () => void;
+  readInitialValues: (device: Device) => Promise<void>;
   updateFirmwareVersion: (version: string) => void;
 
   setLeftRightSwapped: React.Dispatch<React.SetStateAction<boolean>>;
@@ -324,38 +326,24 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     []
   );
 
-  // Monitor CLIENT_MAC characteristic (connection status)
-  const monitorClientMac = useCallback((device: Device) => {
+  // Monitor PASSKEY_UUID characteristic (connection status)
+  const monitorPasskey = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
       MODULE_SETTINGS_SERVICE_UUID,
-      CLIENT_MAC_UUID,
+      PASSKEY_UUID,
       (err, char) => {
         if (err) {
-          console.error('Error monitoring CLIENT_MAC characteristic:', err);
+          console.error('Error monitoring PASSKEY_UUID characteristic:', err);
           return;
         }
         if (!char?.value) return;
 
         try {
-          const val = parseInt(base64.decode(char.value));
-
-          if (val === 1) {
-            Toast.show({
-              autoHide: true,
-              visibilityTime: 8000,
-              text1: 'Module Connected',
-              text2: 'Successfully connected to Open Wink Module.',
-            });
-          } else if (val === 5) {
-            Toast.show({
-              autoHide: true,
-              visibilityTime: 8000,
-              text1: 'Module Bonded',
-              text2: 'Successfully bonded to new Open Wink Module.',
-            });
-          }
+          const passkeyUpdate = base64.decode(char.value);
+          if (passkeyUpdate.length === 0) return;
+          Storage.set("device-passkey", passkeyUpdate);
         } catch (error) {
-          console.error('Error decoding CLIENT_MAC value:', error);
+          console.error('Error decoding PASSKEY_UUID value:', error);
         }
       }
     );
@@ -395,9 +383,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       stopMonitoring();
 
       try {
-        // Read initial values before setting up monitors
-        await readInitialValues(device);
-
         // Set up all monitors and store cleanup functions
         subscriptionsRef.current = [
           monitorBusy(device),
@@ -406,7 +391,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           monitorUpdateProgress(device),
           monitorUpdateStatus(device),
           monitorMotionValue(device),
-          monitorClientMac(device),
+          monitorPasskey(device),
           monitorSwapStatus(device),
         ];
 
@@ -430,7 +415,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       monitorUpdateProgress,
       monitorUpdateStatus,
       monitorMotionValue,
-      monitorClientMac,
+      monitorPasskey,
       monitorCustomCommandStatus,
     ]
   );
@@ -452,8 +437,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const readInitialValues = useCallback(
     async (device: Device) => {
       try {
-        // TODO: ACTUALLY READ SETTINGS
-
 
         // Read LEFT_STATUS
         const leftInitStatus = await device.readCharacteristicForService(
@@ -732,6 +715,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     startMonitoring,
     stopMonitoring,
+    readInitialValues,
     updateFirmwareVersion
   };
 

@@ -17,14 +17,15 @@ import {
   WINK_SERVICE_UUID,
   MODULE_SETTINGS_SERVICE_UUID,
   SCAN_TIME_SECONDS,
-  CLIENT_MAC_UUID,
+  PASSKEY_UUID,
   UNPAIR_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore, MockBleStore } from '../Storage';
-import { getDeviceUUID, sleep } from '../helper/Functions';
+import { getDevicePasskey, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
 import { MockBleManager } from '../Mock/MockBleSystem';
 import DeviceInfo from 'react-native-device-info';
+import Storage from '../Storage/Storage';
 
 export type BleConnectionContextType = {
   device: Device | null;
@@ -87,7 +88,7 @@ const createBleManager = (): BleManager => {
 
 export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const manager = useMemo(() => createBleManager(), []);
-  const { startMonitoring, stopMonitoring } = useBleMonitor();
+  const { startMonitoring, stopMonitoring, readInitialValues } = useBleMonitor();
 
   const [device, setDevice] = useState<Device | null>(null);
   const [mac, setMac] = useState('');
@@ -191,19 +192,23 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const setupConnection = useCallback(
     async (connection: Device) => {
       try {
-        // Send APP UUID to module to ensure compatability
-        const deviceUUID = getDeviceUUID();
-
-        // TODO: Write with response
-        await connection.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CLIENT_MAC_UUID,
-          base64.encode(deviceUUID)
-        );
-
-
-        // Setup monitoring first
         await startMonitoring(connection);
+
+        if (getDevicePasskey() !== "Unknown")
+          await connection.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            PASSKEY_UUID,
+            base64.encode(getDevicePasskey()),
+          );
+        else
+          await connection.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            PASSKEY_UUID,
+            base64.encode("CLAIM"),
+          );
+
+
+        await readInitialValues(connection);
 
         // Once all is initialized and nothing failed, device has successfully connected.
         setIsConnected(true);
@@ -251,10 +256,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const connection = await manager.connectToDevice(deviceId);
         await connection.discoverAllServicesAndCharacteristics();
 
-        // Store MAC and update state
-        DeviceMACStore.setMAC(connection.id);
-        setMac(connection.id);
-
         // Setup monitoring and handlers
         await setupConnection(connection);
 
@@ -262,8 +263,11 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const negotiatedMTUConnection = await connection.requestMTU(517);
         setDevice(negotiatedMTUConnection);
 
-
         setIsConnecting(false);
+
+        // Store MAC and update state after connection establishes
+        DeviceMACStore.setMAC(connection.id);
+        setMac(connection.id);
 
         Toast.show({
           type: 'success',
@@ -459,10 +463,14 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Unpair from module (forgets device MAC)
   const unpair = useCallback(async () => {
-    if (!device) {
-      console.warn('No device connected');
-      return;
-    }
+
+    // Always remove from app, allows unpair when not connected
+    DeviceMACStore.forgetMAC();
+    setMac("");
+    Storage.delete("device-passkey");
+
+    console.log("MAC Erased");
+
 
     if (device !== null) {
       try {
@@ -479,10 +487,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log("Error sending unpair to mcu: ", err);
       }
     }
-
-    // Always remove from app, allows unpair when not connected
-    DeviceMACStore.forgetMAC();
-    setMac("");
 
     Toast.show({
       type: 'success',
