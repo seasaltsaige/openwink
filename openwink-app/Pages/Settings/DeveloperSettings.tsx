@@ -21,7 +21,7 @@ export function DeveloperSettings() {
   const isSimulator = DeviceInfo.isEmulatorSync();
 
   const devInfo = useMemo(() => ({
-    "Application ID": getDevicePasskey(),
+    "App Passkey": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Platform": DeviceInfo.getSystemName(),
     "Is Emulator": isSimulator ? 'Yes' : 'No',
