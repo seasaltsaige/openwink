@@ -131,7 +131,6 @@ export function ModuleSettings() {
   }
 
   const forgetModulePairing = async () => {
-    if (!isConnected) return;
     await unpair();
 
     Toast.show({
@@ -343,7 +342,7 @@ export function ModuleSettings() {
           else deleteStoredModuleData();
         }}
         animationType="fade"
-        disableConfirmation={!isConnected}
+        disableConfirmation={confirmationType === "sleep" && !isConnected}
       />
 
     </>

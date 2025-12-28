@@ -6,6 +6,25 @@
 #include <string>
 using namespace std;
 
+const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+void generateToken(char key[21]) {
+    static const uint8_t charsetSize = 62;
+
+    uint8_t randByte;
+    int idx = 0;
+
+    while (idx < 20) {
+        esp_fill_random(&randByte, 1);
+        if (randByte < (256 / charsetSize) * charsetSize) {
+            key[idx++] = charset[randByte % charsetSize];
+        }
+    }
+
+    key[20] = '\0'; 
+}
+
+
 Preferences Storage::storage;
 
 void Storage::begin(const char *name) {
@@ -88,6 +107,8 @@ void Storage::reset() {
     snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
     storage.remove(pressesKey);
   }
+
+  Storage::resetBond();
 
   customButtonStatusEnabled = false;
   maxTimeBetween_ms = 500;
@@ -174,21 +195,47 @@ void Storage::setSleepyValues(int side, double value) {
   }
 }
 
-void Storage::setWhitelist(string mac) {
-  const char *whitelistKey = "whitelist";
-  // storage.putBool(whitelistKey, true);
-  storage.putString(whitelistKey, mac.c_str());
+// void Storage::setWhitelist() {
+//   const char *whitelistKey = "whitelist";
+//   // storage.putBool(whitelistKey, true);
+//   storage.putString(whitelistKey, mac.c_str());
+// }
+
+// void Storage::clearWhitelist() {
+//   const char *whitelistKey = "whitelist";
+//   storage.remove(whitelistKey);
+// }
+
+// string Storage::getWhitelist() {
+//   const char *whitelistKey = "whitelist";
+//   String stored = storage.getString(whitelistKey, "");
+//   return string(stored.c_str());
+// }
+
+void Storage::setBond(string passkey) {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  if (!value.equals("")) return;
+  else
+    storage.putString(key, String(passkey.c_str()));
 }
 
-void Storage::clearWhitelist() {
-  const char *whitelistKey = "whitelist";
-  storage.remove(whitelistKey);
+void Storage::resetBond() {
+  const char *key = "passkey";
+  storage.remove(key);
 }
 
-string Storage::getWhitelist() {
-  const char *whitelistKey = "whitelist";
-  String stored = storage.getString(whitelistKey, "");
-  return string(stored.c_str());
+string Storage::getBond() {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  return string(value.c_str());
+}
+
+bool Storage::hasBond() {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  if (value.equals("")) return false;
+  else return true;
 }
 
 // void Storage::setMotionTiming(int time) {
