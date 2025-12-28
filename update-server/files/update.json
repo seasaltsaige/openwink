@@ -1,4 +1,4 @@
 {
-  "version": "0.7.7",
+  "version": "0.8.0",
   "description": "Pairing/bonding should now be more secure; determined by module instead of phone."
 }
