@@ -53,12 +53,12 @@ As mentioned previously, you are able to create and edit all of your custom comm
 ## Help
 
 ### App Usage
-<img src="./Help_App.png.png" width="200" alt="App Preview Image">
+<img src="./Help_App.png" width="200" alt="App Preview Image">
 
 The App Usage help page describes how to use different features and settings within the app. Most things should be somewhat self explanatory, and more complicated actions have help built into the page, but if that is not enough, this page serves to provide further explanations.
 
 ### Troubleshooting
-<img src="./Help_Trouble.png.png.png" width="200" alt="App Preview Image">
+<img src="./Help_Trouble.png" width="200" alt="App Preview Image">
 
 These are currently some guesses as to what could go wrong with the module, and will be updated as things evolve. Possible error paths and potential solutions to help troubleshoot.
 
