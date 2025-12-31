@@ -220,11 +220,23 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
         break;
 
       case 8:
-        leftWave();
+        if (leftStatus != rightStatus) {
+          if (leftStatus == 1) rightUp();
+          else rightDown();
+          setAllOff();
+          BLE::updateHeadlightChars();
+        }
+        waveHeadlights(WAVE_START_SIDE::LEFT);
         break;
 
       case 9:
-        rightWave();
+        if (leftStatus != rightStatus) {
+          if (rightStatus == 1) leftUp();
+          else leftDown();
+          setAllOff();
+          BLE::updateHeadlightChars();
+        }
+        waveHeadlights(WAVE_START_SIDE::RIGHT);
         break;
     }
 
