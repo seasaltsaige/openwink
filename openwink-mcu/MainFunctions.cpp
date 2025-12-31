@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include "MainFunctions.h"
+#include "ButtonHandler.h"
 #include "constants.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
@@ -16,6 +17,9 @@ void sleepyEye(bool leftSet, bool rightSet) {
   if (isSleepy()) return;
 
   BLE::setBusy(true);
+
+  // Used to ignore for timing
+  ButtonHandler::setIsSleepyCommand(true);
 
   double left = leftSleepyValue / 100;
   double right = rightSleepyValue / 100;
@@ -37,11 +41,11 @@ void sleepyEye(bool leftSet, bool rightSet) {
   // Delay loop for both headlights
   while ((leftSet && !leftStatusReached) || (rightSet && !rightStatusReached)) {
     unsigned long timeElapsed = (millis() - initialTime);
-    if (leftSet && !leftStatusReached && timeElapsed >= (left * HEADLIGHT_MOVEMENT_DELAY)) {
+    if (leftSet && !leftStatusReached && timeElapsed >= (left * ButtonHandler::leftMoveTime)) {
       leftStatusReached = true;
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
     }
-    if (rightSet && !rightStatusReached && timeElapsed >= (right * HEADLIGHT_MOVEMENT_DELAY)) {
+    if (rightSet && !rightStatusReached && timeElapsed >= (right * ButtonHandler::leftMoveTime)) {
       rightStatusReached = true;
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     }
@@ -54,6 +58,7 @@ void sleepyEye(bool leftSet, bool rightSet) {
   if (rightSet)
     rightStatus = rightSleepyValue + 10;
 
+  ButtonHandler::setIsSleepyCommand(false);
   BLE::updateHeadlightChars();
   BLE::setBusy(false);
 }
