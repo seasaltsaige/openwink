@@ -48,6 +48,16 @@ void setup() {
   ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();
+
+  xTaskCreate(motionInMonitorTask, "MONITOR", 4096, NULL, 1, NULL);
+}
+
+void motionInMonitorTask(void* params) {
+  for (;;) {
+    ButtonHandler::loopLeftMonitor();
+    ButtonHandler::loopRightMonitor();
+    vTaskDelay(pdMS_TO_TICKS(2.5));
+  }
 }
 
 void loop() {
