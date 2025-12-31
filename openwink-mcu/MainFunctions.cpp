@@ -114,6 +114,9 @@ void sleepyReset(bool leftSet, bool rightSet) {
 
 // Both
 void bothUp() {
+  ButtonHandler::setBusy(true);
+  // ButtonHandler::leftMoving = true;
+  // ButtonHandler::rightMoving = true;
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -126,12 +129,13 @@ void bothUp() {
 
   leftStatus = 1;
   rightStatus = 1;
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  while (ButtonHandler::isBusy()) {};
   BLE::updateHeadlightChars();
 }
 
 void bothDown() {
-
+  ButtonHandler::setBusy(true);
   if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -144,12 +148,12 @@ void bothDown() {
   leftStatus = 0;
   rightStatus = 0;
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {};
   BLE::updateHeadlightChars();
 }
 
 void bothBlink() {
-
+  ButtonHandler::setBusy(true);
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -170,9 +174,12 @@ void bothBlink() {
     rightStatus = 0;
   }
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 
+
+  ButtonHandler::setBusy(true);
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -192,33 +199,36 @@ void bothBlink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 // Left
 void leftUp() {
+  ButtonHandler::setBusy(true);
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
     leftStatus = 1;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 void leftDown() {
+  ButtonHandler::setBusy(true);
   if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 void leftWink() {
-
+  ButtonHandler::setBusy(true);
 
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -230,9 +240,11 @@ void leftWink() {
     leftStatus = 0;
   }
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 
+
+  ButtonHandler::setBusy(true);
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -242,33 +254,35 @@ void leftWink() {
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
     leftStatus = 0;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 // Right
 void rightUp() {
+  ButtonHandler::setBusy(true);
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
     rightStatus = 1;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 void rightDown() {
+  ButtonHandler::setBusy(true);
   if (rightStatus != 0) {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
     rightStatus = 0;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
 void rightWink() {
-
+  ButtonHandler::setBusy(true);
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -279,9 +293,10 @@ void rightWink() {
     rightStatus = 0;
   }
 
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 
+  ButtonHandler::setBusy(true);
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -291,7 +306,7 @@ void rightWink() {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     rightStatus = 0;
   }
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  while (ButtonHandler::isBusy()) {}
   BLE::updateHeadlightChars();
 }
 
