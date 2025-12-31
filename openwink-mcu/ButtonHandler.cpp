@@ -24,6 +24,19 @@ int ButtonHandler::buttonPressCounter = 0;
 bool ButtonHandler::customCommandActive = false;
 bool ButtonHandler::resetArmed = false;
 
+bool ButtonHandler::isSleepyCommand = false;
+bool ButtonHandler::commandRunning = false;
+
+bool ButtonHandler::leftMoving = false;
+bool ButtonHandler::rightMoving = false;
+
+unsigned long ButtonHandler::leftTimer = 0;
+unsigned long ButtonHandler::rightTimer = 0;
+
+int ButtonHandler::leftMoveTime = HEADLIGHT_MOVEMENT_DELAY;
+int ButtonHandler::rightMoveTime = HEADLIGHT_MOVEMENT_DELAY;
+
+
 unsigned long debounceTimer = 0;
 const int DEBOUNCE_MS = 35;
 bool checkDebounce = false;
