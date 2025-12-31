@@ -310,230 +310,159 @@ void rightWink() {
   BLE::updateHeadlightChars();
 }
 
-void leftWave() {
-  double headlightToEndMultiplier = 1.0 - headlightMultiplier;
 
-  Serial.printf("Left wave: %f, %f\n", headlightMultiplier, headlightToEndMultiplier);
+enum WaveState {
+  START_SIDE,
+  START_OPP,
+  RETURN_SIDE,
+  RETURN_OPP,
+  DONE_SIDE,
+  DONE_OPP,
+  FINISH,
+};
+WaveState waveState = START_SIDE;
 
-  // Down case
-  if (leftStatus == 0 && rightStatus == 0) {
+void waveSetStatus(WAVE_START_SIDE side, int value) {
+  if (side == WAVE_START_SIDE::LEFT) leftStatus = value;
+  else rightStatus = value;
+}
 
-    // Start left up
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+bool isMoving(WAVE_START_SIDE side) {
+  return side == WAVE_START_SIDE::LEFT ? ButtonHandler::isLeftMoving() : ButtonHandler::isRightMoving();
+}
 
-    // Wait percentage of delay
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    // Start right up
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-    // Wait rest of delay, left is now fully up, right is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    leftStatus = 1;
-    BLE::updateHeadlightChars();
-
-    // Start left down
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-
-    // Wait partial delay, right is now fully up, left is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    rightStatus = 1;
-    BLE::updateHeadlightChars();
-
-    // Start right down
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-
-    // Wait rest of delay, left is fully down, turn off left, right is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    leftStatus = 0;
-    BLE::updateHeadlightChars();
-
-    // Left Off
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-
-    // Both fully down now
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    rightStatus = 0;
-    BLE::updateHeadlightChars();
-
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-
-    // Up case
+void startMovement(WAVE_START_SIDE side) {
+  if (side == WAVE_START_SIDE::LEFT) {
+    ButtonHandler::leftMoving = true;
+    ButtonHandler::leftTimer = millis();
   } else {
-
-    // Start left down
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-
-    // Wait percentage of delay
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    // Start right down
-    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-
-    // Wait rest of delay, left is now fully down, right is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    leftStatus = 0;
-    BLE::updateHeadlightChars();
-
-    // Start left up
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-
-    // Wait partial delay, right is now fully down, left is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    rightStatus = 0;
-    BLE::updateHeadlightChars();
-
-    // Start right up
-    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-
-    // Wait rest of delay, left is fully up, turn off left, right is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    leftStatus = 1;
-    BLE::updateHeadlightChars();
-
-    // Left Off
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-
-    // Both fully up now
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    rightStatus = 1;
-    BLE::updateHeadlightChars();
-
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    ButtonHandler::rightMoving = true;
+    ButtonHandler::rightTimer = millis();
   }
 }
 
-void rightWave() {
-  double headlightToEndMultiplier = 1.0 - headlightMultiplier;
+void waveHeadlights(WAVE_START_SIDE side) {
+  double leftHeadlightDelay = static_cast<double>(ButtonHandler::leftMoveTime);
+  double rightHeadlightDelay = static_cast<double>(ButtonHandler::rightMoveTime);
 
-  Serial.printf("Right wave: %f, %f\n", headlightMultiplier, headlightToEndMultiplier);
+  // arbitrary choice, chose to check against starting on the left.
+  // true if left start side, false if right start side
+  const bool SIDE_CHECK = side == WAVE_START_SIDE::LEFT;
 
-  // Down case
-  if (leftStatus == 0 && rightStatus == 0) {
+  // values for START and OPPOSITE sides. (based on SIDE_CHECK)
+  WAVE_START_SIDE STRT_SIDE = SIDE_CHECK ? WAVE_START_SIDE::LEFT : WAVE_START_SIDE::RIGHT;
+  WAVE_START_SIDE OPP_SIDE = SIDE_CHECK ? WAVE_START_SIDE::RIGHT : WAVE_START_SIDE::LEFT;
 
-    // Start right up
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+  // Delay used to start OPP_SIDE headlight
+  double delay = SIDE_CHECK ? leftHeadlightDelay : rightHeadlightDelay;
+  // Boolean to check if starting in down or up position
+  bool startPosDown = leftStatus == 0 && rightStatus == 0;
 
-    // Wait percentage of delay
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
+  // Timer variable used for delay based actuation of opposite headlight
+  unsigned long waveTimer = 0;
 
-    // Start left up
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+  // if true, up should be high
+  const int dir = startPosDown ? HIGH : LOW;
 
-    // Wait rest of delay, right is now fully up, left is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
+  // PINS to send high/low based on SIDE_CHECK
+  // Start Side pins
+  const int SIDE_DOWN = SIDE_CHECK ? OUT_PIN_LEFT_DOWN : OUT_PIN_RIGHT_DOWN;
+  const int SIDE_UP = SIDE_CHECK ? OUT_PIN_LEFT_UP : OUT_PIN_RIGHT_UP;
 
-    rightStatus = 1;
-    BLE::updateHeadlightChars();
+  // Opposite Side pins
+  const int OPP_DOWN = SIDE_CHECK ? OUT_PIN_RIGHT_DOWN : OUT_PIN_LEFT_DOWN;
+  const int OPP_UP = SIDE_CHECK ? OUT_PIN_RIGHT_UP : OUT_PIN_LEFT_UP;
 
-    // Start right down
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+  while (waveState != FINISH) {
+    switch (waveState) {
+      case START_SIDE:
+        // Start the starting side in the movement direction (if starting low, UP, if starting high, DOWN)
+        digitalWrite(SIDE_DOWN, !dir);
+        digitalWrite(SIDE_UP, dir);
+        // begin handler movement
+        startMovement(STRT_SIDE);
+        // Start timer for percentage based wave
+        waveTimer = millis();
+        // continue to next step
+        waveState = START_OPP;
+        break;
 
-    // Wait partial delay, left is now fully up, right is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
+      case START_OPP:
+        // 
+        if ((millis() - waveTimer) >= (delay * headlightMultiplier)) {
+          digitalWrite(OPP_DOWN, !dir);
+          digitalWrite(OPP_UP, dir);
 
-    leftStatus = 1;
-    BLE::updateHeadlightChars();
+          waveSetStatus(STRT_SIDE, (dir ? (headlightMultiplier * 100) : ((1.0 - headlightMultiplier) * 100) + 10));
+          startMovement(OPP_SIDE);
 
-    // Start left down
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+          BLE::updateHeadlightChars();
 
-    // Wait rest of delay, right is fully down, turn off right, left is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
+          waveState = RETURN_SIDE;
+          waveTimer = 0;
+        }
+        break;
 
-    rightStatus = 0;
-    BLE::updateHeadlightChars();
+      case RETURN_SIDE:
+        // Once left stops moving, send back up
+        if (!isMoving(STRT_SIDE)) {
+          digitalWrite(SIDE_DOWN, dir);
+          digitalWrite(SIDE_UP, !dir);
+          
+          waveSetStatus(STRT_SIDE, dir);
+          startMovement(STRT_SIDE);
 
-    // Right Off
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+          BLE::updateHeadlightChars();
+          waveState = RETURN_OPP;
+        }
+        break;
 
-    // Both fully down now
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
+      case RETURN_OPP:
+        // Once right stops moving, send it back down
+        if (!isMoving(OPP_SIDE)) {
+          digitalWrite(OPP_DOWN, dir);
+          digitalWrite(OPP_UP, !dir);
+         
+          waveSetStatus(OPP_SIDE, dir);
+          startMovement(OPP_SIDE);
+          
+          BLE::updateHeadlightChars();
+          waveState = DONE_SIDE;
+        }
+        break;
 
-    leftStatus = 0;
-    BLE::updateHeadlightChars();
+      case DONE_SIDE:
+        // Wait for left to finish moving, and turn it off
+        if (!isMoving(STRT_SIDE)) {
+          digitalWrite(SIDE_DOWN, LOW);
+          digitalWrite(SIDE_UP, LOW);
 
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+          waveSetStatus(STRT_SIDE, !dir);
 
-    // Up case
-  } else {
+          waveState = DONE_OPP;
+          BLE::updateHeadlightChars();
+        }
+        break;
 
-    // Start right down
-    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+      case DONE_OPP:
+        // Wait for right to finish moving, and turn it off
+        if (!isMoving(OPP_SIDE)) {
+          digitalWrite(OPP_DOWN, LOW);
+          digitalWrite(OPP_UP, LOW);
 
-    // Wait percentage of delay
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
+          waveSetStatus(OPP_SIDE, !dir);
 
-    // Start left down
-    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-
-    // Wait rest of delay, right is now fully down, left is partially down
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    rightStatus = 0;
-    BLE::updateHeadlightChars();
-
-    // Start right up
-    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-
-    // Wait partial delay, left is now fully down, right is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    leftStatus = 0;
-    BLE::updateHeadlightChars();
-
-    // Start left up
-    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
-
-    // Wait rest of delay, right is fully up, turn off right, left is partially up
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightToEndMultiplier);
-
-    rightStatus = 1;
-    BLE::updateHeadlightChars();
-
-    // Right Off
-    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
-
-    // Both fully up now
-    delay(HEADLIGHT_MOVEMENT_DELAY * headlightMultiplier);
-
-    leftStatus = 1;
-    BLE::updateHeadlightChars();
-
-    digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+          waveState = FINISH;
+          BLE::updateHeadlightChars();
+        }
+        break;
+    }
   }
+
+  // Reset wave state to get ready for next wave
+  waveState = START_SIDE;
+  // Disable all pins to ensure all are off
+  setAllOff();
 }
 
 void setAllOff() {
