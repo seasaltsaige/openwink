@@ -50,7 +50,9 @@ void ButtonHandler::setupGPIO() {
   pinMode(OUT_PIN_RIGHT_UP, OUTPUT);
   // OEM Wiring inputs to detect initial state of headlights
   pinMode(OEM_BUTTON_INPUT, INPUT);
-  pinMode(OEM_HEADLIGHT_STATUS, INPUT);
+  // Headlight feedback pins
+  pinMode(OEM_HEADLIGHT_STATUS_RIGHT, INPUT);
+  pinMode(OEM_HEADLIGHT_STATUS_LEFT, INPUT);
 }
 
 // If OEM Button Pressed while custom command is active
