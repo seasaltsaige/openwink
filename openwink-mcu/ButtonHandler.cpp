@@ -347,8 +347,10 @@ void ButtonHandler::loopLeftMonitor() {
   }
 
   if (leftMoving && headlightStatus == LOW) {
-    leftMoving = false;
     unsigned long timeToMove = (millis() - leftTimer);
+    if (timeToMove <= 100) return;
+
+    leftMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
       leftMoveTime = static_cast<int>(timeToMove);
       Serial.printf("Left Headlight Time: %dms\n", leftMoveTime);
@@ -377,8 +379,9 @@ void ButtonHandler::loopRightMonitor() {
   }
 
   if (rightMoving && headlightStatus == LOW) {
-    rightMoving = false;
     unsigned long timeToMove = (millis() - rightTimer);
+    if (timeToMove <= 100) return;
+    rightMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
       rightMoveTime = static_cast<int>(timeToMove);
       Serial.printf("Right Headlight Time: %dms\n", rightMoveTime);
@@ -397,11 +400,9 @@ void ButtonHandler::loopRightMonitor() {
 void ButtonHandler::updateHeadlightDelay() {
   int left = static_cast<int>(leftMoveTime);
   int right = static_cast<int>(rightMoveTime);
-
-  int average = (left + right) / 2;
-  Serial.printf("Average Move Time: %dms\n", average);
-
-  HEADLIGHT_MOVEMENT_DELAY = average;
+  Storage::setMotionIn(SIDE::L, left);
+  Storage::setMotionIn(SIDE::R, right);
+  BLE::setMotionInValue(to_string(left) + "-" + to_string(right));
 }
 
 void ButtonHandler::updateButtonSleep() {
