@@ -332,26 +332,76 @@ void ButtonHandler::loopButtonHandler() {
   initialButton = buttonInput;
 }
 
-void ButtonHandler::handleBusyInput() {
-  int readStatus = digitalRead(OEM_HEADLIGHT_STATUS);
-  if (readStatus != motionButtonStatus) {
-    motionButtonStatus = readStatus;
 
-    if (readStatus == 1) {
-      // Start timer to measure on time
-      motionTimer = millis();
-      Serial.printf("Timer started...\n");
-    } else {
-      unsigned long current = millis();
+void ButtonHandler::loopLeftMonitor() {
+  int headlightStatus = digitalRead(OEM_HEADLIGHT_STATUS_LEFT);
 
-      unsigned long timeOn = current - motionTimer;
+  if (headlightStatus == LOW && !leftMoving) return;
+  if (headlightStatus == HIGH && leftMoving) return;
 
-      // TODO: Set in storage if different
-      // Set RTC DATA ATTR var value
-      // Send notification for app to update value
-      // BLE::setMotionInValue((int)timeOn + 25);
-    }
+  if (!leftMoving && headlightStatus == HIGH) {
+    leftMoving = true;
+    leftTimer = millis();
+    BLE::setBusy(true);
+    return;
   }
+
+  if (leftMoving && headlightStatus == LOW) {
+    leftMoving = false;
+    unsigned long timeToMove = (millis() - leftTimer);
+    if (timeToMove <= 1000 && timeToMove >= 450) {
+      leftMoveTime = static_cast<int>(timeToMove);
+      Serial.printf("Left Headlight Time: %dms\n", leftMoveTime);
+    }
+    leftTimer = 0;
+    updateHeadlightDelay();
+    // If both left and right have stopped
+    if (!rightMoving) {
+      BLE::setBusy(false);
+      ButtonHandler::setBusy(false);
+    }
+    return;
+  }
+}
+
+void ButtonHandler::loopRightMonitor() {
+  int headlightStatus = digitalRead(OEM_HEADLIGHT_STATUS_RIGHT);
+  if (headlightStatus == LOW && !rightMoving) return;
+  if (headlightStatus == HIGH && rightMoving) return;
+
+  if (!rightMoving && headlightStatus == HIGH) {
+    rightMoving = true;
+    rightTimer = millis();
+    BLE::setBusy(true);
+    return;
+  }
+
+  if (rightMoving && headlightStatus == LOW) {
+    rightMoving = false;
+    unsigned long timeToMove = (millis() - rightTimer);
+    if (timeToMove <= 1000 && timeToMove >= 450) {
+      rightMoveTime = static_cast<int>(timeToMove);
+      Serial.printf("Right Headlight Time: %dms\n", rightMoveTime);
+    }
+    rightTimer = 0;
+    updateHeadlightDelay();
+    // If both left and right have stopped
+    if (!leftMoving) {
+      BLE::setBusy(false);
+      ButtonHandler::setBusy(false);
+    }
+    return;
+  }
+}
+
+void ButtonHandler::updateHeadlightDelay() {
+  int left = static_cast<int>(leftMoveTime);
+  int right = static_cast<int>(rightMoveTime);
+
+  int average = (left + right) / 2;
+  Serial.printf("Average Move Time: %dms\n", average);
+
+  HEADLIGHT_MOVEMENT_DELAY = average;
 }
 
 void ButtonHandler::updateButtonSleep() {
