@@ -41,6 +41,8 @@ export function Information() {
     waveDelayMulti,
     buttonDelay,
     leftRightSwapped,
+    leftMoveTime,
+    rightMoveTime,
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -71,6 +73,8 @@ export function Information() {
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
     "Left Headlight Status": headlightStatus(isConnected, leftStatus),
     "Right Headlight Status": headlightStatus(isConnected, rightStatus),
+    "Left Move Time": `${leftMoveTime} ms`,
+    "Right Move Time": `${rightMoveTime} ms`,
   }), [mac, firmwareVersion, isScanning, isConnecting, isConnected, leftStatus, rightStatus])
 
   const deviceSettings = useMemo(() => ({
