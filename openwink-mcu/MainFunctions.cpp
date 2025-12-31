@@ -67,27 +67,34 @@ void sleepyReset(bool leftSet, bool rightSet) {
   if (!leftSet && !rightSet) return;
   if (!isSleepy()) return;
 
+  ButtonHandler::setIsSleepyCommand(true);
   BLE::setBusy(true);
 
   double percentageToUpLeft = 1 - (leftSleepyValue / 100);
   double percentageToUpRight = 1 - (rightSleepyValue / 100);
   unsigned long initialTime = millis();
 
-  if (leftSet)
+  if (leftSet) {
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  if (rightSet)
+    ButtonHandler::leftMoving = true;
+    ButtonHandler::leftTimer = millis();
+  }
+  if (rightSet) {
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    ButtonHandler::rightMoving = true;
+    ButtonHandler::rightTimer = millis();
+  }
 
   bool leftStatusReached = false;
   bool rightStatusReached = false;
 
   while ((leftSet && !leftStatusReached) || (leftSet && !rightStatusReached)) {
     unsigned long timeElapsed = (millis() - initialTime);
-    if (leftSet && !leftStatusReached && timeElapsed >= (percentageToUpLeft * HEADLIGHT_MOVEMENT_DELAY)) {
+    if (!ButtonHandler::isLeftMoving()) {
       leftStatusReached = true;
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
     }
-    if (rightSet && !rightStatusReached && timeElapsed >= (percentageToUpRight * HEADLIGHT_MOVEMENT_DELAY)) {
+    if (!ButtonHandler::isRightMoving()) {
       rightStatusReached = true;
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     }
@@ -100,6 +107,7 @@ void sleepyReset(bool leftSet, bool rightSet) {
   if (rightSet)
     rightStatus = 1;
 
+  ButtonHandler::setIsSleepyCommand(false);
   BLE::updateHeadlightChars();
   BLE::setBusy(false);
 }
