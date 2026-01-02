@@ -55,33 +55,33 @@ export function Information() {
         status === 0 ?
           "Down" :
           `%${status}`
-    ) : "Unknown"
+    ) : "Unavailable"
   );
   const connectionStatus = (scanning: boolean, connecting: boolean, connected: boolean) => (
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
   const appInfo = useMemo(() => ({
-    "App Passkey": getDevicePasskey(),
+    "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({
-    "Module ID": mac || "Unpaired",
+    "Module ID": mac || "Not Paired",
     "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
-    "Left Headlight Status": headlightStatus(isConnected, leftStatus),
-    "Right Headlight Status": headlightStatus(isConnected, rightStatus),
+    "Left Headlight Position": headlightStatus(isConnected, leftStatus),
+    "Right Headlight Position": headlightStatus(isConnected, rightStatus),
     "Left Move Time": `${leftMoveTime} ms`,
     "Right Move Time": `${rightMoveTime} ms`,
   }), [mac, firmwareVersion, isScanning, isConnecting, isConnected, leftStatus, rightStatus])
 
   const deviceSettings = useMemo(() => ({
     "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
-    "Headlight Orientation": leftRightSwapped ? "External" : "Internal",
+    "Headlight Perspective": leftRightSwapped ? "Front" : "Driver",
     "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(2)} ms`,
+    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
     "Press Interval": `${buttonDelay} ms`,
   }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
 
@@ -101,8 +101,6 @@ export function Information() {
   }).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
-
-
 
   useFocusEffect(useCallback(() => {
     const actions = CustomOEMButtonStore.getAll();
