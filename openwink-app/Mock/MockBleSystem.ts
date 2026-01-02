@@ -16,7 +16,6 @@ import {
   SOFTWARE_STATUS_CHAR_UUID,
   HEADLIGHT_MOTION_IN_UUID,
   CUSTOM_COMMAND_UUID,
-  CLIENT_MAC_UUID,
   WINK_SERVICE_UUID,
   OTA_SERVICE_UUID,
   MODULE_SETTINGS_SERVICE_UUID,
@@ -33,6 +32,7 @@ import {
   OTA_UUID,
   DefaultCommandValue,
   ButtonStatus,
+  PASSKEY_UUID,
 } from "../helper/Constants";
 import { MockBleStore, MockBleState } from "../Storage/MockBleStore";
 
@@ -75,7 +75,7 @@ class MockCharacteristicStore {
       this.values.set(HEADLIGHT_MOTION_IN_UUID, "300");
       this.values.set(HEADLIGHT_MOVEMENT_DELAY_UUID, "0.5");
       this.values.set(CUSTOM_COMMAND_UUID, "0");
-      this.values.set(CLIENT_MAC_UUID, "0");
+      this.values.set(PASSKEY_UUID, "0");
       this.values.set(FIRMWARE_UUID, "0.3.5");
     }
   }
@@ -310,9 +310,9 @@ export class MockDevice implements Partial<Device> {
         await this.handleHeadlightCommand(parseInt(value));
         break;
 
-      case CLIENT_MAC_UUID:
+      case PASSKEY_UUID:
         // Connection acknowledged
-        mockStore.setValue(CLIENT_MAC_UUID, "1");
+        mockStore.setValue(PASSKEY_UUID, "1");
         break;
 
       case CUSTOM_COMMAND_UUID:
