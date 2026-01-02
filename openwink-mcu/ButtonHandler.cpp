@@ -356,9 +356,9 @@ void ButtonHandler::loopLeftMonitor() {
       Serial.printf("Left Headlight Time: %dms\n", leftMoveTime);
     }
     leftTimer = 0;
-    updateHeadlightDelay();
     // If both left and right have stopped
     if (!rightMoving) {
+      updateHeadlightDelay();
       BLE::setBusy(false);
       ButtonHandler::setBusy(false);
     }
@@ -387,9 +387,9 @@ void ButtonHandler::loopRightMonitor() {
       Serial.printf("Right Headlight Time: %dms\n", rightMoveTime);
     }
     rightTimer = 0;
-    updateHeadlightDelay();
     // If both left and right have stopped
     if (!leftMoving) {
+      updateHeadlightDelay();
       BLE::setBusy(false);
       ButtonHandler::setBusy(false);
     }
