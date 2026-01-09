@@ -91,6 +91,7 @@ export function ModuleSettings() {
   const deleteStoredModuleData = async () => {
 
     await resetModule();
+    await unpair();
 
     AutoConnectStore.enable();
     CustomCommandStore.deleteAll();

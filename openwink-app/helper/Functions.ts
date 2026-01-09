@@ -65,6 +65,6 @@ export const useThrottle = <T extends unknown[], K>(
 
 export const getDevicePasskey = () => {
   let uuidValue = Storage.getString("device-passkey");
-  if (!uuidValue) uuidValue = "Unknown";
+  if (!uuidValue) uuidValue = "Not Paired";
   return uuidValue;
 }

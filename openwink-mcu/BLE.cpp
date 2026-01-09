@@ -118,7 +118,9 @@ void BLE::initServiceCharacteristics() {
   headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 
 
-  headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  // headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  headlightMotionChar->setValue(to_string(ButtonHandler::leftMoveTime) + "-" + to_string(ButtonHandler::rightMoveTime));
+
   headlightDelayChar->setValue(to_string(headlightMultiplier));
   headlightBypassChar->setValue(bypassHeadlightOverride ? "true" : "false");
   headlightOrientationChar->setValue(Storage::getHeadlightOrientation() ? "1" : "0");
@@ -163,7 +165,6 @@ void BLE::start() {
   if (advertising->setInstanceData(0, advertisement)) {
     if (advertising->start(0)) {
       printf("Started advertising\n");
-      BLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
     } else printf("Failed to start advertising\n");
   } else printf("Failed to register advertisement data\n");
 }
@@ -175,11 +176,8 @@ void BLE::updateHeadlightChars() {
   rightStatusChar->notify();
 }
 
-void BLE::setMotionInValue(int value) {
-  if (value < 500 || value > 800)
-    return;
-  HEADLIGHT_MOVEMENT_DELAY = value;
-  headlightMotionChar->setValue(to_string(value));
+void BLE::setMotionInValue(string value) {
+  headlightMotionChar->setValue(value);
   headlightMotionChar->notify();
 }
 
