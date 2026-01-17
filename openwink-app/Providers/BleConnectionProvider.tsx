@@ -194,14 +194,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         await startMonitoring(connection);
 
-        if (getDevicePasskey() !== "Unknown")
-          await connection.writeCharacteristicWithoutResponseForService(
+        // Wow that was stupid
+        if (getDevicePasskey() !== "Not Paired")
+          await connection.writeCharacteristicWithResponseForService(
             MODULE_SETTINGS_SERVICE_UUID,
             PASSKEY_UUID,
             base64.encode(getDevicePasskey()),
           );
         else
-          await connection.writeCharacteristicWithoutResponseForService(
+          await connection.writeCharacteristicWithResponseForService(
             MODULE_SETTINGS_SERVICE_UUID,
             PASSKEY_UUID,
             base64.encode("CLAIM"),

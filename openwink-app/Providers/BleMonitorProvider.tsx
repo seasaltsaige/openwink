@@ -560,7 +560,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (bypassStatus.value) {
           const decoded = base64.decode(bypassStatus.value);
           console.log(decoded, "bypass");
-          const parsed = decoded === "true";
+          const parsed = decoded === "1";
           setHeadlightBypass(parsed);
           if (parsed)
             CustomOEMButtonStore.enableBypass();
