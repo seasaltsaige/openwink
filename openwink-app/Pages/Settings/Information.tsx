@@ -43,6 +43,7 @@ export function Information() {
     leftRightSwapped,
     leftMoveTime,
     rightMoveTime,
+    headlightBypass
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -81,6 +82,7 @@ export function Information() {
     "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
     "Headlight Perspective": leftRightSwapped ? "Front" : "Driver",
     "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
+    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
     "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
     "Press Interval": `${buttonDelay} ms`,
   }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
