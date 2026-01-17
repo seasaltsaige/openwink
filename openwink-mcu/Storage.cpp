@@ -53,8 +53,8 @@ void Storage::getFromStorage() {
   bool oem = storage.getBool(customOemKey, false);
   customButtonStatusEnabled = oem;
 
-  const char *headlightBypassKey = "headlight-bypass-key";
-  bool bypass = storage.getBool(headlightBypassKey, false);
+  const char *headlightBypassKey = "hl-bypass";
+  bool bypass = storage.getBool(headlightBypassKey);
   bypassHeadlightOverride = bypass;
 
 
@@ -99,7 +99,7 @@ void Storage::reset() {
   storage.remove(leftSleepyHeadlightKey);
   const char *rightSleepyHeadlightKey = "sleepy-right";
   storage.remove(rightSleepyHeadlightKey);
-  const char *headlightBypassKey = "headlight-bypass-key";
+  const char *headlightBypassKey = "hl-bypass";
   storage.remove(headlightBypassKey);
   const char *orientationKey = "orien-key";
   storage.remove(orientationKey);
@@ -154,11 +154,9 @@ void Storage::setCustomButtonPressArray(int index, string value) {
     storage.putString(key.c_str(), value.c_str());
 }
 
-void Storage::setHeadlightBypass(bool bypass) {
-  string key = "headlight-bypass-key";
-  bool storedValue = storage.getBool(key.c_str(), false);
-  if (storedValue != bypass)
-    storage.putBool(key.c_str(), bypass);
+void Storage::setHeadlightBypass(bool value) {
+  const char *key = "hl-bypass";
+  storage.putBool(key, value);
 }
 
 // TRUE = OUTSIDE

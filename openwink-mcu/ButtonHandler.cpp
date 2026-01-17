@@ -13,7 +13,7 @@
 using namespace std;
 
 RTC_DATA_ATTR int initialButton = 0;
-bool bypassHeadlightOverride = false;
+RTC_DATA_ATTR bool bypassHeadlightOverride = false;
 
 int motionButtonStatus = 0;
 unsigned long motionTimer = 0;

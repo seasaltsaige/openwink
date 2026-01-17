@@ -28,7 +28,7 @@ public:
 
   static void setCustomButtonPressArray(int index, string value);
   static void setSleepyValues(int side, double value);
-  static void setHeadlightBypass(bool bypass);
+  static void setHeadlightBypass(bool value);
   static void setHeadlightOrientation(bool orientation);
   static bool getHeadlightOrientation();
 
