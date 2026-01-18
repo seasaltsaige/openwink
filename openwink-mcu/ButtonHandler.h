@@ -43,7 +43,7 @@ public:
   inline static bool isBusy() {
     ButtonHandler::loopLeftMonitor();
     ButtonHandler::loopRightMonitor();
-    return leftMoving || rightMoving;
+    return leftMoving || rightMoving || commandRunning;
   };
 
   inline static void setBusy(bool busy) {

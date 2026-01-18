@@ -348,7 +348,7 @@ void ButtonHandler::loopLeftMonitor() {
 
   if (leftMoving && headlightStatus == LOW) {
     unsigned long timeToMove = (millis() - leftTimer);
-    if (timeToMove <= 100) return;
+    if (timeToMove <= 250) return;
 
     leftMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
@@ -380,7 +380,7 @@ void ButtonHandler::loopRightMonitor() {
 
   if (rightMoving && headlightStatus == LOW) {
     unsigned long timeToMove = (millis() - rightTimer);
-    if (timeToMove <= 100) return;
+    if (timeToMove <= 250) return;
     rightMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
       rightMoveTime = static_cast<int>(timeToMove);
