@@ -115,8 +115,10 @@ void sleepyReset(bool leftSet, bool rightSet) {
 // Both
 void bothUp() {
   ButtonHandler::setBusy(true);
-  // ButtonHandler::leftMoving = true;
-  // ButtonHandler::rightMoving = true;
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::leftTimer = millis();
+  ButtonHandler::rightTimer = millis();
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -136,6 +138,11 @@ void bothUp() {
 
 void bothDown() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::leftTimer = millis();
+  ButtonHandler::rightTimer = millis();
+
   if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -154,6 +161,12 @@ void bothDown() {
 
 void bothBlink() {
   ButtonHandler::setBusy(true);
+
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::leftTimer = millis();
+  ButtonHandler::rightTimer = millis();
+
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -180,6 +193,10 @@ void bothBlink() {
 
 
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::leftTimer = millis();
+  ButtonHandler::rightTimer = millis();
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -207,6 +224,8 @@ void bothBlink() {
 // Left
 void leftUp() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::leftTimer = millis();
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -218,6 +237,8 @@ void leftUp() {
 
 void leftDown() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::leftTimer = millis();
   if (leftStatus != 0) {
     digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
     digitalWrite(OUT_PIN_LEFT_UP, LOW);
@@ -229,6 +250,8 @@ void leftDown() {
 
 void leftWink() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::leftTimer = millis();
 
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
@@ -245,6 +268,8 @@ void leftWink() {
 
 
   ButtonHandler::setBusy(true);
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::leftTimer = millis();
   if (leftStatus != 1) {
     digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
     digitalWrite(OUT_PIN_LEFT_UP, HIGH);
@@ -261,6 +286,8 @@ void leftWink() {
 // Right
 void rightUp() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::rightTimer = millis();
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -272,6 +299,8 @@ void rightUp() {
 
 void rightDown() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::rightTimer = millis();
   if (rightStatus != 0) {
     digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
@@ -283,6 +312,8 @@ void rightDown() {
 
 void rightWink() {
   ButtonHandler::setBusy(true);
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::rightTimer = millis();
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -297,6 +328,8 @@ void rightWink() {
   BLE::updateHeadlightChars();
 
   ButtonHandler::setBusy(true);
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::rightTimer = millis();
   if (rightStatus != 1) {
     digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
     digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
@@ -388,7 +421,7 @@ void waveHeadlights(WAVE_START_SIDE side) {
         break;
 
       case START_OPP:
-        // 
+        //
         if ((millis() - waveTimer) >= (delay * headlightMultiplier)) {
           digitalWrite(OPP_DOWN, !dir);
           digitalWrite(OPP_UP, dir);
@@ -408,7 +441,7 @@ void waveHeadlights(WAVE_START_SIDE side) {
         if (!isMoving(STRT_SIDE)) {
           digitalWrite(SIDE_DOWN, dir);
           digitalWrite(SIDE_UP, !dir);
-          
+
           waveSetStatus(STRT_SIDE, dir);
           startMovement(STRT_SIDE);
 
@@ -422,10 +455,10 @@ void waveHeadlights(WAVE_START_SIDE side) {
         if (!isMoving(OPP_SIDE)) {
           digitalWrite(OPP_DOWN, dir);
           digitalWrite(OPP_UP, !dir);
-         
+
           waveSetStatus(OPP_SIDE, dir);
           startMovement(OPP_SIDE);
-          
+
           BLE::updateHeadlightChars();
           waveState = DONE_SIDE;
         }
