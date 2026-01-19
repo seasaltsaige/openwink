@@ -679,6 +679,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const swapLeftRight = useCallback(
     async () => {
       try {
+        console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
         await device?.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
           SWAP_ORIENTATION_UUID,
@@ -689,7 +690,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       } catch (err) {
         console.log(err);
       }
-    }, [device]);
+    }, [device, leftRightSwapped]);
 
   const value: BleCommandContextType = {
     sendDefaultCommand,

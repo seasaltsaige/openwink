@@ -3,6 +3,7 @@
 #include "MainFunctions.h"
 #include "ButtonHandler.h"
 #include "constants.h"
+#include "Storage.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
 
@@ -375,8 +376,9 @@ void startMovement(WAVE_START_SIDE side) {
 }
 
 void waveHeadlights(WAVE_START_SIDE side) {
-  double leftHeadlightDelay = static_cast<double>(ButtonHandler::leftMoveTime);
-  double rightHeadlightDelay = static_cast<double>(ButtonHandler::rightMoveTime);
+  bool orien = Storage::getHeadlightOrientation();
+  double leftHeadlightDelay = static_cast<double>(!orien ? ButtonHandler::leftMoveTime : ButtonHandler::rightMoveTime);
+  double rightHeadlightDelay = static_cast<double>(!orien ? ButtonHandler::rightMoveTime : ButtonHandler::leftMoveTime);
 
   // arbitrary choice, chose to check against starting on the left.
   // true if left start side, false if right start side

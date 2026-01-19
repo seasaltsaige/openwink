@@ -73,11 +73,17 @@ void Storage::getFromStorage() {
     OUT_PIN_LEFT_UP = 13;
     OUT_PIN_RIGHT_DOWN = 10;
     OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
   } else {
     OUT_PIN_LEFT_DOWN = 10;
     OUT_PIN_LEFT_UP = 11;
     OUT_PIN_RIGHT_DOWN = 12;
     OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
   }
 
   const char *leftMotion = "motion-left-timing";
@@ -123,10 +129,14 @@ void Storage::reset() {
   headlightMultiplier = 1.0;
   leftSleepyValue = 50;
   rightSleepyValue = 50;
+
   OUT_PIN_LEFT_DOWN = 10;
   OUT_PIN_LEFT_UP = 11;
   OUT_PIN_RIGHT_DOWN = 12;
   OUT_PIN_RIGHT_UP = 13;
+
+  OEM_HEADLIGHT_STATUS_RIGHT = 46;
+  OEM_HEADLIGHT_STATUS_LEFT = 3;
 
   for (int i = 0; i < 9; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
@@ -171,11 +181,18 @@ void Storage::setHeadlightOrientation(bool orientation) {
     OUT_PIN_LEFT_UP = 13;
     OUT_PIN_RIGHT_DOWN = 10;
     OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
+
   } else {
     OUT_PIN_LEFT_DOWN = 10;
     OUT_PIN_LEFT_UP = 11;
     OUT_PIN_RIGHT_DOWN = 12;
     OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
   }
 }
 
