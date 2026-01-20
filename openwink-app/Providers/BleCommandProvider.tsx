@@ -98,6 +98,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWaveDelayMulti,
     setLeftRightSwapped,
     setHeadlightBypass,
+    setLeftStatus,
+    setRightStatus,
   } = useBleMonitor();
 
 
@@ -685,12 +687,16 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           SWAP_ORIENTATION_UUID,
           base64.encode(leftRightSwapped ? "0" : "1"),
         );
+        // Swap the status values so the visual display remains unchanged
+        const tempLeft = leftStatus;
+        setLeftStatus(rightStatus);
+        setRightStatus(tempLeft);
         setLeftRightSwapped((v) => !v);
         HeadlightOrientationStore.toggle();
       } catch (err) {
         console.log(err);
       }
-    }, [device, leftRightSwapped]);
+    }, [device, leftRightSwapped, leftStatus, rightStatus, setLeftStatus, setRightStatus]);
 
   const value: BleCommandContextType = {
     sendDefaultCommand,
