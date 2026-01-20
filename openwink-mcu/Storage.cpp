@@ -9,19 +9,19 @@ using namespace std;
 const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 void generateToken(char key[21]) {
-    static const uint8_t charsetSize = 62;
+  static const uint8_t charsetSize = 62;
 
-    uint8_t randByte;
-    int idx = 0;
+  uint8_t randByte;
+  int idx = 0;
 
-    while (idx < 20) {
-        esp_fill_random(&randByte, 1);
-        if (randByte < (256 / charsetSize) * charsetSize) {
-            key[idx++] = charset[randByte % charsetSize];
-        }
+  while (idx < 20) {
+    esp_fill_random(&randByte, 1);
+    if (randByte < (256 / charsetSize) * charsetSize) {
+      key[idx++] = charset[randByte % charsetSize];
     }
+  }
 
-    key[20] = '\0'; 
+  key[20] = '\0';
 }
 
 
@@ -53,8 +53,8 @@ void Storage::getFromStorage() {
   bool oem = storage.getBool(customOemKey, false);
   customButtonStatusEnabled = oem;
 
-  const char *headlightBypassKey = "headlight-bypass-key";
-  bool bypass = storage.getBool(headlightBypassKey, false);
+  const char *headlightBypassKey = "hl-bypass";
+  bool bypass = storage.getBool(headlightBypassKey);
   bypassHeadlightOverride = bypass;
 
 
@@ -73,16 +73,25 @@ void Storage::getFromStorage() {
     OUT_PIN_LEFT_UP = 13;
     OUT_PIN_RIGHT_DOWN = 10;
     OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
   } else {
     OUT_PIN_LEFT_DOWN = 10;
     OUT_PIN_LEFT_UP = 11;
     OUT_PIN_RIGHT_DOWN = 12;
     OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
   }
 
-  // const char *motionKey = "motion-key";
-  // int motion = storage.getInt(motionKey, 750);
-  // HEADLIGHT_MOVEMENT_DELAY = motion;
+  const char *leftMotion = "motion-left-timing";
+  const char *rightMotion = "motion-right-timing";
+  int leftMove = storage.getInt(leftMotion, HEADLIGHT_MOVEMENT_DELAY);
+  int rightMove = storage.getInt(rightMotion, HEADLIGHT_MOVEMENT_DELAY);
+  ButtonHandler::leftMoveTime = leftMove;
+  ButtonHandler::rightMoveTime = rightMove;
 }
 
 void Storage::reset() {
@@ -96,10 +105,15 @@ void Storage::reset() {
   storage.remove(leftSleepyHeadlightKey);
   const char *rightSleepyHeadlightKey = "sleepy-right";
   storage.remove(rightSleepyHeadlightKey);
-  const char *headlightBypassKey = "headlight-bypass-key";
+  const char *headlightBypassKey = "hl-bypass";
   storage.remove(headlightBypassKey);
   const char *orientationKey = "orien-key";
   storage.remove(orientationKey);
+
+  const char *leftMotion = "motion-left-timing";
+  const char *rightMotion = "motion-right-timing";
+  storage.remove(leftMotion);
+  storage.remove(rightMotion);
 
   char pressesKey[15];
 
@@ -115,14 +129,27 @@ void Storage::reset() {
   headlightMultiplier = 1.0;
   leftSleepyValue = 50;
   rightSleepyValue = 50;
+
   OUT_PIN_LEFT_DOWN = 10;
   OUT_PIN_LEFT_UP = 11;
   OUT_PIN_RIGHT_DOWN = 12;
   OUT_PIN_RIGHT_UP = 13;
 
+  OEM_HEADLIGHT_STATUS_RIGHT = 46;
+  OEM_HEADLIGHT_STATUS_LEFT = 3;
+
   for (int i = 0; i < 9; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
   }
+}
+
+void Storage::setMotionIn(SIDE side, int timing) {
+  string s = side == SIDE::L ? "left" : "right";
+  string key = "motion-" + s + "-timing";
+  int t = storage.getInt(static_cast<const char *>(key.c_str()), HEADLIGHT_MOVEMENT_DELAY);
+  if (side == SIDE::L && timing == t || side == SIDE::R && timing == t) return;
+
+  storage.putInt(static_cast<const char *>(key.c_str()), timing);
 }
 
 void Storage::setCustomOEMButtonStatus(bool status) {
@@ -137,11 +164,9 @@ void Storage::setCustomButtonPressArray(int index, string value) {
     storage.putString(key.c_str(), value.c_str());
 }
 
-void Storage::setHeadlightBypass(bool bypass) {
-  string key = "headlight-bypass-key";
-  bool storedValue = storage.getBool(key.c_str(), false);
-  if (storedValue != bypass)
-    storage.putBool(key.c_str(), bypass);
+void Storage::setHeadlightBypass(bool value) {
+  const char *key = "hl-bypass";
+  storage.putBool(key, value);
 }
 
 // TRUE = OUTSIDE
@@ -156,11 +181,18 @@ void Storage::setHeadlightOrientation(bool orientation) {
     OUT_PIN_LEFT_UP = 13;
     OUT_PIN_RIGHT_DOWN = 10;
     OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
+
   } else {
     OUT_PIN_LEFT_DOWN = 10;
     OUT_PIN_LEFT_UP = 11;
     OUT_PIN_RIGHT_DOWN = 12;
     OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
   }
 }
 
@@ -195,23 +227,6 @@ void Storage::setSleepyValues(int side, double value) {
   }
 }
 
-// void Storage::setWhitelist() {
-//   const char *whitelistKey = "whitelist";
-//   // storage.putBool(whitelistKey, true);
-//   storage.putString(whitelistKey, mac.c_str());
-// }
-
-// void Storage::clearWhitelist() {
-//   const char *whitelistKey = "whitelist";
-//   storage.remove(whitelistKey);
-// }
-
-// string Storage::getWhitelist() {
-//   const char *whitelistKey = "whitelist";
-//   String stored = storage.getString(whitelistKey, "");
-//   return string(stored.c_str());
-// }
-
 void Storage::setBond(string passkey) {
   const char *key = "passkey";
   String value = storage.getString(key, "");
@@ -237,8 +252,3 @@ bool Storage::hasBond() {
   if (value.equals("")) return false;
   else return true;
 }
-
-// void Storage::setMotionTiming(int time) {
-//   const char* motionKey = "motion-key";
-//   storage.putInt(motionKey, time);
-// }

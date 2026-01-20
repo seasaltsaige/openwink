@@ -95,8 +95,7 @@ void CommandHandler::handleQueuedCommand() {
         setAllOff();
         BLE::updateHeadlightChars();
       }
-
-      leftWave();
+      waveHeadlights(WAVE_START_SIDE::LEFT);
       break;
 
     case 11:
@@ -107,9 +106,7 @@ void CommandHandler::handleQueuedCommand() {
         setAllOff();
         BLE::updateHeadlightChars();
       }
-
-      rightWave();
-
+      waveHeadlights(WAVE_START_SIDE::RIGHT);
       break;
   }
 
@@ -197,8 +194,7 @@ void CommandHandler::handleQueuedCustomCommand() {
             setAllOff();
             BLE::updateHeadlightChars();
           }
-
-          leftWave();
+          waveHeadlights(WAVE_START_SIDE::LEFT);
           break;
 
         case 11:
@@ -209,9 +205,7 @@ void CommandHandler::handleQueuedCustomCommand() {
             setAllOff();
             BLE::updateHeadlightChars();
           }
-
-          rightWave();
-
+          waveHeadlights(WAVE_START_SIDE::RIGHT);
           break;
       }
 

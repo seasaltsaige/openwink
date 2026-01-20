@@ -18,7 +18,7 @@
 
 using namespace std;
 
-RTC_DATA_ATTR double headlightMultiplier = 1.0;
+RTC_DATA_ATTR double headlightMultiplier = 0.5;
 
 vector<string> customButtonPressArray(20, "0");
 

@@ -13,9 +13,10 @@ extern int OUT_PIN_RIGHT_UP;
 #define OEM_BUTTON_INPUT 9
 
 // Green wire in wiring harness, indicating busy when high
-#define OEM_HEADLIGHT_STATUS 46 // UPDATE TO 46 FOR PROD
+extern int OEM_HEADLIGHT_STATUS_RIGHT;
+extern int OEM_HEADLIGHT_STATUS_LEFT; 
 
-#define FIRMWARE_VERSION "0.8.0"
+#define FIRMWARE_VERSION "0.9.1"
 
 #define AUTH_TIME_MS 5000
 

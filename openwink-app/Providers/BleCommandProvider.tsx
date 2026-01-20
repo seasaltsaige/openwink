@@ -90,11 +90,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     isSleepyEyeActive,
     leftStatus,
     rightStatus,
-    motionValue,
     leftRightSwapped,
-    waveDelayMulti,
-
-
     setLeftSleepyEye,
     setRightSleepyEye,
     setOemCustomButtonEnabled,
@@ -120,29 +116,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(null);
     }
   }, [headlightsBusy]);
-
-  // Motion value ref to avoid stale closures
-  const motionValueRef = useRef(motionValue);
-  const waveDelayMultiRef = useRef(waveDelayMulti);
-  const leftStatusRef = useRef(leftStatus);
-  const rightStatusRef = useRef(rightStatus);
-
-  // Keep refs in sync
-  useEffect(() => {
-    motionValueRef.current = motionValue;
-  }, [motionValue]);
-
-  useEffect(() => {
-    waveDelayMultiRef.current = waveDelayMulti;
-  }, [waveDelayMulti]);
-
-  useEffect(() => {
-    leftStatusRef.current = leftStatus;
-  }, [leftStatus]);
-
-  useEffect(() => {
-    rightStatusRef.current = rightStatus;
-  }, [rightStatus]);
 
   // Load persisted settings on mount
   useEffect(() => {
@@ -706,6 +679,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const swapLeftRight = useCallback(
     async () => {
       try {
+        console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
         await device?.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
           SWAP_ORIENTATION_UUID,
@@ -716,7 +690,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       } catch (err) {
         console.log(err);
       }
-    }, [device]);
+    }, [device, leftRightSwapped]);
 
   const value: BleCommandContextType = {
     sendDefaultCommand,

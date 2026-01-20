@@ -18,108 +18,100 @@ export function AboutFooter({ }) {
 
   const [popupOpen, setPopupOpen] = useState(false);
 
-  const popupHeight = useSharedValue(50);
-
   const open = () => {
     setPopupOpen(true);
-    popupHeight.value = withSequence(
-      withTiming(100, { duration: ANIMATION_DURATION_MS, easing: ANIMATION_STYLE })
-    );
   }
 
   const close = () => {
-    popupHeight.value = withSequence(
-      withTiming(50, { duration: ANIMATION_DURATION_MS, easing: ANIMATION_STYLE }),
-    );
-    setTimeout(() => {
-      setPopupOpen(false);
-    }, ANIMATION_DURATION_MS);
+    setPopupOpen(false);
   }
-
-  const animatedViewStyles = useAnimatedStyle(() => {
-    return {
-      height: popupHeight.value,
-    }
-  });
 
   const { theme, colorTheme } = useColorTheme();
   return (
     <>
-      <Animated.View
+      <View
         style={[
           theme.infoFooterContainer,
-          { flexDirection: "column", rowGap: 5 },
-          animatedViewStyles,
+          {
+            flexDirection: "column",
+            rowGap: 5,
+            overflow: "hidden",
+            position: "absolute",
+            bottom: 15,
+            height: "auto",
+          },
         ]}>
-
 
         <Pressable
           hitSlop={10}
           onPress={() => popupOpen ? close() : open()}
         >
           {({ pressed }) => (
-            <IonIcons size={25} color={`${pressed ? colorTheme.buttonColor : colorTheme.headerTextColor}99`} name={popupOpen ? "chevron-collapse-outline" : "chevron-expand-outline"} />
+            <IonIcons
+              size={25}
+              color={`${pressed ? colorTheme.buttonColor : colorTheme.headerTextColor}99`}
+              name={popupOpen ? "chevron-down" : "chevron-up"} />
           )}
         </Pressable>
 
-        {popupOpen ?
-          <>
-            <View style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 4
-            }}>
-              <Text style={theme.infoFooterText}>
-                Module hardware developed and maintained by
-              </Text>
+        {
+          popupOpen ?
+            <>
+              <View style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 4
+              }}>
+                <Text style={theme.infoFooterText}>
+                  Module hardware developed and maintained by
+                </Text>
 
-              <Pressable
-                onPress={() => openGithub("module")}
-              >
-                {
-                  ({ pressed }) => <Text style={[theme.infoFooterText, {
-                    color: "#99c3ff",
-                    textDecorationLine: pressed ? "underline" : "none"
-                  }]}>
-                    @pyroxenes
-                  </Text>
-                }
+                <Pressable
+                  onPress={() => openGithub("module")}
+                >
+                  {
+                    ({ pressed }) => <Text style={[theme.infoFooterText, {
+                      color: "#99c3ff",
+                      textDecorationLine: pressed ? "underline" : "none"
+                    }]}>
+                      @pyroxenes
+                    </Text>
+                  }
 
-              </Pressable>
-            </View>
+                </Pressable>
+              </View>
 
-            <View style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 4
-            }}>
-              <Text style={theme.infoFooterText}>
+              <View style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                columnGap: 4
+              }}>
+                <Text style={theme.infoFooterText}>
 
-                Module software developed and maintained by
-              </Text>
-              <Pressable
-                onPress={() => openGithub("software")}
-              >
-                {
-                  ({ pressed }) => <Text style={[theme.infoFooterText, {
-                    color: "#99c3ff",
-                    textDecorationLine: pressed ? "underline" : "none"
-                  }]}>
-                    @seasaltsaige
-                  </Text>
-                }
+                  Module software developed and maintained by
+                </Text>
+                <Pressable
+                  onPress={() => openGithub("software")}
+                >
+                  {
+                    ({ pressed }) => <Text style={[theme.infoFooterText, {
+                      color: "#99c3ff",
+                      textDecorationLine: pressed ? "underline" : "none"
+                    }]}>
+                      @seasaltsaige
+                    </Text>
+                  }
 
-              </Pressable>
-            </View>
-          </>
-          : <></>
+                </Pressable>
+              </View>
+            </>
+            : <></>
         }
-
-      </Animated.View>
+      </View>
     </>
   )
 

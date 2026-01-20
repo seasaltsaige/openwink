@@ -22,7 +22,11 @@ export function WaveDelaySettings() {
   const { colorTheme, theme } = useColorTheme();
 
   const { updateWaveDelayMulti } = useBleCommand();
-  const { waveDelayMulti, leftStatus, rightStatus, motionValue } = useBleMonitor();
+  const {
+    waveDelayMulti,
+    leftMoveTime,
+    rightMoveTime
+  } = useBleMonitor();
 
   const {
     isConnected
@@ -65,15 +69,15 @@ export function WaveDelaySettings() {
     cancelAnimation(rightWaveStatus);
 
     leftWaveStatus.value = withSequence(
-      withTiming(0, { duration: motionValue, easing: Easing.linear }),
-      withTiming(100, { duration: motionValue, easing: Easing.linear }),
+      withTiming(0, { duration: leftMoveTime, easing: Easing.linear }),
+      withTiming(100, { duration: leftMoveTime, easing: Easing.linear }),
     );
 
     rightWaveStatus.value = withDelay(
-      motionValue * (min / 100),
+      leftMoveTime * (min / 100),
       withSequence(
-        withTiming(0, { duration: motionValue, easing: Easing.linear }),
-        withTiming(100, { duration: motionValue, easing: Easing.linear }),
+        withTiming(0, { duration: rightMoveTime, easing: Easing.linear }),
+        withTiming(100, { duration: rightMoveTime, easing: Easing.linear }),
       )
     );
   }, [min]);

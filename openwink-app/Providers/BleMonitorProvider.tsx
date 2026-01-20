@@ -34,6 +34,7 @@ import { sleep, toProperCase } from '../helper/Functions';
 import { CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
 import Storage from '../Storage/Storage';
+import { HeadlightMovementSpeedStore, SIDE } from '../Storage/HeadlightMovementSpeedStore';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -44,7 +45,8 @@ export type BleMonitorContextType = {
   updateProgress: number;
   updatingStatus: 'Idle' | 'Updating' | 'Failed' | 'Success' | 'Canceled';
   firmwareVersion: string;
-  motionValue: number;
+  leftMoveTime: number;
+  rightMoveTime: number;
   leftRightSwapped: boolean;
   leftSleepyEye: number;
   rightSleepyEye: number;
@@ -95,7 +97,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [leftSleepyEye, setLeftSleepyEye] = useState(50);
   const [rightSleepyEye, setRightSleepyEye] = useState(50);
   const [leftRightSwapped, setLeftRightSwapped] = useState(false);
-  const [motionValue, setMotionValue] = useState(600);
+  const [leftMoveTime, setLeftMoveTime] = useState(625);
+  const [rightMoveTime, setRightMoveTime] = useState(625);
 
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);
@@ -106,6 +109,11 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (storedFirmware) {
       setFirmwareVersion(storedFirmware);
     }
+
+    const left = HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT);
+    const right = HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT);
+    setLeftMoveTime(left);
+    setRightMoveTime(right);
   }, []);
 
   // Parse and set status value (handles the special encoding)
@@ -283,11 +291,10 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!char?.value) return;
 
         try {
-          const val = base64.decode(char.value);
-          const intVal = parseInt(val);
-          if (!isNaN(intVal)) {
-            setMotionValue(intVal);
-          }
+          const decoded = base64.decode(char.value);
+          const [leftVal, rightVal] = decoded.split("-").map(s => parseInt(s));
+          if (!isNaN(leftVal)) setLeftMoveTime(leftVal);
+          if (!isNaN(rightVal)) setRightMoveTime(rightVal);
         } catch (error) {
           console.error('Error decoding MOTION_VALUE:', error);
         }
@@ -474,11 +481,10 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           HEADLIGHT_MOTION_IN_UUID
         );
         if (motion?.value) {
-          const val = base64.decode(motion.value);
-          const intVal = parseInt(val);
-          if (!isNaN(intVal)) {
-            setMotionValue(intVal);
-          }
+          const decoded = base64.decode(motion.value);
+          const [leftVal, rightVal] = decoded.split("-").map(s => parseInt(s));
+          if (!isNaN(leftVal)) setLeftMoveTime(leftVal);
+          if (!isNaN(rightVal)) setRightMoveTime(rightVal);
         }
 
         // Read SOFTWARE_STATUS 
@@ -554,7 +560,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (bypassStatus.value) {
           const decoded = base64.decode(bypassStatus.value);
           console.log(decoded, "bypass");
-          const parsed = decoded === "true";
+          const parsed = decoded === "1";
           setHeadlightBypass(parsed);
           if (parsed)
             CustomOEMButtonStore.enableBypass();
@@ -696,7 +702,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     updateProgress,
     updatingStatus,
     firmwareVersion,
-    motionValue,
+    leftMoveTime,
+    rightMoveTime,
     leftSleepyEye,
     rightSleepyEye,
     leftRightSwapped,

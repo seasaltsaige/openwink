@@ -45,7 +45,7 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 // export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://10.197.10.42:3000/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
-export const UPDATE_URL = "http://192.168.254.18:3000/.netlify/functions/api/update";
+export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
 
 export const DEFAULT_COMMAND_DATA = [
   [
