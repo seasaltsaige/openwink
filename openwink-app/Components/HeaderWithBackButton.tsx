@@ -10,9 +10,11 @@ interface IHeaderWithBackButtonProps {
   headerText: string;
   headerTextStyle?: TextStyle;
   deviceStatus?: boolean;
+
+  pressAction?: (() => void) | undefined;
 }
 
-export function HeaderWithBackButton({ backText, headerText, headerTextStyle, deviceStatus }: IHeaderWithBackButtonProps) {
+export function HeaderWithBackButton({ pressAction, backText, headerText, headerTextStyle, deviceStatus }: IHeaderWithBackButtonProps) {
   const { theme, colorTheme } = useColorTheme();
   const { isConnecting, isScanning, isConnected } = useBleConnection();
   const navigation = useNavigation();
@@ -21,7 +23,7 @@ export function HeaderWithBackButton({ backText, headerText, headerTextStyle, de
     <View style={theme.headerContainer}>
       <Pressable
         style={theme.backButtonContainer}
-        onPress={() => navigation.goBack()}
+        onPress={() => pressAction ? pressAction() : navigation.goBack()}
       >
         {
           ({ pressed }) => (

@@ -1,10 +1,10 @@
 
-import { FlatList, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { FlatList, Modal, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 
@@ -13,7 +13,8 @@ import {
   HeaderWithBackButton,
   TooltipHeader,
   ConfirmationModal,
-  ComponentModal
+  ComponentModal,
+  ModalBlurBackground
 } from "../../../Components";
 import { CustomCommandStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
@@ -217,6 +218,20 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     listRef.current!.scrollToOffset({ offset: (48 + 15) * command.command!.length })
   }, [command.command?.length]);
 
+  const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
+
+  const navigation = useNavigation();
+  const backWithSaveChanges = () => {
+    // If changes have been made in any capacity
+    if (canUndo) {
+      setUnsavedChangesModalOpen(true);
+      // Spawn confirmation modal
+      return;
+    } else
+      navigation.goBack();
+  }
+
+
   return (
     <SafeAreaView style={theme.container}>
       {/* MAIN Modify VIEW */}
@@ -225,6 +240,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         backText={back}
         headerText={type === ModifyType.CREATE ? "Create Command" : "Edit Command"}
         headerTextStyle={{ ...theme.settingsHeaderText, fontSize: 28 }}
+        pressAction={backWithSaveChanges}
       />
 
 
@@ -466,6 +482,174 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           }}
         />
       </View>
+
+      <UnsavedChangesModal
+        cancel={() => setUnsavedChangesModalOpen(false)}
+        discardChanges={() => { setUnsavedChangesModalOpen(false); navigation.goBack(); }}
+        saveChanges={() => { }}
+        visible={unsavedChangesModalOpen}
+      />
+
     </SafeAreaView>
+  )
+}
+
+
+
+interface IUnsavedChangesModalProps {
+  visible: boolean;
+  saveChanges: () => void;
+  discardChanges: () => void;
+  cancel: () => void;
+}
+const UnsavedChangesModal = ({
+  visible,
+  cancel,
+  discardChanges,
+  saveChanges
+}: IUnsavedChangesModalProps) => {
+
+  const { theme, colorTheme } = useColorTheme();
+
+  return (
+    <Modal
+      onRequestClose={cancel}
+      transparent
+      animationType="fade"
+      visible={visible}
+    >
+      <ModalBlurBackground>
+        <View
+          style={{
+            width: "70%",
+            display: "flex",
+            flexDirection: "column",
+            // alignItems: "center",
+            justifyContent: "flex-start",
+            backgroundColor: colorTheme.backgroundSecondaryColor,
+            borderRadius: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            rowGap: 10
+          }}
+        >
+          {/* HEADER TEXT */}
+          <Text
+            style={{
+              color: colorTheme.headerTextColor,
+              fontSize: 24,
+              fontFamily: "IBMPlexSans_700Bold",
+              textAlign: "center"
+            }}
+          >
+            Save Changes?
+          </Text>
+
+
+          <Text
+            style={{
+
+              color: colorTheme.headerTextColor,
+              fontSize: 16,
+              fontFamily: "IBMPlexSans_400Regular",
+              textAlign: "center"
+            }}
+          >
+            You have unsaved changes, would you like to save before exiting? Unsaved changes will be lost.
+          </Text>
+
+          <View style={{
+            alignItems: "center",
+            marginTop: 5,
+            rowGap: 15,
+            marginBottom: 10,
+          }}>
+
+            <View style={{
+              width: "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-evenly"
+            }}>
+
+
+              <Pressable
+                style={({ pressed }) => ({
+                  backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+                  // width: "60%",
+                  paddingHorizontal: 20,
+                  paddingVertical: 6,
+                  borderRadius: 20,
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
+                })}
+
+                onPress={saveChanges}
+              >
+                {({ pressed }) =>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 18,
+                      fontFamily: "IBMPlexSans_500Medium",
+                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                      // textDecorationLine: "underline"
+                    }}
+                  >
+                    Save
+                  </Text>
+                }
+              </Pressable>
+
+              <Pressable
+                onPress={discardChanges}
+              >
+                {({ pressed }) =>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 18,
+                      fontFamily: "IBMPlexSans_500Medium",
+                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                      textDecorationLine: "underline"
+                    }}
+                  >
+                    Discard
+                  </Text>
+                }
+              </Pressable>
+
+            </View>
+
+            <Pressable
+              // style={({ pressed }) => ({
+              //   backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+              //   width: "60%",
+              //   paddingVertical: 6,
+              //   borderRadius: 20,
+              //   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
+              // })}
+              onPress={cancel}
+            // TODO
+            >
+              {({ pressed }) =>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 18,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                    textDecorationLine: "underline"
+                  }}
+                >
+                  Cancel
+                  {/* {cancelButton} */}
+                  {/* TODO */}
+                </Text>
+              }
+            </Pressable>
+          </View>
+        </View>
+      </ModalBlurBackground>
+    </Modal>
   )
 }
