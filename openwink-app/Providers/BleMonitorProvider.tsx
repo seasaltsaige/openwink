@@ -261,8 +261,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             base64.decode(char.value) as 'idle' | 'updating' | 'failed' | 'success' | 'canceled'
           );
           setUpdatingStatus(statusValue);
-
-          console.log(statusValue);
           // Reset progress when either succes or failure
           if (statusValue === "Success" || statusValue === "Failed" || statusValue === "Canceled") {
             setUpdateProgress(0);

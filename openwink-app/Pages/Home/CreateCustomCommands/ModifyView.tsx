@@ -19,6 +19,7 @@ import {
 import { CustomCommandStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 
 export enum ModifyType {
@@ -56,6 +57,9 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   // TODO: PREVENT CREATION IF NAME ALREADY EXISTS IN STORAGE
 
   useFocusEffect(useCallback(() => {
+
+    const untitledCounter = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).length + 1;
+    console.log(commandName.length, untitledCounter);
     const cmd = CustomCommandStore.get(commandName);
     if (cmd !== null) {
       setCommand(cmd);
@@ -72,10 +76,23 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   }
 
   const saveCommand = () => {
-    if (command.name) {
-      if (commandName) CustomCommandStore.editCommand(command.name, command.name, command.command!);
-      else CustomCommandStore.saveCommand(command.name, command.command!);
-    }
+    const untitledKeys = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).map(k => k.split(" ")[1]);
+    const parsed = untitledKeys.length > 0 ? untitledKeys.map(k => parseInt(k)) : [0];
+    const keyCounter = Math.max(...parsed) + 1;
+
+    // console.log(untitledKeys)
+
+
+
+
+    // console.log(untitledCounter);
+
+    if (commandName.length > 1)
+      CustomCommandStore.editCommand(commandName, command.name, command.command!);
+    else if (command.name.length < 1)
+      CustomCommandStore.saveCommand(`Untitled ${keyCounter}`, command.command!);
+    else
+      CustomCommandStore.saveCommand(command.name, command.command!);
 
     setUndoLog([]);
     onSave();
@@ -209,7 +226,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   }
 
   // Command length needs to be longer than 1 comamnd, otherwise it doesnt make sense to create
-  const canSave = command.name !== "" && command.command && command.command.length > 1;
+  const canSave = command.command && command.command.length > 1;
   const canUndo = commandName ? undoLog.length > 1 : undoLog.length > 0;
 
   const listRef = useRef<FlatList<CommandInput> | null>(null);
@@ -485,8 +502,9 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
       <UnsavedChangesModal
         cancel={() => setUnsavedChangesModalOpen(false)}
+        // canSaveChanges={canSave ?? false}
         discardChanges={() => { setUnsavedChangesModalOpen(false); navigation.goBack(); }}
-        saveChanges={() => { }}
+        saveChanges={() => { saveCommand(); setUnsavedChangesModalOpen(false); }}
         visible={unsavedChangesModalOpen}
       />
 
@@ -498,12 +516,14 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
 interface IUnsavedChangesModalProps {
   visible: boolean;
+  // canSaveChanges: boolean;
   saveChanges: () => void;
   discardChanges: () => void;
   cancel: () => void;
 }
 const UnsavedChangesModal = ({
   visible,
+  // canSaveChanges,
   cancel,
   discardChanges,
   saveChanges
@@ -521,7 +541,7 @@ const UnsavedChangesModal = ({
       <ModalBlurBackground>
         <View
           style={{
-            width: "70%",
+            width: "90%",
             display: "flex",
             flexDirection: "column",
             // alignItems: "center",
@@ -530,20 +550,43 @@ const UnsavedChangesModal = ({
             borderRadius: 10,
             paddingVertical: 10,
             paddingHorizontal: 20,
-            rowGap: 10
+            rowGap: 15
           }}
         >
           {/* HEADER TEXT */}
-          <Text
+
+          <View
             style={{
-              color: colorTheme.headerTextColor,
-              fontSize: 24,
-              fontFamily: "IBMPlexSans_700Bold",
-              textAlign: "center"
+              position: "relative",
+              width: "100%",
             }}
           >
-            Save Changes?
-          </Text>
+            <Text
+              style={{
+                color: colorTheme.headerTextColor,
+                fontSize: 24,
+                fontFamily: "IBMPlexSans_700Bold",
+                textAlign: "center"
+              }}
+            >
+              Save Changes?
+            </Text>
+
+            <Pressable
+              style={{
+                paddingVertical: 4,
+                position: "absolute",
+                top: 0,
+                right: 0,
+              }}
+              onPress={cancel}
+              hitSlop={10}
+            >
+              {({ pressed }) =>
+                <Ionicons name="close" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={30} />
+              }
+            </Pressable>
+          </View>
 
 
           <Text
@@ -555,13 +598,12 @@ const UnsavedChangesModal = ({
               textAlign: "center"
             }}
           >
-            You have unsaved changes, would you like to save before exiting? Unsaved changes will be lost.
+            You have unsaved changes, would you like to save before exiting? Unsaved changes will be discarded.
           </Text>
 
           <View style={{
             alignItems: "center",
-            marginTop: 5,
-            rowGap: 15,
+            marginTop: 15,
             marginBottom: 10,
           }}>
 
@@ -576,7 +618,7 @@ const UnsavedChangesModal = ({
               <Pressable
                 style={({ pressed }) => ({
                   backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
-                  // width: "60%",
+                  width: "40%",
                   paddingHorizontal: 20,
                   paddingVertical: 6,
                   borderRadius: 20,
@@ -584,6 +626,7 @@ const UnsavedChangesModal = ({
                 })}
 
                 onPress={saveChanges}
+                hitSlop={10}
               >
                 {({ pressed }) =>
                   <Text
@@ -592,7 +635,6 @@ const UnsavedChangesModal = ({
                       fontSize: 18,
                       fontFamily: "IBMPlexSans_500Medium",
                       color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                      // textDecorationLine: "underline"
                     }}
                   >
                     Save
@@ -602,6 +644,7 @@ const UnsavedChangesModal = ({
 
               <Pressable
                 onPress={discardChanges}
+                hitSlop={10}
               >
                 {({ pressed }) =>
                   <Text
@@ -619,34 +662,6 @@ const UnsavedChangesModal = ({
               </Pressable>
 
             </View>
-
-            <Pressable
-              // style={({ pressed }) => ({
-              //   backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
-              //   width: "60%",
-              //   paddingVertical: 6,
-              //   borderRadius: 20,
-              //   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
-              // })}
-              onPress={cancel}
-            // TODO
-            >
-              {({ pressed }) =>
-                <Text
-                  style={{
-                    textAlign: "center",
-                    fontSize: 18,
-                    fontFamily: "IBMPlexSans_500Medium",
-                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                    textDecorationLine: "underline"
-                  }}
-                >
-                  Cancel
-                  {/* {cancelButton} */}
-                  {/* TODO */}
-                </Text>
-              }
-            </Pressable>
           </View>
         </View>
       </ModalBlurBackground>
