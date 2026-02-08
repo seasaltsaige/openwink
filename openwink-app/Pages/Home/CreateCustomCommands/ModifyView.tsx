@@ -55,12 +55,8 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
   const [addComponentInitialValue, setAddComponentInitialValue] = useState(null as { delay?: number; action?: DefaultCommandValue } | null);
   const [editIndex, setEditIndex] = useState(0);
-  // TODO: PREVENT CREATION IF NAME ALREADY EXISTS IN STORAGE
 
   useFocusEffect(useCallback(() => {
-
-    const untitledCounter = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).length + 1;
-    console.log(commandName.length, untitledCounter);
     const cmd = CustomCommandStore.get(commandName);
     if (cmd !== null) {
       setCommand(cmd);
