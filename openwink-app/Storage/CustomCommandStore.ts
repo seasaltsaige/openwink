@@ -8,8 +8,6 @@ const COMMAND_STORE_KEY = 'CUSTOM_COMMANDS';
 export abstract class CustomCommandStore {
   static saveCommand(name: string, command: CommandInput[]): null|void {
     const doesCommandExist = Storage.getString(`${COMMAND_STORE_KEY}_${name}`);
-    console.log('Saving Command: ', name, command.length);
-    console.log(`Exists?: ${doesCommandExist}`);
     // Can not save multiple commands with the same name
     if (doesCommandExist !== undefined) return null;
 
@@ -24,9 +22,6 @@ export abstract class CustomCommandStore {
       oldName: string, newName: string, command: CommandInput[]) {
     // Just delete the old one, in case the new one
     CustomCommandStore.deleteCommand(`${COMMAND_STORE_KEY}_${oldName}`);
-
-    console.log('Editing Command: ', oldName, newName, command.length);
-    // console.log(`Exists?: ${doesCommandExist}`);
 
     const commandString =
         command
