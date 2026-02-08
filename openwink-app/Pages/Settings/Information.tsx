@@ -238,7 +238,7 @@ export function Information() {
                           command.command ? (
                             <Pressable
                               style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand(); console.log(`pressed command ${command.name}`) }}
+                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
                               hitSlop={5}
                             >
                               {
