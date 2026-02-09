@@ -122,11 +122,10 @@ export function Home() {
 
   useEffect(() => {
     (async () => {
-      if (device !== null) {
-        fetchModuleUpdate();
-      }
+      if (isConnected)
+        await fetchModuleUpdate();
     })();
-  }, [device]);
+  }, [isConnected]);
 
 
   return (
