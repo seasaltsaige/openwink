@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { Pressable as Press } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -236,16 +237,16 @@ export function Information() {
                         </Text>
                         {
                           command.command ? (
-                            <Pressable
+                            <Press
                               style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
+                              onPressOut={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
                               hitSlop={5}
                             >
                               {
                                 ({ pressed }) =>
-                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} />
+                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={25} />
                               }
-                            </Pressable>
+                            </Press>
                           ) : <></>
                         }
                       </View>
