@@ -67,6 +67,8 @@ export type BleMonitorContextType = {
   setButtonDelay: React.Dispatch<React.SetStateAction<number>>;
   setHeadlightBypass: React.Dispatch<React.SetStateAction<boolean>>;
   setOemCustomButtonEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setLeftStatus: React.Dispatch<React.SetStateAction<number>>;
+  setRightStatus: React.Dispatch<React.SetStateAction<number>>;
 };
 
 export const BleMonitorContext = createContext<BleMonitorContextType | null>(null);
@@ -717,6 +719,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setLeftRightSwapped,
     setLeftSleepyEye,
     setRightSleepyEye,
+    setLeftStatus,
+    setRightStatus,
 
     startMonitoring,
     stopMonitoring,
