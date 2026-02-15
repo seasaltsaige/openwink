@@ -1,3 +1,5 @@
 {
-  "editor.tabSize": 2
+  "editor.tabSize": 2,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true
 }

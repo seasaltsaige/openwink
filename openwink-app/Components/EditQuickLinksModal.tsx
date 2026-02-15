@@ -5,8 +5,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useColorTheme } from "../hooks/useColorTheme";
-import { SearchBarFilter } from ".";
-import { QuickLinksStore } from "../Storage";
+import { ModalBlurBackground, SearchBarFilter } from ".";
 
 export type QuickLink = {
   navigation: {
@@ -91,7 +90,7 @@ const ROUTES: RouteType[] = [
   {
     display: "Module Settings",
     icon: "speedometer-outline",
-    title: "Set Up Custom Wink Button",
+    title: "Customize Button Actions",
     navigation: {
       back: "Home",
       backHumanReadable: "Home",
@@ -244,7 +243,8 @@ export function EditQuickLinksModal({
                   {item.title}
                 </Text>
                 <Text style={{
-                  color: item.visible ? colorTheme.disabledButtonColor : `${colorTheme.disabledButtonColor}80`
+                  color: item.visible ? colorTheme.disabledButtonColor : `${colorTheme.disabledButtonColor}80`,
+                  fontFamily: "IBMPlexSans_400Regular"
                 }}>
                   {item.visible ? "Visible on home page" : "Hidden from home page"}
                 </Text>
@@ -275,16 +275,7 @@ export function EditQuickLinksModal({
       animationType="fade"
       visible={visible}
     >
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${colorTheme.backgroundPrimaryColor}80`,
-        }}
-      >
+      <ModalBlurBackground>
         <View
           style={{
             alignItems: "center",
@@ -418,7 +409,7 @@ export function EditQuickLinksModal({
           </View>
 
         </View>
-      </View>
+      </ModalBlurBackground>
     </Modal>
   );
 }

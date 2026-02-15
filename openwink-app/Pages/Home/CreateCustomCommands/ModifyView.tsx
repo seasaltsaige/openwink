@@ -1,10 +1,10 @@
 
-import { FlatList, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { FlatList, Modal, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
 
 
@@ -13,10 +13,14 @@ import {
   HeaderWithBackButton,
   TooltipHeader,
   ConfirmationModal,
-  ComponentModal
+  ComponentModal,
+  ModalBlurBackground,
+  UnsavedChangesModal
 } from "../../../Components";
-import { CommandInput, CommandOutput, CustomCommandStore } from "../../../Storage";
+import { CustomCommandStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
+import { CommandInput, CommandOutput } from "../../../helper/Types";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 
 export enum ModifyType {
@@ -51,7 +55,6 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
   const [addComponentInitialValue, setAddComponentInitialValue] = useState(null as { delay?: number; action?: DefaultCommandValue } | null);
   const [editIndex, setEditIndex] = useState(0);
-  // TODO: PREVENT CREATION IF NAME ALREADY EXISTS IN STORAGE
 
   useFocusEffect(useCallback(() => {
     const cmd = CustomCommandStore.get(commandName);
@@ -70,10 +73,16 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   }
 
   const saveCommand = () => {
-    if (command.name) {
-      if (commandName) CustomCommandStore.editCommand(command.name, command.name, command.command!);
-      else CustomCommandStore.saveCommand(command.name, command.command!);
-    }
+    const untitledKeys = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).map(k => k.split(" ")[1]);
+    const parsed = untitledKeys.length > 0 ? untitledKeys.map(k => parseInt(k)) : [0];
+    const keyCounter = Math.max(...parsed) + 1;
+
+    if (commandName.length > 1)
+      CustomCommandStore.editCommand(commandName, command.name, command.command!);
+    else if (command.name.length < 1)
+      CustomCommandStore.saveCommand(`Untitled ${keyCounter}`, command.command!);
+    else
+      CustomCommandStore.saveCommand(command.name, command.command!);
 
     setUndoLog([]);
     onSave();
@@ -206,7 +215,8 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     setCommand(() => lastCommandState);
   }
 
-  const canSave = command.name !== "" && command.command && command.command.length > 0;
+  // Command length needs to be longer than 1 comamnd, otherwise it doesnt make sense to create
+  const canSave = command.command && command.command.length > 1;
   const canUndo = commandName ? undoLog.length > 1 : undoLog.length > 0;
 
   const listRef = useRef<FlatList<CommandInput> | null>(null);
@@ -214,6 +224,20 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     listRef.current!.scrollToEnd({ animated: false });
     listRef.current!.scrollToOffset({ offset: (48 + 15) * command.command!.length })
   }, [command.command?.length]);
+
+  const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
+
+  const navigation = useNavigation();
+  const backWithSaveChanges = () => {
+    // If changes have been made in any capacity
+    if (canUndo) {
+      setUnsavedChangesModalOpen(true);
+      // Spawn confirmation modal
+      return;
+    } else
+      navigation.goBack();
+  }
+
 
   return (
     <SafeAreaView style={theme.container}>
@@ -223,6 +247,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         backText={back}
         headerText={type === ModifyType.CREATE ? "Create Command" : "Edit Command"}
         headerTextStyle={{ ...theme.settingsHeaderText, fontSize: 28 }}
+        pressAction={backWithSaveChanges}
       />
 
 
@@ -431,7 +456,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           visible={confirmationVisible}
           onRequestClose={() => setConfirmationVisible(false)}
           onConfirm={discardChanges}
-          animationType="slide"
+          animationType="fade"
           header={"Are you sure?"}
           body={
             `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
@@ -464,6 +489,14 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           }}
         />
       </View>
+
+      <UnsavedChangesModal
+        cancel={() => setUnsavedChangesModalOpen(false)}
+        discardChanges={() => { setUnsavedChangesModalOpen(false); navigation.goBack(); }}
+        saveChanges={() => { saveCommand(); setUnsavedChangesModalOpen(false); }}
+        visible={unsavedChangesModalOpen}
+      />
+
     </SafeAreaView>
   )
 }

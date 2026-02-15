@@ -4,6 +4,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
 import { useColorTheme } from "../hooks/useColorTheme";
+import { ModalBlurBackground } from "./ModalBlurBackground";
 
 interface IComponentModalProps {
   visible: boolean;
@@ -73,16 +74,7 @@ export function ComponentModal({
       visible={visible}
     >
 
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${colorTheme.backgroundPrimaryColor}80`,
-        }}
-      >
+      <ModalBlurBackground>
         <View
           style={{
             width: "75%",
@@ -313,7 +305,7 @@ export function ComponentModal({
             }
           </Pressable>
         </View>
-      </View>
+      </ModalBlurBackground>
 
     </Modal>
   )

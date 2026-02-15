@@ -46,8 +46,10 @@ private:
   static NimBLECharacteristic* sleepSettingsChar;
   static NimBLECharacteristic* unpairChar;
   static NimBLECharacteristic* resetChar;
+  static NimBLECharacteristic* headlightBypassChar;
+  static NimBLECharacteristic* headlightOrientationChar;
 
-  static NimBLECharacteristic* clientMacChar;
+  static NimBLECharacteristic* passkeyChar;
 
   static bool deviceConnected;
 
@@ -63,7 +65,14 @@ public:
   static void setBusy(bool busy);
   static void setFirmwareUpdateStatus(string status);
   static void setFirmwarePercent(string stringPercentage);
-  static void setMotionInValue(int value);
+  static void setMotionInValue(string value);
+  static void setSwapStatus(bool swap) {
+    if (swap)
+      headlightOrientationChar->setValue("1");
+    else 
+      headlightOrientationChar->setValue("0");
+    headlightOrientationChar->notify();
+  }
   static void setCustomStatus(int value) {
     if (value == 0)
       customCommandChar->setValue("0");

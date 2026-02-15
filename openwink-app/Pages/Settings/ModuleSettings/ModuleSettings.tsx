@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import Octicons from "@expo/vector-icons/Octicons";
 import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ToggleSwitch from "toggle-switch-react-native";
@@ -19,6 +20,7 @@ import { ConfirmationModal, LongButton, HeaderWithBackButton } from "../../../Co
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import Tooltip from "react-native-walkthrough-tooltip";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 const moduleSettingsData: Array<{
@@ -37,7 +39,7 @@ const moduleSettingsData: Array<{
       pageSymbol: "eye-outline"
     },
     {
-      pageName: "Set Up Custom Wink Buton",
+      pageName: "Customize Button Actions",
       navigationName: "CustomWinkButton",
       pageSymbol: "speedometer-outline",
     },
@@ -52,19 +54,21 @@ export function ModuleSettings() {
     manager,
     isScanning,
     isConnecting,
-    scanForModule,
+    isConnected,
     autoConnectEnabled,
+    scanForModule,
     setAutoConnect,
     unpair,
   } = useBleConnection();
 
   const {
-    isConnected,
-  } = useBleConnection();
+    leftRightSwapped,
+  } = useBleMonitor();
 
   const {
     enterDeepSleep,
-    resetModule
+    resetModule,
+    swapLeftRight,
   } = useBleCommand();
 
   const route = useRoute();
@@ -75,12 +79,19 @@ export function ModuleSettings() {
 
   const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [confirmationType, setConfirmationType] = useState<"sleep" | "delete" | "forget">("sleep");
-  // const [actionFunction, setActionFunction] = useState<(() => Promise<void>) | null>(null);
-  const [toggleOn, setToggleOn] = useState(autoConnectEnabled);
+  const [autoConnectOn, setAutoConnectOn] = useState(autoConnectEnabled);
+  const [swapOn, setSwapOn] = useState(leftRightSwapped);
+
+  const [swapTooltipOpen, setSwapTooltipOpen] = useState(false);
+
+  useEffect(() => {
+    setSwapOn(leftRightSwapped);
+  }, [leftRightSwapped]);
 
   const deleteStoredModuleData = async () => {
 
     await resetModule();
+    await unpair();
 
     AutoConnectStore.enable();
     CustomCommandStore.deleteAll();
@@ -100,6 +111,9 @@ export function ModuleSettings() {
       text2: "OpenWink Module successfully reset to factory defaults. All stored settings have been reset."
     });
 
+
+    setConfirmationOpen(false);
+
   }
 
   const putModuleToSleep = async () => {
@@ -113,10 +127,11 @@ export function ModuleSettings() {
       text1: "Sleep Successful",
       text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
     });
+
+    setConfirmationOpen(false);
   }
 
   const forgetModulePairing = async () => {
-    if (!isConnected) return;
     await unpair();
     setConfirmationOpen(false);
 
@@ -127,11 +142,13 @@ export function ModuleSettings() {
       text1: "Unpair Successful",
       text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
     });
+
+    setConfirmationOpen(false);
   }
 
 
   const togglePress = async (val: boolean) => {
-    setToggleOn(val);
+    setAutoConnectOn(val);
     if (val) {
       AutoConnectStore.enable();
       setAutoConnect(true);
@@ -141,6 +158,11 @@ export function ModuleSettings() {
       setAutoConnect(false);
       if (isScanning) await manager.stopDeviceScan();
     }
+  }
+
+  const toggleSwap = async (val: boolean) => {
+    setSwapOn(val);
+    await swapLeftRight();
   }
 
   const confirmationBody = confirmationType === "sleep" ?
@@ -161,25 +183,82 @@ export function ModuleSettings() {
         />
 
         <View style={[theme.homeScreenButtonsContainer, { rowGap: 15 }]}>
-          <View style={theme.mainLongButtonPressableContainer}>
-            <View style={theme.mainLongButtonPressableView}>
-              <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} />
-              <Text style={theme.mainLongButtonPressableText}>
-                Auto Connect
-              </Text>
+
+          <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "space-evenly", marginTop: -15, marginBottom: 10, }}>
+            <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0 }]}>
+              <View style={theme.mainLongButtonPressableView}>
+                <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} />
+
+                <Text style={theme.mainLongButtonPressableText}>
+                  Auto Connect
+                </Text>
+              </View>
+
+              <View style={theme.mainLongButtonPressableIcon}>
+
+                <ToggleSwitch
+                  onColor={colorTheme.buttonColor}
+                  offColor={colorTheme.disabledButtonColor}
+                  isOn={autoConnectOn}
+                  size="medium"
+                  hitSlop={10}
+                  circleColor={colorTheme.buttonTextColor}
+                  onToggle={(isOn) => { togglePress(!!isOn) }}
+                />
+
+              </View>
             </View>
 
-            <View style={theme.mainLongButtonPressableIcon}>
-              <ToggleSwitch
-                onColor={colorTheme.buttonColor}
-                offColor={colorTheme.disabledButtonColor}
-                isOn={toggleOn}
-                size="medium"
-                hitSlop={10}
-                circleColor={colorTheme.buttonTextColor}
-                onToggle={(isOn) => { togglePress(!!isOn) }}
-              />
+
+            {/* Disable when no device connected */}
+            <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0 }]}>
+              <View style={theme.mainLongButtonPressableView}>
+                <Octicons name="arrow-switch" size={23} color={colorTheme.headerTextColor} />
+                <Text style={theme.mainLongButtonPressableText}>
+                  Swap Left and Right
+                </Text>
+                <Tooltip
+                  isVisible={swapTooltipOpen}
+                  onClose={() => setSwapTooltipOpen(false)}
+                  content={
+                    <Text style={theme.tooltipContainerText}>
+                      When enabled, Left and Right reference is taken from outside the car, looking at the front.{"\n"}
+                      When disabled, Left and Right reference is taken from inside the cabin.{"\n"}
+                      Currently, reference is from {!swapOn ? "the cabin" : "outside"}.
+                    </Text>
+                  }
+                  closeOnBackgroundInteraction
+                  closeOnContentInteraction
+                  placement="bottom"
+                  contentStyle={theme.tooltipContainer}
+                >
+                  <Pressable
+                    hitSlop={20}
+                    onPress={() => setSwapTooltipOpen(true)}
+                  >
+                    {
+                      ({ pressed }) => (
+                        <IonIcons style={{ marginTop: 2 }} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
+                      )
+                    }
+                  </Pressable>
+                </Tooltip>
+              </View>
+
+              <View style={theme.mainLongButtonPressableIcon}>
+                <ToggleSwitch
+                  disabled={!isConnected}
+                  onColor={!isConnected ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                  offColor={colorTheme.disabledButtonColor}
+                  isOn={swapOn}
+                  size="medium"
+                  hitSlop={10}
+                  circleColor={colorTheme.buttonTextColor}
+                  onToggle={(isOn) => { toggleSwap(!!isOn) }}
+                />
+              </View>
             </View>
+
           </View>
 
 
@@ -265,7 +344,7 @@ export function ModuleSettings() {
           else deleteStoredModuleData();
         }}
         animationType="fade"
-        disableConfirmation={!isConnected}
+        disableConfirmation={confirmationType === "sleep" && !isConnected}
       />
 
     </>

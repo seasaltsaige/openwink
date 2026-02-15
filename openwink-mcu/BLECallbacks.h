@@ -1,14 +1,27 @@
+#include <stdint.h>
 #pragma once
 
 
 // #include "NimBLEConnInfo.h"
 // #include "NimBLECharacteristic.h"
-#include <string.h>
+#include <vector>
+#include <string>
 #include "NimBLEServer.h"
 #include <NimBLEDevice.h>
 
 extern double headlightMultiplier;
 extern bool otaUpdateRestartQueued;
+
+enum AuthState {
+  UNCLAIMED,
+  WAIT_CLAIM,
+  WAIT_TOKEN,
+  AUTHENTICATED
+};
+
+extern uint32_t authTimer;
+extern enum AuthState auth_status;
+extern uint16_t authConnInfo;
 
 using namespace std;
 /**
@@ -23,7 +36,7 @@ using namespace std;
   9 : Right Wave
  10 : ...
 **/
-extern int customButtonPressArray[10];
+extern vector<string> customButtonPressArray;
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;
@@ -33,7 +46,7 @@ class ServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
   void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
   // void onAuthenticationComplete(NimBLEConnInfo& connInfo) override;
-  void onPhyUpdate(NimBLEConnInfo &connInfo, uint8_t txPhy, uint8_t rxPhy) override;
+  void onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) override;
   void onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) override;
 };
 
@@ -59,6 +72,15 @@ class HeadlightCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
 
 class CustomButtonPressCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+  void onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class HeadlightBypassCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
+class HeadlightOrientationCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -81,7 +103,7 @@ class ResetCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
-class ClientMacCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+class PassKeyCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 

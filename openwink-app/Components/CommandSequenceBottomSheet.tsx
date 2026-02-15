@@ -9,8 +9,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import Octicons from "@expo/vector-icons/Octicons";
 
 import { useColorTheme } from "../hooks/useColorTheme";
-import { CommandOutput } from "../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
+import { CommandOutput } from "../helper/Types";
 
 const COMMAND_TYPE_COLORS: {
   [key in DefaultCommandValue | "delay"]: `#${string}`
@@ -58,7 +58,7 @@ export function CommandSequenceBottomSheet({
       onClose={close}
       enablePanDownToClose
       backgroundStyle={{ backgroundColor: colorTheme.backgroundSecondaryColor }}
-      handleIndicatorStyle={{ backgroundColor: colorTheme.buttonTextColor, width: "15%", marginTop: 5 }}
+      handleIndicatorStyle={{ backgroundColor: colorTheme.headerTextColor, width: "15%", marginTop: 5 }}
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView

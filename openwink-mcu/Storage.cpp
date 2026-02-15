@@ -2,8 +2,28 @@
 #include "Storage.h"
 #include "constants.h"
 #include "BLECallbacks.h"
-
+#include "ButtonHandler.h"
+#include <string>
 using namespace std;
+
+const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+void generateToken(char key[21]) {
+  static const uint8_t charsetSize = 62;
+
+  uint8_t randByte;
+  int idx = 0;
+
+  while (idx < 20) {
+    esp_fill_random(&randByte, 1);
+    if (randByte < (256 / charsetSize) * charsetSize) {
+      key[idx++] = charset[randByte % charsetSize];
+    }
+  }
+
+  key[20] = '\0';
+}
+
 
 Preferences Storage::storage;
 
@@ -12,13 +32,14 @@ void Storage::begin(const char *name) {
 }
 
 void Storage::getFromStorage() {
-  char key[15];  
+  char key[15];
 
-  for (int i = 0; i < 10; i++) {
-    snprintf(key, sizeof(key), "presses-%d", i); 
-    int val = storage.getUInt(key, customButtonPressArrayDefaults[i]);
-    customButtonPressArray[i] = val;
+  for (int i = 0; i < 20; i++) {
+    snprintf(key, sizeof(key), "presses-%d", i);
+    String val = storage.getString(key, String(customButtonPressArrayDefaults[i].c_str()));
+    customButtonPressArray[i] = string(val.c_str());
   }
+  Serial.println();
 
   const char *delayKey = "delay-key";
   int del = storage.getUInt(delayKey, maxTimeBetween_msDefault);
@@ -32,6 +53,10 @@ void Storage::getFromStorage() {
   bool oem = storage.getBool(customOemKey, false);
   customButtonStatusEnabled = oem;
 
+  const char *headlightBypassKey = "hl-bypass";
+  bool bypass = storage.getBool(headlightBypassKey);
+  bypassHeadlightOverride = bypass;
+
 
   const char *leftSleepyHeadlightKey = "sleepy-left";
   const char *rightSleepyHeadligthKey = "sleepy-right";
@@ -40,9 +65,33 @@ void Storage::getFromStorage() {
   leftSleepyValue = left;
   rightSleepyValue = right;
 
-  // const char *motionKey = "motion-key";
-  // int motion = storage.getInt(motionKey, 750);
-  // HEADLIGHT_MOVEMENT_DELAY = motion;
+  string orientationKey = "orien-key";
+  bool storedOrientationValue = storage.getBool(orientationKey.c_str(), false);
+
+  if (storedOrientationValue) {
+    OUT_PIN_LEFT_DOWN = 12;
+    OUT_PIN_LEFT_UP = 13;
+    OUT_PIN_RIGHT_DOWN = 10;
+    OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
+  } else {
+    OUT_PIN_LEFT_DOWN = 10;
+    OUT_PIN_LEFT_UP = 11;
+    OUT_PIN_RIGHT_DOWN = 12;
+    OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
+  }
+
+  const char *leftMotion = "motion-left-timing";
+  const char *rightMotion = "motion-right-timing";
+  int leftMove = storage.getInt(leftMotion, HEADLIGHT_MOVEMENT_DELAY);
+  int rightMove = storage.getInt(rightMotion, HEADLIGHT_MOVEMENT_DELAY);
+  ButtonHandler::leftMoveTime = leftMove;
+  ButtonHandler::rightMoveTime = rightMove;
 }
 
 void Storage::reset() {
@@ -56,12 +105,24 @@ void Storage::reset() {
   storage.remove(leftSleepyHeadlightKey);
   const char *rightSleepyHeadlightKey = "sleepy-right";
   storage.remove(rightSleepyHeadlightKey);
-  char pressesKey[15];  
+  const char *headlightBypassKey = "hl-bypass";
+  storage.remove(headlightBypassKey);
+  const char *orientationKey = "orien-key";
+  storage.remove(orientationKey);
+
+  const char *leftMotion = "motion-left-timing";
+  const char *rightMotion = "motion-right-timing";
+  storage.remove(leftMotion);
+  storage.remove(rightMotion);
+
+  char pressesKey[15];
 
   for (int i = 0; i < 10; i++) {
     snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
     storage.remove(pressesKey);
   }
+
+  Storage::resetBond();
 
   customButtonStatusEnabled = false;
   maxTimeBetween_ms = 500;
@@ -69,10 +130,26 @@ void Storage::reset() {
   leftSleepyValue = 50;
   rightSleepyValue = 50;
 
-  for (int i = 0; i < 10; i++) { 
+  OUT_PIN_LEFT_DOWN = 10;
+  OUT_PIN_LEFT_UP = 11;
+  OUT_PIN_RIGHT_DOWN = 12;
+  OUT_PIN_RIGHT_UP = 13;
+
+  OEM_HEADLIGHT_STATUS_RIGHT = 46;
+  OEM_HEADLIGHT_STATUS_LEFT = 3;
+
+  for (int i = 0; i < 9; i++) {
     customButtonPressArray[i] = customButtonPressArrayDefaults[i];
   }
+}
 
+void Storage::setMotionIn(SIDE side, int timing) {
+  string s = side == SIDE::L ? "left" : "right";
+  string key = "motion-" + s + "-timing";
+  int t = storage.getInt(static_cast<const char *>(key.c_str()), HEADLIGHT_MOVEMENT_DELAY);
+  if (side == SIDE::L && timing == t || side == SIDE::R && timing == t) return;
+
+  storage.putInt(static_cast<const char *>(key.c_str()), timing);
 }
 
 void Storage::setCustomOEMButtonStatus(bool status) {
@@ -80,15 +157,53 @@ void Storage::setCustomOEMButtonStatus(bool status) {
   storage.putBool(customOemKey, status);
 }
 
-void Storage::setCustomButtonPressArray(int index, int value) {
-  string key = "presses-" + to_string(index); 
-  int storedVal = storage.getUInt(key.c_str(), customButtonPressArrayDefaults[index]);
-  if (storedVal != value) 
-    storage.putUInt(key.c_str(), value);
+void Storage::setCustomButtonPressArray(int index, string value) {
+  string key = "presses-" + to_string(index);
+  String storedVal = storage.getString(key.c_str(), String(customButtonPressArrayDefaults[index].c_str()));
+  if (string(storedVal.c_str()) != value)
+    storage.putString(key.c_str(), value.c_str());
+}
+
+void Storage::setHeadlightBypass(bool value) {
+  const char *key = "hl-bypass";
+  storage.putBool(key, value);
+}
+
+// TRUE = OUTSIDE
+// FALSE (DEFAULT) = CABIN
+void Storage::setHeadlightOrientation(bool orientation) {
+  string key = "orien-key";
+  storage.putBool(key.c_str(), orientation);
+
+
+  if (orientation) {
+    OUT_PIN_LEFT_DOWN = 12;
+    OUT_PIN_LEFT_UP = 13;
+    OUT_PIN_RIGHT_DOWN = 10;
+    OUT_PIN_RIGHT_UP = 11;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 3;
+    OEM_HEADLIGHT_STATUS_LEFT = 46;
+
+  } else {
+    OUT_PIN_LEFT_DOWN = 10;
+    OUT_PIN_LEFT_UP = 11;
+    OUT_PIN_RIGHT_DOWN = 12;
+    OUT_PIN_RIGHT_UP = 13;
+
+    OEM_HEADLIGHT_STATUS_RIGHT = 46;
+    OEM_HEADLIGHT_STATUS_LEFT = 3;
+  }
+}
+
+bool Storage::getHeadlightOrientation() {
+  string orien_key = "orien-key";
+  bool storedValue = storage.getBool(orien_key.c_str(), false);
+  return storedValue;
 }
 
 void Storage::setDelay(int delay) {
-  
+
   string delayKey = "delay-key";
   int storedDelay = storage.getUInt(delayKey.c_str(), maxTimeBetween_msDefault);
   if (delay != storedDelay)
@@ -96,7 +211,7 @@ void Storage::setDelay(int delay) {
 }
 
 void Storage::setHeadlightMulti(double multi) {
-  const char* headlightKey = "headlight-key";
+  const char *headlightKey = "headlight-key";
   storage.putDouble(headlightKey, multi);
 }
 
@@ -112,24 +227,28 @@ void Storage::setSleepyValues(int side, double value) {
   }
 }
 
-void Storage::setWhitelist(string mac) {
-  const char *whitelistKey = "whitelist";
-  // storage.putBool(whitelistKey, true);
-  storage.putString(whitelistKey, mac.c_str());
+void Storage::setBond(string passkey) {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  if (!value.equals("")) return;
+  else
+    storage.putString(key, String(passkey.c_str()));
 }
 
-void Storage::clearWhitelist() {
-  const char *whitelistKey = "whitelist";
-  storage.remove(whitelistKey);
+void Storage::resetBond() {
+  const char *key = "passkey";
+  storage.remove(key);
 }
 
-string Storage::getWhitelist() {
-  const char *whitelistKey = "whitelist";
-  String stored = storage.getString(whitelistKey, "");
-  return string(stored.c_str());
+string Storage::getBond() {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  return string(value.c_str());
 }
 
-// void Storage::setMotionTiming(int time) {
-//   const char* motionKey = "motion-key";
-//   storage.putInt(motionKey, time);
-// }
+bool Storage::hasBond() {
+  const char *key = "passkey";
+  String value = storage.getString(key, "");
+  if (value.equals("")) return false;
+  else return true;
+}

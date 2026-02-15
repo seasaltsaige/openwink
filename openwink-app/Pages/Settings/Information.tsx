@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
+import { Pressable as Press } from "react-native";
+import { Pressable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
-import { getDeviceUUID } from "../../helper/Functions";
+import { getDevicePasskey } from "../../helper/Functions";
 import { CommandSequenceBottomSheet, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
@@ -14,12 +16,11 @@ import {
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { CommandOutput, CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
-import { ButtonBehaviors, Presses } from "../../helper/Types";
+import { CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
-import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Information() {
 
@@ -34,15 +35,16 @@ export function Information() {
   } = useBleConnection();
 
   const {
-    oemCustomButtonEnabled,
-    waveDelayMulti,
-    buttonDelay,
-  } = useBleCommand();
-
-  const {
     firmwareVersion,
     leftStatus,
     rightStatus,
+    oemCustomButtonEnabled,
+    waveDelayMulti,
+    buttonDelay,
+    leftRightSwapped,
+    leftMoveTime,
+    rightMoveTime,
+    headlightBypass
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -55,50 +57,53 @@ export function Information() {
         status === 0 ?
           "Down" :
           `%${status}`
-    ) : "Unknown"
+    ) : "Unavailable"
   );
   const connectionStatus = (scanning: boolean, connecting: boolean, connected: boolean) => (
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
   const appInfo = useMemo(() => ({
-    "Application ID": getDeviceUUID(),
+    "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   }), [Application.nativeApplicationVersion, themeName])
 
   const deviceInfo = useMemo(() => ({
     "Module ID": mac || "Not Paired",
-    "Firmware Version": `v${firmwareVersion}`,
+    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
-    "Left Headlight Status": headlightStatus(isConnected, leftStatus),
-    "Right Headlight Status": headlightStatus(isConnected, rightStatus),
+    "Left Headlight Position": headlightStatus(isConnected, leftStatus),
+    "Right Headlight Position": headlightStatus(isConnected, rightStatus),
+    "Left Move Time": `${leftMoveTime} ms`,
+    "Right Move Time": `${rightMoveTime} ms`,
   }), [mac, firmwareVersion, isScanning, isConnecting, isConnected, leftStatus, rightStatus])
 
   const deviceSettings = useMemo(() => ({
     "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
+    "Headlight Perspective": leftRightSwapped ? "Front" : "Driver",
     "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(2)} ms`,
+    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
+    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
     "Press Interval": `${buttonDelay} ms`,
   }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
 
-  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors; }[]);
-  const buttonActions = useMemo(() => rawButtonActions.map(action => ({
-    behaviorHumanReadable: action.behavior,
-    presses: action.numberPresses,
-    behavior: buttonBehaviorMap[action.behavior],
-  })).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
+  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
+  const buttonActions = useMemo(() => rawButtonActions.map(action => {
+    if (typeof action.behavior === "string")
+      return {
+        behaviorHumanReadable: action.behavior,
+        presses: action.numberPresses,
+        behavior: buttonBehaviorMap[action.behavior],
+      }
+    else
+      return {
+        customCommand: action.behavior,
+        presses: action.numberPresses,
+      }
+  }).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
-
-  // const [customCommandsExpandedState, dispatchCustomCommands] = useReducer((state: { [key: string]: boolean }, action: { name: string }) => ({
-  //   ...state,
-  //   [action.name]: !state[action.name],
-  // }), customCommands.reduce((accum, curr) => {
-  //   accum[curr.name] = false
-  //   return accum;
-  // }, {} as { [key: string]: boolean }));
-
 
   useFocusEffect(useCallback(() => {
     const actions = CustomOEMButtonStore.getAll();
@@ -173,9 +178,21 @@ export function Information() {
                     {countToEnglish[action.presses]}
                   </Text>
 
-                  <Text style={theme.infoBoxInnerContentText}>
-                    {action.behaviorHumanReadable}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", columnGap: 8, }}>
+
+                    <Text style={theme.infoBoxInnerContentText}>
+                      {
+                        action.customCommand ?
+                          action.customCommand.name :
+                          action.behaviorHumanReadable
+                      }
+                    </Text>
+                    {
+                      action.customCommand ?
+                        // TODO: Make pressable --> Open bottom drawer and show sequence
+                        <IonIcons name="sparkles-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
+                    }
+                  </View>
                 </View>
               ))
             }
@@ -202,7 +219,7 @@ export function Information() {
                       key={command.name}
                     >
                       <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6, width: "40%", height: "auto", }]}>
-                        {command.name}
+                        {command.name.length > 14 ? `${command.name.slice(0, 12)}...` : command.name}
                       </Text>
 
 
@@ -220,16 +237,16 @@ export function Information() {
                         </Text>
                         {
                           command.command ? (
-                            <Pressable
+                            <Press
                               style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPress={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand(); }}
+                              onPressOut={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
                               hitSlop={5}
                             >
                               {
                                 ({ pressed }) =>
-                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} />
+                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={25} />
                               }
-                            </Pressable>
+                            </Press>
                           ) : <></>
                         }
                       </View>

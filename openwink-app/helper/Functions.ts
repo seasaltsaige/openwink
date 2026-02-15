@@ -63,14 +63,8 @@ export const useThrottle = <T extends unknown[], K>(
 };
 
 
-export const getDeviceUUID = () => {
-  const charSet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let uuidValue = Storage.getString("device-uuid");
-  if (!uuidValue) {
-    uuidValue = "";
-    for (let i = 0; i < 15; i++)
-      uuidValue += charSet.charAt(Math.floor(Math.random() * charSet.length));
-    Storage.set("device-uuid", uuidValue);
-  }
+export const getDevicePasskey = () => {
+  let uuidValue = Storage.getString("device-passkey");
+  if (!uuidValue) uuidValue = "Not Paired";
   return uuidValue;
 }

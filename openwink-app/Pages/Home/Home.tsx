@@ -13,7 +13,6 @@ import {
   ModuleUpdateModal,
   MainHeader
 } from "../../Components";
-import { getDeviceUUID } from "../../helper/Functions";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
@@ -22,6 +21,8 @@ import {
   ERROR_TYPE,
   UPDATE_STATUS,
 } from "../../hooks/useUpdateManager";
+import { useBleMonitor } from "../../Providers/BleMonitorProvider";
+import { OTA } from "../../helper/Handlers/OTA";
 import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Home() {
@@ -35,6 +36,8 @@ export function Home() {
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
+
+  const { updateFirmwareVersion } = useBleMonitor();
 
   const {
     disconnect: disconnectFromModule,
@@ -78,6 +81,8 @@ export function Home() {
         autoHide: true,
         visibilityTime: 10000,
       });
+
+      updateFirmwareVersion(OTA.latestVersion);
     },
   });
 
@@ -120,7 +125,6 @@ export function Home() {
   }
 
   useEffect(() => {
-    getDeviceUUID();
     const autoConn = AutoConnectStore.get();
     if (autoConn && !isConnected) scanForDevice();
     (async () => {
@@ -138,7 +142,8 @@ export function Home() {
     }, 2500);
 
     (async () => {
-      fetchModuleUpdate();
+      if (isConnected)
+        await fetchModuleUpdate();
     })();
   }, [isConnected]);
 

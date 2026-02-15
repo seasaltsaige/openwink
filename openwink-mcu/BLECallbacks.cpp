@@ -1,6 +1,6 @@
 #include "esp32-hal-gpio.h"
 #include "esp32-hal.h"
-#include <string.h>
+#include <string>
 #include <vector>
 #include "NimBLEDevice.h"
 #include <Arduino.h>
@@ -18,9 +18,10 @@
 
 using namespace std;
 
-RTC_DATA_ATTR double headlightMultiplier = 1.0;
+RTC_DATA_ATTR double headlightMultiplier = 0.5;
 
-RTC_DATA_ATTR int customButtonPressArray[10] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+vector<string> customButtonPressArray(20, "0");
+
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
 int queuedCommand = -1;
@@ -36,6 +37,10 @@ const uint16_t TIMEOUT = 200;
 
 bool connEstablishing = false;
 
+enum AuthState auth_status = AuthState::UNCLAIMED;
+uint32_t authTimer = 0;
+uint16_t authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
 
   BLE::setDeviceConnected(true);
@@ -50,6 +55,11 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
   pServer->setDataLen(connInfo.getConnHandle(), 251);
   connEstablishing = false;
+
+  Serial.printf("Starting AUTH Sequence\n");
+  authTimer = millis();
+  auth_status = Storage::hasBond() ? WAIT_TOKEN : WAIT_CLAIM;
+  authConnInfo = connInfo.getConnHandle();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -83,81 +93,12 @@ void LongTermSleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
 }
 
 void SyncCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  // if headlights are fully up or down, ignore command
-  if ((leftStatus == 1 || leftStatus == 0) && (rightStatus == 1 || rightStatus == 0)) return;
-
-  double percentageToUpLeft = 1 - (leftSleepyValue / 100);
-  double percentageToUpRight = 1 - (rightSleepyValue / 100);
-  unsigned long initialTime = millis();
-
-  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-  bool leftStatusReached = false;
-  bool rightStatusReached = false;
-
-  while (!leftStatusReached || !rightStatusReached) {
-    unsigned long timeElapsed = (millis() - initialTime);
-    if (!leftStatusReached && timeElapsed >= (percentageToUpLeft * HEADLIGHT_MOVEMENT_DELAY)) {
-      leftStatusReached = true;
-      digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    }
-    if (!rightStatusReached && timeElapsed >= (percentageToUpRight * HEADLIGHT_MOVEMENT_DELAY)) {
-      rightStatusReached = true;
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    }
-  }
-
-  setAllOff();
-
-  leftStatus = 1;
-  rightStatus = 1;
-
-  BLE::updateHeadlightChars();
+  sleepyReset(true, true);
 }
 
 // Send sleep command
 void SleepCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-
-  // If not a full step (fully down or fully up) return; as it is already sleepy
-  if ((leftStatus != 1 && leftStatus != 0) || (rightStatus != 1 && rightStatus != 0))
-    return;
-
-  double left = leftSleepyValue / 100;
-  double right = rightSleepyValue / 100;
-
-  if (leftStatus == 1 || rightStatus == 1) {
-    bothDown();
-    setAllOff();
-  }
-
-  unsigned long initialTime = millis();
-
-  digitalWrite(OUT_PIN_LEFT_UP, HIGH);
-  digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
-
-  bool leftStatusReached = false;
-  bool rightStatusReached = false;
-
-  // Delay loop for both headlights
-  while (!leftStatusReached || !rightStatusReached) {
-    unsigned long timeElapsed = (millis() - initialTime);
-    if (!leftStatusReached && timeElapsed >= (left * HEADLIGHT_MOVEMENT_DELAY)) {
-      leftStatusReached = true;
-      digitalWrite(OUT_PIN_LEFT_UP, LOW);
-    }
-    if (!rightStatusReached && timeElapsed >= (right * HEADLIGHT_MOVEMENT_DELAY)) {
-      rightStatusReached = true;
-      digitalWrite(OUT_PIN_RIGHT_UP, LOW);
-    }
-  }
-
-  setAllOff();
-
-  leftStatus = leftSleepyValue + 10;
-  rightStatus = rightSleepyValue + 10;
-
-  BLE::updateHeadlightChars();
+  sleepyEye(true, true);
 }
 
 // Updates headlight status
@@ -192,13 +133,15 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 }
 
 // 0 : onWrite expects value to be an index, 0-9
-// 1 : index has been read
+// 1 : index has been read -- now expects value to write
+// 3 : expects update of max time
 int customButtonPressUpdateState = 0;
 int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  Serial.printf("Value: %s\n", value);
+  Serial.printf("Custom Press Char Value: %s\n", value.c_str());
+
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;
@@ -208,44 +151,88 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     customButtonStatusEnabled = false;
     Storage::setCustomOEMButtonStatus(false);
     return;
+  } else if (value.compare("delay") == 0) {
+    customButtonPressUpdateState = 3;
+    return;
   }
 
-  int parsedValue = stoi(value);
-  // Updating maxTime
-  if (value.length() > 1) {
-    maxTimeBetween_ms = parsedValue;
-    Storage::setDelay(maxTimeBetween_ms);
-  } else {
-    if (customButtonPressUpdateState == 0) {
-      if (parsedValue > 9)
-        return;
-      indexToUpdate = parsedValue;
-      customButtonPressUpdateState = 1;
+  if (customButtonPressUpdateState == 0) {
+    int parsedValue = stoi(value);
+    if (parsedValue > 9)
+      return;
+    indexToUpdate = parsedValue;
+    customButtonPressUpdateState = 1;
 
-    } else {
-      customButtonPressUpdateState = 0;
-      if (indexToUpdate == 0) return;
+  } else if (customButtonPressUpdateState == 1) {
+    customButtonPressUpdateState = 0;
+    if (indexToUpdate == 0) return;
+    Serial.printf("%s\n", value.c_str());
+    customButtonPressArray[indexToUpdate] = value;
+    Storage::setCustomButtonPressArray(indexToUpdate, value);
 
-      customButtonPressArray[indexToUpdate] = parsedValue;
-
-      Storage::setCustomButtonPressArray(indexToUpdate, parsedValue);
-
-      if (parsedValue == 0) {
-        int maxIndexNotZero = 0;
-        for (int i = 0; i < 10; i++) {
-          if (customButtonPressArray[i] == 0) {
-            maxIndexNotZero = i;
-            break;
-          }
-        }
-
-        for (int i = maxIndexNotZero; i < 9; i++) {
-          customButtonPressArray[i] = customButtonPressArray[i + 1];
-          Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
+    if (value.compare("0") == 0) {
+      int maxIndexNotZero = 0;
+      for (int i = 0; i < 9; i++) {
+        if (customButtonPressArray[i].compare("0") == 0) {
+          maxIndexNotZero = i;
+          break;
         }
       }
+
+      for (int i = maxIndexNotZero; i < 8; i++) {
+        customButtonPressArray[i] = customButtonPressArray[i + 1];
+        Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
+      }
     }
+  } else if (customButtonPressUpdateState == 3) {
+    customButtonPressUpdateState = 0;
+
+    int parsedValue = stoi(value);
+    maxTimeBetween_ms = parsedValue;
+    Storage::setDelay(maxTimeBetween_ms);
   }
+}
+int nextIndex = 1;
+void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  // if 9 index read delay
+  if (nextIndex == 9) {
+    pChar->setValue(to_string(maxTimeBetween_ms));
+    nextIndex++;
+    return;
+    // if 10 index read status
+  } else if (nextIndex == 10) {
+    pChar->setValue(customButtonStatusEnabled ? "true" : "false");
+    nextIndex = 1;
+    return;
+  }
+
+  pChar->setValue(customButtonPressArray[nextIndex]);
+  nextIndex++;
+}
+
+
+
+void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+
+  string received = pChar->getValue();
+  Serial.printf("Received: %s\n", received.c_str());
+  if (received == "1") {
+    Storage::setHeadlightBypass(true);
+    bypassHeadlightOverride = true;
+  } else {
+    Storage::setHeadlightBypass(false);
+    bypassHeadlightOverride = false;
+  }
+}
+
+void HeadlightOrientationCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+
+  string received = pChar->getValue();
+
+  if (received == "0")
+    Storage::setHeadlightOrientation(false);
+  else if (received == "1")
+    Storage::setHeadlightOrientation(true);
 }
 
 
@@ -264,8 +251,9 @@ void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
 }
 
 void UnpairCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
-  Storage::clearWhitelist();
-  // NimBLEDevice::deleteAllBonds();
+
+  if (Storage::hasBond())
+    Storage::resetBond();
   BLE::disconnect(info);
 };
 
@@ -283,24 +271,34 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
 };
 
 // TODO: Timer based check, auto disconnect if characteristic not set/bonded
-void ClientMacCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  string storedMac = Storage::getWhitelist();
 
-  if (storedMac.length() == 0) {
-    // Set bond, let client know bond happened
-    Storage::setWhitelist(value);
-    pChar->setValue("5");
+  Serial.printf("Characteristic Written: %s\n", value.c_str());
+
+  if (auth_status == AuthState::WAIT_CLAIM && value == "CLAIM") {
+    char passkey[33];
+    generateToken(passkey);
+
+    string key = string(passkey);
+    Storage::setBond(key);
+
+    pChar->setValue(key);
     pChar->notify();
-  } else {
-    // check if mac checks out
-    if (value == storedMac) {
-      pChar->setValue("1");
-      pChar->notify();
-    } else {
-      BLE::disconnect(info);
+
+    auth_status = AuthState::AUTHENTICATED;
+
+    return;
+  } else if (auth_status == AuthState::WAIT_TOKEN) {
+    // Waiting for token write
+    if (value == Storage::getBond()) {
+      auth_status = AuthState::AUTHENTICATED;
+      return;
     }
   }
+
+  BLE::disconnect(info);
+
 }
 
 bool updateInProgress = false;

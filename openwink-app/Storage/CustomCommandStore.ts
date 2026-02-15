@@ -1,45 +1,43 @@
-import Storage from "./Storage";
-import { DefaultCommandValue } from "../helper/Constants";
+import {CommandInput, CommandOutput} from '../helper/Types';
 
-export interface CommandInput {
-  delay?: number;
-  transmitValue?: DefaultCommandValue;
-}
+import Storage from './Storage';
 
-export interface CommandOutput {
-  name: string;
-  command?: CommandInput[];
-}
 
-const COMMAND_STORE_KEY = "CUSTOM_COMMANDS";
+const COMMAND_STORE_KEY = 'CUSTOM_COMMANDS';
 
 export abstract class CustomCommandStore {
-
-  static saveCommand(name: string, command: CommandInput[]): null | void {
-
+  static saveCommand(name: string, command: CommandInput[]): null|void {
     const doesCommandExist = Storage.getString(`${COMMAND_STORE_KEY}_${name}`);
     // Can not save multiple commands with the same name
     if (doesCommandExist !== undefined) return null;
 
-    const commandString = command.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+    const commandString =
+        command
+            .map(value => value.delay ? `d${value.delay}` : value.transmitValue)
+            .join('-');
     Storage.set(`${COMMAND_STORE_KEY}_${name}`, commandString);
   }
 
-  static editCommand(oldName: string, newName: string, command: CommandInput[]) {
+  static editCommand(
+      oldName: string, newName: string, command: CommandInput[]) {
     // Just delete the old one, in case the new one
     CustomCommandStore.deleteCommand(`${COMMAND_STORE_KEY}_${oldName}`);
 
-    const commandString = command.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+    const commandString =
+        command
+            .map(value => value.delay ? `d${value.delay}` : value.transmitValue)
+            .join('-');
     Storage.set(`${COMMAND_STORE_KEY}_${newName}`, commandString);
   }
 
   static getAll() {
-
-    const commandKeys = Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
+    const commandKeys =
+        Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
     const allCommands: CommandOutput[] = [];
     for (const commandName of commandKeys) {
-      const commandNameParts = commandName.split("_");
-      allCommands.push({ name: commandNameParts.slice(2).join(" "), command: [] });
+      const commandNameParts = commandName.split('_');
+      allCommands.push(
+          {name: commandNameParts.slice(2).join(' '), command: []});
 
       const commandFromStorage = Storage.getString(commandName);
       const index = allCommands.length - 1;
@@ -47,22 +45,22 @@ export abstract class CustomCommandStore {
         allCommands[index].command = undefined;
         continue;
       } else {
-        const commandParts = commandFromStorage.split("-");
+        const commandParts = commandFromStorage.split('-');
         for (const cmdSection of commandParts) {
-          if (cmdSection.startsWith("d"))
-            allCommands[index].command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
+          if (cmdSection.startsWith('d'))
+            allCommands[index].command?.push(
+                {delay: parseFloat(cmdSection.slice(1, cmdSection.length))});
           else
-            allCommands[index].command?.push({ transmitValue: parseInt(cmdSection) });
+            allCommands[index].command?.push(
+                {transmitValue: parseInt(cmdSection)});
         }
       }
-
     }
     return allCommands;
   }
 
   static get(name: string) {
     const cmdString = Storage.getString(`${COMMAND_STORE_KEY}_${name}`);
-    console.log(cmdString, Storage.getAllKeys())
     if (!cmdString) return null;
 
     const command: CommandOutput = {
@@ -70,12 +68,12 @@ export abstract class CustomCommandStore {
       command: [],
     }
 
-    const parts = cmdString.split("-");
+    const parts = cmdString.split('-');
     for (const part of parts) {
-      if (part.startsWith("d"))
-        command.command?.push({ delay: parseFloat(part.slice(1, part.length)) });
+      if (part.startsWith('d'))
+        command.command?.push({delay: parseFloat(part.slice(1, part.length))});
       else
-        command.command?.push({ transmitValue: parseInt(part) });
+        command.command?.push({transmitValue: parseInt(part)});
     }
 
     return command;
@@ -86,8 +84,18 @@ export abstract class CustomCommandStore {
   }
 
   static deleteAll() {
-    const allCommandKeys = Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
-    for (const key of allCommandKeys)
-      Storage.delete(key);
+    const allCommandKeys =
+        Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
+    for (const key of allCommandKeys) Storage.delete(key);
+  }
+
+
+  static getKeys(cb: ((key: string) => boolean)) {
+    const commandKeys =
+        Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
+
+    console.log(commandKeys)
+
+    return commandKeys.filter(cb);
   }
 }

@@ -3,7 +3,7 @@ export * from "./Home/CreateCustomCommands/CreateCustomCommand";
 export * from "./Home/CustomCommands";
 export * from "./Home/Home";
 export * from "./Home/StandardCommands";
-export * from "./HowToUse";
+export * from "./HowToUse/HowToUse";
 
 export * from "./Settings/Settings";
 export * from "./Settings/Information";

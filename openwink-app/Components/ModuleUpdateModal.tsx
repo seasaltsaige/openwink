@@ -3,6 +3,7 @@ import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
 import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
+import { ModalBlurBackground } from "./ModalBlurBackground";
 
 interface IModuleUpdateModal {
   version: string;
@@ -31,16 +32,7 @@ export function ModuleUpdateModal({
       visible={visible}
     >
 
-      <View
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: `${colorTheme.backgroundPrimaryColor}80`,
-        }}
-      >
+      <ModalBlurBackground>
         <View
           style={{
             width: "85%",
@@ -139,7 +131,7 @@ export function ModuleUpdateModal({
             }
           </Pressable>
         </View>
-      </View>
+      </ModalBlurBackground>
     </Modal>
   )
 }

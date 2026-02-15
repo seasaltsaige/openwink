@@ -1,5 +1,6 @@
 #include "BLE.h"
 #include "BLECallbacks.h"
+#include "ButtonHandler.h"
 #include "NimBLECharacteristic.h"
 #include "NimBLEDevice.h"
 #include "NimBLELocalValueAttribute.h"
@@ -8,6 +9,7 @@
 #include "constants.h"
 #include "esp_bt.h"
 #include <string>
+
 
 using namespace std;
 
@@ -49,7 +51,9 @@ NimBLECharacteristic *BLE::headlightMotionChar;
 NimBLECharacteristic *BLE::sleepSettingsChar;
 NimBLECharacteristic *BLE::unpairChar;
 NimBLECharacteristic *BLE::resetChar;
-NimBLECharacteristic *BLE::clientMacChar;
+NimBLECharacteristic *BLE::passkeyChar;
+NimBLECharacteristic *BLE::headlightBypassChar;
+NimBLECharacteristic *BLE::headlightOrientationChar;
 
 bool BLE::deviceConnected = false;
 
@@ -71,19 +75,28 @@ void BLE::initDeviceServer() {
 void BLE::initServerService() {
   winkService = server->createService(NimBLEUUID(WINK_SERVICE_UUID));
   otaService = server->createService(NimBLEUUID(OTA_SERVICE_UUID));
-  settingsService = server->createService(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
+  settingsService =
+      server->createService(NimBLEUUID(MODULE_SETTINGS_SERVICE_UUID));
 }
 
 void BLE::initServiceCharacteristics() {
 
-  winkChar = winkService->createCharacteristic(HEADLIGHT_CHAR_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  sleepChar = winkService->createCharacteristic(SLEEPY_EYE_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  winkChar = winkService->createCharacteristic(HEADLIGHT_CHAR_UUID,
+                                               NIMBLE_PROPERTY::WRITE_NR);
+  sleepChar = winkService->createCharacteristic(SLEEPY_EYE_UUID,
+                                                NIMBLE_PROPERTY::WRITE_NR);
 
-  busyChar = winkService->createCharacteristic(BUSY_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY);
-  leftStatusChar = winkService->createCharacteristic(LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  rightStatusChar = winkService->createCharacteristic(RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  syncChar = winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  customCommandChar = winkService->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);
+  busyChar = winkService->createCharacteristic(BUSY_CHAR_UUID,
+                                               NIMBLE_PROPERTY::NOTIFY);
+  leftStatusChar = winkService->createCharacteristic(
+      LEFT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  rightStatusChar = winkService->createCharacteristic(
+      RIGHT_STATUS_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  syncChar =
+      winkService->createCharacteristic(SYNC_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  customCommandChar = winkService->createCharacteristic(
+      CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ |
+                               NIMBLE_PROPERTY::WRITE_NR);
 
   syncChar->setValue(0);
   winkChar->setValue(0);
@@ -94,47 +107,86 @@ void BLE::initServiceCharacteristics() {
   sleepChar->setCallbacks(new SleepCharacteristicCallbacks());
   customCommandChar->setCallbacks(new CustomCommandCharacteristicCallbacks());
 
-  otaUpdateChar = otaService->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
-  firmwareChar = otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
-  firmwareUpdateNotifier = otaService->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  otaUpdateChar = otaService->createCharacteristic(
+      OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+  firmwareChar =
+      otaService->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+  firmwareUpdateNotifier = otaService->createCharacteristic(
+      SOFTWARE_UPDATING_CHAR_UUID,
+      NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID,
+                                                    NIMBLE_PROPERTY::NOTIFY |
+                                                        NIMBLE_PROPERTY::READ);
 
   firmwareChar->setValue(FIRMWARE_VERSION);
   firmwareStatus->setValue("idle");
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
 
-  longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  customButtonChar = settingsService->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-  headlightDelayChar = settingsService->createCharacteristic(HEADLIGHT_MOVEMENT_DELAY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-  headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
-  sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-  unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  clientMacChar = settingsService->createCharacteristic(CLIENT_MAC_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+  longTermSleepChar = settingsService->createCharacteristic(
+      LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  customButtonChar = settingsService->createCharacteristic(
+      CUSTOM_BUTTON_UPDATE_UUID,
+      NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightDelayChar = settingsService->createCharacteristic(
+      HEADLIGHT_MOVEMENT_DELAY_UUID,
+      NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightMotionChar = settingsService->createCharacteristic(
+      HEADLIGHT_MOTION_IN_UUID,
+      NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
+  sleepSettingsChar = settingsService->createCharacteristic(
+      SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ |
+                                NIMBLE_PROPERTY::NOTIFY);
+  unpairChar = settingsService->createCharacteristic(UNPAIR_UUID,
+                                                     NIMBLE_PROPERTY::WRITE_NR);
+  resetChar = settingsService->createCharacteristic(RESET_UUID,
+                                                    NIMBLE_PROPERTY::WRITE_NR);
+  passkeyChar = settingsService->createCharacteristic(
+      PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+  headlightBypassChar = settingsService->createCharacteristic(
+      HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+  headlightOrientationChar = settingsService->createCharacteristic(
+      SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ |
+                                 NIMBLE_PROPERTY::NOTIFY);
 
-  headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  // headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
+  headlightMotionChar->setValue(to_string(ButtonHandler::leftMoveTime) + "-" +
+                                to_string(ButtonHandler::rightMoveTime));
+
   headlightDelayChar->setValue(to_string(headlightMultiplier));
+  headlightBypassChar->setValue(bypassHeadlightOverride ? "1" : "0");
+  headlightOrientationChar->setValue(Storage::getHeadlightOrientation() ? "1"
+                                                                        : "0");
 
-  string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
+  customButtonChar->setValue(customButtonPressArray[1]);
+  string sleepCharStart =
+      to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   Serial.printf("Headlight Wave Delay = %f\n", headlightMultiplier);
   sleepSettingsChar->setValue(sleepCharStart);
   string enabled = customButtonStatusEnabled ? "y" : "n";
-  string customButtonDataOnBoot = enabled + "-" + to_string(maxTimeBetween_ms) + "-";
+  string customButtonDataOnBoot =
+      enabled + "-" + to_string(maxTimeBetween_ms) + "-";
 
   for (int i = 0; i < 10; i++) {
-    customButtonDataOnBoot = customButtonDataOnBoot + to_string(customButtonPressArray[i]);
-    if (i != 9) customButtonDataOnBoot = customButtonDataOnBoot + "-";
+    customButtonDataOnBoot =
+        customButtonDataOnBoot + to_string(customButtonPressArray[i]);
+    if (i != 9)
+      customButtonDataOnBoot = customButtonDataOnBoot + "-";
   }
 
   customButtonChar->setValue(customButtonDataOnBoot);
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
-  customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
+  customButtonChar->setCallbacks(
+      new CustomButtonPressCharacteristicCallbacks());
   headlightDelayChar->setCallbacks(new HeadlightCharacteristicCallbacks());
   sleepSettingsChar->setCallbacks(new SleepSettingsCallbacks());
   unpairChar->setCallbacks(new UnpairCharacteristicCallbacks());
   resetChar->setCallbacks(new ResetCharacteristicCallbacks());
-  clientMacChar->setCallbacks(new ClientMacCharacteristicCallbacks());
+  passkeyChar->setCallbacks(new PassKeyCharacteristicCallbacks());
+  headlightBypassChar->setCallbacks(
+      new HeadlightBypassCharacteristicCallbacks());
+  headlightOrientationChar->setCallbacks(
+      new HeadlightOrientationCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {
@@ -162,9 +214,10 @@ void BLE::start() {
   if (advertising->setInstanceData(0, advertisement)) {
     if (advertising->start(0)) {
       printf("Started advertising\n");
-      BLE::setMotionInValue(HEADLIGHT_MOVEMENT_DELAY);
-    } else printf("Failed to start advertising\n");
-  } else printf("Failed to register advertisement data\n");
+    } else
+      printf("Failed to start advertising\n");
+  } else
+    printf("Failed to register advertisement data\n");
 }
 
 void BLE::updateHeadlightChars() {
@@ -174,11 +227,8 @@ void BLE::updateHeadlightChars() {
   rightStatusChar->notify();
 }
 
-void BLE::setMotionInValue(int value) {
-  if (value < 500 || value > 800)
-    return;
-  HEADLIGHT_MOVEMENT_DELAY = value;
-  headlightMotionChar->setValue(to_string(value));
+void BLE::setMotionInValue(string value) {
+  headlightMotionChar->setValue(value);
   headlightMotionChar->notify();
 }
 

@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import { Dimensions } from "react-native";
+
+
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
 export const WINK_SERVICE_UUID = "a144c6b0-5e1a-4460-bb92-3674b2f51520";
@@ -31,14 +35,16 @@ export const HEADLIGHT_MOTION_IN_UUID = "5cdfa4ac-31f5-439b-af8d-ec09a808ce9d";
 export const SLEEPY_SETTINGS_UUID = "bf133860-e47e-43e3-b1ed-cd87a1d9cb63";
 export const UNPAIR_UUID = "c67c4fd1-21ce-4a75-bd16-629f990e575d";
 export const RESET_UUID = "a55946b8-1978-4522-8a29-27d17e21b092";
-
-export const CLIENT_MAC_UUID = "f61146f2-791d-4ef7-95aa-b565097f69c2"
+export const PASSKEY_UUID = "f61146f2-791d-4ef7-95aa-b565097f69c2";
+export const HEADLIGHT_BYPASS_UUID = "ada2537e-0399-4d2a-9eab-0c7cb60d3500";
+export const SWAP_ORIENTATION_UUID = "3ddd922d-14ca-4785-9cd0-39a530e8b14d";
 
 export const SCAN_TIME_SECONDS = 30 * 1000;
 
 
 // export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
 // export const UPDATE_URL = "http://10.197.10.42:3000/.netlify/functions/api/update";
+// export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
 export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
 
 export const DEFAULT_COMMAND_DATA = [
@@ -128,6 +134,7 @@ export const buttonBehaviorMap = {
   "Both Blink x2": 7,
   "Left Wave": 8,
   "Right Wave": 9,
+  "Sleepy Eye": 10,
 } as const;
 
 export const buttonBehaviorMapReversed = {
@@ -140,6 +147,7 @@ export const buttonBehaviorMapReversed = {
   7: "Both Blink x2",
   8: "Left Wave",
   9: "Right Wave",
+  10: "Sleepy Eye",
 } as const;
 
 export enum ButtonStatus {
@@ -174,11 +182,13 @@ export enum BehaviorEnum {
   BOTH_BLINK_X2,
   LEFT_WAVE,
   RIGHT_WAVE,
+  SLEEPY_EYE,
 }
 
 type HexNumber = `#${string}`;
 
 export interface ThemeColors {
+  primary: HexNumber;
   backgroundPrimaryColor: HexNumber;
   backgroundSecondaryColor: HexNumber;
   dropdownColor: HexNumber;
@@ -217,6 +227,7 @@ export namespace ColorTheme {
 
 
   export const crystalWhite: ThemeColors = {
+    primary: "#ffffff",
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
     bottomTabsBackground: "#ffffff",
@@ -232,6 +243,7 @@ export namespace ColorTheme {
   }
 
   export const brilliantBlack: ThemeColors = {
+    primary: "#550000",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
     bottomTabsBackground: "#1c1c1c",
@@ -247,62 +259,79 @@ export namespace ColorTheme {
   }
 
   export const classicRed: ThemeColors = {
+    primary: "#c8102e",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#c8102e", // Classic Red
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
+  // TODO: Needs work on pill color
   export const sunburstYellow: ThemeColors = {
+    primary: "#ffcc00",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#b0b0b069",
+    dropdownColor: "#2F2F32",
     buttonColor: "#ffcc00", // Sunburst Yellow
     disabledButtonColor: "#878787",
     buttonTextColor: "#141414",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
   export const marinerBlue: ThemeColors = {
+    primary: "#0033a0",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#0033a0", // Marina Blue
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
 
   export const britishRacingGreen: ThemeColors = {
+    primary: "#004d26",
     backgroundPrimaryColor: "#141414",
-    backgroundSecondaryColor: "#1e1e1e",
-    bottomTabsBackground: "#ffffff",
-    bottomTabsTextColor: "#141414",
-    bottomTabsPill: "#ffffff",
-    dropdownColor: "#37373b",
+    backgroundSecondaryColor: "#262629",
+    bottomTabsBackground: "#1c1c1c",
+    bottomTabsTextColor: "#ffffff",
+    bottomTabsPill: "#efe6e6",
+    dropdownColor: "#2F2F32",
     buttonColor: "#004d26", // British Racing Green
     disabledButtonColor: "#878787",
     buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#bbbbbb",
+    disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
   }
+}
+
+// TODO: Update to be adaptive with screen width
+const SVG_WIDTH = 300;
+const SCALE_BY = 411.42857142857144;
+
+export const useSvgWidth = () => {
+  const [svgWidth, setSvgWidth] = useState(0);
+  useEffect(() => {
+    setSvgWidth(SVG_WIDTH * (Dimensions.get("window").width / SCALE_BY));
+  }, []);
+  return svgWidth;
 }

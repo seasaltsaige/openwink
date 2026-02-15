@@ -540,12 +540,6 @@ function createThemeStyles(themeColors: ThemeColors) {
     },
     tooltipContainer: {
       backgroundColor: themeColors.backgroundSecondaryColor,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "auto",
-      width: "auto",
       borderRadius: 7
     },
     tooltipContainerText: {
@@ -591,16 +585,16 @@ function createThemeStyles(themeColors: ThemeColors) {
       width: 25,
       height: 25,
       borderRadius: 15,
-      borderWidth: 1,
-      borderColor: "white",
+      borderWidth: 3.5,
+      borderColor: themeColors.backgroundPrimaryColor,
       backgroundColor: themeColors.buttonColor
     },
     rangeSliderThumbDisabled: {
       width: 25,
       height: 25,
       borderRadius: 15,
-      borderWidth: 1,
-      borderColor: "white",
+      borderWidth: 0,
+      borderColor: themeColors.backgroundPrimaryColor,
       backgroundColor: themeColors.disabledButtonColor,
     },
     rangeSliderRailSelected: {

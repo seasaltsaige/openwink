@@ -29,6 +29,15 @@ void CommandHandler::parseCustomCommand(string command) {
 void CommandHandler::handleQueuedCommand() {
   BLE::setBusy(true);
   int command = queuedCommand;
+
+  bool wasSleepy = false;
+  if (isSleepy()) {
+    if (command != 1 && command != 2)
+      wasSleepy = true;
+    sleepyReset(true, true);
+  }
+
+
   queuedCommand = -1;
 
   switch (command) {
@@ -86,8 +95,7 @@ void CommandHandler::handleQueuedCommand() {
         setAllOff();
         BLE::updateHeadlightChars();
       }
-
-      leftWave();
+      waveHeadlights(WAVE_START_SIDE::LEFT);
       break;
 
     case 11:
@@ -98,11 +106,12 @@ void CommandHandler::handleQueuedCommand() {
         setAllOff();
         BLE::updateHeadlightChars();
       }
-
-      rightWave();
-
+      waveHeadlights(WAVE_START_SIDE::RIGHT);
       break;
   }
+
+  if (wasSleepy)
+    sleepyEye(true, true);
 
   setAllOff();
   BLE::setBusy(false);
@@ -111,9 +120,15 @@ void CommandHandler::handleQueuedCommand() {
 void CommandHandler::handleQueuedCustomCommand() {
   parseCustomCommand(queuedCustomCommand);
   queuedCustomCommand = "";
-  BLE::setBusy(true);
   ButtonHandler::setCustomCommandActive(true);
 
+  bool wasSleepy = false;
+  if (isSleepy()) {
+    wasSleepy = true;
+    sleepyReset(true, true);
+  }
+
+  BLE::setBusy(true);
   for (auto cmd : commandSequence) {
     if (!ButtonHandler::customCommandActive) break;
 
@@ -179,8 +194,7 @@ void CommandHandler::handleQueuedCustomCommand() {
             setAllOff();
             BLE::updateHeadlightChars();
           }
-
-          leftWave();
+          waveHeadlights(WAVE_START_SIDE::LEFT);
           break;
 
         case 11:
@@ -191,9 +205,7 @@ void CommandHandler::handleQueuedCustomCommand() {
             setAllOff();
             BLE::updateHeadlightChars();
           }
-
-          rightWave();
-
+          waveHeadlights(WAVE_START_SIDE::RIGHT);
           break;
       }
 
@@ -201,6 +213,9 @@ void CommandHandler::handleQueuedCustomCommand() {
     }
     ButtonHandler::loopButtonHandler();
   }
+
+  if (wasSleepy)
+    sleepyEye(true, true);
 
   ButtonHandler::setCustomCommandActive(false);
   BLE::setCustomStatus(0);

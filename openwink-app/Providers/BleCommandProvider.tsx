@@ -26,6 +26,8 @@ import {
   ButtonStatus,
   buttonBehaviorMap,
   DefaultCommandValueEnglish,
+  HEADLIGHT_BYPASS_UUID,
+  SWAP_ORIENTATION_UUID,
 } from '../helper/Constants';
 import {
   CustomOEMButtonStore,
@@ -33,14 +35,10 @@ import {
   SleepyEyeStore,
 } from '../Storage';
 import { sleep } from '../helper/Functions';
-import { ButtonBehaviors, Presses } from '../helper/Types';
+import { ButtonBehaviors, CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { useBleConnection } from './BleConnectionProvider';
 import { useBleMonitor } from './BleMonitorProvider';
-
-export type CommandInput = {
-  delay?: number;
-  transmitValue?: number;
-};
+import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
 
 export type BleCommandContextType = {
   // Command execution
@@ -55,8 +53,9 @@ export type BleCommandContextType = {
 
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
-  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | 0) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
+  setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
   // Wave configuration
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
@@ -64,14 +63,10 @@ export type BleCommandContextType = {
   // Module management
   enterDeepSleep: () => Promise<void>;
   resetModule: () => Promise<void>;
+  swapLeftRight: () => Promise<void>;
 
   // State
   activeCommandName: string | null;
-  oemCustomButtonEnabled: boolean;
-  buttonDelay: number;
-  waveDelayMulti: number;
-  leftSleepyEye: number;
-  rightSleepyEye: number;
 };
 
 export const BleCommandContext = createContext<BleCommandContextType | null>(null);
@@ -95,22 +90,21 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     isSleepyEyeActive,
     leftStatus,
     rightStatus,
-    motionValue,
+    leftRightSwapped,
+    setLeftSleepyEye,
+    setRightSleepyEye,
+    setOemCustomButtonEnabled,
+    setButtonDelay,
+    setWaveDelayMulti,
+    setLeftRightSwapped,
+    setHeadlightBypass,
   } = useBleMonitor();
 
-  // Settings state
-  const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
-  const [buttonDelay, setButtonDelay] = useState(500);
-  const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
-  const [leftSleepyEye, setLeftSleepyEye] = useState(50);
-  const [rightSleepyEye, setRightSleepyEye] = useState(50);
+
 
   // Track command execution
   const [activeCommandName, setActiveCommandName] = useState<string | null>(null);
   const activeCommandNameRef = useRef<string | null>(null);
-
-
-
 
   const updateActiveCommandName = (name: string | null) => {
     setActiveCommandName(name);
@@ -123,31 +117,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [headlightsBusy]);
 
-  // Motion value ref to avoid stale closures
-  const motionValueRef = useRef(motionValue);
-  const waveDelayMultiRef = useRef(waveDelayMulti);
-  const leftStatusRef = useRef(leftStatus);
-  const rightStatusRef = useRef(rightStatus);
-
-  // Keep refs in sync
-  useEffect(() => {
-    motionValueRef.current = motionValue;
-  }, [motionValue]);
-
-  useEffect(() => {
-    waveDelayMultiRef.current = waveDelayMulti;
-  }, [waveDelayMulti]);
-
-  useEffect(() => {
-    leftStatusRef.current = leftStatus;
-  }, [leftStatus]);
-
-  useEffect(() => {
-    rightStatusRef.current = rightStatus;
-  }, [rightStatus]);
-
   // Load persisted settings on mount
   useEffect(() => {
+    // TODO: Realistically these should be loaded from the MCU, as it should be the source of truth.
     const isOEMEnabled = CustomOEMButtonStore.isEnabled();
     setOemCustomButtonEnabled(isOEMEnabled);
 
@@ -471,7 +443,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Update OEM button preset for specific number of presses
   const updateOEMButtonPresets = useCallback(
-    async (numPresses: Presses, to: ButtonBehaviors | 0) => {
+    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
+
       if (!device) {
         console.warn('No device connected');
         return;
@@ -481,9 +454,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Update local storage
         if (to === 0) {
           CustomOEMButtonStore.remove(numPresses);
-        } else {
+        } else
           CustomOEMButtonStore.set(numPresses, to);
-        }
+
 
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
@@ -495,12 +468,22 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Small delay to prevent overwrite
         await sleep(WRITE_OPERATION_DELAY);
 
-        // Send behavior for that number of presses
-        await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
-          base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
-        );
+        if (to === 0 || typeof to === "string") {
+          // Send behavior for that number of presses
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
+          );
+        } else {
+          // Parse to string, NOT including name, as it is unimportant for the module to know
+          const commandString = to.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(commandString!),
+          );
+        }
       } catch (error) {
         console.error('Error updating OEM button presets:', error);
 
@@ -514,6 +497,32 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     },
     [device]
   );
+
+  const setOEMButtonHeadlightBypass = useCallback(
+    async (bypass: boolean) => {
+      if (!device) {
+        console.warn('No device connected');
+        return;
+      }
+      try {
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          HEADLIGHT_BYPASS_UUID,
+          base64.encode(bypass ? "1" : "0"),
+        );
+
+        if (bypass)
+          CustomOEMButtonStore.enableBypass();
+        else CustomOEMButtonStore.disableBypass();
+
+        setHeadlightBypass(bypass);
+
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device]
+  )
 
   // Update button delay (debounce time)
   const updateButtonDelay = useCallback(
@@ -530,6 +539,15 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       try {
         CustomOEMButtonStore.setDelay(delay);
+
+        // First write a '3' to set characteristic into update mode for delay
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+          base64.encode("delay"),
+        );
+
+        await sleep(WRITE_OPERATION_DELAY);
 
         await device.writeCharacteristicWithoutResponseForService(
           MODULE_SETTINGS_SERVICE_UUID,
@@ -658,6 +676,22 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [device]);
 
+  const swapLeftRight = useCallback(
+    async () => {
+      try {
+        console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
+        await device?.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          SWAP_ORIENTATION_UUID,
+          base64.encode(leftRightSwapped ? "0" : "1"),
+        );
+        setLeftRightSwapped((v) => !v);
+        HeadlightOrientationStore.toggle();
+      } catch (err) {
+        console.log(err);
+      }
+    }, [device, leftRightSwapped]);
+
   const value: BleCommandContextType = {
     sendDefaultCommand,
     sendCustomCommand,
@@ -671,12 +705,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     updateWaveDelayMulti,
     enterDeepSleep,
     resetModule,
+    setOEMButtonHeadlightBypass,
+    swapLeftRight,
     activeCommandName,
-    oemCustomButtonEnabled,
-    buttonDelay,
-    waveDelayMulti,
-    leftSleepyEye,
-    rightSleepyEye,
   };
 
   return <BleCommandContext.Provider value={value}>{children}</BleCommandContext.Provider>;

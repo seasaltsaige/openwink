@@ -36,6 +36,7 @@
     "@react-navigation/native-stack": "^7.1.14",
     "expo": "~52.0.11",
     "expo-application": "~6.0.2",
+    "expo-blur": "~14.0.3",
     "expo-build-properties": "~0.13.3",
     "expo-dev-client": "~5.0.5",
     "expo-device": "~7.0.1",
@@ -56,9 +57,9 @@
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.1.0",
     "react-native-sticky-range-slider": "^0.1.7",
+    "react-native-svg": "15.12.0",
     "react-native-toast-message": "^2.3.3",
     "react-native-walkthrough-tooltip": "^1.6.0",
-    "react-native-wifi-reborn": "^4.13.0",
     "rn-vertical-slider-matyno": "^1.0.1",
     "toggle-switch-react-native": "^3.3.0"
   },

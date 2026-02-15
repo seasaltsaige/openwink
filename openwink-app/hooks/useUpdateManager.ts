@@ -100,8 +100,13 @@ export const useUpdateManager = ({
 
         onSuccess({
           successType: UPDATE_STATUS.UP_TO_DATE,
+<<<<<<< HEAD
           successMessage: `Module updated to version ${OTA.latestVersion} successfully.`,
           successTitle: "Update Success",
+=======
+          successMessage: "Module has been updated.",
+          successTitle: "Success"
+>>>>>>> master
         });
       } else {
         // If update goes wrong, reset and check for update again.

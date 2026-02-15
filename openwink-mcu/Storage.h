@@ -2,6 +2,16 @@
 
 #include <Preferences.h>
 #include <NimBLEDevice.h>
+#include <string>
+
+#include "esp_system.h"
+void generateToken(char out[21]);
+
+enum SIDE {
+  L,
+  R,
+};
+
 using namespace std;
 class Storage {
 private:
@@ -15,10 +25,17 @@ public:
   static void setCustomOEMButtonStatus(bool status);
   static void setHeadlightMulti(double multi);
   static void setDelay(int delay);
-  static void setMotionTiming(int time);
-  static void setCustomButtonPressArray(int index, int value);
+
+  static void setCustomButtonPressArray(int index, string value);
   static void setSleepyValues(int side, double value);
-  static void setWhitelist(string mac);
-  static void clearWhitelist();
-  static string getWhitelist();
+  static void setHeadlightBypass(bool value);
+  static void setHeadlightOrientation(bool orientation);
+  static bool getHeadlightOrientation();
+
+  static void setMotionIn(SIDE side, int timing);
+
+  static void setBond(string passkey);
+  static void resetBond();
+  static string getBond();
+  static bool hasBond();
 };

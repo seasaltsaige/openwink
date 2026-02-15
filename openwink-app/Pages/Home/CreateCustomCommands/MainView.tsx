@@ -5,10 +5,11 @@ import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultCommandValueEnglish } from "../../../helper/Constants";
-import { CommandOutput, CustomCommandStore } from "../../../Storage";
+import { CustomCommandStore } from "../../../Storage";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { HeaderWithBackButton, SearchBarFilter, CustomCommand } from "../../../Components";
 import { ModifyType } from "./ModifyView";
+import { CommandOutput } from "../../../helper/Types";
 
 interface IMainViewProps {
   setModifyType: (type: ModifyType) => void;
