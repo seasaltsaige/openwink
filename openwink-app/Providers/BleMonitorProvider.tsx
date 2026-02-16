@@ -55,7 +55,7 @@ export type BleMonitorContextType = {
   headlightBypass: boolean;
   buttonDelay: number;
 
-  startMonitoring: (device: Device) => Promise<void>;
+  startMonitoring: (device: Device, onCustomCommandInterrupt: () => void) => Promise<void>;
   stopMonitoring: () => void;
   readInitialValues: (device: Device) => Promise<void>;
   updateFirmwareVersion: (version: string) => void;
@@ -312,11 +312,13 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (err) {
             console.error('Error monitoring CUSTOM_COMMAND_STATUS characteristic:', err);
             return;
+
           }
           if (!char?.value) return;
 
           try {
             const val = base64.decode(char.value);
+            console.log(val);
             if (val === '0') {
               onInterrupt();
             }
@@ -383,9 +385,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Start monitoring all characteristics
   const startMonitoring = useCallback(
-    async (device: Device, onCustomCommandInterrupt?: () => void) => {
-      // Clean up any existing subscriptions first
-      stopMonitoring();
+    async (device: Device, onCustomCommandInterrupt: () => void) => {
 
       try {
         // Set up all monitors and store cleanup functions
@@ -401,11 +401,11 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ];
 
         // Only add custom command monitor if callback provided
-        if (onCustomCommandInterrupt) {
-          subscriptionsRef.current.push(
-            monitorCustomCommandStatus(device, onCustomCommandInterrupt)
-          );
-        }
+
+        subscriptionsRef.current.push(
+          monitorCustomCommandStatus(device, onCustomCommandInterrupt)
+        );
+
         // setIsConnected(true);
       } catch (error) {
         console.error('Error setting up monitors:', error);

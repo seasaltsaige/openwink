@@ -41,7 +41,6 @@ export function WaveDelaySettings() {
   const [max, setMax] = useState(MAX);
 
   const handleValueChange = useCallback((newLow: number, newHigh: number) => {
-    console.log(newLow, newHigh);
     setMin(newLow);
     setMax(newHigh);
   }, []);
