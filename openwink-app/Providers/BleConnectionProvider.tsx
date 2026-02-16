@@ -19,6 +19,7 @@ import {
   SCAN_TIME_SECONDS,
   PASSKEY_UUID,
   UNPAIR_UUID,
+  CUSTOM_COMMAND_UUID,
 } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore, MockBleStore } from '../Storage';
 import { getDevicePasskey, sleep } from '../helper/Functions';
@@ -192,7 +193,26 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const setupConnection = useCallback(
     async (connection: Device) => {
       try {
-        await startMonitoring(connection);
+        await startMonitoring(connection, () => {
+          if (!device) {
+            return;
+          }
+
+          console.log('Interrupting custom command');
+
+          // updateActiveCommandName(null);
+
+          // Notify device that command is no longer in progress
+          device
+            .writeCharacteristicWithoutResponseForService(
+              WINK_SERVICE_UUID,
+              CUSTOM_COMMAND_UUID,
+              base64.encode('0')
+            )
+            .catch((error) => {
+              console.error('Error sending interrupt signal:', error);
+            });
+        });
 
         // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired")
@@ -238,7 +258,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         throw error;
       }
     },
-    [startMonitoring, stopMonitoring]
+    [startMonitoring, stopMonitoring, device]
   );
 
   // Connect to a specific device with retry logic

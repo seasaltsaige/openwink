@@ -142,10 +142,10 @@ export function Home() {
     }, 2500);
 
     (async () => {
-      if (isConnected)
+      if (device !== null)
         await fetchModuleUpdate();
     })();
-  }, [isConnected]);
+  }, [device]);
 
 
   return (
