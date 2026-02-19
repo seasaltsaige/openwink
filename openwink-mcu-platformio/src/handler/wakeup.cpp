@@ -1,10 +1,8 @@
 #include "handler/wakeup.h"
 #include "config/gpio_conf.h"
 #include "globals.h"
-
-
-#include "esp_log.h"
-#include "esp_sleep.h"
+#include <esp_log.h>
+#include <esp_sleep.h>
 
 void INIT_wakeup_sources()
 {
@@ -12,8 +10,8 @@ void INIT_wakeup_sources()
     if (err != ESP_OK)
         ESP_LOGE("WAKE", "Wakeup disable failed");
 
-    int input_level = gpio_get_level(BUTTON_INPUT);
-    err = esp_sleep_enable_ext0_wakeup(BUTTON_INPUT, input_level == 1 ? 0 : 1);
+    int input_level = gpio_get_level(Settings::BUTTON_INPUT);
+    err = esp_sleep_enable_ext0_wakeup(Settings::BUTTON_INPUT, input_level == 1 ? 0 : 1);
     if (err != ESP_OK)
         ESP_LOGE("WAKE", "GPIO Wakeup initialization failed");
 
