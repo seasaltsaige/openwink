@@ -41,6 +41,10 @@ enum CommandExecutionState
 
 class CommandHandler
 {
+    private:
+    CommandState command_state;
+    CommandExecutionState execution_state;
+
     public:
     static void request_movement(uint8_t press_count);
     static void request_movement(HEADLIGHT_COMMAND command);

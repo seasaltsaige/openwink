@@ -66,9 +66,9 @@ void MovementHandler::poll_right(LEVEL right_state)
 
 void MovementHandler::update_settings()
 {
+    int64_t current_time = esp_timer_get_time();
+    Settings::left_move_time = (current_time - left_move_start_time);
+    Settings::right_move_time = (current_time - right_move_start_time);
+
+    // TODO: Probably notify BLE characteristic here as well
 }
-// class MovementHandler
-// {
-
-
-// };

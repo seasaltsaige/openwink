@@ -1,10 +1,12 @@
 #include "config/inter_conf.h"
-#include "handler/button_handler.h"
+#include "handler/input.h"
 #include <esp_log.h>
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 
 
+// TODO: Reaslistically, this should just be polled in a task, easier for debounce logic
+//       and polling every ms is almost nothing
 void button_interrupt(void* params)
 {
     // Set event time and gpio level
