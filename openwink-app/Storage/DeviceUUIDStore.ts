@@ -1,7 +1,11 @@
 import Storage from "./Storage";
 
 export abstract class DeviceUUIDStore {
-  static async get() {
+  static get() {
     return Storage.getString("device-uuid");
+  }
+
+  static set(uuid: string) {
+    Storage.set("device-uuid", uuid);
   }
 }
