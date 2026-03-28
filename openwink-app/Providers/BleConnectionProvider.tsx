@@ -372,7 +372,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsConnecting(false);
 
         // Restart scan if auto-connect is enabled
-        if (autoConnectRef.current) {
+        const autoConnectEnabled = AutoConnectStore.get();
+        setAutoConnectEnabled(autoConnectEnabled);
+
+        if (autoConnectEnabled) {
           console.log('Auto-connect enabled, restarting scan...');
           await scanForModule();
         } else {
@@ -479,6 +482,13 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const setAutoConnect = useCallback((enabled: boolean) => {
     console.log('Auto-connect:', enabled);
     setAutoConnectEnabled(enabled);
+    if (!enabled) {
+      manager.stopDeviceScan().then(() => setIsScanning(false)).catch(err => {
+        console.error('Error during connection process:', err);
+        setIsScanning(false);
+      });
+    }
+
     AutoConnectStore.set(enabled);
   }, []);
 

@@ -98,15 +98,6 @@ export abstract class SettingsPresetsStore {
     return names;
   }
 
-  static getCurrentName() {
-    return Storage.getString(PRESETS_CURRENT_KEY) || "Custom";
-  }
-
-  static setCurrentName(name: string) {
-    Storage.set(PRESETS_CURRENT_KEY, name);
-    console.log("Setting current name: ", name);
-  } 
-
   static getPreset(name: string): SettingsPreset | null {
     const key = `${SETTINGS_PRESETS_KEY}-${name}`;
     const pData = Storage.getString(key);
@@ -116,10 +107,6 @@ export abstract class SettingsPresetsStore {
 
   static deletePreset(name: string) {
     Storage.delete(`${SETTINGS_PRESETS_KEY}-${name}`);
-    const curr = this.getCurrentName();
-    if (curr === name) {
-      this.setCurrentName("Custom");
-    }
   }
 
   static applyPreset(name: string, type: ApplyType) {
@@ -171,14 +158,14 @@ export abstract class SettingsPresetsStore {
 
     if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID !== null) {
       DeviceUUIDStore.set(preset.deviceUUID);
+
+      if (preset.deviceMAC)
+        DeviceMACStore.setMAC(preset.deviceMAC);
+
+      if (preset.firmwareVersion)
+        FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
     }
-
-    if (preset.deviceMAC)
-      DeviceMACStore.setMAC(preset.deviceMAC);
-
-    if (preset.firmwareVersion)
-      FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
-
+    return true;
   } 
 
   static existsByName(name: string) {
@@ -216,8 +203,6 @@ export abstract class SettingsPresetsStore {
       deviceMAC: DeviceMACStore.getStoredMAC(),
       firmwareVersion: FirmwareStore.getFirmwareVersion(),
     }
-
-    this.setCurrentName(name);
 
     Storage.set(`${SETTINGS_PRESETS_KEY}-${name}`, JSON.stringify(preset));
     return preset;

@@ -330,8 +330,9 @@ export namespace ColorTheme {
 }
 
 // TODO: Update to be adaptive with screen width
+// no
 const SVG_WIDTH = 300;
-const SCALE_BY = 411.42857142857144;
+const SCALE_BY = 411.42857142857144; // wtf is this lol
 
 export const useSvgWidth = () => {
   const [svgWidth, setSvgWidth] = useState(0);

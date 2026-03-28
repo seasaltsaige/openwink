@@ -56,12 +56,12 @@ const ROUTES: RouteType[] = [
   },
   {
     display: "Settings",
-    icon: "document-text-outline",
-    title: "System Terms of Use",
+    icon: "cog-outline",
+    title: "System Profiles",
     navigation: {
       back: "Home",
       backHumanReadable: "Home",
-      page: "TermsOfUse",
+      page: "SettingsProfiles",
     },
     visible: false,
   },
