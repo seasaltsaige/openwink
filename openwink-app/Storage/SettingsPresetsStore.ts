@@ -21,6 +21,7 @@ import { DeviceUUIDStore } from "./DeviceUUIDStore";
 import { getDevicePasskey } from "../helper/Functions";
 
 const SETTINGS_PRESETS_KEY = "settings-presets";
+const PRESETS_CURRENT_KEY = "presets-name";
 
 /**
  * @description Apply Type defines the type of application done when applying a settings preset. 
@@ -85,11 +86,40 @@ export abstract class SettingsPresetsStore {
     return presets;
   }
 
+  static getAllNames() {
+    const names: string[] = [];
+    const keys = Storage.getAllKeys().filter(key => key.startsWith(SETTINGS_PRESETS_KEY));
+    for (const key of keys) {
+      const pData = Storage.getString(key);
+      if (!pData) continue;
+      names.push((JSON.parse(pData) as SettingsPreset).name);
+    }
+
+    return names;
+  }
+
+  static getCurrentName() {
+    return Storage.getString(PRESETS_CURRENT_KEY) || "Custom";
+  }
+
+  static setCurrentName(name: string) {
+    Storage.set(PRESETS_CURRENT_KEY, name);
+    console.log("Setting current name: ", name);
+  } 
+
   static getPreset(name: string): SettingsPreset | null {
     const key = `${SETTINGS_PRESETS_KEY}-${name}`;
     const pData = Storage.getString(key);
     if (!pData) return null;
     return JSON.parse(pData) as SettingsPreset;
+  }
+
+  static deletePreset(name: string) {
+    Storage.delete(`${SETTINGS_PRESETS_KEY}-${name}`);
+    const curr = this.getCurrentName();
+    if (curr === name) {
+      this.setCurrentName("Custom");
+    }
   }
 
   static applyPreset(name: string, type: ApplyType) {
@@ -150,13 +180,19 @@ export abstract class SettingsPresetsStore {
       FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
 
   } 
+
+  static existsByName(name: string) {
+    return this.getPreset(name) !== null;
+  }
   
   static saveFromCurrent(name: string) {
+    const exists = this.getPreset(name);
+
     const deviceUUID = getDevicePasskey();
 
     const preset: SettingsPreset = {
       name,
-      createdAt: Date.now(),
+      createdAt: exists !== null ? exists.createdAt : Date.now(),
       updatedAt: Date.now(),
       autoConnect: AutoConnectStore.get(),
       colorTheme: ThemeStore.getStoredTheme(),
@@ -180,6 +216,8 @@ export abstract class SettingsPresetsStore {
       deviceMAC: DeviceMACStore.getStoredMAC(),
       firmwareVersion: FirmwareStore.getFirmwareVersion(),
     }
+
+    this.setCurrentName(name);
 
     Storage.set(`${SETTINGS_PRESETS_KEY}-${name}`, JSON.stringify(preset));
     return preset;

@@ -346,7 +346,6 @@ export function EditQuickLinksModal({
             <SearchBarFilter
               useFilters={false}
               filterables={allLinks}
-              filterTitleText="Filter by page location"
               searchFilterKey="title"
               onFilterTextChange={() => { }}
               placeholderText="Filter by page name..."

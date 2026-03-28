@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Dimensions } from "react-native";
-
+import IonIcons from "@expo/vector-icons/Ionicons";
 
 /** ---- BEGIN BLE UUID DEFINITIONS ---- **/
 // Service for headlight movements
@@ -98,7 +98,7 @@ export const DEFAULT_WINK_DATA = [{
 
 export const SETTINGS_DATA: Array<{
   pageName: string;
-  pageSymbol: string;
+  pageSymbol: keyof typeof IonIcons.glyphMap | null;
   navigationName: string;
 }> = [
     {
@@ -116,11 +116,16 @@ export const SETTINGS_DATA: Array<{
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
+        {
+      pageName: "System Profiles",
+      navigationName: "SettingsProfiles",
+      pageSymbol: "settings-outline"
+    },
     {
       pageName: "System Terms of Use",
       navigationName: "TermsOfUse",
       pageSymbol: "document-text-outline",
-    }
+    },
   ]
 
 // Maps english to actual value
