@@ -158,6 +158,7 @@ export abstract class SettingsPresetsStore {
 
     if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID !== null) {
       DeviceUUIDStore.set(preset.deviceUUID);
+      console.log("Updated Device UUID to " + DeviceUUIDStore.get());
 
       if (preset.deviceMAC)
         DeviceMACStore.setMAC(preset.deviceMAC);

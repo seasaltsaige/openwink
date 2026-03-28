@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import Storage from "../Storage/Storage";
+import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 export const generatePassword = (len: number) => {
@@ -64,7 +65,7 @@ export const useThrottle = <T extends unknown[], K>(
 
 
 export const getDevicePasskey = () => {
-  let uuidValue = Storage.getString("device-passkey");
+  let uuidValue = DeviceUUIDStore.get();
   if (!uuidValue) uuidValue = "Not Paired";
   return uuidValue;
 }

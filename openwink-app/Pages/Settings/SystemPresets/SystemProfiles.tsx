@@ -51,17 +51,6 @@ export function SystemProfiles() {
 
         <ScrollView contentContainerStyle={[theme.infoContainer, { flex: 1 }]} style={{ width: "100%" }}>
 
-          <LongButton
-            text="Create New Profile"
-            icons={{ names: [null, "color-wand-outline"], size: [20, 20] }}
-            pressableStyle={{
-              width: "auto",
-              columnGap: 15,
-              marginVertical: 20,
-            }}
-            onPress={() => setConfirmationModalOpen(true)}
-          />
-
 
           <TooltipHeader
             tooltipTitle="System Profiles"
@@ -70,6 +59,18 @@ export function SystemProfiles() {
                 Presets save your settings and device pairing, making it easy to switch between multiple cars or settings setups.
               </Text>
             }
+          />
+
+          <LongButton
+            text="Create New Profile"
+            icons={{ names: [null, "color-wand-outline"], size: [20, 20] }}
+            pressableStyle={{
+              width: "auto",
+              columnGap: 15,
+              marginTop: 10,
+              // marginVertical: 20,
+            }}
+            onPress={() => setConfirmationModalOpen(true)}
           />
 
           <View style={{
@@ -83,7 +84,7 @@ export function SystemProfiles() {
             <SearchBarFilter
               filterables={presets}
               searchFilterKey="name"
-              placeholderText="Search for Settings Profiles"
+              placeholderText="Search for profiles..."
               useFilters={false}
               onFilterTextChange={(filterText) => {
 
@@ -114,9 +115,9 @@ export function SystemProfiles() {
                     <>
                       <Pressable
                         key={`${preset.name}-${preset.createdAt}`}
-                        style={{
-                          backgroundColor: colorTheme.backgroundSecondaryColor,
-                          width: "75%",
+                        style={({ pressed }) => ({
+                          backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
+                          width: "100%",
                           flexDirection: "row",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -124,7 +125,7 @@ export function SystemProfiles() {
                           paddingRight: 10,
                           height: 45,
                           borderRadius: 7,
-                        }}
+                        })}
                         onPress={() => setPresetToApply(preset.name)}
                       >
 
@@ -162,7 +163,7 @@ export function SystemProfiles() {
 
                       {
                         index === filteredPresets.length - 1 ? <></> : (
-                          <View key={`${preset.name}-${preset.createdAt}-divider`} style={{ width: "75%", height: 2, borderRadius: 2, backgroundColor: colorTheme.disabledButtonColor, }} />
+                          <View key={`${preset.name}-${preset.createdAt}-divider`} style={{ width: "75%", height: 2, borderRadius: 2, backgroundColor: `${colorTheme.disabledButtonColor}80`, }} />
                         )
                       }
                     </>

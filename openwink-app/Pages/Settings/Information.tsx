@@ -16,7 +16,7 @@ import {
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { CustomCommandStore, CustomOEMButtonStore } from "../../Storage";
+import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
 import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
@@ -31,7 +31,8 @@ export function Information() {
     isConnecting,
     autoConnectEnabled,
     mac,
-    isConnected
+    isConnected,
+
   } = useBleConnection();
 
   const {
@@ -63,30 +64,30 @@ export function Information() {
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
-  const appInfo = useMemo(() => ({
+  const appInfo = {
     "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
-    "Application Theme": ColorTheme.themeNames[themeName],
-  }), [Application.nativeApplicationVersion, themeName])
+    "Application Theme": ColorTheme.themeNames[ThemeStore.getStoredTheme()],
+  };
 
-  const deviceInfo = useMemo(() => ({
+  const deviceInfo = {
     "Module ID": mac || "Not Paired",
-    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
+    "Firmware Version": FirmwareStore.getFirmwareVersion() ? `v${FirmwareStore.getFirmwareVersion()}` : "Unknown",
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
     "Left Headlight Position": headlightStatus(isConnected, leftStatus),
     "Right Headlight Position": headlightStatus(isConnected, rightStatus),
     "Left Move Time": `${leftMoveTime} ms`,
     "Right Move Time": `${rightMoveTime} ms`,
-  }), [mac, firmwareVersion, isScanning, isConnecting, isConnected, leftStatus, rightStatus])
+  };
 
-  const deviceSettings = useMemo(() => ({
-    "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
-    "Headlight Perspective": leftRightSwapped ? "Front" : "Driver",
-    "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
-    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
-    "Press Interval": `${buttonDelay} ms`,
-  }), [autoConnectEnabled, Application.nativeApplicationVersion, oemCustomButtonEnabled, waveDelayMulti, buttonDelay]);
+  const deviceSettings = {
+    "Auto Connect": AutoConnectStore.get() ? "Enabled" : "Disabled",
+    "Headlight Perspective": HeadlightOrientationStore.getStatus() === ORIENTATION.OUTSIDE ? "Outside" : "Driver",
+    "Custom Retractor Button": CustomOEMButtonStore.isEnabled() ? "Enabled" : "Disabled",
+    "Headlight Bypass": CustomOEMButtonStore.isBypassEnabled() ? "Enabled" : "Disabled",
+    "Wave Delay Interval": `${(750 * CustomWaveStore.getMultiplier()).toFixed(0)} ms`,
+    "Press Interval": `${CustomOEMButtonStore.getDelay()} ms`,
+  };
 
   const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
   const buttonActions = useMemo(() => rawButtonActions.map(action => {

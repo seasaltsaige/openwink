@@ -9,6 +9,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { AutoConnectStore } from "../../../Storage";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
 
 interface IApplyConfirmationModal {
   visible: boolean;
@@ -21,6 +22,7 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
   const { colorTheme, theme, refresh } = useColorTheme();
 
   const { setAutoConnect } = useBleConnection();
+  const { } = useBleCommand();
 
   const [applyAsNew, setApplyAsNew] = useState(false);
   const [applyTooltipOpen, setApplyTooltipOpen] = useState(false);
@@ -32,6 +34,11 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
     setAutoConnect(AutoConnectStore.get()); // Update auto-connect state in case it was changed by the preset, force re-render of components using auto-connect state
     refresh(); // Refresh theme in case it was changed by the preset
     props.close();
+
+
+    // TODO: If connected to the module, it will need to actually send the updates to the module.
+    // Currently only updates the apps states.
+    // Additionally need to sync app state to module on connection
 
     Toast.show({
       type: "success",

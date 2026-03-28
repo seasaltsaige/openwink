@@ -21,7 +21,7 @@ import {
   UNPAIR_UUID,
   CUSTOM_COMMAND_UUID,
 } from '../helper/Constants';
-import { AutoConnectStore, DeviceMACStore, MockBleStore } from '../Storage';
+import { AutoConnectStore, DeviceMACStore, FirmwareStore, MockBleStore } from '../Storage';
 import { getDevicePasskey, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
 import { MockBleManager } from '../Mock/MockBleSystem';
@@ -498,6 +498,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     // Always remove from app, allows unpair when not connected
     DeviceMACStore.forgetMAC();
     setMac("");
+    FirmwareStore.forgetFirmwareVersion();
     Storage.delete("device-passkey");
 
     console.log("MAC Erased");

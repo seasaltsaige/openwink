@@ -3,6 +3,7 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import { SettingsPresetsStore } from "../../../Storage/SettingsPresetsStore";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import { ModalBlurBackground } from "../../../Components";
+import Toast from "react-native-toast-message";
 
 interface ICreatePresetModalInterface {
   close: () => void;
@@ -17,9 +18,24 @@ export const CreatePresetModal = (props: ICreatePresetModalInterface) => {
   const presetExists = SettingsPresetsStore.existsByName(presetName);
 
   const saveProfile = (name: string) => {
+    const exists = SettingsPresetsStore.existsByName(name);
+
     SettingsPresetsStore.saveFromCurrent(name);
     setPresetName("");
     props.close();
+
+    if (exists) // Update toast
+      Toast.show({
+        type: "success",
+        text1: "Profile Updated",
+        text2: `The profile '${name}' has been updated successfully.`,
+      });
+    else // Create toast
+      Toast.show({
+        type: "success",
+        text1: "Profile Created",
+        text2: `The profile '${name}' has been created successfully.`,
+      });
   }
 
   useEffect(() => {
