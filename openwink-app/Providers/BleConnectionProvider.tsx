@@ -87,7 +87,7 @@ const createBleManager = (): BleManager => {
 
 export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const manager = useMemo(() => createBleManager(), []);
-  const { startMonitoring, stopMonitoring, readInitialValues } = useBleMonitor();
+  const { startMonitoring, stopMonitoring, readInitialValues, writeInitialSettings } = useBleMonitor();
 
   const [device, setDevice] = useState<Device | null>(null);
   const [mac, setMac] = useState('');
@@ -205,7 +205,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             return;
           }
 
-          console.log('Interrupting custom command');
 
           // updateActiveCommandName(null);
 
@@ -220,7 +219,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
               console.error('Error sending interrupt signal:', error);
             });
         });
-
         // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired")
           await connection.writeCharacteristicWithResponseForService(
@@ -235,7 +233,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             base64.encode("CLAIM"),
           );
 
-
+        await writeInitialSettings(connection);
         await readInitialValues(connection);
 
         // Once all is initialized and nothing failed, device has successfully connected.
@@ -533,6 +531,17 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       text2: 'Successfully unpaired from module.',
       visibilityTime: 3000,
     });
+  }, [device]);
+
+  const updateProfile = useCallback(async () => {
+    if (!device) return;
+
+    try {
+      await writeInitialSettings(device);
+    } catch (err) {
+      console.log("Error updating profile on module: ", err);
+    }
+
   }, [device]);
 
   // Cleanup on unmount

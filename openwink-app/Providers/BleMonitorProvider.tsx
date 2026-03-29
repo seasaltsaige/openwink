@@ -92,7 +92,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [updatingStatus, setUpdatingStatus] = useState<'Idle' | 'Updating' | 'Failed' | 'Success' | 'Canceled'>('Idle');
   const [firmwareVersion, setFirmwareVersion] = useState('');
 
-
   // Settings state
   const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
   const [headlightBypass, setHeadlightBypass] = useState(false);
@@ -466,6 +465,131 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // setIsConnected(false);
   }, []);
 
+  const writeInitialSettings = useCallback(async (device: Device) => {
+
+    // Write swap status 
+    // Outside orientation is enabled, cabin is disabled.
+    const swapOrientation = HeadlightOrientationStore.getStatus() === ORIENTATION.OUTSIDE ? "1" : "0";
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      SWAP_ORIENTATION_UUID,
+      base64.encode(swapOrientation),
+    );
+    setLeftRightSwapped(swapOrientation === "1");
+
+    // Write sleepy eye settings
+    const [leftSleepy, rightSleepy] = [SleepyEyeStore.get("left"), SleepyEyeStore.get("right")];
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      SLEEPY_SETTINGS_UUID,
+      base64.encode(`${leftSleepy}-${rightSleepy}`),
+    );
+    setLeftSleepyEye(leftSleepy);
+    setRightSleepyEye(rightSleepy);
+
+    // Write wave delay multiplier
+    const waveDelay = CustomWaveStore.getMultiplier();
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      HEADLIGHT_MOVEMENT_DELAY_UUID,
+      base64.encode(waveDelay.toString()),
+    );
+    setWaveDelayMulti(waveDelay);
+
+    // Write headlight bypass status
+    const headlightBypass = CustomOEMButtonStore.isBypassEnabled();
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      HEADLIGHT_BYPASS_UUID,
+      base64.encode(headlightBypass ? "1" : "0"),
+    );
+    setHeadlightBypass(headlightBypass);
+
+    // Write custom OEM button sequence settings
+    // Now, instead of reading, we will be writing all of the stored CustomOEMButton values to the MCU on connection
+    const sequences = CustomOEMButtonStore.getAll();
+    for (let i = 1; i <= 9; i++) {
+      const seq = sequences.find(s => s.numberPresses === i);
+      console.log(seq);
+
+      if (!seq) {
+        // Remove it from MCU if it doesn't exist in the app
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+          base64.encode(i.toString()),
+        );
+
+        await sleep(20);
+
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+          base64.encode("0")
+        );
+
+        console.log(`Removed custom sequence for ${i + 1} presses from MCU`);
+
+      } else {
+
+        // Send number of button presses to update
+        await device.writeCharacteristicWithoutResponseForService(
+          MODULE_SETTINGS_SERVICE_UUID,
+          CUSTOM_BUTTON_UPDATE_UUID,
+          base64.encode(i.toString())
+        );
+
+        // Small delay to prevent overwrite
+        await sleep(20);
+
+        if (typeof seq.behavior === "string") {
+          // Send behavior for that number of presses
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(buttonBehaviorMap[seq.behavior].toString())
+          );
+        } else {
+          // Parse to string, NOT including name, as it is unimportant for the module to know
+          const commandString = seq.behavior.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+          await device.writeCharacteristicWithoutResponseForService(
+            MODULE_SETTINGS_SERVICE_UUID,
+            CUSTOM_BUTTON_UPDATE_UUID,
+            base64.encode(commandString!),
+          );
+        }
+
+      }
+
+      await sleep(20);
+    }
+
+
+    // Write stored delay value
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode("delay"),
+    );
+    await sleep(20);
+    const delay = CustomOEMButtonStore.getDelay();
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(delay.toString())
+    );
+    setButtonDelay(delay);
+
+
+    // Write custom OEM button enabled status
+    const customStatus = CustomOEMButtonStore.isEnabled() ? "enable" : "disable";
+    await device.writeCharacteristicWithoutResponseForService(
+      MODULE_SETTINGS_SERVICE_UUID,
+      CUSTOM_BUTTON_UPDATE_UUID,
+      base64.encode(customStatus)
+    );
+  }, []);
+
   // Read initial values from characteristics
   const readInitialValues = useCallback(
     async (device: Device) => {
@@ -528,179 +652,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setUpdateProgress(0);
         }
 
-        // Read SWAP_ORIENTATION
-        const orientationSwapStatus = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SWAP_ORIENTATION_UUID,
-        );
-        if (orientationSwapStatus.value) {
-          const decoded = base64.decode(orientationSwapStatus.value);
-          console.log(decoded, "orien");
-          if (decoded === "1") {
-            setLeftRightSwapped(true);
-            HeadlightOrientationStore.enable();
-          } else {
-            setLeftRightSwapped(false);
-            HeadlightOrientationStore.disable();
-          }
-        }
-
-        // Read SLEEPY_SETTINGS
-        const sleepyValues = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SLEEPY_SETTINGS_UUID,
-        );
-        if (sleepyValues.value) {
-          const decoded = base64.decode(sleepyValues.value);
-          console.log(decoded, "sleepy");
-          const [left, right] = decoded.split("-");
-          const leftParsed = parseFloat(left);
-          const rightParsed = parseFloat(right);
-
-          setLeftSleepyEye(leftParsed);
-          setRightSleepyEye(rightParsed);
-
-          SleepyEyeStore.set("left", leftParsed);
-          SleepyEyeStore.set("right", rightParsed);
-        }
-
-        // Read HEADLIGHT_MOVEMENT_DELAY
-        const waveDelayStatus = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          HEADLIGHT_MOVEMENT_DELAY_UUID,
-        );
-        if (waveDelayStatus.value) {
-          const decoded = base64.decode(waveDelayStatus.value);
-          console.log(decoded, "wave");
-          const parsed = parseFloat(decoded);
-
-          setWaveDelayMulti(parsed);
-          CustomWaveStore.setMultiplier(parsed);
-        }
-
-        // Read HEADLIGHT_BYPASS
-        const bypassStatus = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          HEADLIGHT_BYPASS_UUID,
-        );
-        if (bypassStatus.value) {
-          const decoded = base64.decode(bypassStatus.value);
-          console.log(decoded, "bypass");
-          const parsed = decoded === "1";
-          setHeadlightBypass(parsed);
-          if (parsed)
-            CustomOEMButtonStore.enableBypass();
-          else
-            CustomOEMButtonStore.disableBypass();
-        }
-
-
-        // Read CUSTOM_BUTTON_UPDATE
-        // Syncs custom button sequence from mcu to app
-
-        // Fetch custom commands available; Used for displaying command name
-        // If command no longer exists, simply display Unknown/Unknown Command
-        const customCommands = CustomCommandStore.getAll();
-        for (let i = 1; i < 9; i++) {
-          const customButtonStatus = await device.readCharacteristicForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
-          );
-          if (!customButtonStatus) break;
-
-          if (customButtonStatus.value) {
-            const decoded = base64.decode(customButtonStatus.value);
-
-            // Default Action
-            if (!decoded.includes("-")) {
-              if (decoded === "0")
-                CustomOEMButtonStore.remove(i as Presses);
-              else
-                //@ts-ignore (not presses lol)
-                CustomOEMButtonStore.set(i as Presses, buttonBehaviorMapReversed[parseInt(decoded)]);
-            } else {
-              // Custom Action. First needs to be parsed into a CommandOutput object
-              const actionsParts = decoded.split("-");
-
-              let commandFound = false;
-              outer: for (const cmd of customCommands) {
-                for (let j = 0; j < cmd.command!.length; j++) {
-                  const cmdPart = cmd.command![j];
-                  if (
-                    cmdPart.delay &&
-                    actionsParts[j].startsWith("d") &&
-                    cmdPart.delay === parseInt(actionsParts[j].slice(1))
-                  ) continue;
-                  else if (
-                    cmdPart.transmitValue &&
-                    cmdPart.transmitValue === parseInt(actionsParts[j])
-                  ) continue;
-                  else continue outer;
-                }
-                // If we get to here, we know a command was found
-                commandFound = true;
-                CustomOEMButtonStore.set(i as Presses, cmd);
-                break;
-              }
-
-              if (!commandFound) {
-                // No custom command found, parse mcu value to commandoutput, just with Unknown Name
-                const command: CommandInput[] = actionsParts.map(str => str.includes("d") ? ({ delay: parseInt(str.slice(1)) }) : ({ transmitValue: parseInt(str), }))
-                const output: CommandOutput = {
-                  name: "Unknown",
-                  command,
-                }
-
-                CustomOEMButtonStore.set(i as Presses, output);
-              }
-            }
-          }
-
-          await sleep(20);
-        }
-
-        // i = 9
-        const cbStatus_Delay = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
-        );
-        if (cbStatus_Delay.value) {
-          const decoded = base64.decode(cbStatus_Delay.value);
-          console.log(decoded);
-          const parsed = parseInt(decoded);
-          setButtonDelay(parsed);
-          CustomOEMButtonStore.setDelay(parsed);
-        }
-
-
-        // i = 10
-        const cbStatus_Enabled = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
-        );
-        if (cbStatus_Enabled.value) {
-          const decoded = base64.decode(cbStatus_Enabled.value);
-          console.log(decoded);
-          const parsed = decoded === "true";
-          setOemCustomButtonEnabled(parsed);
-          if (parsed)
-            CustomOEMButtonStore.enable();
-          else
-            CustomOEMButtonStore.disable();
-        }
-
-
-        const swapStatus = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SWAP_ORIENTATION_UUID,
-        );
-        if (swapStatus.value) {
-          const swapValue = base64.decode(swapStatus.value);
-          if (swapValue === "1")
-            HeadlightOrientationStore.enable();
-          else
-            HeadlightOrientationStore.disable();
-        }
       } catch (error) {
         console.error('Error reading initial values:', error);
         // throw error;

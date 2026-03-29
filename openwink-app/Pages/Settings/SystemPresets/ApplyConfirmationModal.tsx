@@ -8,8 +8,7 @@ import Tooltip from "react-native-walkthrough-tooltip";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
-import { AutoConnectStore } from "../../../Storage";
-import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 interface IApplyConfirmationModal {
   visible: boolean;
@@ -19,32 +18,47 @@ interface IApplyConfirmationModal {
 
 export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
 
-  const { colorTheme, theme, refresh } = useColorTheme();
+  const { colorTheme, theme, refreshTheme } = useColorTheme();
 
-  const { setAutoConnect } = useBleConnection();
-  const { } = useBleCommand();
+  const { updateProfile, disconnect, isConnected } = useBleConnection();
+  const { refreshConnection } = useBleConnection();
+  const { refreshMonitorStatus } = useBleMonitor();
 
   const [applyAsNew, setApplyAsNew] = useState(false);
   const [applyTooltipOpen, setApplyTooltipOpen] = useState(false);
 
-  const applyPreset = (type: ApplyType) => {
+  const applyPreset = async (type: ApplyType) => {
     SettingsPresetsStore.applyPreset(props.presetName, type);
     setApplyAsNew(false);
 
-    setAutoConnect(AutoConnectStore.get()); // Update auto-connect state in case it was changed by the preset, force re-render of components using auto-connect state
-    refresh(); // Refresh theme in case it was changed by the preset
+    refreshTheme(); // Refresh theme in case it was changed by the preset
     props.close();
 
+    try {
+      // If applying as new device, disconnect from current device to allow new device with the profile's pairing info
+      if (isConnected) {
+        if (type === ApplyType.AS_NEW_DEVICE)
+          await disconnect(false);
 
-    // TODO: If connected to the module, it will need to actually send the updates to the module.
-    // Currently only updates the apps states.
-    // Additionally need to sync app state to module on connection
+        await updateProfile();
+      }
 
-    Toast.show({
-      type: "success",
-      text1: "Profile Applied",
-      text2: `The profile '${props.presetName}' has been applied successfully.`,
-    })
+      // Refresh related settings so they are displayed correctly in different pages.
+      await refreshConnection();
+      await refreshMonitorStatus();
+
+      Toast.show({
+        type: "success",
+        text1: "Profile Applied",
+        text2: `The profile '${props.presetName}' has been applied successfully.`,
+      });
+    } catch (e) {
+      Toast.show({
+        type: "error",
+        text1: "Error Applying Profile",
+        text2: `An error occurred while applying the profile '${props.presetName}'. Please try again.`,
+      });
+    }
   }
 
   return (
