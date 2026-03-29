@@ -27,6 +27,7 @@ import { useBleMonitor } from './BleMonitorProvider';
 import { MockBleManager } from '../Mock/MockBleSystem';
 import DeviceInfo from 'react-native-device-info';
 import Storage from '../Storage/Storage';
+import { DeviceUUIDStore } from '../Storage/DeviceUUIDStore';
 
 export type BleConnectionContextType = {
   device: Device | null;
@@ -42,6 +43,8 @@ export type BleConnectionContextType = {
   disconnect: (showToast?: boolean) => Promise<void>;
   setAutoConnect: (enabled: boolean) => void;
   unpair: () => Promise<void>;
+  updateProfile: () => Promise<void>;
+  refreshConnection: () => Promise<void>;
 };
 
 export const BleConnectionContext = createContext<BleConnectionContextType | null>(null);
@@ -53,11 +56,6 @@ export const useBleConnection = () => {
   }
   return context;
 };
-
-// Connection retry configuration
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-const MAX_RETRY_DELAY = 10000; // 10 seconds
 
 const isSimulator = (): boolean => {
   return DeviceInfo.isEmulatorSync()
@@ -117,6 +115,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedAutoConnect !== null) {
       setAutoConnectEnabled(storedAutoConnect);
     }
+  }, []);
+
+
+  const refreshConnection = useCallback(async () => {
+    const storedMac = DeviceMACStore.getStoredMAC();
+    const autoConnect = AutoConnectStore.get();
+
+    setMac(storedMac ?? "");
+    setAutoConnect(autoConnect);
   }, []);
 
   // Request Android 31+ permissions
@@ -480,7 +487,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Set auto-connect preference
   const setAutoConnect = useCallback((enabled: boolean) => {
-    console.log('Auto-connect:', enabled);
     setAutoConnectEnabled(enabled);
     if (!enabled) {
       manager.stopDeviceScan().then(() => setIsScanning(false)).catch(err => {
@@ -497,9 +503,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Always remove from app, allows unpair when not connected
     DeviceMACStore.forgetMAC();
+    DeviceUUIDStore.forgetUUID();
     setMac("");
     FirmwareStore.forgetFirmwareVersion();
-    Storage.delete("device-passkey");
+
 
     console.log("MAC Erased");
 
@@ -561,6 +568,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     disconnect,
     setAutoConnect,
     unpair,
+    updateProfile,
+    refreshConnection,
   };
 
   return (

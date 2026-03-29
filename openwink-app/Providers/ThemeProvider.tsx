@@ -114,7 +114,7 @@ export type ThemeContextType = {
   update: (name: keyof typeof ColorTheme.themeNames) => void;
   setTheme: (theme: keyof typeof ColorTheme.themeNames) => Promise<void>;
   reset: () => Promise<void>;
-  refresh: () => void;
+  refreshTheme: () => void;
   theme: StyleSheetInterface;
   colorTheme: ThemeColors;
   themeName: keyof typeof ColorTheme.themeNames;
@@ -169,7 +169,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     themeName,
     theme,
     reset,
-    refresh,
+    refreshTheme: refresh,
     setTheme,
     update,
   }), [

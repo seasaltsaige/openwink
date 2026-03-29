@@ -28,13 +28,15 @@ import {
   SLEEPY_SETTINGS_UUID,
   HEADLIGHT_MOVEMENT_DELAY_UUID,
   HEADLIGHT_BYPASS_UUID,
+  buttonBehaviorMap,
 } from '../helper/Constants';
 import { CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
 import { CommandInput, CommandOutput, Presses } from '../helper/Types';
-import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
+import { HeadlightOrientationStore, ORIENTATION } from '../Storage/HeadlightOrientationStore';
 import Storage from '../Storage/Storage';
 import { HeadlightMovementSpeedStore, SIDE } from '../Storage/HeadlightMovementSpeedStore';
+import { DeviceUUIDStore } from '../Storage/DeviceUUIDStore';
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -58,6 +60,7 @@ export type BleMonitorContextType = {
   startMonitoring: (device: Device, onCustomCommandInterrupt: () => void) => Promise<void>;
   stopMonitoring: () => void;
   readInitialValues: (device: Device) => Promise<void>;
+  writeInitialSettings: (device: Device) => Promise<void>;
   updateFirmwareVersion: (version: string) => void;
 
   setLeftRightSwapped: React.Dispatch<React.SetStateAction<boolean>>;
@@ -67,6 +70,7 @@ export type BleMonitorContextType = {
   setButtonDelay: React.Dispatch<React.SetStateAction<number>>;
   setHeadlightBypass: React.Dispatch<React.SetStateAction<boolean>>;
   setOemCustomButtonEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  refreshMonitorStatus: () => Promise<void>
 };
 
 export const BleMonitorContext = createContext<BleMonitorContextType | null>(null);
@@ -115,6 +119,29 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setLeftMoveTime(left);
     setRightMoveTime(right);
   }, []);
+
+
+  const refreshMonitorStatus = useCallback(async () => {
+    const buttonStatus = CustomOEMButtonStore.isEnabled();
+    const bypass = CustomOEMButtonStore.isBypassEnabled();
+    const bDelay = CustomOEMButtonStore.getDelay();
+    const waveMult = CustomWaveStore.getMultiplier();
+    const [lSleepy, rSleepy] = [SleepyEyeStore.get("left"), SleepyEyeStore.get("right")];
+    const swap = HeadlightOrientationStore.getStatus();
+
+    const firmwareV = FirmwareStore.getFirmwareVersion();
+    setFirmwareVersion(firmwareV ?? "");
+
+    setOemCustomButtonEnabled(buttonStatus);
+    setHeadlightBypass(bypass);
+    setButtonDelay(bDelay);
+    setWaveDelayMulti(waveMult);
+    setLeftSleepyEye(lSleepy);
+    setRightSleepyEye(rSleepy);
+    setLeftRightSwapped(swap === ORIENTATION.OUTSIDE);
+
+  }, []);
+
 
   // Parse and set status value (handles the special encoding)
   const parseAndSetStatus = useCallback((rawValue: string, setter: (val: number) => void) => {
@@ -348,7 +375,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try {
           const passkeyUpdate = base64.decode(char.value);
           if (passkeyUpdate.length === 0) return;
-          Storage.set("device-passkey", passkeyUpdate);
+          DeviceUUIDStore.set(passkeyUpdate);
+
         } catch (error) {
           console.error('Error decoding PASSKEY_UUID value:', error);
         }
@@ -721,7 +749,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     startMonitoring,
     stopMonitoring,
     readInitialValues,
-    updateFirmwareVersion
+    writeInitialSettings,
+    updateFirmwareVersion,
+    refreshMonitorStatus,
   };
 
   return (
