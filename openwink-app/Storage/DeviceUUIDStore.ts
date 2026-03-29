@@ -8,4 +8,8 @@ export abstract class DeviceUUIDStore {
   static set(uuid: string) {
     Storage.set("device-uuid", uuid);
   }
+
+  static forgetUUID() {
+    Storage.delete("device-uuid");  
+  }
 }
