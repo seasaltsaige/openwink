@@ -1,3 +1,4 @@
+#include "esp_sleep.h"
 #include "ButtonHandler.h"
 
 #include <Arduino.h>
@@ -124,14 +125,14 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
   Serial.printf("Preset Value: %s\n", response.c_str());
 
-  if (response == "10") {
+  if (response == "10" && customButtonStatusEnabled) {
     if (isSleepy())
       sleepyReset(true, true);
     else
       sleepyEye(true, true);
 
     return;
-  } else if (response == "12") {
+  } else if (response == "12" && customButtonStatusEnabled) {
     bool swap = Storage::getHeadlightOrientation();
     Storage::setHeadlightOrientation(!swap);
     BLE::setSwapStatus(!swap);
@@ -167,8 +168,11 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
 
+    esp_deep_sleep_start();
     return;
   }
+
+  if (!customButtonStatusEnabled) return;
 
   if (response.length() == 1) {
     int parsed = stoi(response);
@@ -332,8 +336,8 @@ void ButtonHandler::loopButtonHandler() {
 
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
-  } else if (buttonPressCounter > 0 &&
-             (millis() - buttonTimer) > maxTimeBetween_ms) {
+  } else if ((customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) || 
+            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 2000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
 

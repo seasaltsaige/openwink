@@ -57,7 +57,7 @@ export function Information() {
         "Up" :
         status === 0 ?
           "Down" :
-          `%${status}`
+          `%${status * 100}`
     ) : "Unavailable"
   );
   const connectionStatus = (scanning: boolean, connecting: boolean, connected: boolean) => (
@@ -67,12 +67,12 @@ export function Information() {
   const appInfo = {
     "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
-    "Application Theme": ColorTheme.themeNames[ThemeStore.getStoredTheme()],
+    "Application Theme": ColorTheme.themeNames[themeName],
   };
 
   const deviceInfo = {
     "Module ID": mac || "Not Paired",
-    "Firmware Version": FirmwareStore.getFirmwareVersion() ? `v${FirmwareStore.getFirmwareVersion()}` : "Unknown",
+    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
     "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
     "Left Headlight Position": headlightStatus(isConnected, leftStatus),
     "Right Headlight Position": headlightStatus(isConnected, rightStatus),
@@ -81,12 +81,12 @@ export function Information() {
   };
 
   const deviceSettings = {
-    "Auto Connect": AutoConnectStore.get() ? "Enabled" : "Disabled",
-    "Headlight Perspective": HeadlightOrientationStore.getStatus() === ORIENTATION.OUTSIDE ? "Outside" : "Driver",
-    "Custom Retractor Button": CustomOEMButtonStore.isEnabled() ? "Enabled" : "Disabled",
-    "Headlight Bypass": CustomOEMButtonStore.isBypassEnabled() ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * CustomWaveStore.getMultiplier()).toFixed(0)} ms`,
-    "Press Interval": `${CustomOEMButtonStore.getDelay()} ms`,
+    "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
+    "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver",
+    "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
+    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
+    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
+    "Press Interval": `${buttonDelay} ms`,
   };
 
   const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
