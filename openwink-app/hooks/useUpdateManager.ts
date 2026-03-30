@@ -45,7 +45,6 @@ type UpdateManagerType = {
 type UpdateManagerReturnType = {
   updateStatus: UPDATE_STATUS; updateData: UpdateData | null; error: ERROR_TYPE;
   startUpdate: () => Promise<void>;
-  stopUpdate: () => Promise<void>;
   checkUpdateAvailable: () => Promise<void>;
 }
 
@@ -164,27 +163,7 @@ export const useUpdateManager = ({
       [isConnected],
   );
 
-  const stopUpdate = useCallback(
-      async () => {
-        if (!isConnected) return;
-        await haltOTAUpdate();
-        setError(ERROR_TYPE.ERR_UPDATE_HALTED);
-        setUpdateStatus(UPDATE_STATUS.IDLE);
-
-        onError({
-          errorType: ERROR_TYPE.ERR_UPDATE_HALTED,
-          errorMessage:
-              'Firmware installation halted by user. Reconnect to module to retry.',
-          errorTitle: 'Update Halted',
-        });
-
-        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
-      },
-      [isConnected],
-  );
-
   return {
-    updateStatus, error, updateData, checkUpdateAvailable, startUpdate,
-        stopUpdate,
+    updateStatus, error, updateData, checkUpdateAvailable, startUpdate
   }
 }

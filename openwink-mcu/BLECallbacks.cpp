@@ -333,16 +333,20 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     BLE::setFirmwareUpdateStatus("updating");
     Serial.println("OTA Update Started");
     return;
-  } else if (charData == "HALT") {
-    updateInProgress = false;
-    buffTotalSize = 0;
-    buffSizeWritten = 0;
-    BLE::setFirmwareUpdateStatus("canceled");
-    Serial.println("OTA Update Canceled");
-    delay(25);
-    otaUpdateRestartQueued = true;
-    return;
-  }
+  } 
+  // At least temporary for now.
+  // Potentially may add a HALT characteristic later to still handle this
+  // Though im not sure if its super necessary in reality.
+  // else if (charData == "HALT") {
+  //   updateInProgress = false;
+  //   buffTotalSize = 0;
+  //   buffSizeWritten = 0;
+  //   BLE::setFirmwareUpdateStatus("canceled");
+  //   Serial.println("OTA Update Canceled");
+  //   delay(25);
+  //   otaUpdateRestartQueued = true;
+  //   return;
+  // }
 
 
   // const uint8_t* = (const uint8_t*)charData.data();
