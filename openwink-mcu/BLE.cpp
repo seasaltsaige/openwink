@@ -113,7 +113,7 @@ void BLE::initServiceCharacteristics() {
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
   resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  passkeyChar = settingsService->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE| NIMBLE_PROPERTY::NOTIFY);
+  passkeyChar = settingsService->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
 

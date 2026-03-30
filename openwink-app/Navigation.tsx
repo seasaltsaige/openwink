@@ -22,6 +22,7 @@ import {
   CustomWinkButton,
   WaveDelaySettings,
   SleepyEyeSettings,
+  SystemProfiles,
 } from "./Pages";
 import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
 import { useBleConnection } from "./Providers/BleConnectionProvider";
@@ -237,6 +238,7 @@ export function AppNavigator() {
         <Stack.Screen name="WaveDelaySettings" component={WaveDelaySettings} />
         <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
         <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
+        <Stack.Screen name="SettingsProfiles" component={SystemProfiles} />
 
       </Stack.Navigator>
 

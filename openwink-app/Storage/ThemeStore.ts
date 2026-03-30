@@ -8,7 +8,7 @@ export abstract class ThemeStore {
   }
 
   static getStoredTheme() {
-    const themeName: keyof typeof ColorTheme.themeNames = Storage.getString("color-theme") as any;
+    const themeName: keyof typeof ColorTheme.themeNames = Storage.getString("color-theme") as keyof typeof ColorTheme.themeNames || "brilliantBlack";
     return themeName;
   }
 

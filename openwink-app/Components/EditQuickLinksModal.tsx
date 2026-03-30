@@ -56,12 +56,12 @@ const ROUTES: RouteType[] = [
   },
   {
     display: "Settings",
-    icon: "document-text-outline",
-    title: "System Terms of Use",
+    icon: "cog-outline",
+    title: "System Profiles",
     navigation: {
       back: "Home",
       backHumanReadable: "Home",
-      page: "TermsOfUse",
+      page: "SettingsProfiles",
     },
     visible: false,
   },
@@ -346,7 +346,6 @@ export function EditQuickLinksModal({
             <SearchBarFilter
               useFilters={false}
               filterables={allLinks}
-              filterTitleText="Filter by page location"
               searchFilterKey="title"
               onFilterTextChange={() => { }}
               placeholderText="Filter by page name..."

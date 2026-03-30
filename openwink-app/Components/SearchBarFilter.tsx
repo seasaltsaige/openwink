@@ -22,7 +22,7 @@ interface BaseSearchBarFilter<
   onFilteredItemsUpdate: (filteredItems: K) => void;
   filterables: K;
   placeholderText: string;
-  filterTitleText: string;
+  // filterTitleText: string;
 }
 
 interface SearchBarFilterWithFilters<
@@ -33,6 +33,7 @@ interface SearchBarFilterWithFilters<
   useFilters: true;
   filters: T;
   onFiltersChange: (selectedFilters: T[number][]) => void;
+  filterTitleText: string;
   filterFn: (filterData: {
     itemsToFilter: K;
     filterType: "narrow" | "inclusive";
@@ -49,6 +50,7 @@ interface SearchBarFilterWithoutFilters<
   filters?: never;
   onFiltersChange?: never;
   filterFn?: never;
+  filterTitleText?: never;
 }
 
 type ISearchBarFilter<
