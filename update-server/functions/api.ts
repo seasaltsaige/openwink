@@ -25,6 +25,8 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
   const macs = jsonData.mac_addr as string[];
   if (!macs) return res.status(500).json({ error: "Internal Server Error" });
 
+  // Likely needs to be removed, or changed in some way, as using mac address for auth
+  // becomes unmaintainable
   if (!macs.includes(authorization))
     return res.status(403).json({ error: "Invalid Authorization" });
 
