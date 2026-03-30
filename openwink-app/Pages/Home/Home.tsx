@@ -32,6 +32,7 @@ export function Home() {
 
   const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
   const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+  const [moduleUpdateVisible, setModuleUpdateVisible] = useState(false);
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
@@ -52,7 +53,6 @@ export function Home() {
     updateStatus,
     updateData,
     error,
-    stopUpdate,
     checkUpdateAvailable,
     startUpdate,
   } = useUpdateManager({
@@ -78,10 +78,23 @@ export function Home() {
     },
   });
 
-  const updatePanelVisible =
-    error === ERROR_TYPE.ERR_NONE &&
-    updateData !== null &&
-    updateStatus === UPDATE_STATUS.INSTALLING;
+  const closeModuleUpdate = () => {
+    setModuleUpdateVisible(false);
+    Toast.show({
+      type: "success",
+      text1: "Update Dismissed",
+      text2: "Firmware update dismissed. Consider updating soon.",
+      autoHide: true,
+      visibilityTime: 5000,
+    });
+  }
+
+  // const updatePanelVisible =
+  //   error === ERROR_TYPE.ERR_NONE &&
+  //   updateData !== null &&
+  //   updateStatus === UPDATE_STATUS.INSTALLING;
+
+
 
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
@@ -385,11 +398,12 @@ export function Home() {
       />
 
       <ModuleUpdateModal
-        visible={updatePanelVisible}
+        visible={moduleUpdateVisible}
         binSizeBytes={updateData?.size!}
         description={updateData?.description!}
         version={updateData?.version!}
-        stopUpdate={stopUpdate}
+        startUpdate={startUpdate}
+        close={closeModuleUpdate}
       />
     </>
   );
