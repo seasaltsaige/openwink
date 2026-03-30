@@ -206,6 +206,7 @@ export interface ThemeColors {
   bottomTabsTextColor: HexNumber;
   bottomTabsPill: HexNumber;
   textColor: HexNumber;
+  warning: HexNumber;
 }
 
 export namespace ColorTheme {
@@ -245,6 +246,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#000000",
     textColor: "#141414",
+    warning: "#D0342C"
   }
 
   export const brilliantBlack: ThemeColors = {
@@ -261,6 +263,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
+    warning: "#D0342C"
   }
 
   export const classicRed: ThemeColors = {
@@ -277,6 +280,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
+    warning: "#D0342C"
   }
 
   // TODO: Needs work on pill color
@@ -294,6 +298,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
+    warning: "#D0342C"
   }
 
   export const marinerBlue: ThemeColors = {
@@ -310,6 +315,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
+    warning: "#D0342C"
   }
 
   export const britishRacingGreen: ThemeColors = {
@@ -326,6 +332,7 @@ export namespace ColorTheme {
     disabledButtonTextColor: "#ffffff",
     headerTextColor: "#ffffff",
     textColor: "#ffffff",
+    warning: "#D0342C"
   }
 }
 
