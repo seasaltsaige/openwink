@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { StatusBar, View } from 'react-native';
+import { Pressable, StatusBar, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BottomTabBarProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PlatformPressable, Text } from "@react-navigation/elements";
@@ -24,7 +24,7 @@ import {
   SleepyEyeSettings,
   SystemProfiles,
 } from "./Pages";
-import Toast, { BaseToast, ToastConfig } from "react-native-toast-message";
+import Toast, { BaseToast, ToastConfig, ToastConfigParams } from "react-native-toast-message";
 import { useBleConnection } from "./Providers/BleConnectionProvider";
 
 const Tab = createBottomTabNavigator();
@@ -201,12 +201,74 @@ export function AppNavigator() {
         }}
         text2NumberOfLines={4}
         style={{
-          // borderLeftColor: "green",
           height: "auto",
           paddingVertical: 10,
           backgroundColor: colorTheme.backgroundSecondaryColor,
         }}
       />
+    ),
+    update: (props: ToastConfigParams<{
+      downloadAction: () => void;
+    }>) => (
+      <View
+        style={{
+          borderLeftColor: "#43A5BE",
+          borderRightColor: colorTheme.backgroundSecondaryColor,
+          borderBottomColor: colorTheme.backgroundSecondaryColor,
+          borderTopColor: colorTheme.backgroundSecondaryColor,
+          borderWidth: 3,
+          borderRadius: 5,
+          backgroundColor: colorTheme.backgroundSecondaryColor,
+          height: "auto",
+          paddingVertical: 10,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "75%",
+          // columnGap: 20,
+          paddingHorizontal: 10
+        }}
+      >
+        <Text style={{
+          fontFamily: "IBMPlexSans_500Medium",
+          color: colorTheme.headerTextColor,
+          fontSize: 14
+        }}>
+          {props.text2}
+        </Text>
+
+        <View style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: 15,
+        }}>
+
+          <Pressable
+            hitSlop={10}
+            onPress={() => { Toast.hide(); props.props.downloadAction() }}
+          >
+            {
+              ({ pressed }) => (
+                <Ionicons name="download-outline" size={20} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
+              )
+            }
+          </Pressable>
+
+
+          <Pressable
+            hitSlop={10}
+            onPress={() => Toast.hide()}
+          >
+            {
+              ({ pressed }) => (
+                <Ionicons name="close-outline" size={22} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} />
+              )
+            }
+          </Pressable>
+
+        </View>
+      </View>
     )
   }
 
@@ -220,9 +282,8 @@ export function AppNavigator() {
       <Stack.Navigator screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
-        animationDuration: 100,
-      }}
-      >
+        animationDuration: 100
+      }}>
 
         <Stack.Screen name="MainTabs" component={BottomTabs} />
         <Stack.Screen name="Theme" component={AppTheme} />
