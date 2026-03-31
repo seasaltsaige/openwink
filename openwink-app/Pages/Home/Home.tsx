@@ -75,6 +75,7 @@ export function Home() {
       });
 
       updateFirmwareVersion(OTA.latestVersion);
+      setModuleUpdateVisible(false);
     },
   });
 
@@ -108,17 +109,27 @@ export function Home() {
   }
 
   const installAppUpdate = async () => {
-
+    // Open app store...
   }
 
   const fetchModuleUpdate = async () => {
     if (!device) return;
-    await checkUpdateAvailable();
+    const available = await checkUpdateAvailable();
+    if (available) {
+      Toast.show({
+        // Custom toast with install buttons
+        text2: "Firmware Update Available",
+        type: "update",
+        props: {
+          downloadAction: () => { setModuleUpdateVisible(true); },
+        },
+        swipeable: false,
+        autoHide: false,
+      });
+    }
   }
 
-  const installModuleUpdate = async () => {
-    await startUpdate();
-  }
+  const installModuleUpdate = async () => setModuleUpdateVisible(true);
 
   const scanForDevice = async () => {
     const result = await requestPermissions();
