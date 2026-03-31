@@ -1,10 +1,8 @@
 import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
-
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
-import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
 import { ModalBlurBackground } from "./ModalBlurBackground";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
 enum ModalState {
@@ -44,6 +42,10 @@ export function ModuleUpdateModal({
     if (modalState === ModalState.UPDATE) return;
     close();
   }
+
+  useEffect(() => {
+    if (visible) setModalState(ModalState.DESCRIPTION);
+  }, [visible]);
 
   const updateSizeKB = binSizeBytes / 1000;
   return (
