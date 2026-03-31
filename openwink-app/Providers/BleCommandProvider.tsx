@@ -8,27 +8,7 @@ import React, {
 } from 'react';
 import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
-import {
-  HEADLIGHT_CHAR_UUID,
-  CUSTOM_BUTTON_UPDATE_UUID,
-  HEADLIGHT_MOVEMENT_DELAY_UUID,
-  SLEEPY_EYE_UUID,
-  SLEEPY_SETTINGS_UUID,
-  LONG_TERM_SLEEP_UUID,
-  SYNC_UUID,
-  CUSTOM_COMMAND_UUID,
-  RESET_UUID,
-  OTA_UUID,
-  WINK_SERVICE_UUID,
-  MODULE_SETTINGS_SERVICE_UUID,
-  OTA_SERVICE_UUID,
-  DefaultCommandValue,
-  ButtonStatus,
-  buttonBehaviorMap,
-  DefaultCommandValueEnglish,
-  HEADLIGHT_BYPASS_UUID,
-  SWAP_ORIENTATION_UUID,
-} from '../helper/Constants';
+import { getBLEDescriptors, DefaultCommandValue, ButtonStatus, DefaultCommandValueEnglish, buttonBehaviorMap } from '../helper/Constants';
 import {
   CustomOEMButtonStore,
   CustomWaveStore,
@@ -190,8 +170,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateActiveCommandName(commandName);
 
         await device.writeCharacteristicWithoutResponseForService(
-          WINK_SERVICE_UUID,
-          HEADLIGHT_CHAR_UUID,
+          ...getBLEDescriptors("WINK", "DEFAULT_COMMAND"),
           base64.encode(command.toString())
         );
       } catch (error) {
@@ -230,8 +209,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       try {
         // Alert device that custom command is in progress
         await device.writeCharacteristicWithoutResponseForService(
-          WINK_SERVICE_UUID,
-          CUSTOM_COMMAND_UUID,
+          ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
           base64.encode('1')
         );
 
@@ -242,8 +220,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const cmdSeq = commandSequence.map((cmd) => cmd.delay ? `d${cmd.delay}` : cmd.transmitValue).join("-");
         // Write entire command sequence to MCU at once
         await device.writeCharacteristicWithoutResponseForService(
-          WINK_SERVICE_UUID,
-          CUSTOM_COMMAND_UUID,
+          ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
           base64.encode(cmdSeq),
         );
       } catch (error) {
@@ -272,8 +249,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Notify device that command is no longer in progress
     device
       .writeCharacteristicWithoutResponseForService(
-        WINK_SERVICE_UUID,
-        CUSTOM_COMMAND_UUID,
+        ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
         base64.encode('0')
       )
       .catch((error) => {
@@ -301,8 +277,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        WINK_SERVICE_UUID,
-        SYNC_UUID,
+        ...getBLEDescriptors("WINK", "SYNC_HEADLIGHTS"),
         base64.encode('1')
       );
     } catch (error) {
@@ -341,8 +316,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Send to device
         const data = `${left}-${right}`;
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SLEEPY_SETTINGS_UUID,
+          ...getBLEDescriptors("SETTINGS", "SLEEPY_SETTINGS"),
           base64.encode(data)
         );
       } catch (error) {
@@ -381,8 +355,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        WINK_SERVICE_UUID,
-        SLEEPY_EYE_UUID,
+        ...getBLEDescriptors("WINK", "SLEEPY_EYE"),
         base64.encode('1')
       );
     } catch (error) {
@@ -421,8 +394,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode(status)
         );
 
@@ -461,8 +433,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode(numPresses.toString())
         );
 
@@ -472,16 +443,14 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (to === 0 || typeof to === "string") {
           // Send behavior for that number of presses
           await device.writeCharacteristicWithoutResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
           );
         } else {
           // Parse to string, NOT including name, as it is unimportant for the module to know
           const commandString = to.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
           await device.writeCharacteristicWithoutResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(commandString!),
           );
         }
@@ -507,8 +476,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       try {
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          HEADLIGHT_BYPASS_UUID,
+          ...getBLEDescriptors("SETTINGS", "HEADLIGHT_BYPASS"),
           base64.encode(bypass ? "1" : "0"),
         );
 
@@ -543,16 +511,14 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // First write a '3' to set characteristic into update mode for delay
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode("delay"),
         );
 
         await sleep(WRITE_OPERATION_DELAY);
 
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode(delay.toString())
         );
 
@@ -588,8 +554,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         CustomWaveStore.setMultiplier(delayMulti);
 
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          HEADLIGHT_MOVEMENT_DELAY_UUID,
+          ...getBLEDescriptors("SETTINGS", "HEADLIGHT_MOVE_DELAY"),
           base64.encode(delayMulti.toString())
         );
 
@@ -617,8 +582,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        MODULE_SETTINGS_SERVICE_UUID,
-        LONG_TERM_SLEEP_UUID,
+        ...getBLEDescriptors("SETTINGS", "SLEEP"),
         base64.encode('0')
       );
 
@@ -654,8 +618,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        MODULE_SETTINGS_SERVICE_UUID,
-        RESET_UUID,
+        ...getBLEDescriptors("SETTINGS", "RESET"),
         base64.encode('0')
       );
 
@@ -682,8 +645,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       try {
         console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
         await device?.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          SWAP_ORIENTATION_UUID,
+          ...getBLEDescriptors("SETTINGS", "SWAP_ORIENTATION"),
           base64.encode(leftRightSwapped ? "0" : "1"),
         );
         setLeftRightSwapped((v) => !v);

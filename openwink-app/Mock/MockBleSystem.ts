@@ -9,30 +9,10 @@ import {
 } from "react-native-ble-plx";
 import base64 from "react-native-base64";
 import {
-  BUSY_CHAR_UUID,
-  LEFT_STATUS_UUID,
-  RIGHT_STATUS_UUID,
-  SOFTWARE_UPDATING_CHAR_UUID,
-  SOFTWARE_STATUS_CHAR_UUID,
-  HEADLIGHT_MOTION_IN_UUID,
-  CUSTOM_COMMAND_UUID,
-  WINK_SERVICE_UUID,
-  OTA_SERVICE_UUID,
-  MODULE_SETTINGS_SERVICE_UUID,
-  FIRMWARE_UUID,
-  HEADLIGHT_CHAR_UUID,
-  CUSTOM_BUTTON_UPDATE_UUID,
-  HEADLIGHT_MOVEMENT_DELAY_UUID,
-  SLEEPY_EYE_UUID,
-  SLEEPY_SETTINGS_UUID,
-  LONG_TERM_SLEEP_UUID,
-  SYNC_UUID,
-  UNPAIR_UUID,
-  RESET_UUID,
-  OTA_UUID,
+  getBLEDescriptors,
+  BLE,
   DefaultCommandValue,
   ButtonStatus,
-  PASSKEY_UUID,
 } from "../helper/Constants";
 import { MockBleStore, MockBleState } from "../Storage/MockBleStore";
 

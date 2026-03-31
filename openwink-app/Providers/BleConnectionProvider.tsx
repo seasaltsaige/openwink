@@ -12,15 +12,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from 'expo-device';
 import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
-import {
-  OTA_SERVICE_UUID,
-  WINK_SERVICE_UUID,
-  MODULE_SETTINGS_SERVICE_UUID,
-  SCAN_TIME_SECONDS,
-  PASSKEY_UUID,
-  UNPAIR_UUID,
-  CUSTOM_COMMAND_UUID,
-} from '../helper/Constants';
+import { BLE, getBLEDescriptors, SCAN_TIME_SECONDS } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore, FirmwareStore, MockBleStore } from '../Storage';
 import { getDevicePasskey, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
@@ -211,8 +203,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           // Notify device that command is no longer in progress
           device
             .writeCharacteristicWithoutResponseForService(
-              WINK_SERVICE_UUID,
-              CUSTOM_COMMAND_UUID,
+              ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
               base64.encode('0')
             )
             .catch((error) => {
@@ -222,14 +213,12 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired")
           await connection.writeCharacteristicWithResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            PASSKEY_UUID,
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode(getDevicePasskey()),
           );
         else
           await connection.writeCharacteristicWithResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            PASSKEY_UUID,
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode("CLAIM"),
           );
 
@@ -333,9 +322,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       // if there is no stored MAC address, and scanned device has required service uuids
       else if (scannedDevice.serviceUUIDs && targetMac === null)
         return (
-          scannedDevice.serviceUUIDs.includes(OTA_SERVICE_UUID) &&
-          scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID) &&
-          scannedDevice.serviceUUIDs.includes(MODULE_SETTINGS_SERVICE_UUID)
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.OTA.UUID) &&
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.WINK.UUID) &&
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.SETTINGS.UUID)
         );
       else
         return false;
@@ -512,8 +501,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (device !== null) {
       try {
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          UNPAIR_UUID,
+          ...getBLEDescriptors("SETTINGS", "UNPAIR"),
           base64.encode('0')
         );
 
