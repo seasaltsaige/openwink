@@ -2,12 +2,6 @@ import { useEffect, useState } from "react";
 import { Dimensions } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
-
-
-// TODO: Regroup UUIDs as an Object for easier thinking later...
-// a bit hard to navigate currently as a big blob of constants
-
-
 export const BLE = {
   SERVICES: {
     WINK: {

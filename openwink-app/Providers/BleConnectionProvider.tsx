@@ -16,7 +16,6 @@ import { BLE, getBLEDescriptors, SCAN_TIME_SECONDS } from '../helper/Constants';
 import { AutoConnectStore, DeviceMACStore, FirmwareStore, MockBleStore } from '../Storage';
 import { getDevicePasskey, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
-import { MockBleManager } from '../Mock/MockBleSystem';
 import DeviceInfo from 'react-native-device-info';
 import Storage from '../Storage/Storage';
 import { DeviceUUIDStore } from '../Storage/DeviceUUIDStore';
@@ -53,27 +52,7 @@ const isSimulator = (): boolean => {
   return DeviceInfo.isEmulatorSync()
 };
 
-const shouldUseMockBle = (): boolean => {
-  // Always use mock in simulator
-  if (isSimulator()) {
-    return true;
-  }
-
-  // In development mode, check the user preference
-  if (__DEV__) {
-    return MockBleStore.get();
-  }
-
-  // Never use mock in production
-  return false;
-};
-
 const createBleManager = (): BleManager => {
-  if (shouldUseMockBle()) {
-    console.log('Using Mock BLE Manager');
-    return new MockBleManager() as unknown as BleManager;
-  }
-
   return new BleManager();
 };
 
