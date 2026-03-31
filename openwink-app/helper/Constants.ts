@@ -41,11 +41,13 @@ export const SWAP_ORIENTATION_UUID = "3ddd922d-14ca-4785-9cd0-39a530e8b14d";
 
 export const SCAN_TIME_SECONDS = 30 * 1000;
 
+// If you are a user working on your own build of the app
+// you will need to update the local IP to your own runtimes IP.
+// use ipconfig or ifconfig to view your local IP addr.
+export const UPDATE_URL = __DEV__ 
+  ? "http://172.20.9.16:3000/.netlify/functions/api/update" 
+  : "https://update-server.netlify.app/.netlify/functions/api/update";
 
-export const UPDATE_URL = "https://update-server.netlify.app/.netlify/functions/api/update";
-// export const UPDATE_URL = "http://10.197.10.42:3000/.netlify/functions/api/update";
-// export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
-// export const UPDATE_URL = "http://172.20.9.16:3000/.netlify/functions/api/update";
 
 export const DEFAULT_COMMAND_DATA = [
   [
