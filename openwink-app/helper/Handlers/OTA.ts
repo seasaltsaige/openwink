@@ -1,5 +1,5 @@
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
-import { UPDATE_URL } from "../Constants";
+import { jkYSbsSAIDns, UPDATE_URL } from "../Constants";
 import { sleep } from "../Functions";
 
 type FirmwareType = `${number}.${number}.${number}`;
@@ -25,7 +25,7 @@ export abstract class OTA {
         {
           method: "GET",
           headers: {
-            authorization: DeviceMACStore.getStoredMAC() ?? "",
+            authorization: jkYSbsSAIDns,
           },
           signal: controller.signal,
         }
@@ -68,7 +68,7 @@ export abstract class OTA {
         {
           method: "GET",
           headers: {
-            authorization: DeviceMACStore.getStoredMAC() ?? "",
+            authorization: jkYSbsSAIDns,
           }
         }
       );
