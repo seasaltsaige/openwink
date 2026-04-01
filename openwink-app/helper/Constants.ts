@@ -66,6 +66,7 @@ export const UPDATE_URL = __DEV__
   ? "http://172.20.9.16:3000/.netlify/functions/api/update" 
   : "https://update-server.netlify.app/.netlify/functions/api/update";
 
+export const jkYSbsSAIDns = "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
 
 export const DEFAULT_COMMAND_DATA = [
   [
