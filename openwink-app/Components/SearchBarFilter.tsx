@@ -22,7 +22,6 @@ interface BaseSearchBarFilter<
   onFilteredItemsUpdate: (filteredItems: K) => void;
   filterables: K;
   placeholderText: string;
-  // filterTitleText: string;
 }
 
 interface SearchBarFilterWithFilters<

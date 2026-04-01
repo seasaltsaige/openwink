@@ -1,10 +1,10 @@
 import express, { NextFunction, Request, Response, Router } from "express";
 import serverless from "serverless-http";
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
 const app = express();
-
 
 const router = Router();
 
@@ -21,15 +21,8 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
 
   if (!jsonData || !jsonData.mac_addr) return res.status(500).json({ error: "Internal Server Error" });
 
-
-  const macs = jsonData.mac_addr as string[];
-  if (!macs) return res.status(500).json({ error: "Internal Server Error" });
-
-  // Likely needs to be removed, or changed in some way, as using mac address for auth
-  // becomes unmaintainable
-  if (!macs.includes(authorization))
+  if (authorization !== process.env.API_AUTH)
     return res.status(403).json({ error: "Invalid Authorization" });
-
 
   next(null);
 }
