@@ -135,14 +135,17 @@ export function SystemProfiles() {
                           */}
                         {/* Saving/creating a applies it, sure, (it already is), but theres no need to keep track of active ones... pointless imo */}
 
-                        <Text style={{
-                          color: colorTheme.textColor,
-                          fontFamily: "IBMPlexSans_500Medium",
-                          fontSize: 17,
-                        }}>
-                          {preset.name}
-                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 8 }}>
+                          <IonIcons name="chevron-forward-circle-outline" size={20} color={colorTheme.textColor} style={{ marginBottom: -2 }} />
 
+                          <Text style={{
+                            color: colorTheme.textColor,
+                            fontFamily: "IBMPlexSans_500Medium",
+                            fontSize: 17,
+                          }}>
+                            {preset.name}
+                          </Text>
+                        </View>
 
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 12 }}>
 
@@ -163,7 +166,7 @@ export function SystemProfiles() {
 
                       {
                         index === filteredPresets.length - 1 ? <></> : (
-                          <View key={`${preset.name}-${preset.createdAt}-divider`} style={{ width: "75%", height: 2, borderRadius: 2, backgroundColor: `${colorTheme.disabledButtonColor}80`, }} />
+                          <View key={`div${preset.name}-${preset.createdAt}-divider`} style={{ width: "85%", height: 1.2, borderRadius: 2, backgroundColor: `${colorTheme.disabledButtonColor}70`, }} />
                         )
                       }
                     </>

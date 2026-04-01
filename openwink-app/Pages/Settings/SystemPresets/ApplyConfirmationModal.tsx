@@ -51,12 +51,16 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
         type: "success",
         text1: "Profile Applied",
         text2: `The profile '${props.presetName}' has been applied successfully.`,
+        autoHide: true,
+        visibilityTime: 5000,
       });
     } catch (e) {
       Toast.show({
         type: "error",
         text1: "Error Applying Profile",
         text2: `An error occurred while applying the profile '${props.presetName}'. Please try again.`,
+        autoHide: true,
+        visibilityTime: 5000,
       });
     }
   }

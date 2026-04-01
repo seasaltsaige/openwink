@@ -1,40 +1,10 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-} from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { Device } from 'react-native-ble-plx';
-import base64, { decode } from 'react-native-base64';
-import Toast from 'react-native-toast-message';
-import {
-  BUSY_CHAR_UUID,
-  LEFT_STATUS_UUID,
-  RIGHT_STATUS_UUID,
-  SOFTWARE_UPDATING_CHAR_UUID,
-  SOFTWARE_STATUS_CHAR_UUID,
-  HEADLIGHT_MOTION_IN_UUID,
-  CUSTOM_COMMAND_UUID,
-  PASSKEY_UUID,
-  WINK_SERVICE_UUID,
-  OTA_SERVICE_UUID,
-  MODULE_SETTINGS_SERVICE_UUID,
-  FIRMWARE_UUID,
-  CUSTOM_BUTTON_UPDATE_UUID,
-  buttonBehaviorMapReversed,
-  SWAP_ORIENTATION_UUID,
-  SLEEPY_SETTINGS_UUID,
-  HEADLIGHT_MOVEMENT_DELAY_UUID,
-  HEADLIGHT_BYPASS_UUID,
-  buttonBehaviorMap,
-} from '../helper/Constants';
-import { CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
+import base64 from 'react-native-base64';
+import { getBLEDescriptors, buttonBehaviorMap, } from '../helper/Constants';
+import { CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
-import { CommandInput, CommandOutput, Presses } from '../helper/Types';
 import { HeadlightOrientationStore, ORIENTATION } from '../Storage/HeadlightOrientationStore';
-import Storage from '../Storage/Storage';
 import { HeadlightMovementSpeedStore, SIDE } from '../Storage/HeadlightMovementSpeedStore';
 import { DeviceUUIDStore } from '../Storage/DeviceUUIDStore';
 
@@ -174,8 +144,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor BUSY characteristic
   const monitorBusy = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      WINK_SERVICE_UUID,
-      BUSY_CHAR_UUID,
+      ...getBLEDescriptors("WINK", "BUSY_STATUS"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring BUSY characteristic:', err);
@@ -198,8 +167,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor LEFT_STATUS characteristic
   const monitorLeftStatus = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      WINK_SERVICE_UUID,
-      LEFT_STATUS_UUID,
+      ...getBLEDescriptors("WINK", "LEFT_STATUS"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring LEFT_STATUS characteristic:', err);
@@ -222,8 +190,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor RIGHT_STATUS characteristic
   const monitorRightStatus = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      WINK_SERVICE_UUID,
-      RIGHT_STATUS_UUID,
+      ...getBLEDescriptors("WINK", "RIGHT_STATUS"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring RIGHT_STATUS characteristic:', err);
@@ -246,8 +213,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor SOFTWARE_UPDATING characteristic (progress)
   const monitorUpdateProgress = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      OTA_SERVICE_UUID,
-      SOFTWARE_UPDATING_CHAR_UUID,
+      ...getBLEDescriptors("OTA", "SOFTWARE_UPDATING"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring UPDATE_PROGRESS characteristic:', err);
@@ -273,8 +239,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor SOFTWARE_STATUS characteristic
   const monitorUpdateStatus = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      OTA_SERVICE_UUID,
-      SOFTWARE_STATUS_CHAR_UUID,
+      ...getBLEDescriptors("OTA", "SOFTWARE_STATUS"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring UPDATE_STATUS characteristic:', err);
@@ -305,8 +270,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor HEADLIGHT_MOTION_IN characteristic
   const monitorMotionValue = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      HEADLIGHT_MOTION_IN_UUID,
+      ...getBLEDescriptors("SETTINGS", "MOTOR_FEEDBACK"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring MOTION_VALUE characteristic:', err);
@@ -332,8 +296,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const monitorCustomCommandStatus = useCallback(
     (device: Device, onInterrupt: () => void) => {
       const subscription = device.monitorCharacteristicForService(
-        WINK_SERVICE_UUID,
-        CUSTOM_COMMAND_UUID,
+        ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
         (err, char) => {
           if (err) {
             console.error('Error monitoring CUSTOM_COMMAND_STATUS characteristic:', err);
@@ -362,8 +325,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Monitor PASSKEY_UUID characteristic (connection status)
   const monitorPasskey = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      PASSKEY_UUID,
+      ...getBLEDescriptors("SETTINGS", "AUTH"),
       (err, char) => {
         if (err) {
           console.error('Error monitoring PASSKEY_UUID characteristic:', err);
@@ -387,8 +349,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const monitorSwapStatus = useCallback((device: Device) => {
     const sub = device.monitorCharacteristicForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      SWAP_ORIENTATION_UUID,
+      ...getBLEDescriptors("SETTINGS", "SWAP_ORIENTATION"),
       (err, char) => {
         if (err)
           return console.log("Err Monitoring 'SWAP_ORIENTATION' Char");
@@ -471,8 +432,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Outside orientation is enabled, cabin is disabled.
     const swapOrientation = HeadlightOrientationStore.getStatus() === ORIENTATION.OUTSIDE ? "1" : "0";
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      SWAP_ORIENTATION_UUID,
+      ...getBLEDescriptors("SETTINGS", "SWAP_ORIENTATION"),
       base64.encode(swapOrientation),
     );
     setLeftRightSwapped(swapOrientation === "1");
@@ -480,8 +440,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Write sleepy eye settings
     const [leftSleepy, rightSleepy] = [SleepyEyeStore.get("left"), SleepyEyeStore.get("right")];
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      SLEEPY_SETTINGS_UUID,
+      ...getBLEDescriptors("SETTINGS", "SLEEPY_SETTINGS"),
       base64.encode(`${leftSleepy}-${rightSleepy}`),
     );
     setLeftSleepyEye(leftSleepy);
@@ -490,8 +449,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Write wave delay multiplier
     const waveDelay = CustomWaveStore.getMultiplier();
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      HEADLIGHT_MOVEMENT_DELAY_UUID,
+      ...getBLEDescriptors("SETTINGS", "HEADLIGHT_MOVE_DELAY"),
       base64.encode(waveDelay.toString()),
     );
     setWaveDelayMulti(waveDelay);
@@ -499,8 +457,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Write headlight bypass status
     const headlightBypass = CustomOEMButtonStore.isBypassEnabled();
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      HEADLIGHT_BYPASS_UUID,
+      ...getBLEDescriptors("SETTINGS", "HEADLIGHT_BYPASS"),
       base64.encode(headlightBypass ? "1" : "0"),
     );
     setHeadlightBypass(headlightBypass);
@@ -510,32 +467,26 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const sequences = CustomOEMButtonStore.getAll();
     for (let i = 1; i <= 9; i++) {
       const seq = sequences.find(s => s.numberPresses === i);
-      console.log(seq);
 
       if (!seq) {
         // Remove it from MCU if it doesn't exist in the app
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode(i.toString()),
         );
 
         await sleep(20);
 
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode("0")
         );
-
-        console.log(`Removed custom sequence for ${i + 1} presses from MCU`);
 
       } else {
 
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          CUSTOM_BUTTON_UPDATE_UUID,
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode(i.toString())
         );
 
@@ -545,16 +496,14 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (typeof seq.behavior === "string") {
           // Send behavior for that number of presses
           await device.writeCharacteristicWithoutResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(buttonBehaviorMap[seq.behavior].toString())
           );
         } else {
           // Parse to string, NOT including name, as it is unimportant for the module to know
           const commandString = seq.behavior.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
           await device.writeCharacteristicWithoutResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            CUSTOM_BUTTON_UPDATE_UUID,
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(commandString!),
           );
         }
@@ -567,15 +516,13 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Write stored delay value
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      CUSTOM_BUTTON_UPDATE_UUID,
+      ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
       base64.encode("delay"),
     );
     await sleep(20);
     const delay = CustomOEMButtonStore.getDelay();
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      CUSTOM_BUTTON_UPDATE_UUID,
+      ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
       base64.encode(delay.toString())
     );
     setButtonDelay(delay);
@@ -584,8 +531,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Write custom OEM button enabled status
     const customStatus = CustomOEMButtonStore.isEnabled() ? "enable" : "disable";
     await device.writeCharacteristicWithoutResponseForService(
-      MODULE_SETTINGS_SERVICE_UUID,
-      CUSTOM_BUTTON_UPDATE_UUID,
+      ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
       base64.encode(customStatus)
     );
   }, []);
@@ -597,8 +543,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Read LEFT_STATUS
         const leftInitStatus = await device.readCharacteristicForService(
-          WINK_SERVICE_UUID,
-          LEFT_STATUS_UUID
+          ...getBLEDescriptors("WINK", "LEFT_STATUS"),
         );
         if (leftInitStatus?.value) {
           const strVal = base64.decode(leftInitStatus.value);
@@ -607,8 +552,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Read RIGHT_STATUS
         const rightInitStatus = await device.readCharacteristicForService(
-          WINK_SERVICE_UUID,
-          RIGHT_STATUS_UUID
+          ...getBLEDescriptors("WINK", "RIGHT_STATUS"),
         );
         if (rightInitStatus?.value) {
           const strVal = base64.decode(rightInitStatus.value);
@@ -617,8 +561,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Read FIRMWARE_VERSION
         const firmware = await device.readCharacteristicForService(
-          OTA_SERVICE_UUID,
-          FIRMWARE_UUID
+          ...getBLEDescriptors("OTA", "FIRMWARE_VERSION"),
         );
         if (firmware?.value) {
           const version = base64.decode(firmware.value);
@@ -627,8 +570,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         // Read MOTION_VALUE
         const motion = await device.readCharacteristicForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          HEADLIGHT_MOTION_IN_UUID
+          ...getBLEDescriptors("SETTINGS", "MOTOR_FEEDBACK"),
         );
         if (motion?.value) {
           const decoded = base64.decode(motion.value);
@@ -641,8 +583,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Useful pretty much only in the case of a canceled OTA Update
         // still need to check the case though.
         const status = await device.readCharacteristicForService(
-          OTA_SERVICE_UUID,
-          SOFTWARE_STATUS_CHAR_UUID,
+          ...getBLEDescriptors("OTA", "SOFTWARE_STATUS"),
         );
         if (status?.value) {
           const val = base64.decode(status.value) as any; // not good but i might be lazy
@@ -654,7 +595,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       } catch (error) {
         console.error('Error reading initial values:', error);
-        // throw error;
       }
     },
     [parseAndSetStatus]

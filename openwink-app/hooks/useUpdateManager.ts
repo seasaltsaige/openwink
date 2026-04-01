@@ -45,8 +45,7 @@ type UpdateManagerType = {
 type UpdateManagerReturnType = {
   updateStatus: UPDATE_STATUS; updateData: UpdateData | null; error: ERROR_TYPE;
   startUpdate: () => Promise<void>;
-  stopUpdate: () => Promise<void>;
-  checkUpdateAvailable: () => Promise<void>;
+  checkUpdateAvailable: () => Promise<boolean>;
 }
 
 const OTA_HEADER_SIZE = 5;
@@ -124,18 +123,21 @@ export const useUpdateManager = ({
         if (!isConnected) {
           setUpdateStatus(UPDATE_STATUS.IDLE);
           setError(ERROR_TYPE.ERR_DISCONNECT);
+          return false;
         };
         try {
-          console.log('In check update');
           setUpdateStatus(UPDATE_STATUS.FETCHING);
           setError(ERROR_TYPE.ERR_NONE);
 
           // simulated delay cause it looks bad without it lol
-          await sleep(1100);
+          await sleep(Math.floor(Math.random() * 1100) + 1);
 
           const available = await OTA.fetchUpdateAvailable();
 
-          if (!available) return setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+          if (!available) {
+            setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+            return false;
+          }
 
           const updateInfo: UpdateData = {
             description: OTA.updateDescription,
@@ -146,8 +148,7 @@ export const useUpdateManager = ({
           setUpdateData(() => (updateInfo));
           setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
-          // onSuccess({});
-
+          return true;
         } catch (err) {
           setError(ERROR_TYPE.ERR_TIMEOUT);
           setUpdateStatus(UPDATE_STATUS.IDLE);
@@ -159,32 +160,13 @@ export const useUpdateManager = ({
           });
 
           setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+          return false;
         }
       },
       [isConnected],
   );
 
-  const stopUpdate = useCallback(
-      async () => {
-        if (!isConnected) return;
-        await haltOTAUpdate();
-        setError(ERROR_TYPE.ERR_UPDATE_HALTED);
-        setUpdateStatus(UPDATE_STATUS.IDLE);
-
-        onError({
-          errorType: ERROR_TYPE.ERR_UPDATE_HALTED,
-          errorMessage:
-              'Firmware installation halted by user. Reconnect to module to retry.',
-          errorTitle: 'Update Halted',
-        });
-
-        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
-      },
-      [isConnected],
-  );
-
   return {
-    updateStatus, error, updateData, checkUpdateAvailable, startUpdate,
-        stopUpdate,
+    updateStatus, error, updateData, checkUpdateAvailable, startUpdate
   }
 }
