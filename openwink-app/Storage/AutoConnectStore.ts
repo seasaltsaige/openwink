@@ -2,23 +2,23 @@ import Storage from "./Storage";
 const AUTO_CONNECT_KEY = "auto-reconnect-setting";
 export abstract class AutoConnectStore {
 
-  static enable(): void {
+  static disable(): void {
     Storage.delete(AUTO_CONNECT_KEY);
   }
 
-  static disable(): void {
+  static enable(): void {
     Storage.set(AUTO_CONNECT_KEY, 1);
   }
 
   static get(): boolean {
     const value = Storage.getNumber(AUTO_CONNECT_KEY);
-    if (value === undefined) return true;
-    else return false;
+    if (value === undefined) return false;
+    else return true;
   }
 
   static set(value: boolean): void {
-    if (value) this.enable();
-    else this.disable();
+    if (value) this.disable(); 
+    else this.enable();
   }
 
 }
