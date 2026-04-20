@@ -222,6 +222,39 @@ void bothBlink() {
   BLE::updateHeadlightChars();
 }
 
+void bothSwap() {
+  ButtonHandler::setBusy(true);
+
+  ButtonHandler::leftMoving = true;
+  ButtonHandler::rightMoving = true;
+  ButtonHandler::leftTimer = millis();
+  ButtonHandler::rightTimer = millis();
+
+  if (leftStatus == 0) {
+    digitalWrite(OUT_PIN_LEFT_DOWN, LOW);
+    digitalWrite(OUT_PIN_LEFT_UP, HIGH);
+    leftStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_LEFT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_LEFT_UP, LOW);
+    leftStatus = 0;
+  }
+
+  if (rightStatus == 0) {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, LOW);
+    digitalWrite(OUT_PIN_RIGHT_UP, HIGH);
+    rightStatus = 1;
+  } else {
+    digitalWrite(OUT_PIN_RIGHT_DOWN, HIGH);
+    digitalWrite(OUT_PIN_RIGHT_UP, LOW);
+    rightStatus = 0;
+  }
+
+  while (ButtonHandler::isBusy()) {}
+  BLE::updateHeadlightChars();
+}
+
+
 // Left
 void leftUp() {
   ButtonHandler::setBusy(true);

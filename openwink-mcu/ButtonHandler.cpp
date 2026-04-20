@@ -130,6 +130,92 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       sleepyReset(true, true);
     else
       sleepyEye(true, true);
+    return;
+    
+  } else if (response == "11" && customButtonStatusEnabled) {
+    // Left-Right
+    if (isSleepy()) sleepyReset(true, true);
+    if (leftStatus == 0) rightDown();
+    else rightUp();
+
+    if (leftStatus == 0) {
+      leftUp();
+      bothSwap();
+      rightDown();
+    } else {
+      leftDown();
+      bothSwap();
+      rightUp();
+    }
+    return;
+    
+  } else if (response == "13" && customButtonStatusEnabled) {
+    // Left-Right x2
+    if (isSleepy()) sleepyReset(true, true);
+    if (leftStatus == 0) rightDown();
+    else rightUp();
+
+    if (leftStatus == 0) {
+      leftUp();
+      bothSwap();
+      rightDown();
+    } else {
+      leftDown();
+      bothSwap();
+      rightUp();
+    }
+
+    if (leftStatus == 0) {
+      leftUp();
+      bothSwap();
+      rightDown();
+    } else {
+      leftDown();
+      bothSwap();
+      rightUp();
+    }
+    return;
+  } else if (response == "14" && customButtonStatusEnabled) {
+    // Right-Left
+    if (isSleepy()) sleepyReset(true, true);
+    if (rightStatus == 0) leftDown();
+    else leftUp();
+
+    if (rightStatus == 0) {
+      rightUp();
+      bothSwap();
+      leftDown();
+    } else {
+      rightDown();
+      bothSwap();
+      leftUp();
+    }
+    return;
+  } else if (response == "15" && customButtonStatusEnabled) {
+    // Right-Left x2
+    if (isSleepy()) sleepyReset(true, true);
+    if (rightStatus == 0) leftDown();
+    else leftUp();
+
+    if (rightStatus == 0) {
+      rightUp();
+      bothSwap();
+      leftDown();
+    } else {
+      rightDown();
+      bothSwap();
+      leftUp();
+    }
+
+    if (rightStatus == 0) {
+      rightUp();
+      bothSwap();
+      leftDown();
+    } else {
+      rightDown();
+      bothSwap();
+      leftUp();
+    }
 
     return;
   } else if (response == "12" && customButtonStatusEnabled) {
