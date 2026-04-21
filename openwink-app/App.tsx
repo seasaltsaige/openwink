@@ -12,10 +12,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BleCommandProvider } from './Providers/BleCommandProvider';
 import { BleMonitorProvider } from './Providers/BleMonitorProvider';
 import { BleConnectionProvider } from './Providers/BleConnectionProvider';
-
 import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
 import { OTAUpdateProvider } from './Providers/OTAUpdateProvider';
+import { CustomButtonFrequencyStore } from './Storage';
+import { useEffect } from 'react';
 
 export default function App() {
 
@@ -27,6 +28,11 @@ export default function App() {
   });
 
   if (!loaded) return null;
+
+  useEffect(() => {
+    // Decay frequencies on app startup (so that over time, if a new button action is used, it appears higher)
+    CustomButtonFrequencyStore.decay();
+  }, []);
 
   return (
     <SafeAreaProvider>

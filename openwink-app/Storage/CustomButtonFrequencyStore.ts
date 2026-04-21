@@ -59,12 +59,19 @@ export abstract class CustomButtonFrequencyStore {
     else return Storage.set(`${FREQUENCY_KEY}-${name}`, 1);
   }
 
+  static decay() {
+    const allFreqs = Storage.getAllKeys()
+      .filter(k => k.startsWith(FREQUENCY_KEY))
+      .map((key) => ({ uses: Storage.getNumber(key) || 0, key }));
 
-  static remove(command: (ButtonBehaviors | CommandOutput)) {
-
+    for (const freq of allFreqs) {
+      freq.uses = freq.uses * 0.95;
+      Storage.set(freq.key, freq.uses);
+    }
+    
   }
 
   static reset() {
-    
+    Storage.getAllKeys().filter(key => key.startsWith(FREQUENCY_KEY)).forEach(key => Storage.delete(key));
   }
 }
