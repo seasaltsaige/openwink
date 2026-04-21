@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { ScrollView } from "react-native-gesture-handler";
-import Tooltip from "react-native-walkthrough-tooltip";
 
 import { ButtonBehaviors, CommandOutput, CustomButtonAction } from "../helper/Types";
 import { useColorTheme } from "../hooks/useColorTheme";
-import { CustomCommandStore, CustomOEMButtonStore } from "../Storage";
+import { CustomButtonFrequencyStore, CustomCommandStore } from "../Storage";
 import { ModalBlurBackground } from "./ModalBlurBackground";
-import { BehaviorEnum, buttonBehaviorMap, countToEnglish } from "../helper/Constants";
+import { buttonBehaviorMap, countToEnglish } from "../helper/Constants";
 import { InfoPageHeader } from "./InfoPageHeader";
+import LinearGradient from "react-native-linear-gradient";
 
 
 type CustomButtonActionModalProps = {
@@ -22,18 +22,22 @@ type CustomButtonActionModalProps = {
 }
 const MODAL_CATEGORIES = ["Frequently Used", "Left", "Right", "Both", "Macros"] as const;
 export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
-  const { theme, colorTheme } = useColorTheme();
+  const { colorTheme } = useColorTheme();
 
   const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput);
-  const [customCommands, setCustomCommands] = useState(CustomCommandStore.getAll());
-  const [actionTooltipOpen, setActionTooltipOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("" as typeof MODAL_CATEGORIES[number]);
   const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[])
 
-  // Object.keys(buttonBehaviorMap)
-  // .slice(1, Object.keys(buttonBehaviorMap).length).map((behavior) => (
   useEffect(() => {
+
     if (selectedCategory === "Frequently Used") {
+      const frequents = CustomButtonFrequencyStore.getTopFive();
+      const actions = frequents.map((data) => {
+        const customCommand = CustomCommandStore.get(data.name);
+        if (customCommand !== null) return customCommand;
+        else return data.name;
+      });
+      setFilteredActions(actions as any[]);
     } else {
       const allActions = Object.keys(buttonBehaviorMap).slice(1);
       switch (selectedCategory) {
@@ -50,7 +54,6 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
         case "Macros":
           // Waves, sleepy eye, and customs
           setFilteredActions([...allActions.filter(act => act.includes("Wave") || act.includes("Sleepy")) as any[], ...CustomCommandStore.getAll()]);
-
           break;
       }
     }
@@ -66,9 +69,13 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
   useEffect(() => {
     if (props.visible) {
-      setCustomCommands(
-        CustomCommandStore.getAll(),
-      );
+      const frequents = CustomButtonFrequencyStore.getTopFive();
+      const actions = frequents.map((data) => {
+        const customCommand = CustomCommandStore.get(data.name);
+        if (customCommand !== null) return customCommand;
+        else return data.name;
+      });
+      setFilteredActions(actions as any[]);
     }
   }, [props.visible]);
 
@@ -76,16 +83,37 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
   const getBoxType = (action: Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput) => {
     if (typeof action === "string") {
       if (typeof selectedAction === "string") {
-        if (action === selectedAction) return "checkbox-outline";
-        else return "square-outline";
-      } else return "square-outline";
+        if (action === selectedAction) return "radio-button-on-outline";
+        else return "radio-button-off-outline";
+      } else return "radio-button-off-outline";
     } else {
       if (typeof selectedAction !== "string") {
-        if (action.name === selectedAction?.name) return "checkbox-outline";
-        else return "square-outline";
-      } else return "square-outline";
+        if (action.name === selectedAction?.name) return "radio-button-on-outline";
+        else return "radio-button-off-outline";
+      } else return "radio-button-off-outline";
     }
   }
+
+  const saveAction = useCallback(() => {
+    if (selectedAction === null) return;
+
+    if (typeof selectedAction === "string") {
+      props.update({
+        presses: props.action.presses,
+        behavior: buttonBehaviorMap[selectedAction],
+        behaviorHumanReadable: selectedAction,
+      });
+    } else {
+      props.update({
+        presses: props.action.presses,
+        customCommand: selectedAction,
+      });
+    }
+
+    CustomButtonFrequencyStore.increment(selectedAction);
+    props.close();
+  }, [selectedAction]);
+
   return (
     <Modal
       transparent
@@ -96,7 +124,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
       <ModalBlurBackground>
         <View
           style={{
-            width: "90%",
+            width: "85%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -136,15 +164,34 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
           <View style={{
             flex: 1,
-            marginVertical: 20,
-            width: "63%",
+            marginVertical: 10,
+            width: "80%",
+            position: "relative",
+            paddingHorizontal: 10,
+            paddingTop: 5,
           }}>
+            <LinearGradient
+              start={{ x: 0, y: 1 }}
+              end={{ x: 0, y: 0 }}
+              colors={[colorTheme.backgroundSecondaryColor, "transparent"]}
+              style={{
+                position: "absolute",
+                left: 0,
+                bottom: 0,
+                height: 25,
+                width: "100%",
+                zIndex: 1000,
+              }}
+              pointerEvents="none"
+            />
+
             <ScrollView
               contentContainerStyle={{
-                rowGap: 9,
+                rowGap: 12,
                 alignItems: "center",
                 justifyContent: "flex-start",
                 width: "100%",
+                paddingHorizontal: 18,
               }}
             >
 
@@ -161,6 +208,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                           justifyContent: "space-between",
                           width: "100%",
                         }}
+                        hitSlop={15}
                       >
                         {({ pressed }) => (
                           <>
@@ -184,7 +232,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                       </Pressable>
                       {
                         i !== (filteredActions.length - 1) ? (
-                          <View style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                          <View key={typeof action === "string" ? `view-${action}-${i}` : `view-${action.name}-${i}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
                         ) : <></>
                       }
                     </>
@@ -201,6 +249,21 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
               }
 
             </ScrollView>
+
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              colors={[colorTheme.backgroundSecondaryColor, "transparent"]}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: 25,
+                width: "100%",
+                zIndex: 1000,
+              }}
+              pointerEvents="none"
+            />
           </View>
 
 
@@ -220,7 +283,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
               })}
-              onPress={() => { }}
+              onPress={saveAction}
             >
               {({ pressed }) =>
                 <Text
@@ -231,23 +294,6 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                     color: colorTheme.headerTextColor,
                   }}
                 >
-
-                  {/*   //             onPress={() => {
-  //               if (typeof selectedAction === "object")
-  //                 props.update({
-  //                   customCommand: selectedAction!,
-  //                   presses: props.action.presses,
-  //                 });
-  //               else
-  //                 props.update({
-  //                   presses: props.action.presses,
-  //                   behavior: buttonBehaviorMap[selectedAction!] as BehaviorEnum,
-  //                   behaviorHumanReadable: selectedAction
-  //                 });
-
-  //               props.close();
-  //             }} */}
-
                   Apply Action
                 </Text>
               }

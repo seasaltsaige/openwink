@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { FlatList } from "react-native-gesture-handler";
 
+import { LinearGradient } from "react-native-linear-gradient";
 interface IInfoPageHeaderProps<T extends string> {
   categories: readonly T[],
   onSelect: (category: T) => void;
@@ -30,7 +31,25 @@ export function InfoPageHeader<R extends string>({
   return (
     <View style={{
       height: 50,
+      position: "relative",
+      paddingHorizontal: 10,
     }}>
+
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        colors={[hiddenBorderColor, "transparent"]}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          height: 50,
+          width: 25,
+          zIndex: 1000,
+        }}
+        pointerEvents="none"
+      />
+
       <FlatList
         ref={listRef}
         horizontal
@@ -51,8 +70,6 @@ export function InfoPageHeader<R extends string>({
               borderRightColor: hiddenBorderColor,
               borderBottomColor: selectedCategory === category ? colorTheme.headerTextColor : hiddenBorderColor,
               borderWidth: 2,
-              // borderWidth: (selectedCategory === category) ? 2 : 0,
-              // top: selectedCategory === category ? -2 : 0,
               height: "100%",
               paddingHorizontal: 10,
               borderRadius: 2,
@@ -77,6 +94,21 @@ export function InfoPageHeader<R extends string>({
             }
           </Pressable>
         )}
+      />
+
+
+      <LinearGradient
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        colors={["transparent", hiddenBorderColor]}
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          height: 50,
+          width: 25
+        }}
+        pointerEvents="none"
       />
 
     </View>
