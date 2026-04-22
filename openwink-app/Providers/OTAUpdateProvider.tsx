@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { useBleConnection } from "./BleConnectionProvider";
-import { OTA_SERVICE_UUID, OTA_UUID } from "../helper/Constants";
+import { getBLEDescriptors } from "../helper/Constants";
 import base64 from "react-native-base64";
 import Toast from "react-native-toast-message";
 import { sleep } from "../helper/Functions";
@@ -49,8 +49,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       try {
         await device.writeCharacteristicWithResponseForService(
-          OTA_SERVICE_UUID,
-          OTA_UUID,
+          ...getBLEDescriptors("OTA", "OTA_COMMAND"),
           base64.encode("START"),
         );
 
@@ -81,8 +80,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       try {
         await device.writeCharacteristicWithoutResponseForService(
-          OTA_SERVICE_UUID,
-          OTA_UUID,
+          ...getBLEDescriptors("OTA", "OTA_COMMAND"),
           base64.encode("HALT"),
         );
 
@@ -116,8 +114,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             const parsedDataChunk = base64.encode(String.fromCharCode(...dataChunk));
             // send data chunk
             await device.writeCharacteristicWithoutResponseForService(
-              OTA_SERVICE_UUID,
-              OTA_UUID,
+              ...getBLEDescriptors("OTA", "OTA_COMMAND"),
               parsedDataChunk,
             );
           }
@@ -126,8 +123,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         } else {
           const parsedChunk = base64.encode(String.fromCharCode(...chunk));
           await device.writeCharacteristicWithoutResponseForService(
-            OTA_SERVICE_UUID,
-            OTA_UUID,
+            ...getBLEDescriptors("OTA", "OTA_COMMAND"),
             parsedChunk,
           );
         }
@@ -155,8 +151,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       try {
         await device.writeCharacteristicWithResponseForService(
-          OTA_SERVICE_UUID,
-          OTA_UUID,
+          ...getBLEDescriptors("OTA", "OTA_COMMAND"),
           base64.encode(otaSize.toString()),
         );
 
@@ -184,8 +179,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       try {
         await device.writeCharacteristicWithoutResponseForService(
-          OTA_SERVICE_UUID,
-          OTA_UUID,
+          ...getBLEDescriptors("OTA", "OTA_COMMAND"),
           base64.encode("DONE"),
         );
 
