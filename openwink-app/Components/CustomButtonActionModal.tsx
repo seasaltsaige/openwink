@@ -178,7 +178,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                 position: "absolute",
                 left: 0,
                 bottom: 0,
-                height: 25,
+                height: 10,
                 width: "100%",
                 zIndex: 1000,
               }}
@@ -250,6 +250,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
             </ScrollView>
 
+            {/* Not sure about these gradients */}
             <LinearGradient
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
@@ -258,7 +259,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                 position: "absolute",
                 left: 0,
                 top: 0,
-                height: 25,
+                height: 10,
                 width: "100%",
                 zIndex: 1000,
               }}

@@ -56,8 +56,8 @@ export function CustomWinkButton() {
   const [min, setMin] = useState(buttonDelay);
   const [max, setMax] = useState(MAX);
 
-  // const { isConnected } = useBleConnection();
-  const isConnected = true;
+  const { isConnected } = useBleConnection();
+  // const isConnected = true;
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();
