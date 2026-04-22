@@ -1,4 +1,4 @@
 {
-  "version": "0.10.0",
-  "description": "Adds system profiles to app and MCU."
+  "version": "0.10.1",
+  "description": "Adds additional preset functionality including Left-Right and Right-Left sequences for button press actions. Fixes issues with button press actions getting removed on app sync."
 }
