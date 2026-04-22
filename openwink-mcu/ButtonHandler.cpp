@@ -141,11 +141,13 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     if (leftStatus == 0) {
       leftUp();
       bothSwap();
-      rightDown();
+      bothSwap();
+      leftDown();
     } else {
       leftDown();
       bothSwap();
-      rightUp();
+      bothSwap();
+      leftUp();
     }
     return;
     
@@ -158,22 +160,24 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     if (leftStatus == 0) {
       leftUp();
       bothSwap();
-      rightDown();
+      bothSwap();
     } else {
       leftDown();
       bothSwap();
-      rightUp();
+      bothSwap();
     }
+
+    bothSwap();
+    bothSwap();
 
     if (leftStatus == 0) {
       leftUp();
-      bothSwap();
-      rightDown();
     } else {
       leftDown();
-      bothSwap();
-      rightUp();
     }
+
+    
+
     return;
   } else if (response == "14" && customButtonStatusEnabled) {
     // Right-Left
@@ -184,11 +188,13 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     if (rightStatus == 0) {
       rightUp();
       bothSwap();
-      leftDown();
+      bothSwap();
+      rightDown();
     } else {
       rightDown();
       bothSwap();
-      leftUp();
+      bothSwap();
+      rightUp();
     }
     return;
   } else if (response == "15" && customButtonStatusEnabled) {
@@ -200,21 +206,21 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     if (rightStatus == 0) {
       rightUp();
       bothSwap();
-      leftDown();
+      bothSwap();
     } else {
       rightDown();
       bothSwap();
-      leftUp();
+      bothSwap();
     }
 
+    bothSwap();
+    bothSwap();
+
+    
     if (rightStatus == 0) {
       rightUp();
-      bothSwap();
-      leftDown();
     } else {
       rightDown();
-      bothSwap();
-      leftUp();
     }
 
     return;
