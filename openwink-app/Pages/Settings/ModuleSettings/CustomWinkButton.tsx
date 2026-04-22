@@ -46,7 +46,7 @@ export function CustomWinkButton() {
 
   // Note: Should only include actions for 2 presses to 10 presses. 1 press can NOT be changed.
 
-  const [modalType, setModalType] = useState("" as "edit" | "create" | "view");
+  const [modalType, setModalType] = useState("" as "edit" | "create");
   const [modalVisible, setModalVisible] = useState(false);
 
   // const [actions, setActions] = useState([{ behavior: BehaviorEnum.LEFT_WAVE, presses: 2, behaviorHumanReadable: "Left Wave" }, { behavior: BehaviorEnum.LEFT_WAVE, presses: 3, behaviorHumanReadable: "Left Wave" }, { behavior: BehaviorEnum.LEFT_WAVE, presses: 4, behaviorHumanReadable: "Left Wave" }] as CustomButtonAction[]);
@@ -57,6 +57,7 @@ export function CustomWinkButton() {
   const [max, setMax] = useState(MAX);
 
   const { isConnected } = useBleConnection();
+  // const isConnected = true;
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();

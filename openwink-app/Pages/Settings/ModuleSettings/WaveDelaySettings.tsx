@@ -10,7 +10,6 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
-import { sleep } from "../../../helper/Functions";
 import { cancelAnimation, Easing, runOnJS, useAnimatedReaction, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
 
 const MIN = 0;

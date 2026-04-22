@@ -9,6 +9,7 @@ import ToggleSwitch from "toggle-switch-react-native";
 
 import {
   AutoConnectStore,
+  CustomButtonFrequencyStore,
   CustomCommandStore,
   CustomOEMButtonStore,
   CustomWaveStore,
@@ -101,6 +102,7 @@ export function ModuleSettings() {
     SleepyEyeStore.reset("both");
     CustomWaveStore.reset();
     QuickLinksStore.reset();
+    CustomButtonFrequencyStore.reset();
     await reset();
 
     Toast.show({

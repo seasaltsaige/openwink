@@ -1,31 +1,63 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { ScrollView } from "react-native-gesture-handler";
-import Tooltip from "react-native-walkthrough-tooltip";
 
 import { ButtonBehaviors, CommandOutput, CustomButtonAction } from "../helper/Types";
 import { useColorTheme } from "../hooks/useColorTheme";
-import { CustomCommandStore } from "../Storage";
+import { CustomButtonFrequencyStore, CustomCommandStore } from "../Storage";
 import { ModalBlurBackground } from "./ModalBlurBackground";
-import { BehaviorEnum, buttonBehaviorMap, countToEnglish } from "../helper/Constants";
+import { buttonBehaviorMap, countToEnglish } from "../helper/Constants";
+import { InfoPageHeader } from "./InfoPageHeader";
+import LinearGradient from "react-native-linear-gradient";
 
 
 type CustomButtonActionModalProps = {
   visible: boolean;
   action: CustomButtonAction;
-  modalType: "edit" | "create" | "view";
+  modalType: "edit" | "create";
   close: () => void;
   update: (action: CustomButtonAction) => Promise<void>;
   delete: (action: CustomButtonAction) => Promise<void>;
 }
-
+const MODAL_CATEGORIES = ["Frequently Used", "Left", "Right", "Both", "Macros"] as const;
 export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
-  const { theme, colorTheme } = useColorTheme();
+  const { colorTheme } = useColorTheme();
 
   const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput);
-  const [customCommands, setCustomCommands] = useState(CustomCommandStore.getAll());
-  const [actionTooltipOpen, setActionTooltipOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("" as typeof MODAL_CATEGORIES[number]);
+  const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[])
+
+  useEffect(() => {
+
+    if (selectedCategory === "Frequently Used") {
+      const frequents = CustomButtonFrequencyStore.getTopFive();
+      const actions = frequents.map((data) => {
+        const customCommand = CustomCommandStore.get(data.name);
+        if (customCommand !== null) return customCommand;
+        else return data.name;
+      });
+      setFilteredActions(actions as any[]);
+    } else {
+      const allActions = Object.keys(buttonBehaviorMap).slice(1);
+      switch (selectedCategory) {
+        case "Left":
+          // shh
+          setFilteredActions(allActions.filter(act => act.startsWith("Left") && !act.includes("Wave")) as any[]);
+          break;
+        case "Right":
+          setFilteredActions(allActions.filter(act => act.startsWith("Right") && !act.includes("Wave")) as any[]);
+          break;
+        case "Both":
+          setFilteredActions(allActions.filter(act => act.startsWith("Both") && !act.includes("Wave")) as any[]);
+          break;
+        case "Macros":
+          // Waves, sleepy eye, and customs
+          setFilteredActions([...allActions.filter(act => act.includes("Wave") || act.includes("Sleepy")) as any[], ...CustomCommandStore.getAll()]);
+          break;
+      }
+    }
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (props.action.behaviorHumanReadable !== "Default Behavior")
@@ -37,297 +69,257 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
   useEffect(() => {
     if (props.visible) {
-      setCustomCommands(
-        CustomCommandStore.getAll(),
-      );
+      const frequents = CustomButtonFrequencyStore.getTopFive();
+      const actions = frequents.map((data) => {
+        const customCommand = CustomCommandStore.get(data.name);
+        if (customCommand !== null) return customCommand;
+        else return data.name;
+      });
+      setFilteredActions(actions as any[]);
     }
   }, [props.visible]);
 
+
+  const getBoxType = (action: Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput) => {
+    if (typeof action === "string") {
+      if (typeof selectedAction === "string") {
+        if (action === selectedAction) return "radio-button-on-outline";
+        else return "radio-button-off-outline";
+      } else return "radio-button-off-outline";
+    } else {
+      if (typeof selectedAction !== "string") {
+        if (action.name === selectedAction?.name) return "radio-button-on-outline";
+        else return "radio-button-off-outline";
+      } else return "radio-button-off-outline";
+    }
+  }
+
+  const saveAction = useCallback(() => {
+    if (selectedAction === null) return;
+
+    if (typeof selectedAction === "string") {
+      props.update({
+        presses: props.action.presses,
+        behavior: buttonBehaviorMap[selectedAction],
+        behaviorHumanReadable: selectedAction,
+      });
+    } else {
+      props.update({
+        presses: props.action.presses,
+        customCommand: selectedAction,
+      });
+    }
+
+    CustomButtonFrequencyStore.increment(selectedAction);
+    props.close();
+  }, [selectedAction]);
+
   return (
     <Modal
-      onRequestClose={() => { props.close(); setSelectedAction(null); }}
       transparent
       animationType="fade"
-      hardwareAccelerated
       visible={props.visible}
+      onRequestClose={props.close}
     >
       <ModalBlurBackground>
-        <View style={[theme.modalContentContainer, { justifyContent: "flex-start" }]}>
+        <View
+          style={{
+            width: "85%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            backgroundColor: colorTheme.backgroundSecondaryColor,
+            borderRadius: 10,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            rowGap: 10,
+            height: "52%",
+          }}
+        >
+          <Text
+            style={{
+              color: colorTheme.headerTextColor,
+              fontSize: 24,
+              fontFamily: "IBMPlexSans_700Bold",
+              textAlign: "center",
+              marginBottom: 15,
+            }}
+          >
+
+            {
+              props.modalType === "edit" ?
+                "Editing" :
+                "Creating"
+            } {countToEnglish[props.action.presses]}
+
+          </Text>
+
+          {/* Sections: "Frequently Used", "Left", "Right", "Both", and "Macro/Custom" ??? */}
+          <InfoPageHeader
+            categories={MODAL_CATEGORIES}
+            onSelect={(category) => setSelectedCategory(category)}
+            hiddenBorderColor={colorTheme.backgroundSecondaryColor}
+          />
+
+          <View style={{
+            flex: 1,
+            marginVertical: 10,
+            width: "80%",
+            position: "relative",
+            paddingHorizontal: 10,
+            paddingTop: 5,
+          }}>
+            <LinearGradient
+              start={{ x: 0, y: 1 }}
+              end={{ x: 0, y: 0 }}
+              colors={[colorTheme.backgroundSecondaryColor, "transparent"]}
+              style={{
+                position: "absolute",
+                left: 0,
+                bottom: 0,
+                height: 10,
+                width: "100%",
+                zIndex: 1000,
+              }}
+              pointerEvents="none"
+            />
+
+            <ScrollView
+              contentContainerStyle={{
+                rowGap: 12,
+                alignItems: "center",
+                justifyContent: "flex-start",
+                width: "100%",
+                paddingHorizontal: 18,
+              }}
+            >
+
+              {
+                filteredActions !== null ? (
+                  filteredActions.map((action, i) => (
+                    <>
+                      <Pressable
+                        key={typeof action === "string" ? `${action}-${i}` : `${action.name}-${i}`}
+                        onPress={() => setSelectedAction(action)}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                        hitSlop={15}
+                      >
+                        {({ pressed }) => (
+                          <>
+                            <Text
+                              style={{
+                                fontFamily: "IBMPlexSans_500Medium",
+                                fontSize: 18,
+                                color: pressed ? colorTheme.buttonColor : colorTheme.textColor,
+                              }}
+                            >
+                              {
+                                typeof action === "string" ?
+                                  action
+                                  : action.name
+                              }
+                            </Text>
+                            <IonIcons name={getBoxType(action)} color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={22} style={{ top: 1 }} />
+                          </>
+                        )}
+
+                      </Pressable>
+                      {
+                        i !== (filteredActions.length - 1) ? (
+                          <View key={typeof action === "string" ? `view-${action}-${i}` : `view-${action.name}-${i}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                        ) : <></>
+                      }
+                    </>
+                  ))
+                ) : (
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    fontSize: 15,
+                  }}>
+                    Something went wrong here...
+                  </Text>
+                )
+              }
+
+            </ScrollView>
+
+            {/* Not sure about these gradients */}
+            <LinearGradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              colors={[colorTheme.backgroundSecondaryColor, "transparent"]}
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: 10,
+                width: "100%",
+                zIndex: 1000,
+              }}
+              pointerEvents="none"
+            />
+          </View>
 
 
           <View style={{
-            width: "100%",
-            flexDirection: "row",
+            display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
+            rowGap: 8,
+            marginBottom: 10,
           }}>
-            <Text
-              style={{
-                fontFamily: "IBMPlexSans_700Bold",
-                color: colorTheme.headerTextColor,
-                fontSize: 22,
-                textAlign: "left"
-              }}
-            >
-              {
-                props.modalType === "create" ?
-                  "Creating action for\n" :
-                  props.modalType === "edit" ?
-                    "Editing action for\n" :
-                    "Viewing action for\n"}
-              {countToEnglish[props.action.presses]
-              }
-            </Text>
-
             <Pressable
-              hitSlop={10}
-              onPress={props.close}
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+                width: "60%",
+                paddingVertical: 6,
+                borderRadius: 20,
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
+              })}
+              onPress={saveAction}
             >
-              {
-                ({ pressed }) => (
-                  <IonIcons name="close-outline" size={25} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} />
-                )
-              }
-            </Pressable>
-          </View>
-
-
-
-          {(
-            // Two column views, left column contains default actions
-            // right column contains custom commands
-            <View style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-evenly",
-              height: 300,
-              width: "100%",
-            }}>
-
-              <View style={{
-                width: "45%",
-                height: "100%",
-                rowGap: 5,
-              }}>
-
-                <Text style={{
-                  width: "100%",
-                  textAlign: "center",
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_500Medium",
-                  fontSize: 16,
-                }}>
-                  Single Action
-                </Text>
-
-                <ScrollView
-                  contentContainerStyle={{
-                    rowGap: 7,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: 'center',
-                    justifyContent: "center",
-                    width: "100%"
-                  }}>
-                  {
-                    Object.keys(buttonBehaviorMap)
-                      .slice(1, Object.keys(buttonBehaviorMap).length).map((behavior) => (
-                        <Pressable
-                          style={({ pressed }) =>
-                            [
-                              (pressed || behavior === selectedAction) ?
-                                theme.mainLongButtonPressableContainerPressed :
-                                theme.mainLongButtonPressableContainer,
-                              {
-                                paddingVertical: 6,
-                                paddingHorizontal: 0,
-                                width: "100%",
-                                borderRadius: 5,
-                              }
-                            ]
-                          }
-                          onPress={() => setSelectedAction(behavior as Exclude<ButtonBehaviors, "Default Behavior">)}
-                          key={behavior}
-                        >
-
-                          <View style={theme.mainLongButtonPressableView}>
-                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 13.5 }]}>
-                              {behavior}
-                            </Text>
-                          </View>
-                          <IonIcons size={18} color={colorTheme.textColor} name={behavior === selectedAction ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
-
-
-
-                        </Pressable>
-                      ))
-                  }
-                </ScrollView>
-              </View>
-
-              <View style={{
-                width: "45%",
-                height: "100%",
-                rowGap: 5,
-              }}>
-
-                <Tooltip
-                  isVisible={actionTooltipOpen}
-                  onClose={() => setActionTooltipOpen(false)}
-                  content={
-                    <Text style={theme.tooltipContainerText}>
-                      Custom Commands can be assigned to button press sequences.{"\n"}To create a new custom command, navigate to the 'Create Custom Command' page on the Home Screen.
-                    </Text>
-                  }
-                  closeOnBackgroundInteraction
-                  closeOnContentInteraction
-                  placement="bottom"
-                  contentStyle={theme.tooltipContainer}
-                >
-
-                  <View style={{
-                    alignItems: "center",
-                    justifyContent: "space-evenly",
-                    flexDirection: "row",
-                    width: "100%",
-                  }}>
-
-                    <Text style={{
-                      color: colorTheme.textColor,
-                      fontFamily: "IBMPlexSans_500Medium",
-                      fontSize: 16,
-                    }}>
-                      Custom Actions
-                    </Text>
-                    <Pressable
-                      hitSlop={18}
-                      onPress={() => setActionTooltipOpen(true)}
-                    >
-                      {
-                        ({ pressed }) => (
-                          <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={21} name="help-circle-outline" />
-                        )
-                      }
-                    </Pressable>
-                  </View>
-                </Tooltip>
-
-                <ScrollView
-                  contentContainerStyle={{
-                    rowGap: 7,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: 'center',
-                    justifyContent: "center",
-                    width: "100%"
-                  }}>
-
-                  {
-                    customCommands.length > 0 ? (
-                      customCommands.map((cmd) => (
-                        <Pressable
-                          style={({ pressed }) =>
-                            [
-                              (pressed || (selectedAction && typeof selectedAction !== "string" && selectedAction.name === cmd.name)) ?
-                                theme.mainLongButtonPressableContainerPressed :
-                                theme.mainLongButtonPressableContainer,
-                              {
-                                paddingVertical: 6,
-                                paddingHorizontal: 0,
-                                width: "100%",
-                                borderRadius: 5,
-                              }
-                            ]
-                          }
-                          onPress={() => setSelectedAction(cmd)}
-                          key={cmd.name}
-                        >
-
-                          <View style={theme.mainLongButtonPressableView}>
-                            <Text style={[theme.mainLongButtonPressableText, { fontSize: 13.5 }]}>
-                              {cmd.name.length > 15 ? `${cmd.name.slice(0, 13)}...` : cmd.name}
-                            </Text>
-                          </View>
-                          <IonIcons size={18} color={colorTheme.textColor} name={(selectedAction && typeof selectedAction !== "string" && selectedAction.name === cmd.name) ? "checkmark-circle-outline" : "ellipse-outline"} style={theme.mainLongButtonPressableIcon} />
-                        </Pressable>
-                      ))
-                    )
-                      :
-                      <Text style={{
-                        color: colorTheme.textColor,
-                        fontFamily: "IBMPlexSans_500Medium"
-                      }}>
-                        No Actions Available
-                      </Text>
-
-                  }
-
-                </ScrollView>
-
-              </View>
-
-            </View>
-          )
-          }
-
-
-          <View style={[theme.modalSettingsConfirmationButtonContainer]}>
-            <Pressable
-              style={({ pressed }) => selectedAction === null ? theme.modalSettingsConfirmationButtonDisabled : (pressed) ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton}
-              onPress={() => {
-                if (typeof selectedAction === "object")
-                  props.update({
-                    customCommand: selectedAction!,
-                    presses: props.action.presses,
-                  });
-                else
-                  props.update({
-                    presses: props.action.presses,
-                    behavior: buttonBehaviorMap[selectedAction!] as BehaviorEnum,
-                    behaviorHumanReadable: selectedAction
-                  });
-
-                props.close();
-              }}
-            >
-              <IonIcons name={props.modalType === "create" ? "sparkles-outline" : "sparkles-outline"} color={colorTheme.headerTextColor} size={17} />
-              <Text style={[theme.modalSettingsConfirmationButtonText, { fontSize: 17 }]}>
-                {props.modalType === "create" ? "Create Action" : "Save Action"}
-              </Text>
-            </Pressable>
-            {
-              props.modalType === "edit" ? (
-                <Pressable
-                  style={({ pressed }) => [(pressed) ? theme.modalSettingsConfirmationButtonPressed : theme.modalSettingsConfirmationButton, { marginVertical: 8 }]}
-                  onPress={() => {
-                    if (typeof selectedAction === "object")
-                      props.delete({
-                        customCommand: selectedAction!,
-                        presses: props.action.presses
-                      });
-                    else
-                      props.delete({
-                        presses: props.action.presses,
-                        behavior: buttonBehaviorMap[selectedAction!] as BehaviorEnum,
-                        behaviorHumanReadable: selectedAction
-                      });
-
-                    props.close();
+              {({ pressed }) =>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 18,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    color: colorTheme.headerTextColor,
                   }}
                 >
-                  <IonIcons name={"trash-outline"} color={colorTheme.headerTextColor} size={17} />
-                  <Text style={[theme.modalSettingsConfirmationButtonText, { fontSize: 17 }]}>
-                    Delete Action
-                  </Text>
-                </Pressable>
-              ) : <></>
+                  Apply Action
+                </Text>
+              }
+            </Pressable>
 
-            }
+            <Pressable
+              onPress={() => props.close()}
+            >
+              {({ pressed }) =>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 18,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                    textDecorationLine: "underline"
+                  }}
+                >
+                  Cancel
+                </Text>
+              }
+            </Pressable>
           </View>
 
-
         </View>
-
       </ModalBlurBackground>
     </Modal>
   )

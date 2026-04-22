@@ -103,8 +103,10 @@ void ButtonHandler::readWakeUpReason() {
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
-  if (customButtonPressArray[numberOfPresses] == "0" && numberOfPresses != 11 &&
-      numberOfPresses != 19) {
+  if (customButtonPressArray[numberOfPresses] == "0" 
+      && numberOfPresses != 11 
+      && numberOfPresses != 19) {
+
     for (int i = 0; i < 9; i++) {
       if (customButtonPressArray[i] == "0") {
         numberOfPresses = i - 1;
@@ -118,31 +120,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   // Uses above array of items
   string response = customButtonPressArray[numberOfPresses];
 
-  // check length --> if length 1, parse to int and proceed with default things,
-  // otherwise, will be modified custom command with guaranteed length of 2 or
-  // more, thus sending to CommandHandler to parse and execute.
-
-  Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
-  Serial.printf("Preset Value: %s\n", response.c_str());
-
-  if (response == "10" && customButtonStatusEnabled) {
-    if (isSleepy())
-      sleepyReset(true, true);
-    else
-      sleepyEye(true, true);
-
-    return;
-  } else if (response == "12" && customButtonStatusEnabled) {
-    bool swap = Storage::getHeadlightOrientation();
-    Storage::setHeadlightOrientation(!swap);
-    BLE::setSwapStatus(!swap);
-    BLE::setBusy(true);
-    leftWink();
-    setAllOff();
-    BLE::setBusy(false);
-
-    return;
-  } else if (response == "20") {
+  if (response == "20") {
 
     Storage::reset();
 
@@ -169,6 +147,124 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
 
     esp_deep_sleep_start();
+    return;
+  }
+
+  // check length --> if length 1, parse to int and proceed with default things,
+  // otherwise, will be modified custom command with guaranteed length of 2 or
+  // more, thus sending to CommandHandler to parse and execute.
+
+  Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
+  Serial.printf("Preset Value: %s\n", response.c_str());
+
+  if (response == "10" && customButtonStatusEnabled) {
+    if (isSleepy())
+      sleepyReset(true, true);
+    else
+      sleepyEye(true, true);
+    return;
+    
+  } else if (response == "11" && customButtonStatusEnabled) {
+    // Left-Right
+    if (isSleepy()) sleepyReset(true, true);
+    if (leftStatus == 0) rightDown();
+    else rightUp();
+
+    if (leftStatus == 0) {
+      leftUp();
+      bothSwap();
+      bothSwap();
+      leftDown();
+    } else {
+      leftDown();
+      bothSwap();
+      bothSwap();
+      leftUp();
+    }
+    return;
+    
+  } else if (response == "13" && customButtonStatusEnabled) {
+    // Left-Right x2
+    if (isSleepy()) sleepyReset(true, true);
+    if (leftStatus == 0) rightDown();
+    else rightUp();
+
+    if (leftStatus == 0) {
+      leftUp();
+      bothSwap();
+      bothSwap();
+    } else {
+      leftDown();
+      bothSwap();
+      bothSwap();
+    }
+
+    bothSwap();
+    bothSwap();
+
+    if (leftStatus == 0) {
+      leftUp();
+    } else {
+      leftDown();
+    }
+
+    
+
+    return;
+  } else if (response == "14" && customButtonStatusEnabled) {
+    // Right-Left
+    if (isSleepy()) sleepyReset(true, true);
+    if (rightStatus == 0) leftDown();
+    else leftUp();
+
+    if (rightStatus == 0) {
+      rightUp();
+      bothSwap();
+      bothSwap();
+      rightDown();
+    } else {
+      rightDown();
+      bothSwap();
+      bothSwap();
+      rightUp();
+    }
+    return;
+  } else if (response == "15" && customButtonStatusEnabled) {
+    // Right-Left x2
+    if (isSleepy()) sleepyReset(true, true);
+    if (rightStatus == 0) leftDown();
+    else leftUp();
+
+    if (rightStatus == 0) {
+      rightUp();
+      bothSwap();
+      bothSwap();
+    } else {
+      rightDown();
+      bothSwap();
+      bothSwap();
+    }
+
+    bothSwap();
+    bothSwap();
+
+    
+    if (rightStatus == 0) {
+      rightUp();
+    } else {
+      rightDown();
+    }
+
+    return;
+  } else if (response == "12" && customButtonStatusEnabled) {
+    bool swap = Storage::getHeadlightOrientation();
+    Storage::setHeadlightOrientation(!swap);
+    BLE::setSwapStatus(!swap);
+    BLE::setBusy(true);
+    leftWink();
+    setAllOff();
+    BLE::setBusy(false);
+
     return;
   }
 
@@ -337,7 +433,7 @@ void ButtonHandler::loopButtonHandler() {
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
   } else if ((customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) || 
-            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 2000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
+            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 3000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
 

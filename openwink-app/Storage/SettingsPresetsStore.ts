@@ -148,7 +148,7 @@ export abstract class SettingsPresetsStore {
     else
       CustomOEMButtonStore.disableBypass();
 
-    for (let i = 2; i <= 9; i++) {
+    for (let i = 1; i <= 9; i++) {
       const pressPreset = preset.customOEMButtons.find(v => v.numberPresses === i);
       if (!pressPreset) CustomOEMButtonStore.remove(i as Presses);
       else CustomOEMButtonStore.set(pressPreset.numberPresses, pressPreset.behavior);

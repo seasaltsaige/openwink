@@ -262,12 +262,13 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
   // all customizations, etc
   // does not affect bond
   Storage::reset();
-  bothBlink();
-  delay(HEADLIGHT_MOVEMENT_DELAY);
+  leftWink();
+  setAllOff();
+  rightWink();
   setAllOff();
   bothBlink();
-  delay(HEADLIGHT_MOVEMENT_DELAY);
   setAllOff();
+  pChar->getService()->getServer()->disconnect(info.getConnHandle());
 };
 
 // TODO: Timer based check, auto disconnect if characteristic not set/bonded
