@@ -27,12 +27,13 @@ export default function App() {
     IBMPlexSans_700Bold,
   });
 
-  if (!loaded) return null;
 
   useEffect(() => {
     // Decay frequencies on app startup (so that over time, if a new button action is used, it appears higher)
     CustomButtonFrequencyStore.decay();
   }, []);
+
+  if (!loaded) return null;
 
   return (
     <SafeAreaProvider>
