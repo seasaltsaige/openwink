@@ -103,8 +103,10 @@ void ButtonHandler::readWakeUpReason() {
 
 void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
-  if (customButtonPressArray[numberOfPresses] == "0" && numberOfPresses != 11 &&
-      numberOfPresses != 19) {
+  if (customButtonPressArray[numberOfPresses] == "0" 
+      && numberOfPresses != 11 
+      && numberOfPresses != 19) {
+
     for (int i = 0; i < 9; i++) {
       if (customButtonPressArray[i] == "0") {
         numberOfPresses = i - 1;
@@ -117,6 +119,36 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
   // Uses above array of items
   string response = customButtonPressArray[numberOfPresses];
+
+  if (response == "20") {
+
+    Storage::reset();
+
+    // reset sequence to visually indicate reset success
+    leftWink();
+    setAllOff();
+    rightWink();
+    setAllOff();
+    bothBlink();
+    setAllOff();
+
+    Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
+
+    // reset wakeup sources
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+    // enable sleep timer
+    esp_sleep_enable_timer_wakeup(sleepTime_us);
+
+    int buttonInput = digitalRead(OEM_BUTTON_INPUT);
+    // enable gpio wakeup, depending on current state
+    if (buttonInput == 1)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
+    else if (buttonInput == 0)
+      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+    esp_deep_sleep_start();
+    return;
+  }
 
   // check length --> if length 1, parse to int and proceed with default things,
   // otherwise, will be modified custom command with guaranteed length of 2 or
@@ -233,34 +265,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     setAllOff();
     BLE::setBusy(false);
 
-    return;
-  } else if (response == "20") {
-
-    Storage::reset();
-
-    // reset sequence to visually indicate reset success
-    leftWink();
-    setAllOff();
-    rightWink();
-    setAllOff();
-    bothBlink();
-    setAllOff();
-
-    Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
-
-    // reset wakeup sources
-    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-    // enable sleep timer
-    esp_sleep_enable_timer_wakeup(sleepTime_us);
-
-    int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-    // enable gpio wakeup, depending on current state
-    if (buttonInput == 1)
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
-    else if (buttonInput == 0)
-      esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
-
-    esp_deep_sleep_start();
     return;
   }
 
@@ -429,7 +433,7 @@ void ButtonHandler::loopButtonHandler() {
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
   } else if ((customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) || 
-            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 2000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
+            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 3000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
 
