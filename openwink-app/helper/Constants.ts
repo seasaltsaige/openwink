@@ -117,6 +117,11 @@ export const DEFAULT_WINK_DATA = [{
   value: 9,
 }];
 
+export const MACRO_DATA = [
+  [{ name: "Left Wave", command: 10 }, { name: "Left-Right", command: 12 }, { name: "Left-Right x2", command: 13 }],
+  [{ name: "Right Wave", command: 11 }, { name: "Right-Left", command: 14 }, { name: "Right-Left x2", command: 15 }],
+];
+
 export const SETTINGS_DATA: Array<{
   pageName: string;
   pageSymbol: keyof typeof IonIcons.glyphMap | null;
@@ -200,10 +205,14 @@ export enum DefaultCommandValue {
   RIGHT_DOWN,
   RIGHT_WINK,
   LEFT_WAVE,
-  RIGHT_WAVE
+  RIGHT_WAVE,
+  LEFT_RIGHT,
+  LEFT_RIGHT_X2,
+  RIGHT_LEFT,
+  RIGHT_LEFT_X2,
 }
 
-export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", "Left Up", "Left Down", "Left Wink", "Right Up", "Right Down", "Right Wink", "Left Wave", "Right Wave"] as const;
+export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", "Left Up", "Left Down", "Left Wink", "Right Up", "Right Down", "Right Wink", "Left Wave", "Right Wave", "Left-Right", "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
 
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {
