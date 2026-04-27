@@ -26,7 +26,9 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
   const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput);
   const [selectedCategory, setSelectedCategory] = useState("" as typeof MODAL_CATEGORIES[number]);
-  const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[])
+  const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[]);
+
+  const canSave = selectedAction !== null;
 
   useEffect(() => {
 
@@ -278,12 +280,13 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           }}>
             <Pressable
               style={({ pressed }) => ({
-                backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+                backgroundColor: !canSave ? colorTheme.disabledButtonColor : pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
                 width: "60%",
                 paddingVertical: 6,
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
               })}
+              disabled={!canSave}
               onPress={saveAction}
             >
               {({ pressed }) =>
