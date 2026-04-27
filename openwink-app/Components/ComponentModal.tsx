@@ -13,6 +13,10 @@ interface IComponentModalProps {
   initialValue: { delay?: number; action?: DefaultCommandValue } | null;
 }
 
+
+// TODO: Needs major UI rework
+// addition of new command types
+// also add those types to the default commands page as well
 export function ComponentModal({
   onRequestClose,
   onSelect,
@@ -50,21 +54,21 @@ export function ComponentModal({
 
   const canSubmit = selectedCommand !== null || delay > 0;
 
-  const commandTypes = useMemo(() => {
-    const commandKeys = Object.keys(DefaultCommandValue).map(key => parseInt(key)).filter(key => !isNaN(key));
-    const commandMap: { left: number[], right: number[], both: number[] } = {
-      left: [],
-      right: [],
-      both: [],
-    };
+  // const commandTypes = useMemo(() => {
+  //   const commandKeys = Object.keys(DefaultCommandValue).map(key => parseInt(key)).filter(key => !isNaN(key));
+  //   const commandMap: { left: number[], right: number[], both: number[] } = {
+  //     left: [],
+  //     right: [],
+  //     both: [],
+  //   };
 
-    for (const cmd of commandKeys) {
-      const englishCommand = DefaultCommandValueEnglish[cmd - 1].toLowerCase();
-      commandMap[englishCommand.split(" ")[0] as "left" | "right" | "both"].push(cmd);
-    }
+  //   for (const cmd of commandKeys) {
+  //     const englishCommand = DefaultCommandValueEnglish[cmd - 1].toLowerCase();
+  //     commandMap[englishCommand.split(" ")[0] as "left" | "right" | "both"].push(cmd);
+  //   }
 
-    return commandMap;
-  }, [DefaultCommandValue]);
+  //   return commandMap;
+  // }, [DefaultCommandValue]);
 
   return (
     <Modal
@@ -125,64 +129,6 @@ export function ComponentModal({
             }}>
               Commands
             </Text>
-
-            <View style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "center",
-              columnGap: 20,
-              rowGap: 20,
-            }}>
-              {
-                Object.keys(commandTypes).map((type) => (
-                  <View
-                    key={type}
-                    style={{
-                      width: "45%",
-                      alignItems: "center",
-                      rowGap: 7,
-                    }}>
-                    {
-                      commandTypes[type as "left" | "right" | "both"].map(cmd => (
-                        <Pressable
-                          style={{
-                            width: "100%",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between"
-                          }}
-                          key={`${type}-${cmd}`}
-                          hitSlop={10}
-                          onPress={() => {
-                            setSelectedCommand(cmd);
-                            setDelay(0);
-                          }}
-                        >
-                          {({ pressed }) => (
-                            <>
-                              <Text
-                                style={{
-                                  fontFamily: "IBMPlexSans_500Medium",
-                                  fontSize: 16,
-                                  color: (pressed) ? colorTheme.buttonColor : colorTheme.textColor,
-                                  textDecorationLine: (selectedCommand === cmd) ? "underline" : "none",
-                                }}
-                              >
-                                {DefaultCommandValueEnglish[cmd - 1]}
-                              </Text>
-
-                              <IonIcons color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={20} name={(selectedCommand === cmd) ? "radio-button-on" : "radio-button-off"} />
-                            </>
-                          )}
-                        </Pressable>
-                      ))
-                    }
-
-                  </View>
-                ))
-              }
-            </View>
           </View>
 
 
