@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, TextStyle, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Tooltip from "react-native-walkthrough-tooltip";
 
@@ -8,7 +8,7 @@ interface ITooltipHeaderProps {
   tooltipContent: React.ReactElement<any, string | React.JSXElementConstructor<any>>;
   tooltipTitle: string;
   useModal?: boolean;
-
+  titleStyle?: TextStyle;
   parentControl?: {
     tooltipOpen: boolean;
     setTooltipOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,7 +19,8 @@ export function TooltipHeader({
   tooltipContent,
   tooltipTitle,
   useModal = true,
-  parentControl
+  parentControl,
+  titleStyle
 }: ITooltipHeaderProps) {
   const { theme, colorTheme } = useColorTheme();
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -36,7 +37,7 @@ export function TooltipHeader({
     >
 
       <View style={theme.tooltipContainerView}>
-        <Text style={theme.tooltipText}>
+        <Text style={[theme.tooltipText, titleStyle]}>
           {tooltipTitle}
         </Text>
 
