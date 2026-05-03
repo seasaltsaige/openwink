@@ -126,7 +126,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
       <ModalBlurBackground>
         <View
           style={{
-            width: "85%",
+            width: "88%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -167,7 +167,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           <View style={{
             flex: 1,
             marginVertical: 10,
-            width: "80%",
+            width: "85%",
             position: "relative",
             paddingHorizontal: 10,
             paddingTop: 5,
@@ -234,7 +234,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                       </Pressable>
                       {
                         i !== (filteredActions.length - 1) ? (
-                          <View key={typeof action === "string" ? `view-${action}-${i}` : `view-${action.name}-${i}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                          <View key={typeof action === "string" ? `view-${action}` : `view-${action.name}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
                         ) : <></>
                       }
                     </>
