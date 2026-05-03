@@ -98,4 +98,5 @@ The Open Wink project codebase was created and is maintained by [seasaltsaige](h
 
 ## Contact Me
 You can reach me through my website at [miatawink.tech/contact](https://miatawink.tech/contact)
+
 Join the discord server here [https://discord.gg/jaP67bgZBM](https://discord.gg/jaP67bgZBM)
