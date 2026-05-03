@@ -357,7 +357,7 @@ export function CustomWinkButton() {
                           }
                         </Text>
                       </View>
-                      <View style={theme.buttonActionPressable}>
+                      <View style={[theme.mainLongButtonPressableIcon, { display: "flex", flexDirection: "row", alignItems: "center", columnGap: 18 }]}>
                         <Pressable
                           disabled={(!isConnected || !oemCustomButtonEnabled)}
                           onPress={() => {
@@ -369,20 +369,32 @@ export function CustomWinkButton() {
                         >
                           {
                             ({ pressed }) => (
-                              <View style={theme.buttonActionPressableView}>
-                                <Text style={[
-                                  theme.buttonActionPressableText,
-                                  {
-                                    color: (!isConnected || !oemCustomButtonEnabled) ?
-                                      colorTheme.disabledButtonColor :
-                                      pressed ? colorTheme.buttonColor :
-                                        colorTheme.textColor
-                                  }]}>
-                                  Edit
-                                </Text>
-                                <IonIcons color={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
 
-                              </View>
+                              <IonIcons color={
+                                (!isConnected || !oemCustomButtonEnabled) ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor
+                              } name="create-outline" size={18} />
+                            )
+                          }
+                        </Pressable>
+                        <Pressable
+                          disabled={(!isConnected || !oemCustomButtonEnabled)}
+                          onPress={() => deleteButtonAction(action)}
+                          hitSlop={5}
+                        >
+                          {
+                            ({ pressed }) => (
+
+                              <IonIcons color={
+                                (!isConnected || !oemCustomButtonEnabled) ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor
+                              } name="close" size={18} />
                             )
                           }
                         </Pressable>

@@ -26,7 +26,9 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
   const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput);
   const [selectedCategory, setSelectedCategory] = useState("" as typeof MODAL_CATEGORIES[number]);
-  const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[])
+  const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[]);
+
+  const canSave = selectedAction !== null;
 
   useEffect(() => {
 
@@ -124,7 +126,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
       <ModalBlurBackground>
         <View
           style={{
-            width: "85%",
+            width: "88%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -165,7 +167,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           <View style={{
             flex: 1,
             marginVertical: 10,
-            width: "80%",
+            width: "85%",
             position: "relative",
             paddingHorizontal: 10,
             paddingTop: 5,
@@ -232,7 +234,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                       </Pressable>
                       {
                         i !== (filteredActions.length - 1) ? (
-                          <View key={typeof action === "string" ? `view-${action}-${i}` : `view-${action.name}-${i}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                          <View key={typeof action === "string" ? `view-${action}` : `view-${action.name}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
                         ) : <></>
                       }
                     </>
@@ -278,12 +280,13 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           }}>
             <Pressable
               style={({ pressed }) => ({
-                backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+                backgroundColor: !canSave ? colorTheme.disabledButtonColor : pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
                 width: "60%",
                 paddingVertical: 6,
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
               })}
+              disabled={!canSave}
               onPress={saveAction}
             >
               {({ pressed }) =>

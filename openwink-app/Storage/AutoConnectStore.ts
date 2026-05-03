@@ -17,7 +17,7 @@ export abstract class AutoConnectStore {
   }
 
   static set(value: boolean): void {
-    if (value) this.disable(); 
+    if (!value) this.disable(); // oops
     else this.enable();
   }
 

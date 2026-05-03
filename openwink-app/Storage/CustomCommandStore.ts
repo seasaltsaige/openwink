@@ -21,8 +21,7 @@ export abstract class CustomCommandStore {
   static editCommand(
       oldName: string, newName: string, command: CommandInput[]) {
     // Just delete the old one, in case the new one
-    CustomCommandStore.deleteCommand(`${COMMAND_STORE_KEY}_${oldName}`);
-
+    CustomCommandStore.deleteCommand(oldName);
     const commandString =
         command
             .map(value => value.delay ? `d${value.delay}` : value.transmitValue)

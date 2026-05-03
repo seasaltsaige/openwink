@@ -768,11 +768,11 @@ function createThemeStyles(themeColors: ThemeColors) {
     },
     commandButton: {
       width: "100%",
-      height: 48,
+      height: 43,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: 7,
+      borderRadius: 5,
     },
     commandButtonText: {
       fontSize: 18,
