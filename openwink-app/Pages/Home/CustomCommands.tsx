@@ -189,9 +189,12 @@ export function CustomCommands() {
           >
             {filteredCommands.length > 0 ?
               filteredCommands.map((command) => (
-                <View
+                <Pressable
                   key={command.name}
-                  style={theme.mainLongButtonPressableContainer}
+                  onPress={() => handleCommandInteraction(command, getCommandAction(command))}
+                  hitSlop={10}
+                  disabled={isPlayButtonDisabled(command)}
+                  style={({ pressed }) => [theme.mainLongButtonPressableContainer, { backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor }]}
                 >
                   <View style={theme.mainLongButtonPressableView}>
                     <Text
@@ -205,7 +208,6 @@ export function CustomCommands() {
                       {command.name}
                     </Text>
                   </View>
-                  {/* </Pressable> */}
 
                   <View
                     style={[
@@ -217,25 +219,11 @@ export function CustomCommands() {
                       },
                     ]}
                   >
-                    <Pressable
-                      onPress={() => {
-                        handleCommandInteraction(
-                          command,
-                          getCommandAction(command),
-                        );
-                      }}
-                      hitSlop={10}
-                      disabled={isPlayButtonDisabled(command)}
-                    >
-                      {() => (
-                        <IonIcons
-                          name={getPlayIconName(command)}
-                          size={23}
-                          color={getCommandTextColor(command)}
-                        />
-                      )}
-                    </Pressable>
-
+                    <IonIcons
+                      name={getPlayIconName(command)}
+                      size={23}
+                      color={getCommandTextColor(command)}
+                    />
                     <Pressable
                       onPress={() => {
                         if (command.name === displayedCommand?.name) {
@@ -265,7 +253,7 @@ export function CustomCommands() {
                       )}
                     </Pressable>
                   </View>
-                </View>
+                </Pressable>
               ))
               : <Text
                 style={{
