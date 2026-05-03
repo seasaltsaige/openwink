@@ -1,4 +1,4 @@
 {
-  "version": "0.10.2",
-  "description": "Adds additional preset functionality including Left-Right and Right-Left sequences for button press actions. Fixes issues with button press actions getting removed on app sync."
+  "version": "0.10.5",
+  "description": "Adds Left-Right/Right-Left action compatibility with default and custom command sequences, allowing these actions to be used from the app, apart from just custom button sequence actions."
 }
