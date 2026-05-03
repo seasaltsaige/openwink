@@ -5,7 +5,8 @@ import { FlatList } from "react-native-gesture-handler";
 
 import { LinearGradient } from "react-native-linear-gradient";
 interface IInfoPageHeaderProps<T extends string> {
-  categories: readonly T[],
+  categories: readonly T[];
+  initialValue?: T;
   onSelect: (category: T) => void;
   hiddenBorderColor: string;
 }
@@ -14,18 +15,18 @@ export function InfoPageHeader<R extends string>({
   categories,
   onSelect,
   hiddenBorderColor,
+  initialValue
 }: IInfoPageHeaderProps<R>) {
 
   const { colorTheme } = useColorTheme();
   const listRef = useRef<FlatList>(null);
 
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [selectedCategory, setSelectedCategory] = useState(initialValue ? initialValue : categories[0]);
 
   const _updateSelectedCategory = (category: R, index: number) => {
     onSelect(category);
     setSelectedCategory(category);
     listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
-
   }
 
   return (
@@ -75,7 +76,7 @@ export function InfoPageHeader<R extends string>({
               borderRadius: 2,
             })}
             onPress={() => _updateSelectedCategory(category, index)}
-            key={category}
+            key={`${category}-${index}-cat-header`}
           >
             {
               ({ pressed }) => (
