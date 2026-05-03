@@ -21,6 +21,7 @@ import { CustomCommandStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useThrottle } from "../../../helper/Functions";
 
 
 export enum ModifyType {
@@ -64,7 +65,6 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       setUndoLog([cmd]);
     } else setUndoLog([]);
   }, []));
-
 
   const discardChanges = () => {
     setCommand({} as CommandOutput);
@@ -204,6 +204,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     });
   };
 
+  const throttledTextChange = useThrottle((commandText: string) => {
+    return handleCommandChange({ name: commandText })
+  }, 450);
+
   const undo = () => {
     const lastCommandState = undoLog.at(-1)!;
 
@@ -264,7 +268,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         <TooltipHeader
           tooltipContent={
             <Text style={theme.tooltipContainerText}>
-              TODO
+              Give your commands sequence a memorable name so you can add use it quickly from the preset screen, or add it as a button press sequence!
             </Text>
           }
           tooltipTitle="Command Name"
@@ -281,10 +285,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             fontFamily: "IBMPlexSans_400Regular",
             textAlign: "center",
           }}
-          onEndEditing={() => handleCommandChange({ name: cmdName })}
+          onEndEditing={() => { handleCommandChange({ name: cmdName }) }}
           value={cmdName}
           maxLength={16}
-          onChangeText={(text) => setCommandName(text)}
+          onChangeText={(text) => { throttledTextChange(text); setCommandName(text); }}
           placeholder="Enter command name..."
           placeholderTextColor={colorTheme.disabledButtonColor}
         />
@@ -295,7 +299,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       <TooltipHeader
         tooltipContent={
           <Text style={theme.tooltipContainerText}>
-            TODO
+            Add individual action components to give your sequence a unique, personalized style.
           </Text>
         }
         tooltipTitle="Command Components"
@@ -316,7 +320,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           ref={listRef}
           ListFooterComponent={
             <Pressable
-              onPress={() => setAddComponentVisible(true)}
+              onPress={() => { setAddComponentInitialValue(null); setAddComponentVisible(true); }}
               style={({ pressed }) => ({
                 display: "flex",
                 width: 275,
@@ -333,6 +337,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                 borderRadius: 10,
               })}
               hitSlop={10}
+              key={"custom-command-add"}
             >
               {
                 ({ pressed }) => <>
@@ -452,43 +457,44 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             </>
           )}
         </Pressable>
-        <ConfirmationModal
-          visible={confirmationVisible}
-          onRequestClose={() => setConfirmationVisible(false)}
-          onConfirm={discardChanges}
-          animationType="fade"
-          header={"Are you sure?"}
-          body={
-            `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
-          }
-          cancelButton="Cancel"
-          confirmButton={"Discard Changes"}
-        />
-
-        <ComponentModal
-          onRequestClose={() => setAddComponentVisible(false)}
-          initialValue={addComponentInitialValue}
-          visible={addComponentVisible}
-          onSelect={({ action, delay }) => {
-            if (addComponentInitialValue !== null)
-              handleCommandChange({
-                editCommand: {
-                  command: { transmitValue: action, delay, },
-                  index: editIndex
-                }
-              })
-            else
-              handleCommandChange({
-                addCommand: {
-                  delay: (delay && delay > 0) ? delay : undefined,
-                  transmitValue: action,
-                }
-              });
-            setAddComponentInitialValue(null);
-            setAddComponentVisible(false);
-          }}
-        />
       </View>
+
+      <ConfirmationModal
+        visible={confirmationVisible}
+        onRequestClose={() => setConfirmationVisible(false)}
+        onConfirm={discardChanges}
+        animationType="fade"
+        header={"Are you sure?"}
+        body={
+          `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
+        }
+        cancelButton="Cancel"
+        confirmButton={"Discard Changes"}
+      />
+
+      <ComponentModal
+        onRequestClose={() => setAddComponentVisible(false)}
+        initialValue={addComponentInitialValue}
+        visible={addComponentVisible}
+        onSelect={({ action, delay }) => {
+          if (addComponentInitialValue !== null)
+            handleCommandChange({
+              editCommand: {
+                command: { transmitValue: action, delay, },
+                index: editIndex
+              }
+            })
+          else
+            handleCommandChange({
+              addCommand: {
+                delay: (delay && delay > 0) ? delay : undefined,
+                transmitValue: action,
+              }
+            });
+          setAddComponentInitialValue(null);
+          setAddComponentVisible(false);
+        }}
+      />
 
       <UnsavedChangesModal
         cancel={() => setUnsavedChangesModalOpen(false)}
