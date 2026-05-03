@@ -212,7 +212,11 @@ export enum DefaultCommandValue {
   RIGHT_LEFT_X2,
 }
 
-export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", "Left Up", "Left Down", "Left Wink", "Right Up", "Right Down", "Right Wink", "Left Wave", "Right Wave", "Left-Right", "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
+export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", 
+                                           "Left Up", "Left Down", "Left Wink", 
+                                           "Right Up", "Right Down", "Right Wink", 
+                                           "Left Wave", "Right Wave", "Left-Right", 
+                                           "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
 
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {
@@ -284,8 +288,8 @@ export namespace ColorTheme {
     dropdownColor: "#e8e8e8",
     buttonColor: "#bd9664",
     disabledButtonColor: "#dbdbdb",
-    buttonTextColor: "#ffffff",
-    disabledButtonTextColor: "#ffffff",
+    buttonTextColor: "#000000",
+    disabledButtonTextColor: "#000000",
     headerTextColor: "#000000",
     textColor: "#141414",
     warning: "#D0342C"
