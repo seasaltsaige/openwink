@@ -181,7 +181,7 @@ export function StandardCommands() {
 
             </View>
 
-            <View style={{ width: "100%", height: 2, backgroundColor: `${colorTheme.disabledButtonColor}80`, borderRadius: 10, marginVertical: 10 }} />
+            <View style={{ width: "100%", height: 1.5, backgroundColor: `${colorTheme.disabledButtonColor}80`, borderRadius: 10, marginVertical: 10 }} />
 
             <View
               style={[
