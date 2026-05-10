@@ -110,6 +110,10 @@ export abstract class CustomOEMButtonStore {
     return allCustomizations;
   }
 
+  static getAllBy(fn: (press: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }) => boolean) {
+    return this.getAll().filter(p => fn(p));
+  }
+
   static getDelay() {
     const value = Storage.getNumber(BUTTON_DELAY_KEY);
     if (value === undefined) return DEFAULT_DELAY;
