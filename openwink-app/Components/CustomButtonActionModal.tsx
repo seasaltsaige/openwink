@@ -55,31 +55,38 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           break;
         case "Macros":
           // Waves, sleepy eye, and customs
-          setFilteredActions([...allActions.filter(act => act.includes("Wave") || act.includes("Sleepy")) as any[], ...CustomCommandStore.getAll()]);
+          const customs = CustomCommandStore.getAll();
+          setFilteredActions([...allActions.filter(act => act.includes("Wave") || act.includes("Sleepy")) as any[], ...customs]);
           break;
       }
     }
   }, [selectedCategory]);
 
   useEffect(() => {
+    // Don't run on close
+    if (!props.visible) return;
+
     if (props.action.behaviorHumanReadable !== "Default Behavior")
       if (props.action.customCommand)
         setSelectedAction(props.action.customCommand)
       else
         setSelectedAction(props.action.behaviorHumanReadable!);
-  }, [props.action]);
-
-  useEffect(() => {
-    if (props.visible) {
-      const frequents = CustomButtonFrequencyStore.getTopFive();
-      const actions = frequents.map((data) => {
-        const customCommand = CustomCommandStore.get(data.name);
-        if (customCommand !== null) return customCommand;
-        else return data.name;
-      });
-      setFilteredActions(actions as any[]);
-    }
-  }, [props.visible]);
+    // Set category on open
+    const act = props.action;
+    console.log(act);
+    if (act.behaviorHumanReadable) {
+      if (act.behaviorHumanReadable.startsWith("Left") && !act.behaviorHumanReadable.includes("Wave"))
+        setSelectedCategory("Left");
+      else if (act.behaviorHumanReadable.startsWith("Right") && !act.behaviorHumanReadable.includes("Wave"))
+        setSelectedCategory("Right");
+      else if (act.behaviorHumanReadable.startsWith("Both") && !act.behaviorHumanReadable.includes("Wave"))
+        setSelectedCategory("Both");
+      else if (act.behaviorHumanReadable.includes("Wave") || act.behaviorHumanReadable.includes("Sleepy"))
+        setSelectedCategory("Macros");
+    } else if (act.customCommand)
+      setSelectedCategory("Macros");
+    else setSelectedCategory("Frequently Used");
+  }, [props.action, props.visible]);
 
 
   const getBoxType = (action: Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput) => {
@@ -162,6 +169,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
             categories={MODAL_CATEGORIES}
             onSelect={(category) => setSelectedCategory(category)}
             hiddenBorderColor={colorTheme.backgroundSecondaryColor}
+            initialValue={selectedCategory}
           />
 
           <View style={{
