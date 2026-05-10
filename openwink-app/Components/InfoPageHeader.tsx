@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { FlatList } from "react-native-gesture-handler";
 
 import { LinearGradient } from "react-native-linear-gradient";
+import { useFocusEffect } from "@react-navigation/native";
 interface IInfoPageHeaderProps<T extends string> {
   categories: readonly T[];
   initialValue?: T;
@@ -28,6 +29,11 @@ export function InfoPageHeader<R extends string>({
     setSelectedCategory(category);
     listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
   }
+
+
+  useEffect(() => {
+    if (initialValue) setSelectedCategory(initialValue);
+  }, [initialValue]);
 
   return (
     <View style={{

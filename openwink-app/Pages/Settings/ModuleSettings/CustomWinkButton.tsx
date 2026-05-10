@@ -138,7 +138,7 @@ export function CustomWinkButton() {
 
             <View style={theme.mainLongButtonPressableView}>
               <Text style={theme.mainLongButtonPressableText}>
-                {oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button
+                Custom Button {oemCustomButtonEnabled ? "Enabled" : "Disabled"}
               </Text>
             </View>
 
@@ -161,7 +161,7 @@ export function CustomWinkButton() {
 
             <View style={theme.mainLongButtonPressableView}>
               <Text style={theme.mainLongButtonPressableText}>
-                {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
+                Headlights Bypass {headlightBypass ? "Enabled" : "Disabled"}
               </Text>
 
               <Tooltip
