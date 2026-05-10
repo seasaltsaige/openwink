@@ -46,7 +46,7 @@ export function CustomWinkButton() {
 
   // Note: Should only include actions for 2 presses to 10 presses. 1 press can NOT be changed.
 
-  const [modalType, setModalType] = useState("" as "edit" | "create" | "view");
+  const [modalType, setModalType] = useState("" as "edit" | "create");
   const [modalVisible, setModalVisible] = useState(false);
 
   // const [actions, setActions] = useState([{ behavior: BehaviorEnum.LEFT_WAVE, presses: 2, behaviorHumanReadable: "Left Wave" }, { behavior: BehaviorEnum.LEFT_WAVE, presses: 3, behaviorHumanReadable: "Left Wave" }, { behavior: BehaviorEnum.LEFT_WAVE, presses: 4, behaviorHumanReadable: "Left Wave" }] as CustomButtonAction[]);
@@ -57,6 +57,7 @@ export function CustomWinkButton() {
   const [max, setMax] = useState(MAX);
 
   const { isConnected } = useBleConnection();
+  // const isConnected = true;
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();
@@ -137,7 +138,7 @@ export function CustomWinkButton() {
 
             <View style={theme.mainLongButtonPressableView}>
               <Text style={theme.mainLongButtonPressableText}>
-                {oemCustomButtonEnabled ? "Disable" : "Enable"} Custom Button
+                Custom Button {oemCustomButtonEnabled ? "Enabled" : "Disabled"}
               </Text>
             </View>
 
@@ -160,7 +161,7 @@ export function CustomWinkButton() {
 
             <View style={theme.mainLongButtonPressableView}>
               <Text style={theme.mainLongButtonPressableText}>
-                {headlightBypass ? "Disable" : "Enable"} Headlights Bypass
+                Headlights Bypass {headlightBypass ? "Enabled" : "Disabled"}
               </Text>
 
               <Tooltip
@@ -356,7 +357,7 @@ export function CustomWinkButton() {
                           }
                         </Text>
                       </View>
-                      <View style={theme.buttonActionPressable}>
+                      <View style={[theme.mainLongButtonPressableIcon, { display: "flex", flexDirection: "row", alignItems: "center", columnGap: 18 }]}>
                         <Pressable
                           disabled={(!isConnected || !oemCustomButtonEnabled)}
                           onPress={() => {
@@ -368,20 +369,32 @@ export function CustomWinkButton() {
                         >
                           {
                             ({ pressed }) => (
-                              <View style={theme.buttonActionPressableView}>
-                                <Text style={[
-                                  theme.buttonActionPressableText,
-                                  {
-                                    color: (!isConnected || !oemCustomButtonEnabled) ?
-                                      colorTheme.disabledButtonColor :
-                                      pressed ? colorTheme.buttonColor :
-                                        colorTheme.textColor
-                                  }]}>
-                                  Edit
-                                </Text>
-                                <IonIcons color={(!isConnected || !oemCustomButtonEnabled) ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.textColor} name="create-outline" size={16} />
 
-                              </View>
+                              <IonIcons color={
+                                (!isConnected || !oemCustomButtonEnabled) ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor
+                              } name="create-outline" size={18} />
+                            )
+                          }
+                        </Pressable>
+                        <Pressable
+                          disabled={(!isConnected || !oemCustomButtonEnabled)}
+                          onPress={() => deleteButtonAction(action)}
+                          hitSlop={5}
+                        >
+                          {
+                            ({ pressed }) => (
+
+                              <IonIcons color={
+                                (!isConnected || !oemCustomButtonEnabled) ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor
+                              } name="close" size={18} />
                             )
                           }
                         </Pressable>

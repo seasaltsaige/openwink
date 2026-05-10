@@ -2,11 +2,15 @@ import { getDeviceUUID } from "../helper/Functions";
 import Storage from "./Storage";
 
 export abstract class DeviceUUIDStore {
-  static async get() {
+  static get() {
     return Storage.getString("device-uuid");
   }
-  static async reset() {
-    Storage.delete("device-uuid");
-    getDeviceUUID();
+
+  static set(uuid: string) {
+    Storage.set("device-uuid", uuid);
+  }
+
+  static forgetUUID() {
+    Storage.delete("device-uuid");  
   }
 }

@@ -17,10 +17,13 @@ import {
   ModalBlurBackground,
   UnsavedChangesModal
 } from "../../../Components";
-import { CustomCommandStore } from "../../../Storage";
+import { CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useThrottle } from "../../../helper/Functions";
+import { useBleCommand } from "../../../Providers/BleCommandProvider";
+import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 
 
 export enum ModifyType {
@@ -44,6 +47,8 @@ type CommandChangeData =
 
 export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyViewProps) {
   const { colorTheme, theme } = useColorTheme();
+  const { updateOEMButtonPresets } = useBleCommand();
+  const { isConnected } = useBleConnection();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
@@ -65,28 +70,58 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     } else setUndoLog([]);
   }, []));
 
-
   const discardChanges = () => {
     setCommand({} as CommandOutput);
     setUndoLog([]);
     onDiscard();
   }
 
-  const saveCommand = () => {
+  const saveCommand = useCallback(async () => {
     const untitledKeys = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).map(k => k.split(" ")[1]);
     const parsed = untitledKeys.length > 0 ? untitledKeys.map(k => parseInt(k)) : [0];
     const keyCounter = Math.max(...parsed) + 1;
 
-    if (commandName.length > 1)
+
+    // If this view was opened with a pre-existing command name (editing)
+    if (commandName.length >= 1)
       CustomCommandStore.editCommand(commandName, command.name, command.command!);
+    // Otherwise, if the new command doesn't have a name
     else if (command.name.length < 1)
       CustomCommandStore.saveCommand(`Untitled ${keyCounter}`, command.command!);
+    // Otherwise, if the new command DOES have a name
     else
       CustomCommandStore.saveCommand(command.name, command.command!);
+    // If command name has been changed, or updating command regularly
 
     setUndoLog([]);
     onSave();
-  }
+
+    // UPDATE POTENTIAL CUSTOM BUTTON ACTION
+    const allCustomButtons = CustomOEMButtonStore.getAllBy((press) => typeof press.behavior === "object");
+    // All custom command names which map to a custom button action
+    const names = allCustomButtons.map(v => typeof v.behavior === "object" ? ({ name: v.behavior.name, presses: v.numberPresses }) : null).filter(v => v !== null);
+
+    // Filter by current command name in ModifyView : if editing, get by old name (what will be in the custom button panel)
+    const filteredNames = names.filter(n => commandName.length >= 1 ? n.name === commandName : n.name === command.name);
+
+    if (filteredNames.length === 0) return;
+
+    // Loop through button actions that need updating in some capacity
+    for (const btnAction of filteredNames) {
+      if (command.name.length < 1) {
+        // Update with "Untitled X" from above
+        CustomOEMButtonStore.set(btnAction.presses, { name: `Untitled ${keyCounter}`, command: command.command });
+      } else {
+        // Normal update
+        CustomOEMButtonStore.set(btnAction.presses, command);
+      }
+
+      // After set, if connected, send to device for update
+      if (isConnected)
+        await updateOEMButtonPresets(btnAction.presses, command);
+
+    }
+  }, [commandName, command]);
 
   const renderDragItem = useCallback(
     ({ isActive, item, index, onDragEnd, onDragStart, separators }: DragListRenderItemInfo<CommandInput>) => {
@@ -204,6 +239,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     });
   };
 
+  const throttledTextChange = useThrottle((commandText: string) => {
+    return handleCommandChange({ name: commandText })
+  }, 450);
+
   const undo = () => {
     const lastCommandState = undoLog.at(-1)!;
 
@@ -264,7 +303,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         <TooltipHeader
           tooltipContent={
             <Text style={theme.tooltipContainerText}>
-              TODO
+              Give your commands sequence a memorable name so you can add use it quickly from the preset screen, or add it as a button press sequence!
             </Text>
           }
           tooltipTitle="Command Name"
@@ -281,10 +320,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             fontFamily: "IBMPlexSans_400Regular",
             textAlign: "center",
           }}
-          onEndEditing={() => handleCommandChange({ name: cmdName })}
+          onEndEditing={() => { handleCommandChange({ name: cmdName }) }}
           value={cmdName}
           maxLength={16}
-          onChangeText={(text) => setCommandName(text)}
+          onChangeText={(text) => { handleCommandChange({ name: text }); setCommandName(text); }}
           placeholder="Enter command name..."
           placeholderTextColor={colorTheme.disabledButtonColor}
         />
@@ -295,7 +334,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       <TooltipHeader
         tooltipContent={
           <Text style={theme.tooltipContainerText}>
-            TODO
+            Add individual action components to give your sequence a unique, personalized style.
           </Text>
         }
         tooltipTitle="Command Components"
@@ -316,7 +355,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           ref={listRef}
           ListFooterComponent={
             <Pressable
-              onPress={() => setAddComponentVisible(true)}
+              onPress={() => { setAddComponentInitialValue(null); setAddComponentVisible(true); }}
               style={({ pressed }) => ({
                 display: "flex",
                 width: 275,
@@ -333,6 +372,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                 borderRadius: 10,
               })}
               hitSlop={10}
+              key={"custom-command-add"}
             >
               {
                 ({ pressed }) => <>
@@ -452,43 +492,44 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             </>
           )}
         </Pressable>
-        <ConfirmationModal
-          visible={confirmationVisible}
-          onRequestClose={() => setConfirmationVisible(false)}
-          onConfirm={discardChanges}
-          animationType="fade"
-          header={"Are you sure?"}
-          body={
-            `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
-          }
-          cancelButton="Cancel"
-          confirmButton={"Discard Changes"}
-        />
-
-        <ComponentModal
-          onRequestClose={() => setAddComponentVisible(false)}
-          initialValue={addComponentInitialValue}
-          visible={addComponentVisible}
-          onSelect={({ action, delay }) => {
-            if (addComponentInitialValue !== null)
-              handleCommandChange({
-                editCommand: {
-                  command: { transmitValue: action, delay, },
-                  index: editIndex
-                }
-              })
-            else
-              handleCommandChange({
-                addCommand: {
-                  delay: (delay && delay > 0) ? delay : undefined,
-                  transmitValue: action,
-                }
-              });
-            setAddComponentInitialValue(null);
-            setAddComponentVisible(false);
-          }}
-        />
       </View>
+
+      <ConfirmationModal
+        visible={confirmationVisible}
+        onRequestClose={() => setConfirmationVisible(false)}
+        onConfirm={discardChanges}
+        animationType="fade"
+        header={"Are you sure?"}
+        body={
+          `Are you sure you want to discard changes made to ${commandName ? commandName : "this command"}? You will need to restart to create a new command.`
+        }
+        cancelButton="Cancel"
+        confirmButton={"Discard Changes"}
+      />
+
+      <ComponentModal
+        onRequestClose={() => setAddComponentVisible(false)}
+        initialValue={addComponentInitialValue}
+        visible={addComponentVisible}
+        onSelect={({ action, delay }) => {
+          if (addComponentInitialValue !== null)
+            handleCommandChange({
+              editCommand: {
+                command: { transmitValue: action, delay, },
+                index: editIndex
+              }
+            })
+          else
+            handleCommandChange({
+              addCommand: {
+                delay: (delay && delay > 0) ? delay : undefined,
+                transmitValue: action,
+              }
+            });
+          setAddComponentInitialValue(null);
+          setAddComponentVisible(false);
+        }}
+      />
 
       <UnsavedChangesModal
         cancel={() => setUnsavedChangesModalOpen(false)}

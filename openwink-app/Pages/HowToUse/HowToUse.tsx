@@ -17,7 +17,7 @@ const pages = [
 
 export function HowToUse() {
 
-  const { theme } = useColorTheme();
+  const { theme, colorTheme } = useColorTheme();
   const [selectedPage, setSelectedPage] = useState<typeof pages[number]>("App Usage");
 
   return (
@@ -27,6 +27,7 @@ export function HowToUse() {
       <InfoPageHeader
         onSelect={(cat) => setSelectedPage(cat)}
         categories={pages}
+        hiddenBorderColor={colorTheme.backgroundPrimaryColor}
       />
 
       <View

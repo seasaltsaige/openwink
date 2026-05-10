@@ -52,6 +52,7 @@
     "react-native-draglist": "^3.9.9",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^3.3.0",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",

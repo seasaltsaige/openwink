@@ -12,21 +12,13 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import * as ExpoDevice from 'expo-device';
 import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
-import {
-  OTA_SERVICE_UUID,
-  WINK_SERVICE_UUID,
-  MODULE_SETTINGS_SERVICE_UUID,
-  SCAN_TIME_SECONDS,
-  PASSKEY_UUID,
-  UNPAIR_UUID,
-  CUSTOM_COMMAND_UUID,
-} from '../helper/Constants';
-import { AutoConnectStore, DeviceMACStore, MockBleStore } from '../Storage';
+import { BLE, getBLEDescriptors, SCAN_TIME_SECONDS } from '../helper/Constants';
+import { AutoConnectStore, DeviceMACStore, FirmwareStore, MockBleStore } from '../Storage';
 import { getDevicePasskey, sleep } from '../helper/Functions';
 import { useBleMonitor } from './BleMonitorProvider';
-import { MockBleManager } from '../Mock/MockBleSystem';
 import DeviceInfo from 'react-native-device-info';
 import Storage from '../Storage/Storage';
+import { DeviceUUIDStore } from '../Storage/DeviceUUIDStore';
 
 export type BleConnectionContextType = {
   device: Device | null;
@@ -42,6 +34,8 @@ export type BleConnectionContextType = {
   disconnect: (showToast?: boolean) => Promise<void>;
   setAutoConnect: (enabled: boolean) => void;
   unpair: () => Promise<void>;
+  updateProfile: () => Promise<void>;
+  refreshConnection: () => Promise<void>;
 };
 
 export const BleConnectionContext = createContext<BleConnectionContextType | null>(null);
@@ -54,42 +48,17 @@ export const useBleConnection = () => {
   return context;
 };
 
-// Connection retry configuration
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-const MAX_RETRY_DELAY = 10000; // 10 seconds
-
 const isSimulator = (): boolean => {
   return DeviceInfo.isEmulatorSync()
 };
 
-const shouldUseMockBle = (): boolean => {
-  // Always use mock in simulator
-  if (isSimulator()) {
-    return true;
-  }
-
-  // In development mode, check the user preference
-  if (__DEV__) {
-    return MockBleStore.get();
-  }
-
-  // Never use mock in production
-  return false;
-};
-
 const createBleManager = (): BleManager => {
-  if (shouldUseMockBle()) {
-    console.log('Using Mock BLE Manager');
-    return new MockBleManager() as unknown as BleManager;
-  }
-
   return new BleManager();
 };
 
 export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const manager = useMemo(() => createBleManager(), []);
-  const { startMonitoring, stopMonitoring, readInitialValues } = useBleMonitor();
+  const { startMonitoring, stopMonitoring, readInitialValues, writeInitialSettings } = useBleMonitor();
 
   const [device, setDevice] = useState<Device | null>(null);
   const [mac, setMac] = useState('');
@@ -117,6 +86,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedAutoConnect !== null) {
       setAutoConnectEnabled(storedAutoConnect);
     }
+  }, []);
+
+
+  const refreshConnection = useCallback(async () => {
+    const storedMac = DeviceMACStore.getStoredMAC();
+    const autoConnect = AutoConnectStore.get();
+
+    setMac(storedMac ?? "");
+    setAutoConnect(autoConnect);
   }, []);
 
   // Request Android 31+ permissions
@@ -198,37 +176,32 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             return;
           }
 
-          console.log('Interrupting custom command');
 
           // updateActiveCommandName(null);
 
           // Notify device that command is no longer in progress
           device
             .writeCharacteristicWithoutResponseForService(
-              WINK_SERVICE_UUID,
-              CUSTOM_COMMAND_UUID,
+              ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
               base64.encode('0')
             )
             .catch((error) => {
               console.error('Error sending interrupt signal:', error);
             });
         });
-
         // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired")
           await connection.writeCharacteristicWithResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            PASSKEY_UUID,
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode(getDevicePasskey()),
           );
         else
           await connection.writeCharacteristicWithResponseForService(
-            MODULE_SETTINGS_SERVICE_UUID,
-            PASSKEY_UUID,
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode("CLAIM"),
           );
 
-
+        await writeInitialSettings(connection);
         await readInitialValues(connection);
 
         // Once all is initialized and nothing failed, device has successfully connected.
@@ -328,7 +301,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       // if there is no stored MAC address, and scanned device has required service uuids
       else if (scannedDevice.serviceUUIDs && targetMac === null)
         return (
-          scannedDevice.serviceUUIDs.includes(WINK_SERVICE_UUID)
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.OTA.UUID) &&
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.WINK.UUID) &&
+          scannedDevice.serviceUUIDs.includes(BLE.SERVICES.SETTINGS.UUID)
         );
       else
         return false;
@@ -370,7 +345,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsConnecting(false);
 
         // Restart scan if auto-connect is enabled
-        if (autoConnectRef.current) {
+        const autoConnectEnabled = AutoConnectStore.get();
+        setAutoConnectEnabled(autoConnectEnabled);
+
+        if (autoConnectEnabled) {
           console.log('Auto-connect enabled, restarting scan...');
           await scanForModule();
         } else {
@@ -475,8 +453,14 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Set auto-connect preference
   const setAutoConnect = useCallback((enabled: boolean) => {
-    console.log('Auto-connect:', enabled);
     setAutoConnectEnabled(enabled);
+    if (!enabled) {
+      manager.stopDeviceScan().then(() => setIsScanning(false)).catch(err => {
+        console.error('Error during connection process:', err);
+        setIsScanning(false);
+      });
+    }
+
     AutoConnectStore.set(enabled);
   }, []);
 
@@ -485,8 +469,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Always remove from app, allows unpair when not connected
     DeviceMACStore.forgetMAC();
+    DeviceUUIDStore.forgetUUID();
     setMac("");
-    Storage.delete("device-passkey");
+    FirmwareStore.forgetFirmwareVersion();
+
 
     console.log("MAC Erased");
 
@@ -494,8 +480,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (device !== null) {
       try {
         await device.writeCharacteristicWithoutResponseForService(
-          MODULE_SETTINGS_SERVICE_UUID,
-          UNPAIR_UUID,
+          ...getBLEDescriptors("SETTINGS", "UNPAIR"),
           base64.encode('0')
         );
 
@@ -513,6 +498,17 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       text2: 'Successfully unpaired from module.',
       visibilityTime: 3000,
     });
+  }, [device]);
+
+  const updateProfile = useCallback(async () => {
+    if (!device) return;
+
+    try {
+      await writeInitialSettings(device);
+    } catch (err) {
+      console.log("Error updating profile on module: ", err);
+    }
+
   }, [device]);
 
   // Cleanup on unmount
@@ -548,6 +544,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     disconnect,
     setAutoConnect,
     unpair,
+    updateProfile,
+    refreshConnection,
   };
 
   return (

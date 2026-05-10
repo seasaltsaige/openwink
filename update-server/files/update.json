@@ -1,4 +1,4 @@
 {
-  "version": "0.9.9",
-  "description": "Fake 0.9.5 fix issues?"
+  "version": "0.10.5",
+  "description": "Adds Left-Right/Right-Left action compatibility with default and custom command sequences, allowing these actions to be used from the app, apart from just custom button sequence actions."
 }

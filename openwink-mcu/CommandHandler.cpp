@@ -98,6 +98,7 @@ void CommandHandler::handleQueuedCommand() {
       waveHeadlights(WAVE_START_SIDE::LEFT);
       break;
 
+    // "Wave" right first
     case 11:
 
       if (leftStatus != rightStatus) {
@@ -107,6 +108,92 @@ void CommandHandler::handleQueuedCommand() {
         BLE::updateHeadlightChars();
       }
       waveHeadlights(WAVE_START_SIDE::RIGHT);
+      break;
+
+    // left - right sequence
+    case 12:
+
+      if (leftStatus == 0) rightDown();
+      else rightUp();
+
+      if (leftStatus == 0) {
+        leftUp();
+        bothSwap();
+        bothSwap();
+        leftDown();
+      } else {
+        leftDown();
+        bothSwap();
+        bothSwap();
+        leftUp();
+      }
+
+      break;
+    // left - right x2
+    case 13:
+      if (leftStatus == 0) rightDown();
+      else rightUp();
+
+      if (leftStatus == 0) {
+        leftUp();
+        bothSwap();
+        bothSwap();
+      } else {
+        leftDown();
+        bothSwap();
+        bothSwap();
+      }
+
+      bothSwap();
+      bothSwap();
+
+      if (leftStatus == 0) {
+        leftUp();
+      } else {
+        leftDown();
+      }
+      break;
+    // right - left
+    case 14:
+      if (rightStatus == 0) leftDown();
+      else leftUp();
+
+      if (rightStatus == 0) {
+        rightUp();
+        bothSwap();
+        bothSwap();
+        rightDown();
+      } else {
+        rightDown();
+        bothSwap();
+        bothSwap();
+        rightUp();
+      }
+      break;
+    // right - left x2
+    case 15:
+      if (rightStatus == 0) leftDown();
+      else leftUp();
+
+      if (rightStatus == 0) {
+        rightUp();
+        bothSwap();
+        bothSwap();
+      } else {
+        rightDown();
+        bothSwap();
+        bothSwap();
+      }
+
+      bothSwap();
+      bothSwap();
+
+      
+      if (rightStatus == 0) {
+        rightUp();
+      } else {
+        rightDown();
+      }
       break;
   }
 

@@ -5,32 +5,23 @@ const QUICKLINKS_KEY = "quick-links";
 
 const DEFAULTS: QuickLink[] = [
   {
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "WaveDelaySettings"
-    },
-    icon: "radio-outline",
-    title: "Wave Delay Settings"
-  },
-  {
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "CustomWinkButton",
-    },
-    icon: "speedometer-outline",
-    title: "Set Up Custom Wink Button",
-  },
-  {
+    icon: "eye-outline",
+    title: "Sleepy Eye Settings",
     navigation: {
       back: "Home",
       backHumanReadable: "Home",
       page: "SleepyEyeSettings",
     },
-    icon: "eye-outline",
-    title: "Sleepy Eye Settings",
-  }
+  },
+  {
+    icon: "speedometer-outline",
+    title: "Customize Button Actions",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "CustomWinkButton",
+    },
+  },
 ]
 export abstract class QuickLinksStore {
 

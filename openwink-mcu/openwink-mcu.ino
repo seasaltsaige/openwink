@@ -7,12 +7,6 @@
 #include "BLECallbacks.h"
 #include "ButtonHandler.h"
 #include "CommandHandler.h"
-#include "MainFunctions.h"
-#include "Storage.h"
-#include "constants.h"
-
-// #include "esp_gatts_api.h"
-// #include "esp_gatt_defs.h"
 
 using namespace std;
 

@@ -6,10 +6,10 @@ export * from "./Home/StandardCommands";
 export * from "./HowToUse/HowToUse";
 
 export * from "./Settings/Settings";
+export * from "./Settings/SystemPresets/SystemProfiles";
 export * from "./Settings/Information";
 export * from "./Settings/AppTheme";
 export * from "./Settings/TermsOfUse";
-export * from "./Settings/DeveloperSettings";
 
 export * from "./Settings/ModuleSettings/ModuleSettings";
 export * from "./Settings/ModuleSettings/CustomWinkButton";

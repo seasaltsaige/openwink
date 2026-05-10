@@ -14,6 +14,7 @@ void bothDown();
 void leftDown();
 void rightDown();
 void bothBlink();
+void bothSwap();
 void leftWink();
 void rightWink();
 void waveHeadlights(WAVE_START_SIDE side);
