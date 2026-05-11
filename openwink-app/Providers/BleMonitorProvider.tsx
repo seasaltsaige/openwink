@@ -371,6 +371,26 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return sub.remove;
   }, []);
 
+  const monitorReset = useCallback((device: Device) => {
+    const sub = device.monitorCharacteristicForService(
+      ...getBLEDescriptors("SETTINGS", "RESET"),
+      (err, char) => {
+        if (err)
+          return console.log("Err Monitorying 'RESET' Char");
+
+        if (!char?.value) return;
+
+        const decoded = base64.decode(char.value);
+        if (decoded === "1") {
+          // TODO: reset app, clean disconnect (hopefully lol)
+
+        }
+      }
+    );
+
+    return sub.remove;
+  }, []);
+
   // Start monitoring all characteristics
   const startMonitoring = useCallback(
     async (device: Device, onCustomCommandInterrupt: () => void) => {
