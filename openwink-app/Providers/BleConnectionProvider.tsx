@@ -194,6 +194,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
           try {
             await connection.cancelConnection();
+
+            Toast.show({
+              type: "info",
+              text1: "Unpaired",
+              text2: "Unpaired from Module successfully",
+              visibilityTime: 4000,
+            });
+
+
           } catch (err) {
             console.log(err, "Error disconnecting on reset");
           }
