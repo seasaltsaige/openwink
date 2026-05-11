@@ -27,23 +27,25 @@ void setup() {
   }
   Serial.printf("%02X\n", baseMac[5]);
 
+  ButtonHandler::setupGPIO();
   ButtonHandler::init();
 
+  ButtonHandler::readOnWakeup();
+
+  BLE::init("OpenWink");
+  
+  ButtonHandler::readOnWakeup();
   Storage::begin("oem-store");
   Storage::getFromStorage();
   esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-
-  BLE::init("OpenWink");
-
   setCpuFrequencyMhz(80);
-
+  ButtonHandler::readOnWakeup();
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   printf("Version %s\n", FIRMWARE_VERSION);
-
+  ButtonHandler::readOnWakeup();
   BLE::start();
 
-  ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();
 

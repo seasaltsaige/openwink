@@ -369,7 +369,7 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // Small pulse occurred --- THIS MEANS HEADLIGHTS ARE *ON*. THIS IS ONE PRESS
-  if (checkDebounce && (buttonInput != initialButton) && (millis() - buttonTimer) <= DEBOUNCE_MS) {
+  if (customButtonStatusEnabled && checkDebounce && (buttonInput != initialButton) && (millis() - buttonTimer) <= DEBOUNCE_MS) {
     if (!bypassHeadlightOverride) {
       Serial.println("Bypass not enabled");
       checkDebounce = false;
@@ -408,8 +408,8 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // IF debounce time has passed
-  if ((!debounceOccurred && checkDebounce) &&
-      (millis() - buttonTimer) > DEBOUNCE_MS) {
+  if ((customButtonStatusEnabled && (!debounceOccurred && checkDebounce) &&
+      (millis() - buttonTimer) > DEBOUNCE_MS) || (!customButtonStatusEnabled && initialButton != buttonInput)) {
     // no longer need to check debounce
     checkDebounce = false;
     Serial.println("Past debounce timer");
@@ -433,7 +433,7 @@ void ButtonHandler::loopButtonHandler() {
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
   } else if ((customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) || 
-            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 3000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
+            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 1500)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
     Serial.println("Past timer... executing command");
     // Timeout has occurred, send command based on count
 

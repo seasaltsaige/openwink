@@ -332,25 +332,8 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     buffTotalSize = 0;
     buffSizeWritten = 0;
     BLE::setFirmwareUpdateStatus("updating");
-    Serial.println("OTA Update Started");
     return;
   } 
-  // At least temporary for now.
-  // Potentially may add a HALT characteristic later to still handle this
-  // Though im not sure if its super necessary in reality.
-  // else if (charData == "HALT") {
-  //   updateInProgress = false;
-  //   buffTotalSize = 0;
-  //   buffSizeWritten = 0;
-  //   BLE::setFirmwareUpdateStatus("canceled");
-  //   Serial.println("OTA Update Canceled");
-  //   delay(25);
-  //   otaUpdateRestartQueued = true;
-  //   return;
-  // }
-
-
-  // const uint8_t* = (const uint8_t*)charData.data();
 
   if (updateInProgress) {
     // Update in progress, but no file size written yet, needs to be set
@@ -366,7 +349,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
         Update.printError(Serial);
         updateInProgress = false;
         BLE::setFirmwareUpdateStatus("failed");
-        Serial.println("OTA Update Failed to initialize");
         return;
       }
     } else {
@@ -376,15 +358,12 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       if (charData == "DONE") {
         if (buffTotalSize != buffSizeWritten) {
           // Something went wrong, buff sizes do not match as expected
-          Serial.printf("OTA Size mismatch Total: %d - Received: %d\n", buffTotalSize, buffSizeWritten);
           Update.end(false);
         } else if (Update.end(true)) {
-          Serial.println("Update success");
           BLE::setFirmwareUpdateStatus("success");
           esp_ota_mark_app_valid_cancel_rollback();
           otaUpdateRestartQueued = true;
         } else {
-          Serial.println("OTA Update failed to finalize");
           Update.printError(Serial);
         }
         updateInProgress = false;
@@ -394,7 +373,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       uint8_t* toWriteData = const_cast<uint8_t*>((const uint8_t*)charData.data());
       if (buffTotalSize > buffSizeWritten) {
         size_t writtenSize = Update.write(toWriteData, len);
-        // Serial.printf("Wrote size: %zu\nTotal Written out of Total Size: (%d/%d)", writtenSize, buffSizeWritten, buffTotalSize);
         if (writtenSize != len) {
           // Something went wrong writting data, update void
           updateInProgress = false;
@@ -407,7 +385,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
         int progress = (buffSizeWritten * 100) / buffTotalSize;
         if (progress != lastProgress) {
           lastProgress = progress;
-          Serial.printf("OTA Progress at %d\n", progress);
           BLE::setFirmwarePercent(to_string(progress));
         }
       }
