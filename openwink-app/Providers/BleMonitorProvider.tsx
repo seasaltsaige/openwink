@@ -27,7 +27,7 @@ export type BleMonitorContextType = {
   headlightBypass: boolean;
   buttonDelay: number;
 
-  startMonitoring: (device: Device, onCustomCommandInterrupt: () => void) => Promise<void>;
+  startMonitoring: (device: Device, onCustomCommandInterrupt: () => void, onReset: () => Promise<void>) => Promise<void>;
   stopMonitoring: () => void;
   readInitialValues: (device: Device) => Promise<void>;
   writeInitialSettings: (device: Device) => Promise<void>;
@@ -371,7 +371,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return sub.remove;
   }, []);
 
-  const monitorReset = useCallback((device: Device) => {
+  const monitorReset = useCallback((device: Device, onReset: () => Promise<void>) => {
     const sub = device.monitorCharacteristicForService(
       ...getBLEDescriptors("SETTINGS", "RESET"),
       (err, char) => {
@@ -381,20 +381,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!char?.value) return;
 
         const decoded = base64.decode(char.value);
-        console.log(decoded);
         if (decoded === "1") {
-          // TODO: reset app, clean disconnect (hopefully lol)
-          DeviceUUIDStore.forgetUUID();
-          DeviceMACStore.forgetMAC();
-          FirmwareStore.forgetFirmwareVersion();
+          onReset();
           setFirmwareVersion("");
-
-          // TODO: send toast?
-          // use external callback from connection provider to handle reset?
-          // could reset some state values too from there... probably
-          console.log("Resetting from notif");
-
-          device.cancelConnection().catch(console.log);
         }
       }
     );
@@ -404,7 +393,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Start monitoring all characteristics
   const startMonitoring = useCallback(
-    async (device: Device, onCustomCommandInterrupt: () => void) => {
+    async (device: Device, onCustomCommandInterrupt: () => void, onReset: () => Promise<void>) => {
 
       try {
         // Set up all monitors and store cleanup functions
@@ -417,7 +406,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           monitorMotionValue(device),
           monitorPasskey(device),
           monitorSwapStatus(device),
-          monitorReset(device),
+          monitorReset(device, onReset),
         ];
 
         // Only add custom command monitor if callback provided
