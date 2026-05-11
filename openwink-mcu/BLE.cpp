@@ -55,6 +55,7 @@ NimBLECharacteristic *BLE::headlightBypassChar;
 NimBLECharacteristic *BLE::headlightOrientationChar;
 
 bool BLE::deviceConnected = false;
+bool BLE::initialized = false;
 
 void BLE::init(string deviceName) {
   NimBLEDevice::init(deviceName);
@@ -64,6 +65,7 @@ void BLE::init(string deviceName) {
   initServiceCharacteristics();
   initAdvertising();
   NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+  initialized = true;
 }
 
 void BLE::initDeviceServer() {
@@ -112,7 +114,7 @@ void BLE::initServiceCharacteristics() {
   headlightMotionChar = settingsService->createCharacteristic(HEADLIGHT_MOTION_IN_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
   sleepSettingsChar = settingsService->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
   unpairChar = settingsService->createCharacteristic(UNPAIR_UUID, NIMBLE_PROPERTY::WRITE_NR);
-  resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR);
+  resetChar = settingsService->createCharacteristic(RESET_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::NOTIFY);
   passkeyChar = settingsService->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
@@ -128,6 +130,7 @@ void BLE::initServiceCharacteristics() {
   customButtonChar->setValue(customButtonPressArray[1]);
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   sleepSettingsChar->setValue(sleepCharStart);
+  resetChar->setValue("0");
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
@@ -138,6 +141,7 @@ void BLE::initServiceCharacteristics() {
   passkeyChar->setCallbacks(new PassKeyCharacteristicCallbacks());
   headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
   headlightOrientationChar->setCallbacks(new HeadlightOrientationCharacteristicCallbacks());
+
 }
 
 void BLE::initAdvertising() {
@@ -170,6 +174,7 @@ void BLE::start() {
 }
 
 void BLE::updateHeadlightChars() {
+  if (!initialized) return;
   leftStatusChar->setValue(std::to_string(leftStatus));
   rightStatusChar->setValue(std::to_string(rightStatus));
   leftStatusChar->notify();
@@ -177,11 +182,13 @@ void BLE::updateHeadlightChars() {
 }
 
 void BLE::setMotionInValue(string value) {
+  if (!initialized) return;
   headlightMotionChar->setValue(value);
   headlightMotionChar->notify();
 }
 
 void BLE::setBusy(bool busy) {
+  if (!initialized) return;
   if (busy) {
     busyChar->setValue("1");
   } else {
@@ -191,11 +198,13 @@ void BLE::setBusy(bool busy) {
 }
 
 void BLE::setFirmwareUpdateStatus(string status) {
+  if (!initialized) return;
   firmwareStatus->setValue(status.c_str());
   firmwareStatus->notify();
 }
 
 void BLE::setFirmwarePercent(string stringPercentage) {
+  if (!initialized) return;
   firmwareUpdateNotifier->setValue(stringPercentage);
   firmwareUpdateNotifier->notify();
 }

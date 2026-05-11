@@ -76,12 +76,11 @@ void ButtonHandler::readOnWakeup() {
     mainTimer = millis();
     if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
-      Serial.printf("Wakeup button press: %d\n", buttonPressCounter);
+
       buttonTimer = millis();
       debounceTimer = millis();
     }
   } else {
-    Serial.printf("Custom not enabled\n");
     if ((wakeupValue != initialButton)) {
       buttonPressCounter++;
       if (initialButton == 1)
@@ -124,6 +123,9 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     Storage::reset();
 
+    if (BLE::getDeviceConnected())
+      BLE::sendReset();
+
     // reset sequence to visually indicate reset success
     leftWink();
     setAllOff();
@@ -131,8 +133,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     setAllOff();
     bothBlink();
     setAllOff();
-
-    Serial.printf("RESET BONDED DEVICE. GOING TO SLEEP.\n");
 
     // reset wakeup sources
     esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
@@ -149,13 +149,6 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     esp_deep_sleep_start();
     return;
   }
-
-  // check length --> if length 1, parse to int and proceed with default things,
-  // otherwise, will be modified custom command with guaranteed length of 2 or
-  // more, thus sending to CommandHandler to parse and execute.
-
-  Serial.printf("Executing preset with %d, presses\n", numberOfPresses);
-  Serial.printf("Preset Value: %s\n", response.c_str());
 
   if (response == "10" && customButtonStatusEnabled) {
     if (isSleepy())
@@ -369,9 +362,8 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // Small pulse occurred --- THIS MEANS HEADLIGHTS ARE *ON*. THIS IS ONE PRESS
-  if (checkDebounce && (buttonInput != initialButton) && (millis() - buttonTimer) <= DEBOUNCE_MS) {
+  if (customButtonStatusEnabled && checkDebounce && (buttonInput != initialButton) && (millis() - buttonTimer) <= DEBOUNCE_MS) {
     if (!bypassHeadlightOverride) {
-      Serial.println("Bypass not enabled");
       checkDebounce = false;
       debounceOccurred = false;
       buttonPressCounter = 0;
@@ -379,8 +371,6 @@ void ButtonHandler::loopButtonHandler() {
     }
 
     debounceOccurred = true;
-
-    Serial.println("Debounce occurred");
     buttonPressCounter++;
     
     ButtonHandler::loopCustomCommandInterruptHandler();
@@ -393,7 +383,6 @@ void ButtonHandler::loopButtonHandler() {
 
   // if button input changes, set debounce timer and return
   if (buttonInput != initialButton) {
-    Serial.println("Inputs differ");
     debounceTimer = millis();
     // button timer gets set every press (only affects non-headlight on /
     // no-debounce state)
@@ -408,11 +397,10 @@ void ButtonHandler::loopButtonHandler() {
   }
 
   // IF debounce time has passed
-  if ((!debounceOccurred && checkDebounce) &&
-      (millis() - buttonTimer) > DEBOUNCE_MS) {
+  if ((customButtonStatusEnabled && (!debounceOccurred && checkDebounce) &&
+      (millis() - buttonTimer) > DEBOUNCE_MS) || (!customButtonStatusEnabled && initialButton != buttonInput)) {
     // no longer need to check debounce
     checkDebounce = false;
-    Serial.println("Past debounce timer");
     // checkDebounce being true means that button was pressed previously
     if (customButtonStatusEnabled) {
       // add to counter
@@ -428,13 +416,10 @@ void ButtonHandler::loopButtonHandler() {
       initialButton = !initialButton;
     }
 
-    Serial.printf("Press Count: %d\n", buttonPressCounter);
-
     // if button has been pressed at least one time, and wait time has exceeded
     // max, execute action
   } else if ((customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > maxTimeBetween_ms) || 
-            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 3000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
-    Serial.println("Past timer... executing command");
+            (!customButtonStatusEnabled && buttonPressCounter > 0 && (millis() - buttonTimer) > 2000)) { // 2000 ms timeout for non-custom button press sequence, since the headlights need to move for each press to register
     // Timeout has occurred, send command based on count
 
     if (customButtonStatusEnabled ||
@@ -471,7 +456,6 @@ void ButtonHandler::loopLeftMonitor() {
     leftMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
       leftMoveTime = static_cast<int>(timeToMove);
-      Serial.printf("Left Headlight Time: %dms\n", leftMoveTime);
     }
     leftTimer = 0;
     // If both left and right have stopped
@@ -505,7 +489,6 @@ void ButtonHandler::loopRightMonitor() {
     rightMoving = false;
     if (timeToMove <= 1000 && timeToMove >= 450) {
       rightMoveTime = static_cast<int>(timeToMove);
-      Serial.printf("Right Headlight Time: %dms\n", rightMoveTime);
     }
     rightTimer = 0;
     // If both left and right have stopped
@@ -535,8 +518,6 @@ void ButtonHandler::updateButtonSleep() {
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
-
-    Serial.println("Entering deep sleep...");
 
     if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();

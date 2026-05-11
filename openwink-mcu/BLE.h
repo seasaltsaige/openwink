@@ -52,6 +52,7 @@ private:
   static NimBLECharacteristic* passkeyChar;
 
   static bool deviceConnected;
+  static bool initialized;
 
   static void initDeviceServer();
   static void initServerService();
@@ -91,5 +92,10 @@ public:
 
   static void disconnect(const NimBLEConnInfo &connInfo) {
     server->disconnect(connInfo);
+  }
+
+  static void sendReset() {
+    resetChar->setValue("1");
+    resetChar->notify();
   }
 };

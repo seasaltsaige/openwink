@@ -1,4 +1,4 @@
 {
-  "version": "0.10.5",
-  "description": "Adds Left-Right/Right-Left action compatibility with default and custom command sequences, allowing these actions to be used from the app, apart from just custom button sequence actions."
+  "version": "0.11.1",
+  "description": "Fixes several issues with button press sequences behaving abnormally during wake-up from sleep and other edge cases. Additionally, adds notifications on module reset to allow app to unpair if conncted."
 }

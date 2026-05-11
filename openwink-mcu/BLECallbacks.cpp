@@ -46,17 +46,11 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   BLE::setDeviceConnected(true);
   BLE::updateHeadlightChars();
   bool update = pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
-  if (update) {
-    Serial.println("PHY SUCCESSFULLY UPDATE");
-  } else {
-    Serial.println("PHY UPDATE FAILED");
-  }
 
   pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
   pServer->setDataLen(connInfo.getConnHandle(), 251);
   connEstablishing = false;
 
-  Serial.printf("Starting AUTH Sequence\n");
   authTimer = millis();
   auth_status = Storage::hasBond() ? WAIT_TOKEN : WAIT_CLAIM;
   authConnInfo = connInfo.getConnHandle();
@@ -140,7 +134,6 @@ int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  Serial.printf("Custom Press Char Value: %s\n", value.c_str());
 
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
@@ -166,7 +159,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   } else if (customButtonPressUpdateState == 1) {
     customButtonPressUpdateState = 0;
     if (indexToUpdate == 0) return;
-    Serial.printf("%s\n", value.c_str());
+
     customButtonPressArray[indexToUpdate] = value;
     Storage::setCustomButtonPressArray(indexToUpdate, value);
 
@@ -215,7 +208,6 @@ void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pCha
 void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
   string received = pChar->getValue();
-  Serial.printf("Received: %s\n", received.c_str());
   if (received == "1") {
     Storage::setHeadlightBypass(true);
     bypassHeadlightOverride = true;
@@ -275,8 +267,6 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
 void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
 
-  Serial.printf("Characteristic Written: %s\n", value.c_str());
-
   if (auth_status == AuthState::WAIT_CLAIM && value == "CLAIM") {
     char passkey[33];
     generateToken(passkey);
@@ -319,7 +309,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     if (phy2mSuccess) {
       Serial.println("Successfully updated PHY to 2M for OTA Update");
     } else {
-      Serial.println("Failed to update PHY to 2M... Trying 1M");
       bool phy1mSuccess = server->updatePhy(info.getConnHandle(), BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
       if (phy1mSuccess) {
         Serial.println("Successfully updated PHY to 1M for OTA Update");
@@ -332,25 +321,8 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     buffTotalSize = 0;
     buffSizeWritten = 0;
     BLE::setFirmwareUpdateStatus("updating");
-    Serial.println("OTA Update Started");
     return;
   } 
-  // At least temporary for now.
-  // Potentially may add a HALT characteristic later to still handle this
-  // Though im not sure if its super necessary in reality.
-  // else if (charData == "HALT") {
-  //   updateInProgress = false;
-  //   buffTotalSize = 0;
-  //   buffSizeWritten = 0;
-  //   BLE::setFirmwareUpdateStatus("canceled");
-  //   Serial.println("OTA Update Canceled");
-  //   delay(25);
-  //   otaUpdateRestartQueued = true;
-  //   return;
-  // }
-
-
-  // const uint8_t* = (const uint8_t*)charData.data();
 
   if (updateInProgress) {
     // Update in progress, but no file size written yet, needs to be set
@@ -359,14 +331,11 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       int fileSize = stoi(charData);
       buffTotalSize = fileSize;
 
-      Serial.printf("OTA File Size: %d\n", fileSize);
-
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
         Update.printError(Serial);
         updateInProgress = false;
         BLE::setFirmwareUpdateStatus("failed");
-        Serial.println("OTA Update Failed to initialize");
         return;
       }
     } else {
@@ -376,15 +345,12 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       if (charData == "DONE") {
         if (buffTotalSize != buffSizeWritten) {
           // Something went wrong, buff sizes do not match as expected
-          Serial.printf("OTA Size mismatch Total: %d - Received: %d\n", buffTotalSize, buffSizeWritten);
           Update.end(false);
         } else if (Update.end(true)) {
-          Serial.println("Update success");
           BLE::setFirmwareUpdateStatus("success");
           esp_ota_mark_app_valid_cancel_rollback();
           otaUpdateRestartQueued = true;
         } else {
-          Serial.println("OTA Update failed to finalize");
           Update.printError(Serial);
         }
         updateInProgress = false;
@@ -394,12 +360,10 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       uint8_t* toWriteData = const_cast<uint8_t*>((const uint8_t*)charData.data());
       if (buffTotalSize > buffSizeWritten) {
         size_t writtenSize = Update.write(toWriteData, len);
-        // Serial.printf("Wrote size: %zu\nTotal Written out of Total Size: (%d/%d)", writtenSize, buffSizeWritten, buffTotalSize);
         if (writtenSize != len) {
           // Something went wrong writting data, update void
           updateInProgress = false;
           BLE::setFirmwareUpdateStatus("failed");
-          Serial.println("OTA Update Failed");
           return;
         }
 
@@ -407,7 +371,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
         int progress = (buffSizeWritten * 100) / buffTotalSize;
         if (progress != lastProgress) {
           lastProgress = progress;
-          Serial.printf("OTA Progress at %d\n", progress);
           BLE::setFirmwarePercent(to_string(progress));
         }
       }

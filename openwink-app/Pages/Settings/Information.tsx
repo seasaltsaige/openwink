@@ -57,7 +57,7 @@ export function Information() {
         "Up" :
         status === 0 ?
           "Down" :
-          `%${status * 100}`
+          `${status * 100}%`
     ) : "Unavailable"
   );
   const connectionStatus = (scanning: boolean, connecting: boolean, connected: boolean) => (

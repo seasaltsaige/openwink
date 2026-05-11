@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { Device } from 'react-native-ble-plx';
 import base64 from 'react-native-base64';
 import { getBLEDescriptors, buttonBehaviorMap, } from '../helper/Constants';
-import { CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
+import { CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
 import { HeadlightOrientationStore, ORIENTATION } from '../Storage/HeadlightOrientationStore';
 import { HeadlightMovementSpeedStore, SIDE } from '../Storage/HeadlightMovementSpeedStore';
@@ -27,7 +27,7 @@ export type BleMonitorContextType = {
   headlightBypass: boolean;
   buttonDelay: number;
 
-  startMonitoring: (device: Device, onCustomCommandInterrupt: () => void) => Promise<void>;
+  startMonitoring: (device: Device, onCustomCommandInterrupt: () => void, onReset: () => Promise<void>) => Promise<void>;
   stopMonitoring: () => void;
   readInitialValues: (device: Device) => Promise<void>;
   writeInitialSettings: (device: Device) => Promise<void>;
@@ -371,9 +371,29 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return sub.remove;
   }, []);
 
+  const monitorReset = useCallback((device: Device, onReset: () => Promise<void>) => {
+    const sub = device.monitorCharacteristicForService(
+      ...getBLEDescriptors("SETTINGS", "RESET"),
+      (err, char) => {
+        if (err)
+          return console.log("Err Monitorying 'RESET' Char");
+
+        if (!char?.value) return;
+
+        const decoded = base64.decode(char.value);
+        if (decoded === "1") {
+          onReset();
+          setFirmwareVersion("");
+        }
+      }
+    );
+
+    return sub.remove;
+  }, []);
+
   // Start monitoring all characteristics
   const startMonitoring = useCallback(
-    async (device: Device, onCustomCommandInterrupt: () => void) => {
+    async (device: Device, onCustomCommandInterrupt: () => void, onReset: () => Promise<void>) => {
 
       try {
         // Set up all monitors and store cleanup functions
@@ -386,6 +406,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           monitorMotionValue(device),
           monitorPasskey(device),
           monitorSwapStatus(device),
+          monitorReset(device, onReset),
         ];
 
         // Only add custom command monitor if callback provided

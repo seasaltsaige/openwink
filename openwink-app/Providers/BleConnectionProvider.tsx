@@ -176,9 +176,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             return;
           }
 
-
-          // updateActiveCommandName(null);
-
           // Notify device that command is no longer in progress
           device
             .writeCharacteristicWithoutResponseForService(
@@ -188,6 +185,27 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             .catch((error) => {
               console.error('Error sending interrupt signal:', error);
             });
+        }, async () => {
+          DeviceUUIDStore.forgetUUID();
+          DeviceMACStore.forgetMAC();
+          FirmwareStore.forgetFirmwareVersion();
+
+          setMac("");
+
+          try {
+            await connection.cancelConnection();
+
+            Toast.show({
+              type: "info",
+              text1: "Unpaired",
+              text2: "Unpaired from Module successfully",
+              visibilityTime: 4000,
+            });
+
+
+          } catch (err) {
+            console.log(err, "Error disconnecting on reset");
+          }
         });
         // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired")
