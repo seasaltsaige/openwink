@@ -46,17 +46,11 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
   BLE::setDeviceConnected(true);
   BLE::updateHeadlightChars();
   bool update = pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
-  if (update) {
-    Serial.println("PHY SUCCESSFULLY UPDATE");
-  } else {
-    Serial.println("PHY UPDATE FAILED");
-  }
 
   pServer->updateConnParams(connInfo.getConnHandle(), MIN_INTERVAL, MAX_INTERVAL, LATENCY, TIMEOUT);
   pServer->setDataLen(connInfo.getConnHandle(), 251);
   connEstablishing = false;
 
-  Serial.printf("Starting AUTH Sequence\n");
   authTimer = millis();
   auth_status = Storage::hasBond() ? WAIT_TOKEN : WAIT_CLAIM;
   authConnInfo = connInfo.getConnHandle();
@@ -140,7 +134,6 @@ int indexToUpdate = 0;
 
 void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
-  Serial.printf("Custom Press Char Value: %s\n", value.c_str());
 
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
@@ -166,7 +159,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   } else if (customButtonPressUpdateState == 1) {
     customButtonPressUpdateState = 0;
     if (indexToUpdate == 0) return;
-    Serial.printf("%s\n", value.c_str());
+
     customButtonPressArray[indexToUpdate] = value;
     Storage::setCustomButtonPressArray(indexToUpdate, value);
 
@@ -215,7 +208,6 @@ void CustomButtonPressCharacteristicCallbacks::onRead(NimBLECharacteristic* pCha
 void HeadlightBypassCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
   string received = pChar->getValue();
-  Serial.printf("Received: %s\n", received.c_str());
   if (received == "1") {
     Storage::setHeadlightBypass(true);
     bypassHeadlightOverride = true;
@@ -275,8 +267,6 @@ void ResetCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLECo
 void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();
 
-  Serial.printf("Characteristic Written: %s\n", value.c_str());
-
   if (auth_status == AuthState::WAIT_CLAIM && value == "CLAIM") {
     char passkey[33];
     generateToken(passkey);
@@ -319,7 +309,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     if (phy2mSuccess) {
       Serial.println("Successfully updated PHY to 2M for OTA Update");
     } else {
-      Serial.println("Failed to update PHY to 2M... Trying 1M");
       bool phy1mSuccess = server->updatePhy(info.getConnHandle(), BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
       if (phy1mSuccess) {
         Serial.println("Successfully updated PHY to 1M for OTA Update");
@@ -341,8 +330,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 
       int fileSize = stoi(charData);
       buffTotalSize = fileSize;
-
-      Serial.printf("OTA File Size: %d\n", fileSize);
 
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
@@ -377,7 +364,6 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
           // Something went wrong writting data, update void
           updateInProgress = false;
           BLE::setFirmwareUpdateStatus("failed");
-          Serial.println("OTA Update Failed");
           return;
         }
 

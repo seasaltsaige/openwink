@@ -1,9 +1,6 @@
 #include <stdint.h>
 #pragma once
 
-
-// #include "NimBLEConnInfo.h"
-// #include "NimBLECharacteristic.h"
 #include <vector>
 #include <string>
 #include "NimBLEServer.h"

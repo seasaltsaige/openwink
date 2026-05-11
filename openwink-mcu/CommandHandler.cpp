@@ -197,6 +197,8 @@ void CommandHandler::handleQueuedCommand() {
       break;
   }
 
+  Serial.printf("Was sleepy?: %s\n", wasSleepy ? "true" : "false");
+
   if (wasSleepy)
     sleepyEye(true, true);
 
