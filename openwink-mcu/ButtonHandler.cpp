@@ -124,6 +124,9 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     Storage::reset();
 
+    if (BLE::getDeviceConnected())
+      BLE::sendReset();
+
     // reset sequence to visually indicate reset success
     leftWink();
     setAllOff();

@@ -130,6 +130,7 @@ void BLE::initServiceCharacteristics() {
   customButtonChar->setValue(customButtonPressArray[1]);
   string sleepCharStart = to_string(leftSleepyValue) + "-" + to_string(rightSleepyValue);
   sleepSettingsChar->setValue(sleepCharStart);
+  resetChar->setValue("0");
 
   longTermSleepChar->setCallbacks(new LongTermSleepCharacteristicCallbacks());
   customButtonChar->setCallbacks(new CustomButtonPressCharacteristicCallbacks());
@@ -140,6 +141,7 @@ void BLE::initServiceCharacteristics() {
   passkeyChar->setCallbacks(new PassKeyCharacteristicCallbacks());
   headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
   headlightOrientationChar->setCallbacks(new HeadlightOrientationCharacteristicCallbacks());
+
 }
 
 void BLE::initAdvertising() {

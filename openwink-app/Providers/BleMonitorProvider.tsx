@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef, useEff
 import { Device } from 'react-native-ble-plx';
 import base64 from 'react-native-base64';
 import { getBLEDescriptors, buttonBehaviorMap, } from '../helper/Constants';
-import { CustomOEMButtonStore, CustomWaveStore, FirmwareStore, SleepyEyeStore } from '../Storage';
+import { CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, FirmwareStore, SleepyEyeStore } from '../Storage';
 import { sleep, toProperCase } from '../helper/Functions';
 import { HeadlightOrientationStore, ORIENTATION } from '../Storage/HeadlightOrientationStore';
 import { HeadlightMovementSpeedStore, SIDE } from '../Storage/HeadlightMovementSpeedStore';
@@ -381,9 +381,20 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (!char?.value) return;
 
         const decoded = base64.decode(char.value);
+        console.log(decoded);
         if (decoded === "1") {
           // TODO: reset app, clean disconnect (hopefully lol)
+          DeviceUUIDStore.forgetUUID();
+          DeviceMACStore.forgetMAC();
+          FirmwareStore.forgetFirmwareVersion();
+          setFirmwareVersion("");
 
+          // TODO: send toast?
+          // use external callback from connection provider to handle reset?
+          // could reset some state values too from there... probably
+          console.log("Resetting from notif");
+
+          device.cancelConnection().catch(console.log);
         }
       }
     );
@@ -406,6 +417,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           monitorMotionValue(device),
           monitorPasskey(device),
           monitorSwapStatus(device),
+          monitorReset(device),
         ];
 
         // Only add custom command monitor if callback provided
