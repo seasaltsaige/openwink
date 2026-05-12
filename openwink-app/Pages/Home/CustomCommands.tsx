@@ -179,7 +179,7 @@ export function CustomCommands() {
           />
         </View>
 
-        <View style={{ width: "100%", backgroundColor: "orange", flex: 1, marginBottom: 100, }}>
+        <View style={{ width: "100%", flex: 1, marginBottom: 100, }}>
           <ScrollView
             contentContainerStyle={{
               width: "100%",

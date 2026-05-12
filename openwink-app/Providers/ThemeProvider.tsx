@@ -199,7 +199,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       flexDirection: "column",
       alignItems: "center",
       rowGap: 18,
-      margin: 10,
+      // margin: 10,
     },
     container: {
       backgroundColor: themeColors.backgroundPrimaryColor,

@@ -154,11 +154,13 @@ export function Home() {
 
   return (
     <>
-      <SafeAreaView style={theme.tabContainer}>
+      <SafeAreaView
+        style={[theme.tabContainer]}
+      >
         <MainHeader text="Home" />
 
         <ScrollView
-          contentContainerStyle={theme.contentContainer}
+          contentContainerStyle={[theme.contentContainer]}
         >
 
           {
