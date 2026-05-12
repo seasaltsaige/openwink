@@ -157,7 +157,9 @@ export function Home() {
       <SafeAreaView style={theme.tabContainer}>
         <MainHeader text="Home" />
 
-        <ScrollView contentContainerStyle={theme.contentContainer} >
+        <ScrollView
+          contentContainerStyle={theme.contentContainer}
+        >
 
           {
             isConnected ? (

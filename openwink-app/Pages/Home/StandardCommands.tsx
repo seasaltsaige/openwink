@@ -58,183 +58,196 @@ export function StandardCommands() {
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView contentContainerStyle={{ width: "100%", padding: 15, rowGap: 10, backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%" }}>
-        <HeaderWithBackButton
-          backText={back}
-          headerText="Commands"
-          headerTextStyle={theme.settingsHeaderText}
-          deviceStatus
-        />
+    <SafeAreaView style={{
+      backgroundColor: colorTheme.backgroundPrimaryColor,
+      padding: 15,
+      rowGap: 10,
+    }}>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="Commands"
+        headerTextStyle={theme.settingsHeaderText}
+        deviceStatus
+      />
+      <View style={{ height: "100%" }}>
+        <ScrollView
+          contentContainerStyle={{
+            width: "100%",
+            rowGap: 10,
+            backgroundColor: colorTheme.backgroundPrimaryColor,
+          }}
+        >
 
-        <View style={[theme.contentContainer, { rowGap: 12 }]}>
-          <MiataHeadlights
-            leftStatus={leftStatus}
-            rightStatus={rightStatus}
-          />
 
-          <View style={[theme.defaultCommandSectionContainer, {}]}>
-            <Text style={theme.commandSectionHeader}>Manual</Text>
+          <View style={[theme.contentContainer, { rowGap: 12 }]}>
+            <MiataHeadlights
+              leftStatus={leftStatus}
+              rightStatus={rightStatus}
+            />
 
-            <View style={theme.commandRowContainer}>
-              {DEFAULT_COMMAND_DATA.map((row, i) => (
-                <View style={theme.commandColContainer} key={i}>
-                  {row.map((val, j) => (
-                    <Pressable
-                      style={({ pressed }) => [
-                        theme.commandButton,
-                        {
-                          backgroundColor:
-                            !canSendMainCommands ? colorTheme.disabledButtonColor
-                              : pressed ? colorTheme.buttonColor
-                                : colorTheme.backgroundSecondaryColor,
-                        },
-                      ]}
-                      key={`${val.value}-${j}`}
-                      onPress={() => sendDefaultCommand(val.value)}
-                      disabled={!canSendMainCommands}
-                    >
-                      <Text style={theme.commandButtonText}>{val.name}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ))}
+            <View style={[theme.defaultCommandSectionContainer, {}]}>
+              <Text style={theme.commandSectionHeader}>Manual</Text>
+
+              <View style={theme.commandRowContainer}>
+                {DEFAULT_COMMAND_DATA.map((row, i) => (
+                  <View style={theme.commandColContainer} key={i}>
+                    {row.map((val, j) => (
+                      <Pressable
+                        style={({ pressed }) => [
+                          theme.commandButton,
+                          {
+                            backgroundColor:
+                              !canSendMainCommands ? colorTheme.disabledButtonColor
+                                : pressed ? colorTheme.buttonColor
+                                  : colorTheme.backgroundSecondaryColor,
+                          },
+                        ]}
+                        key={`${val.value}-${j}`}
+                        onPress={() => sendDefaultCommand(val.value)}
+                        disabled={!canSendMainCommands}
+                      >
+                        <Text style={theme.commandButtonText}>{val.name}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
 
-          <View style={theme.defaultCommandSectionContainer}>
-            <Text style={theme.commandSectionHeader}>Winks</Text>
+            <View style={theme.defaultCommandSectionContainer}>
+              <Text style={theme.commandSectionHeader}>Winks</Text>
 
-            <View style={theme.commandRowContainer}>
-              {DEFAULT_WINK_DATA.map((row) => (
+              <View style={theme.commandRowContainer}>
+                {DEFAULT_WINK_DATA.map((row) => (
+                  <Pressable
+                    style={({ pressed }) => [
+                      theme.commandButton,
+                      {
+                        width: "30%",
+                        backgroundColor: getButtonBackgroundColor(pressed),
+                      },
+                    ]}
+                    key={row.value}
+                    onPress={() => sendDefaultCommand(row.value)}
+                    disabled={(!deviceConnected || headlightsBusy)}
+                  >
+                    <Text style={theme.commandButtonText}>{row.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* SECTION: MACROS */}
+
+            <View style={theme.defaultCommandSectionContainer}>
+              <Text style={theme.commandSectionHeader}>Macros</Text>
+
+              <View
+                style={
+                  [
+                    theme.commandRowContainer,
+                    {
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-evenly"
+                    }
+                  ]
+                }>
+
+                {
+                  MACRO_DATA.map((side_data, i) => (
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "flex-start",
+                        width: "50%",
+                        rowGap: 12
+                      }}
+                      key={i === 0 ? "Left" : "Right"}>
+                      {
+                        side_data.map((cmd) => (
+                          <Pressable
+                            style={({ pressed }) => [
+                              theme.commandButton,
+                              {
+                                width: "95%",
+                                backgroundColor:
+                                  !canSendMainCommands ? colorTheme.disabledButtonColor
+                                    : pressed ? colorTheme.buttonColor
+                                      : colorTheme.backgroundSecondaryColor,
+                              },
+                            ]}
+                            key={cmd.name}
+                            onPress={() => sendDefaultCommand(cmd.command)}
+                            disabled={!canSendMainCommands}
+                          >
+                            <Text style={theme.commandButtonText}>
+                              {cmd.name}
+                            </Text>
+                          </Pressable>
+                        ))
+                      }
+                    </View>
+                  ))
+                }
+
+              </View>
+
+              <View style={{ width: "100%", height: 1.5, backgroundColor: `${colorTheme.disabledButtonColor}80`, borderRadius: 10, marginVertical: 10 }} />
+
+              <View
+                style={[
+                  theme.commandRowContainer,
+                  {
+                    width: "100%",
+                    // marginTop: 15,
+                    justifyContent: "space-between",
+                    columnGap: 0,
+                  },
+                ]}
+              >
                 <Pressable
                   style={({ pressed }) => [
                     theme.commandButton,
                     {
-                      width: "30%",
-                      backgroundColor: getButtonBackgroundColor(pressed),
+                      width: "47%",
+                      backgroundColor:
+                        !canSendMainCommands ? colorTheme.disabledButtonColor
+                          : pressed ? colorTheme.buttonColor
+                            : colorTheme.backgroundSecondaryColor,
                     },
                   ]}
-                  key={row.value}
-                  onPress={() => sendDefaultCommand(row.value)}
-                  disabled={(!deviceConnected || headlightsBusy)}
+                  key={105}
+                  onPress={sendSleepyEye}
+                  disabled={!canSendMainCommands}
                 >
-                  <Text style={theme.commandButtonText}>{row.name}</Text>
+                  <Text style={theme.commandButtonText}>Sleepy Eye</Text>
                 </Pressable>
-              ))}
-            </View>
-          </View>
 
-          {/* SECTION: MACROS */}
-
-          <View style={theme.defaultCommandSectionContainer}>
-            <Text style={theme.commandSectionHeader}>Macros</Text>
-
-            <View
-              style={
-                [
-                  theme.commandRowContainer,
-                  {
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-evenly"
-                  }
-                ]
-              }>
-
-              {
-                MACRO_DATA.map((side_data, i) => (
-                  <View
-                    style={{
-                      alignItems: "center",
-                      justifyContent: "flex-start",
-                      width: "50%",
-                      rowGap: 12
-                    }}
-                    key={i === 0 ? "Left" : "Right"}>
+                <Pressable
+                  style={({ pressed }) => [
+                    theme.commandButton,
                     {
-                      side_data.map((cmd) => (
-                        <Pressable
-                          style={({ pressed }) => [
-                            theme.commandButton,
-                            {
-                              width: "95%",
-                              backgroundColor:
-                                !canSendMainCommands ? colorTheme.disabledButtonColor
-                                  : pressed ? colorTheme.buttonColor
-                                    : colorTheme.backgroundSecondaryColor,
-                            },
-                          ]}
-                          key={cmd.name}
-                          onPress={() => sendDefaultCommand(cmd.command)}
-                          disabled={!canSendMainCommands}
-                        >
-                          <Text style={theme.commandButtonText}>
-                            {cmd.name}
-                          </Text>
-                        </Pressable>
-                      ))
-                    }
-                  </View>
-                ))
-              }
+                      width: "47%",
+                      backgroundColor:
+                        !canResetHeadlightPositions ?
+                          colorTheme.disabledButtonColor
+                          : pressed ? colorTheme.buttonColor
+                            : colorTheme.backgroundSecondaryColor,
+                    },
+                  ]}
+                  key={106}
+                  onPress={sendSyncCommand}
+                  disabled={!canResetHeadlightPositions}
+                >
+                  <Text style={theme.commandButtonText}>Reset Sleepy</Text>
+                </Pressable>
+              </View>
 
             </View>
-
-            <View style={{ width: "100%", height: 1.5, backgroundColor: `${colorTheme.disabledButtonColor}80`, borderRadius: 10, marginVertical: 10 }} />
-
-            <View
-              style={[
-                theme.commandRowContainer,
-                {
-                  width: "100%",
-                  // marginTop: 15,
-                  justifyContent: "space-between",
-                  columnGap: 0,
-                },
-              ]}
-            >
-              <Pressable
-                style={({ pressed }) => [
-                  theme.commandButton,
-                  {
-                    width: "47%",
-                    backgroundColor:
-                      !canSendMainCommands ? colorTheme.disabledButtonColor
-                        : pressed ? colorTheme.buttonColor
-                          : colorTheme.backgroundSecondaryColor,
-                  },
-                ]}
-                key={105}
-                onPress={sendSleepyEye}
-                disabled={!canSendMainCommands}
-              >
-                <Text style={theme.commandButtonText}>Sleepy Eye</Text>
-              </Pressable>
-
-              <Pressable
-                style={({ pressed }) => [
-                  theme.commandButton,
-                  {
-                    width: "47%",
-                    backgroundColor:
-                      !canResetHeadlightPositions ?
-                        colorTheme.disabledButtonColor
-                        : pressed ? colorTheme.buttonColor
-                          : colorTheme.backgroundSecondaryColor,
-                  },
-                ]}
-                key={106}
-                onPress={sendSyncCommand}
-                disabled={!canResetHeadlightPositions}
-              >
-                <Text style={theme.commandButtonText}>Reset Sleepy</Text>
-              </Pressable>
-            </View>
-
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView >
   );
 }

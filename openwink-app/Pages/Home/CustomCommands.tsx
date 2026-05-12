@@ -116,7 +116,7 @@ export function CustomCommands() {
         deviceStatus
       />
 
-      <View style={theme.contentContainer}>
+      <View style={[theme.contentContainer, { height: "100%" }]}>
         <MiataHeadlights
           leftStatus={leftStatus}
           rightStatus={rightStatus}
@@ -179,7 +179,7 @@ export function CustomCommands() {
           />
         </View>
 
-        <View style={{ height: "80%", width: "100%" }}>
+        <View style={{ width: "100%", backgroundColor: "orange", flex: 1, marginBottom: 100, }}>
           <ScrollView
             contentContainerStyle={{
               width: "100%",
