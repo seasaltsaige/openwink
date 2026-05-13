@@ -404,6 +404,7 @@ export function Home() {
       <EditQuickLinksModal
         close={() => setQuickLinksModalVisible(false)}
         visible={quickLinksModalVisible}
+        defaultLinks={QuickLinksStore.getDefaultLinks()}
         initialLinks={quickLinks}
         onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
       />

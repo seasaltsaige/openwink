@@ -113,16 +113,19 @@ interface IEditQuickLinksModal {
   visible: boolean;
   close: () => void;
   initialLinks: (QuickLink)[];
+  defaultLinks: (QuickLink)[];
   onUpdateLinks: (updatedLinks: (QuickLink)[]) => void;
 }
 
 export function EditQuickLinksModal({
   close,
+  defaultLinks,
   initialLinks,
   onUpdateLinks,
   visible,
 }: IEditQuickLinksModal) {
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
+  const mappedDefaultLinks = useMemo(() => defaultLinks.map(l => l.title), [defaultLinks]);
 
   const { colorTheme, theme } = useColorTheme();
 
@@ -163,8 +166,8 @@ export function EditQuickLinksModal({
     }
   }
 
-  const setInitialValues = () => {
-    const mappedLinks = ROUTES.map(r => mappedInitialLinks.includes(r.title) ? { ...r, visible: true } : r);
+  const setLinkValues = (visibleTitles: string[]) => {
+    const mappedLinks = ROUTES.map(r => visibleTitles.includes(r.title) ? { ...r, visible: true } : r);
     const visible = mappedLinks.filter(r => r.visible);
     const hidden = mappedLinks.filter(r => !r.visible);
 
@@ -172,9 +175,9 @@ export function EditQuickLinksModal({
     setFilteredLinks([...visible, ...hidden]);
   }
 
-  useEffect(() => setInitialValues(), []);
+  useEffect(() => setLinkValues(mappedInitialLinks), [mappedInitialLinks]);
 
-  const resetToStart = () => setInitialValues();
+  const resetToStart = () => setLinkValues(mappedDefaultLinks);
   const __saveLinksOnClose = () => {
     onUpdateLinks(allLinks.filter(l => l.visible).map(l => ({ icon: l.icon, navigation: l.navigation, title: l.title })));
     close();
