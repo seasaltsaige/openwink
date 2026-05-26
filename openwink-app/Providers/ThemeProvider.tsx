@@ -1,8 +1,18 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, TextStyle, ViewStyle } from "react-native";
+import { setAppIcon } from "@howincodes/expo-dynamic-app-icon";
 
 import { ColorTheme, ThemeColors } from "../helper/Constants";
 import { ThemeStore } from "../Storage";
+
+const ICON_NAME_BY_THEME: Record<ColorTheme.ThemeKey, string> = {
+  crystalWhite: "white",
+  brilliantBlack: "black",
+  classicRed: "red",
+  sunburstYellow: "yellow",
+  marinerBlue: "blue",
+  britishRacingGreen: "green",
+};
 
 interface StyleSheetInterface {
   tabContainer: ViewStyle;
@@ -144,6 +154,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const iconName = ICON_NAME_BY_THEME[themeName];
+    try {
+      setAppIcon(iconName);
+    } catch (error) {
+      console.warn("Failed to set app icon:", error);
+    }
+  }, [themeName, isLoading]);
 
   const refresh = useCallback(() => {
     const storedTheme = ThemeStore.getStoredTheme();

@@ -28,6 +28,7 @@
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
     "@gorhom/bottom-sheet": "^5.1.8",
     "@gorhom/portal": "^1.0.14",
+    "@howincodes/expo-dynamic-app-icon": "^2.0.3",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-native-vector-icons/material-design-icons": "^12.3.0",
     "@react-native-vector-icons/octicons": "^20.3.0",
@@ -69,6 +70,7 @@
     "@types/react": "~18.3.12",
     "@types/react-native-base64": "^0.2.2",
     "dotenv": "^17.2.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "private": true
