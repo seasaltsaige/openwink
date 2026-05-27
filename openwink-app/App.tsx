@@ -19,7 +19,7 @@ import { ThemeProvider } from './Providers/ThemeProvider';
 import { AppNavigator } from './Navigation';
 import { OTAUpdateProvider } from './Providers/OTAUpdateProvider';
 import { CustomButtonFrequencyStore, ThemeStore } from './Storage';
-import { ThemedSplash, splashBackgroundByTheme } from './Components/ThemedSplash';
+import { ThemedSplash, splashBackgroundByTheme } from './Components';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,7 +28,7 @@ const initialThemeName = ThemeStore.getStoredTheme();
 
 export default function App() {
 
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     IBMPlexSans_300Light,
     IBMPlexSans_400Regular,
     IBMPlexSans_500Medium,
@@ -38,6 +38,7 @@ export default function App() {
   const [splashHidden, setSplashHidden] = useState(!isIOS);
 
   useEffect(() => {
+    // Decay frequencies on app startup (so that over time, if a new button action is used, it appears higher)
     CustomButtonFrequencyStore.decay();
   }, []);
 
