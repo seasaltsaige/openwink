@@ -18,3 +18,4 @@ export * from './InfoPageHeader';
 export * from './AccordionDropdown';
 export * from './SettingsToolbar';
 export * from './UnsavedChangesModal';
+export * from './ThemedSplash';

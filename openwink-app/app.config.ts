@@ -7,7 +7,7 @@ dotenv.config();
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "openwink-app",
+  name: "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
   version: "1.0.0",
   orientation: "portrait",
@@ -15,9 +15,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   splash: {
-    image: "./assets/icon_british_racing_green.png",
-    resizeMode: "cover",
-    backgroundColor: "#004d26"
+    image: "./assets/splash_transparent.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
+    dark: {
+      backgroundColor: "#000000",
+    },
   },
   ios: {
     supportsTablet: true,
@@ -28,7 +31,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/icon_british_racing_green.png",
+      foregroundImage: "./assets/icon_british_racing_green_android.png",
       backgroundColor: "#004d26"
     },
     permissions: [
