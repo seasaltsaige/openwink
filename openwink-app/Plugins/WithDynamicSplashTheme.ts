@@ -51,7 +51,7 @@ const variants: Variant[] = [
   { key: "green",  name: "Green",  color: "#004d26", iconPath: "./assets/icon_british_racing_green_android.png" },
 ];
 
-const defaultKey = "black";
+const defaultKey = "green";
 const densities = ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"];
 
 const implClass    = (v: Variant) => `MainActivity${v.name}Impl`;

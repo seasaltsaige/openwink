@@ -130,7 +130,7 @@ export type ThemeContextType = {
   themeName: keyof typeof ColorTheme.themeNames;
 };
 
-const defaultName: keyof typeof ColorTheme.themeNames = "brilliantBlack";
+const defaultName: keyof typeof ColorTheme.themeNames = "britishRacingGreen";
 
 export const ThemeContext = createContext<ThemeContextType | null>(null);
 

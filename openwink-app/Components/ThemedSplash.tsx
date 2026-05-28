@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { StyleSheet, useColorScheme } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
   interpolateColor,
@@ -41,8 +41,9 @@ export const splashBackgroundByTheme: Record<ColorTheme.ThemeKey, string> = {
   britishRacingGreen: "#004d26",
 };
 
-const SYSTEM_LIGHT_BG = "#ffffff";
-const SYSTEM_DARK_BG  = "#000000";
+// Matches the iOS LaunchScreen backgroundColor in app.config.ts so the JS
+// overlay starts on the exact same color the native screen was showing.
+const NATIVE_SPLASH_BG = "#004d26";
 
 const FADE_IN_MS  = 250;
 const HOLD_MS     = 700;
@@ -56,8 +57,7 @@ type Props = {
 };
 
 export function ThemedSplash({ themeName, contentReady = true, onLayout, onHidden }: Props) {
-  const scheme  = useColorScheme();
-  const startBg = scheme === "dark" ? SYSTEM_DARK_BG : SYSTEM_LIGHT_BG;
+  const startBg = NATIVE_SPLASH_BG;
   const endBg   = splashBackgroundByTheme[themeName];
 
   const fadeIn  = useSharedValue(0);
