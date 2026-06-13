@@ -23,7 +23,7 @@ import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore'
 export type BleCommandContextType = {
   // Command execution
   sendDefaultCommand: (command: DefaultCommandValue) => Promise<void>;
-  sendCustomCommand: (name: string | undefined, commandSequence: CommandInput[]) => Promise<void>;
+  sendCustomCommand: (name: string | undefined, commandSequence: CommandInput[], looped: boolean) => Promise<void>;
   customCommandInterrupt: () => void;
 
   // Sync and positioning
@@ -189,7 +189,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Send a custom command sequence
   const sendCustomCommand = useCallback(
-    async (name: string = 'Custom Command', commandSequence: CommandInput[]) => {
+    async (name: string = 'Custom Command', commandSequence: CommandInput[], looped: boolean) => {
       if (!device) {
         console.warn('No device connected');
         return;
@@ -207,6 +207,19 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(name);
 
       try {
+
+
+        // if sending command with "loop" enabled
+        // alert module incoming command is a loop type
+        if (looped) {
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
+            base64.encode("loop"),
+          )
+        }
+
+        await sleep(25);
+
         // Alert device that custom command is in progress
         await device.writeCharacteristicWithoutResponseForService(
           ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
