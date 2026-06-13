@@ -15,6 +15,7 @@
 #include <Update.h>
 #include <iostream>
 #include "esp_ota_ops.h"
+#include "CommandHandler.h"
 
 using namespace std;
 
@@ -238,7 +239,9 @@ void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
     else if (stoi(value) == 0)
       ButtonHandler::setCustomCommandActive(false);
     else ButtonHandler::setCustomCommandActive(false);
-  } else
+  } else if (value == "loop")
+    CommandHandler::custom_command_loop = true;
+  else
     queuedCustomCommand = value;
 }
 

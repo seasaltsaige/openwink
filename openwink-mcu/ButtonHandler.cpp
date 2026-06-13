@@ -10,6 +10,7 @@
 #include "constants.h"
 #include "esp32-hal-gpio.h"
 #include <string>
+#include "CommandHandler.h"
 
 
 using namespace std;
@@ -66,6 +67,10 @@ void ButtonHandler::loopCustomCommandInterruptHandler() {
 
 void ButtonHandler::setCustomCommandActive(bool value) {
   ButtonHandler::customCommandActive = value;
+
+  if (!value) {
+    CommandHandler::custom_command_loop = false;
+  }
 }
 
 void ButtonHandler::readOnWakeup() {
@@ -407,7 +412,7 @@ void ButtonHandler::loopButtonHandler() {
       buttonPressCounter++;
     } else {
       buttonPressCounter++;
-      if (initialButton == 0) {
+      if (initialButton == 1) {
         bothDown();
       } else {
         bothUp();

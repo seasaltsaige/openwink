@@ -12,6 +12,7 @@
 using namespace std;
 
 vector<string> CommandHandler::commandSequence;
+bool CommandHandler::custom_command_loop = false;
 
 void CommandHandler::parseCustomCommand(string command) {
   char* command_c_str = const_cast<char*>(command.c_str());
@@ -197,8 +198,6 @@ void CommandHandler::handleQueuedCommand() {
       break;
   }
 
-  Serial.printf("Was sleepy?: %s\n", wasSleepy ? "true" : "false");
-
   if (wasSleepy)
     sleepyEye(true, true);
 
@@ -218,7 +217,9 @@ void CommandHandler::handleQueuedCustomCommand() {
   }
 
   BLE::setBusy(true);
-  for (auto cmd : commandSequence) {
+  for (int i = 0; i < commandSequence.size(); i++) {
+    auto cmd = commandSequence[i];
+
     if (!ButtonHandler::customCommandActive) break;
 
     if (cmd[0] == 'd') {
@@ -296,11 +297,99 @@ void CommandHandler::handleQueuedCustomCommand() {
           }
           waveHeadlights(WAVE_START_SIDE::RIGHT);
           break;
+
+        // left - right sequence
+        case 12:
+
+          if (leftStatus == 0) rightDown();
+          else rightUp();
+
+          if (leftStatus == 0) {
+            leftUp();
+            bothSwap();
+            bothSwap();
+            leftDown();
+          } else {
+            leftDown();
+            bothSwap();
+            bothSwap();
+            leftUp();
+          }
+
+          break;
+        // left - right x2
+        case 13:
+          if (leftStatus == 0) rightDown();
+          else rightUp();
+
+          if (leftStatus == 0) {
+            leftUp();
+            bothSwap();
+            bothSwap();
+          } else {
+            leftDown();
+            bothSwap();
+            bothSwap();
+          }
+
+          bothSwap();
+          bothSwap();
+
+          if (leftStatus == 0) {
+            leftUp();
+          } else {
+            leftDown();
+          }
+          break;
+        // right - left
+        case 14:
+          if (rightStatus == 0) leftDown();
+          else leftUp();
+
+          if (rightStatus == 0) {
+            rightUp();
+            bothSwap();
+            bothSwap();
+            rightDown();
+          } else {
+            rightDown();
+            bothSwap();
+            bothSwap();
+            rightUp();
+          }
+          break;
+        // right - left x2
+        case 15:
+          if (rightStatus == 0) leftDown();
+          else leftUp();
+
+          if (rightStatus == 0) {
+            rightUp();
+            bothSwap();
+            bothSwap();
+          } else {
+            rightDown();
+            bothSwap();
+            bothSwap();
+          }
+
+          bothSwap();
+          bothSwap();
+
+          
+          if (rightStatus == 0) {
+            rightUp();
+          } else {
+            rightDown();
+          }
+          break;
       }
 
       setAllOff();
     }
     ButtonHandler::loopButtonHandler();
+
+    if (i == (commandSequence.size() - 1) && CommandHandler::custom_command_loop) i = -1;
   }
 
   if (wasSleepy)
