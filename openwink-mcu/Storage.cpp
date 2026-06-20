@@ -39,7 +39,13 @@ void Storage::getFromStorage() {
     String val = storage.getString(key, String(customButtonPressArrayDefaults[i].c_str()));
     customButtonPressArray[i] = string(val.c_str());
   }
-  Serial.println();
+
+  // Get loop data from storage
+  for (int i = 0; i < 9; i++) {
+    snprintf(key, sizeof(key), "loop-%d", i);
+    bool value = storage.getBool(key, false);
+    customButtonPressLoopArray[i] = value;
+  }
 
   const char *delayKey = "delay-key";
   int del = storage.getUInt(delayKey, maxTimeBetween_msDefault);
@@ -122,6 +128,11 @@ void Storage::reset() {
     storage.remove(pressesKey);
   }
 
+  for (int i = 0; i < 9; i++) {
+    snprintf(pressesKey, sizeof(pressesKey), "loop-%d", i);
+    storage.remove(pressesKey);
+  }
+
   Storage::resetBond();
 
   customButtonStatusEnabled = false;
@@ -163,6 +174,12 @@ void Storage::setCustomButtonPressArray(int index, string value) {
   if (string(storedVal.c_str()) != value)
     storage.putString(key.c_str(), value.c_str());
 }
+
+void Storage::setCustomButtonPressLoop(int index, bool loop) {
+  string key = "loop-" + to_string(index);
+  storage.putBool(key.c_str(), loop);
+}
+
 
 void Storage::setHeadlightBypass(bool value) {
   const char *key = "hl-bypass";

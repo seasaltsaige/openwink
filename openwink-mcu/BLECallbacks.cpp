@@ -22,6 +22,7 @@ using namespace std;
 RTC_DATA_ATTR double headlightMultiplier = 0.5;
 
 vector<string> customButtonPressArray(20, "0");
+bool customButtonPressLoopArray[9] = { false, false, false, false, false, false, false, false, false };
 
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
@@ -129,6 +130,8 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 
 // 0 : onWrite expects value to be an index, 0-9
 // 1 : index has been read -- now expects value to write
+// 2 : value has been written -- now expects loop status
+
 // 3 : expects update of max time
 int customButtonPressUpdateState = 0;
 int indexToUpdate = 0;
@@ -158,7 +161,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     customButtonPressUpdateState = 1;
 
   } else if (customButtonPressUpdateState == 1) {
-    customButtonPressUpdateState = 0;
+    customButtonPressUpdateState = 2;
     if (indexToUpdate == 0) return;
 
     customButtonPressArray[indexToUpdate] = value;
@@ -178,6 +181,13 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
         Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
       }
     }
+  } else if (customButtonPressUpdateState == 2) {
+    customButtonPressUpdateState = 0;
+    bool loopStatus = value.compare("0") == 0 ? false : true;
+    
+    Storage::setCustomButtonPressLoop(indexToUpdate, loopStatus);
+    customButtonPressLoopArray[indexToUpdate] = loopStatus;
+
   } else if (customButtonPressUpdateState == 3) {
     customButtonPressUpdateState = 0;
 
