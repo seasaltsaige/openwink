@@ -6,6 +6,7 @@ const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
 const BUTTON_KEY = "oem-button-values";
 const BUTTON_DELAY_KEY = "oem-button-delay";
 const BYPASS_KEY = "headlight-bypass";
+const LOOPING_KEY = "oem-button-loop";
 
 const DEFAULT_DELAY = 500;
 
@@ -38,6 +39,16 @@ export abstract class CustomOEMButtonStore {
   static disableBypass() {
     Storage.delete(BYPASS_KEY);
   }
+
+  static setLooping(presses: Presses, looping: boolean): void {
+    if (looping) Storage.set(`${LOOPING_KEY}-${presses}`, looping);
+    else Storage.delete(`${LOOPING_KEY}-${presses}`);
+  }
+
+  static getLooping(presses: Presses): boolean {
+    return Storage.getBoolean(`${LOOPING_KEY}-${presses}`) ? true : false;
+  }
+
 
   static set(presses: Presses, buttonValue: ButtonBehaviors | CommandOutput): void {
     if (typeof buttonValue === "object") {
