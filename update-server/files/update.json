@@ -1,4 +1,4 @@
 {
   "version": "0.12.0",
-  "description": "Adds the ability to set custom button actions which use custom macros as the action to loop continuously, similar to the existing macro loop mode."
+  "description": "Adds configurable button action options for running custom macros in a continuous loop until canceled via button press."
 }
