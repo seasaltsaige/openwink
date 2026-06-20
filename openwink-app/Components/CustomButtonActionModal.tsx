@@ -5,11 +5,13 @@ import { ScrollView } from "react-native-gesture-handler";
 
 import { ButtonBehaviors, CommandOutput, CustomButtonAction } from "../helper/Types";
 import { useColorTheme } from "../hooks/useColorTheme";
-import { CustomButtonFrequencyStore, CustomCommandStore } from "../Storage";
+import { CustomButtonFrequencyStore, CustomCommandStore, CustomOEMButtonStore } from "../Storage";
 import { ModalBlurBackground } from "./ModalBlurBackground";
 import { buttonBehaviorMap, countToEnglish } from "../helper/Constants";
 import { InfoPageHeader } from "./InfoPageHeader";
 import LinearGradient from "react-native-linear-gradient";
+import Tooltip from "react-native-walkthrough-tooltip";
+import ToggleSwitch from "toggle-switch-react-native";
 
 
 type CustomButtonActionModalProps = {
@@ -17,20 +19,25 @@ type CustomButtonActionModalProps = {
   action: CustomButtonAction;
   modalType: "edit" | "create";
   close: () => void;
-  update: (action: CustomButtonAction) => Promise<void>;
+  update: (action: CustomButtonAction, looping: boolean) => Promise<void>;
   delete: (action: CustomButtonAction) => Promise<void>;
 }
 const MODAL_CATEGORIES = ["Frequently Used", "Left", "Right", "Both", "Macros"] as const;
+
 export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
 
   const [selectedAction, setSelectedAction] = useState(null as null | Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput);
   const [selectedCategory, setSelectedCategory] = useState("" as typeof MODAL_CATEGORIES[number]);
   const [filteredActions, setFilteredActions] = useState(null as null | (Exclude<ButtonBehaviors, "Default Behavior"> | CommandOutput)[]);
+  const [macroLoop, setMacroLoop] = useState(false);
+  const [macroLoopTooltipOpen, setMacroLoopTooltipOpen] = useState(false);
 
   const canSave = selectedAction !== null;
 
   useEffect(() => {
+    if (!selectedAction)
+      setMacroLoop(false);
 
     if (selectedCategory === "Frequently Used") {
       const frequents = CustomButtonFrequencyStore.getTopFive();
@@ -60,11 +67,18 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           break;
       }
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedAction]);
+
+  useEffect(() => {
+    if (typeof selectedAction === "string") setMacroLoop(false);
+  }, [selectedAction]);
 
   useEffect(() => {
     // Don't run on close
     if (!props.visible) return;
+
+    const looped = CustomOEMButtonStore.getLooping(props.action.presses);
+    setMacroLoop(looped);
 
     if (props.action.behaviorHumanReadable !== "Default Behavior")
       if (props.action.customCommand)
@@ -73,7 +87,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
         setSelectedAction(props.action.behaviorHumanReadable!);
     // Set category on open
     const act = props.action;
-    console.log(act);
+
     if (act.behaviorHumanReadable) {
       if (act.behaviorHumanReadable.startsWith("Left") && !act.behaviorHumanReadable.includes("Wave"))
         setSelectedCategory("Left");
@@ -86,6 +100,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
     } else if (act.customCommand)
       setSelectedCategory("Macros");
     else setSelectedCategory("Frequently Used");
+
   }, [props.action, props.visible]);
 
 
@@ -111,17 +126,17 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
         presses: props.action.presses,
         behavior: buttonBehaviorMap[selectedAction],
         behaviorHumanReadable: selectedAction,
-      });
+      }, false);
     } else {
       props.update({
         presses: props.action.presses,
         customCommand: selectedAction,
-      });
+      }, macroLoop);
     }
 
     CustomButtonFrequencyStore.increment(selectedAction);
     props.close();
-  }, [selectedAction]);
+  }, [selectedAction, macroLoop]);
 
   return (
     <Modal
@@ -175,11 +190,66 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
           <View style={{
             flex: 1,
             marginVertical: 10,
-            width: "85%",
-            position: "relative",
+            width: "95%",
             paddingHorizontal: 10,
             paddingTop: 5,
           }}>
+
+
+            {
+              selectedCategory === "Macros" ? (
+                <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0, margin: 0, marginTop: -10, marginBottom: 10, }]}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Macro Loop {macroLoop ? "Enabled" : "Disabled"}
+                    </Text>
+
+                    <Tooltip
+                      isVisible={macroLoopTooltipOpen}
+                      onClose={() => setMacroLoopTooltipOpen(false)}
+                      content={
+                        <Text style={theme.tooltipContainerText}>
+                          Macro Loop mode is useful for continuous operation at meets or in similar situations. If enabled, when the button action is executed, the macro will run continuously, until cancelled by an additional button press.{"\n\n"}
+                          Loop mode is only compatible with custom macros.
+                        </Text>
+                      }
+                      closeOnBackgroundInteraction
+                      closeOnContentInteraction
+                      placement="bottom"
+                      contentStyle={theme.tooltipContainer}
+                    >
+                      <Pressable
+                        hitSlop={20}
+                        onPress={() => setMacroLoopTooltipOpen(true)}
+                      >
+                        {
+                          ({ pressed }) => (
+                            <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={22} name="help-circle-outline" />
+                          )
+                        }
+                      </Pressable>
+                    </Tooltip>
+                  </View>
+
+                  <View style={theme.mainLongButtonPressableIcon}>
+                    <ToggleSwitch
+                      disabled={typeof selectedAction === "string"}
+                      onColor={typeof selectedAction === "string" ? colorTheme.disabledButtonColor : colorTheme.buttonColor}
+                      offColor={colorTheme.disabledButtonColor}
+                      isOn={macroLoop}
+                      size="medium"
+                      hitSlop={10}
+                      circleColor={colorTheme.buttonTextColor}
+                      onToggle={(isOn) => setMacroLoop(isOn)}
+                      labelStyle={theme.mainLongButtonPressableIcon}
+                    />
+                  </View>
+
+                </View>
+              ) : <></>
+            }
+
+
             <LinearGradient
               start={{ x: 0, y: 1 }}
               end={{ x: 0, y: 0 }}
@@ -332,6 +402,6 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
         </View>
       </ModalBlurBackground>
-    </Modal>
+    </Modal >
   )
 }
