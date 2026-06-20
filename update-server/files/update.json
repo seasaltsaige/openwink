@@ -1,4 +1,4 @@
 {
-  "version": "0.11.6",
-  "description": "Add custom command 'looping'. Custom commands sent from the app with this setting will loop indefinitely until interrupted by either a button press or cancellation in app. Additionally fixes issue with dash button causing opposite action when custom button actions are disabled."
+  "version": "0.12.0",
+  "description": "Adds configurable button action options for running custom macros in a continuous loop until canceled via button press."
 }

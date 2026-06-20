@@ -347,8 +347,16 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
     if (wasSleepy)
       sleepyEye(true, true);
-  } else
+  } else {
+    // Check press index for looping
+    if (numberOfPresses < 9 && customButtonPressLoopArray[numberOfPresses])
+      CommandHandler::custom_command_loop = true;
+    else
+      CommandHandler::custom_command_loop = false;
+
+    // Queue command
     queuedCustomCommand = response;
+  }
 
   setAllOff();
 

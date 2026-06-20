@@ -26,6 +26,7 @@ import {
   SIDE,
 } from "../Storage/HeadlightMovementSpeedStore";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
+import { Presses } from "../helper/Types";
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -291,11 +292,11 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const statusValue = toProperCase(
             base64.decode(char.value) as
-              | "idle"
-              | "updating"
-              | "failed"
-              | "success"
-              | "canceled",
+            | "idle"
+            | "updating"
+            | "failed"
+            | "success"
+            | "canceled",
           );
           setUpdatingStatus(statusValue);
           // Reset progress when either succes or failure
@@ -591,7 +592,17 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       await sleep(20);
+
+      // Write looping status next
+      const isLooped = CustomOEMButtonStore.getLooping(i as Presses);
+      await device.writeCharacteristicWithoutResponseForService(
+        ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+        // 1 for looped, 0 for not looped
+        base64.encode(isLooped ? "1" : "0"),
+      )
     }
+
+
 
     // Write stored delay value
     await device.writeCharacteristicWithoutResponseForService(

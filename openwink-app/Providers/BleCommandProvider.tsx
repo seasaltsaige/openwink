@@ -33,7 +33,7 @@ export type BleCommandContextType = {
 
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
-  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping: boolean) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
   setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
@@ -429,7 +429,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Update OEM button preset for specific number of presses
   const updateOEMButtonPresets = useCallback(
-    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
+    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping: boolean) => {
 
       if (!device) {
         console.warn('No device connected');
@@ -442,6 +442,10 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           CustomOEMButtonStore.remove(numPresses);
         } else
           CustomOEMButtonStore.set(numPresses, to);
+
+        // Update looping store
+        CustomOEMButtonStore.setLooping(numPresses, looping);
+
 
 
         // Send number of button presses to update
@@ -467,6 +471,18 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             base64.encode(commandString!),
           );
         }
+
+        // Small delay to prevent overwrite
+        await sleep(WRITE_OPERATION_DELAY);
+
+        // Write looping status next
+        const isLooped = looping;
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+          // 1 for looped, 0 for not looped
+          base64.encode(isLooped ? "1" : "0"),
+        )
+
       } catch (error) {
         console.error('Error updating OEM button presets:', error);
 

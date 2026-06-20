@@ -27,6 +27,8 @@ public:
   static void setDelay(int delay);
 
   static void setCustomButtonPressArray(int index, string value);
+  static void setCustomButtonPressLoop(int index, bool loop);
+  
   static void setSleepyValues(int side, double value);
   static void setHeadlightBypass(bool value);
   static void setHeadlightOrientation(bool orientation);

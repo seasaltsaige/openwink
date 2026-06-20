@@ -193,6 +193,11 @@ export function Information() {
                         // TODO: Make pressable --> Open bottom drawer and show sequence
                         <IonIcons name="sparkles-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
                     }
+
+                    {
+                      CustomOEMButtonStore.getLooping(action.presses) ?
+                        <IonIcons name="infinite-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
+                    }
                   </View>
                 </View>
               ))

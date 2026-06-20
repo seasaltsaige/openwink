@@ -87,12 +87,12 @@ export function CustomWinkButton() {
     fetchActionsFromStorage();
   }, []));
 
-  const updateButtonAction = async (action: CustomButtonAction) => {
-    if (action.customCommand) {
-      await updateOEMButtonPresets(action.presses, action.customCommand)
-    } else {
-      await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!);
-    }
+  const updateButtonAction = async (action: CustomButtonAction, looping: boolean) => {
+    if (action.customCommand)
+      await updateOEMButtonPresets(action.presses, action.customCommand, looping);
+    else
+      // non-custom macro should never be able to loop
+      await updateOEMButtonPresets(action.presses, action.behaviorHumanReadable!, false);
 
     fetchActionsFromStorage();
   }
@@ -100,22 +100,24 @@ export function CustomWinkButton() {
   const deleteButtonAction = async (action: CustomButtonAction) => {
     const index = actions.findIndex(v => v.presses === action.presses);
     // delete action at presses number
-    await updateOEMButtonPresets(action.presses, 0);
+    await updateOEMButtonPresets(action.presses, 0, false);
 
 
     // Loop from presses array location to end of array
     for (let i = index + 1; i < actions.length; i++) {
       const actionToUpdateFromDelete = actions[i];
-      //   // Move action down 1 press location
+      // Move action down 1 press location
       await updateOEMButtonPresets(
         (actionToUpdateFromDelete.presses - 1) as Presses,
 
         actionToUpdateFromDelete.customCommand ?
           actionToUpdateFromDelete.customCommand :
-          actionToUpdateFromDelete.behaviorHumanReadable!
+          actionToUpdateFromDelete.behaviorHumanReadable!,
+
+        CustomOEMButtonStore.getLooping(actionToUpdateFromDelete.presses),
       );
-      //   // Delete old location
-      await updateOEMButtonPresets(actionToUpdateFromDelete.presses, 0);
+      // Delete old location
+      await updateOEMButtonPresets(actionToUpdateFromDelete.presses, 0, false);
       await sleep(10);
     }
 

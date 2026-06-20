@@ -9,7 +9,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "1.0.0",
+  version: "1.0.2",
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
