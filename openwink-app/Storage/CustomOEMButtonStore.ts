@@ -99,9 +99,7 @@ export abstract class CustomOEMButtonStore {
 
         const customCmd: CommandOutput = {
           name,
-          command: [
-
-          ],
+          command: [],
         }
 
         for (const cmdSection of commandParts) {
