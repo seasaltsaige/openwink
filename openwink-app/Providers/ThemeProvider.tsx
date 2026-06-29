@@ -159,6 +159,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (isLoading) return;
     const iconName = ICON_NAME_BY_THEME[themeName];
     try {
+      //@ts-ignore
       setAppIcon(iconName);
     } catch (error) {
       console.warn("Failed to set app icon:", error);
@@ -436,7 +437,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
       columnGap: 10,
-      height: "100%"
+      // height: "100%"
     },
     backButtonContainerText: {
       color: themeColors.headerTextColor,
