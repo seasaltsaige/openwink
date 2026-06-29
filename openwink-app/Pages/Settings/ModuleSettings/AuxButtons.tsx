@@ -103,7 +103,7 @@ export function AuxButtons() {
 
   return (
     <>
-      <SafeAreaView style={[theme.container, { rowGap: 25 }]}>
+      <SafeAreaView style={[theme.container, { rowGap: 20 }]}>
         <HeaderWithBackButton
           backText={backHumanReadable}
           headerText="Auxiliary Buttons"
@@ -224,125 +224,129 @@ export function AuxButtons() {
 
               <View style={{ width: "90%", backgroundColor: `${colorTheme.disabledButtonColor}80`, height: 1.6, borderRadius: 5, }} />
 
+
               <View style={{
-                // rowGap: 7,
-                width: "90%",
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "space-between"
+                justifyContent: "space-between",
+                width: "90%",
               }}>
-
                 <View style={{
-                  rowGap: 7,
+                  rowGap: 10,
                 }}>
 
-                  <Text style={{
-                    fontFamily: "IBMPlexSans_700Bold",
-                    color: colorTheme.textColor,
-                    fontSize: 17,
+                  <View style={{
+                    rowGap: 7,
                   }}>
-                    Selected Action:
-                  </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", columnGap: 7 }}>
+
                     <Text style={{
-                      fontFamily: "IBMPlexSans_500Medium",
+                      fontFamily: "IBMPlexSans_700Bold",
                       color: colorTheme.textColor,
-                      fontSize: 16,
-                    }}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {typeof aux.action === "string" ? aux.action : aux.action.name}
+                      fontSize: 17,
+                    }}>
+                      Selected Action:
                     </Text>
-                    {
-                      typeof aux.action === "object" ? (
-                        <IonIcons name="sparkles-outline" size={16} color={colorTheme.textColor} style={{ marginTop: 2 }} />
-                      ) : <></>
-                    }
+                    <View style={{ flexDirection: "row", alignItems: "center", columnGap: 7 }}>
+                      <Text style={{
+                        fontFamily: "IBMPlexSans_500Medium",
+                        color: colorTheme.textColor,
+                        fontSize: 16,
+                      }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {typeof aux.action === "string" ? aux.action : aux.action.name}
+                      </Text>
+                      {
+                        typeof aux.action === "object" ? (
+                          <IonIcons name="sparkles-outline" size={16} color={colorTheme.textColor} style={{ marginTop: 2 }} />
+                        ) : <></>
+                      }
+                    </View>
+                  </View>
+
+                  <View style={{
+                    rowGap: 7,
+                  }}>
+
+                    <Text style={{
+                      fontFamily: "IBMPlexSans_700Bold",
+                      color: colorTheme.textColor,
+                      fontSize: 17,
+                    }}>
+                      Action Type:
+                    </Text>
+                    <View style={{ flexDirection: "row" }}>
+                      <Text style={{
+                        fontFamily: "IBMPlexSans_500Medium",
+                        color: colorTheme.textColor,
+                        fontSize: 16,
+                      }}>
+                        {typeof aux.action === "string" ? "Built-in" : "Custom Macro"}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
                 <View style={{
-                  rowGap: 7,
+                  rowGap: 10,
                 }}>
 
-                  <Text style={{
-                    fontFamily: "IBMPlexSans_700Bold",
-                    color: colorTheme.textColor,
-                    fontSize: 17,
+                  <View style={{
+                    rowGap: 7,
                   }}>
-                    Action Type:
-                  </Text>
-                  <View style={{ flexDirection: "row" }}>
+
                     <Text style={{
-                      fontFamily: "IBMPlexSans_500Medium",
+                      fontFamily: "IBMPlexSans_700Bold",
                       color: colorTheme.textColor,
-                      fontSize: 16,
+                      fontSize: 17,
                     }}>
-                      {typeof aux.action === "string" ? "Built-in" : "Custom Macro"}
+                      Button Type:
                     </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", columnGap: 7 }}>
+                      <Text style={{
+                        fontFamily: "IBMPlexSans_500Medium",
+                        color: colorTheme.textColor,
+                        fontSize: 16,
+                      }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {
+                          aux.type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary"
+                        }
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{
+                    rowGap: 7,
+                  }}>
+
+                    <Text style={{
+                      fontFamily: "IBMPlexSans_700Bold",
+                      color: colorTheme.textColor,
+                      fontSize: 17,
+                    }}>
+                      Macro Loop:
+                    </Text>
+                    <View style={{ flexDirection: "row" }}>
+                      <Text style={{
+                        fontFamily: "IBMPlexSans_500Medium",
+                        color: colorTheme.textColor,
+                        fontSize: 16,
+                      }}>
+                        {
+                          aux.looping ? "Enabled" : "Disabled"
+                        }
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
 
-              <View style={{
-                width: "90%",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
 
-                <View style={{
-                  rowGap: 7,
-                }}>
 
-                  <Text style={{
-                    fontFamily: "IBMPlexSans_700Bold",
-                    color: colorTheme.textColor,
-                    fontSize: 17,
-                  }}>
-                    Button Type:
-                  </Text>
-                  <View style={{ flexDirection: "row", alignItems: "center", columnGap: 7 }}>
-                    <Text style={{
-                      fontFamily: "IBMPlexSans_500Medium",
-                      color: colorTheme.textColor,
-                      fontSize: 16,
-                    }}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {
-                        aux.type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary"
-                      }
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={{
-                  rowGap: 7,
-                }}>
-
-                  <Text style={{
-                    fontFamily: "IBMPlexSans_700Bold",
-                    color: colorTheme.textColor,
-                    fontSize: 17,
-                  }}>
-                    Macro Loop:
-                  </Text>
-                  <View style={{ flexDirection: "row" }}>
-                    <Text style={{
-                      fontFamily: "IBMPlexSans_500Medium",
-                      color: colorTheme.textColor,
-                      fontSize: 16,
-                    }}>
-                      {
-                        aux.looping ? "Enabled" : "Disabled"
-                      }
-                    </Text>
-                  </View>
-                </View>
-              </View>
 
               {
                 ((aux.id === AUX_ID.AUX1 && unsavedAux1) ||
