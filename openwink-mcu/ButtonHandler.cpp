@@ -181,6 +181,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       bothSwap();
       leftUp();
     }
+    setAllOff();
     return;
     
   } else if (response == "13" && customButtonStatusEnabled) {
@@ -208,7 +209,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       leftDown();
     }
 
-    
+    setAllOff();
 
     return;
   } else if (response == "14" && customButtonStatusEnabled) {
@@ -228,6 +229,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       bothSwap();
       rightUp();
     }
+    setAllOff();
     return;
   } else if (response == "15" && customButtonStatusEnabled) {
     // Right-Left x2
@@ -254,7 +256,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     } else {
       rightDown();
     }
-
+    setAllOff();
     return;
   } else if (response == "12" && customButtonStatusEnabled) {
     bool swap = Storage::getHeadlightOrientation();

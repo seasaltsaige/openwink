@@ -58,6 +58,8 @@ void handleAuxFunction(string response, int aux) {
       bothSwap();
       leftUp();
     }
+
+    setAllOff();
     return;
     
   } else if (response == "13") {
@@ -85,7 +87,7 @@ void handleAuxFunction(string response, int aux) {
       leftDown();
     }
 
-    
+    setAllOff();
 
     return;
   } else if (response == "14") {
@@ -105,6 +107,7 @@ void handleAuxFunction(string response, int aux) {
       bothSwap();
       rightUp();
     }
+    setAllOff();
     return;
   } else if (response == "15") {
     // Right-Left x2
@@ -131,6 +134,7 @@ void handleAuxFunction(string response, int aux) {
     } else {
       rightDown();
     }
+    setAllOff();
 
     return;
   }
@@ -147,17 +151,6 @@ void handleAuxFunction(string response, int aux) {
     BLE::setBusy(true);
 
     switch (parsed) {
-    case 1:
-      if (initialButton == 1) {
-        bothUp();
-      } else if (initialButton == 0) {
-        bothDown();
-      }
-
-      rightStatus = initialButton;
-      leftStatus = initialButton;
-      break;
-
     case 2:
       leftWink();
       break;
