@@ -89,13 +89,12 @@ export function SleepyEyeSettings() {
   const down = useAnimatedStyle(() => ({
     transform: [{ translateY: -offset.value }],
   }));
-  // TODO: Tap arrows adjust wrong side (due to swap)
   return (
     <SafeAreaView style={theme.container}>
 
       <HeaderWithBackButton
         backText={backHumanReadable}
-        headerText="Sleepy"
+        headerText="Sleepy Settings"
         deviceStatus
       />
 

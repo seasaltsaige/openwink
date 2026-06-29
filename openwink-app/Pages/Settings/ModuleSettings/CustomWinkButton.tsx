@@ -130,7 +130,7 @@ export function CustomWinkButton() {
       <SafeAreaView style={theme.container}>
         <HeaderWithBackButton
           backText={backHumanReadable}
-          headerText="Button"
+          headerText="Button Actions"
           deviceStatus
         />
 

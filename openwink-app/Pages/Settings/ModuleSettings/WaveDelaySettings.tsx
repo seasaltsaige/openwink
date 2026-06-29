@@ -98,7 +98,7 @@ export function WaveDelaySettings() {
     <SafeAreaView style={theme.container}>
       <HeaderWithBackButton
         backText={backHumanReadable}
-        headerText="Waves"
+        headerText="Wave Settings"
         deviceStatus
       />
 
