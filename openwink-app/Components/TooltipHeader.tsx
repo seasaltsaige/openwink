@@ -36,7 +36,7 @@ export function TooltipHeader({
       useReactNativeModal={useModal}
     >
 
-      <View style={theme.tooltipContainerView}>
+      <View style={[theme.tooltipContainerView, { justifyContent: "center" }]}>
         <Text style={[theme.tooltipText, titleStyle]}>
           {tooltipTitle}
         </Text>
