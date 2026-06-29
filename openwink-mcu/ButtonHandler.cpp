@@ -7,6 +7,7 @@
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
 #include "Storage.h"
+#include "AuxHandler.h"
 #include "constants.h"
 #include "esp32-hal-gpio.h"
 #include <string>
@@ -87,6 +88,7 @@ void ButtonHandler::readOnWakeup() {
     }
   } else {
     if ((wakeupValue != initialButton)) {
+      mainTimer = millis();
       buttonPressCounter++;
       if (initialButton == 1)
         bothUp();
@@ -523,14 +525,20 @@ void ButtonHandler::updateHeadlightDelay() {
 }
 
 void ButtonHandler::updateButtonSleep() {
+
   if (!BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms &&
       (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-
+    
     if (buttonInput == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+    // any low transition (press, active low) for aux inputs cause wake
+    if (AuxHandler::getAuxStatus()) 
+      esp_sleep_enable_ext1_wakeup((1ULL << AUX1_INPUT) | (1ULL << AUX2_INPUT), ESP_EXT1_WAKEUP_ANY_LOW);
+
 
     if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();
