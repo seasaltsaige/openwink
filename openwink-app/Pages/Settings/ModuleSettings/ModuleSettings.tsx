@@ -44,6 +44,11 @@ const moduleSettingsData: Array<{
       navigationName: "CustomWinkButton",
       pageSymbol: "speedometer-outline",
     },
+    {
+      pageName: "Custuomize Auxiliary Buttons",
+      navigationName: "AuxButtons",
+      pageSymbol: "flash-outline",
+    }
   ]
 
 export function ModuleSettings() {
@@ -179,7 +184,7 @@ export function ModuleSettings() {
       <SafeAreaView style={theme.moduleSettingsContainer}>
         <HeaderWithBackButton
           backText={back}
-          headerText="Module"
+          headerText="Module Settings"
           deviceStatus
         />
 
