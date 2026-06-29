@@ -10,6 +10,9 @@ import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
 import { getBLEDescriptors, DefaultCommandValue, ButtonStatus, DefaultCommandValueEnglish, buttonBehaviorMap } from '../helper/Constants';
 import {
+  AUX_ID,
+  AUX_SWITCH_TYPE,
+  AuxButtonStore,
   CustomOEMButtonStore,
   CustomWaveStore,
   SleepyEyeStore,
@@ -37,6 +40,8 @@ export type BleCommandContextType = {
   updateButtonDelay: (delay: number) => Promise<void>;
   setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
+  setAuxiliaryButtonStatus: (status: boolean) => Promise<void>;
+  setAuxButton: (aux: AUX_ID, action: ButtonBehaviors | CommandOutput, loop: boolean, type: AUX_SWITCH_TYPE) => Promise<void>;
   // Wave configuration
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
 
@@ -71,6 +76,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     leftStatus,
     rightStatus,
     leftRightSwapped,
+    auxiliaryButtonsEnabled,
     setLeftSleepyEye,
     setRightSleepyEye,
     setOemCustomButtonEnabled,
@@ -78,6 +84,13 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWaveDelayMulti,
     setLeftRightSwapped,
     setHeadlightBypass,
+    setAuxiliaryButtonsEnabled,
+    setAux1Action,
+    setAux2Action,
+    setAux1Loop,
+    setAux2Loop,
+    setAux1Type,
+    setAux2Type,
     // 
   } = useBleMonitor();
 
@@ -384,6 +397,105 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(null);
     }
   }, [device, leftStatus, rightStatus, headlightsBusy]);
+
+
+  const setAuxiliaryButtonStatus = useCallback(
+    async (status: boolean) => {
+      if (!device) {
+        console.warn("No device connected");
+        return;
+      }
+
+      try {
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(status ? "enable" : "disable"),
+        );
+
+        if (status) AuxButtonStore.enable();
+        else AuxButtonStore.disable();
+
+        setAuxiliaryButtonsEnabled(status);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device]
+  );
+
+  const setAuxButton = useCallback(
+    async (aux: AUX_ID, action: ButtonBehaviors | CommandOutput, loop: boolean, type: AUX_SWITCH_TYPE) => {
+      if (!device) {
+        console.warn("No device connected");
+        return;
+      }
+
+      if (!auxiliaryButtonsEnabled) {
+        console.warn("Aux Buttons not enabled");
+        return;
+      }
+
+      try {
+
+        // send aux id
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(aux.toString()),
+        );
+
+        await sleep(20);
+
+
+        // send aux command
+        if (typeof action === "string")
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+            base64.encode(buttonBehaviorMap[action].toString())
+          );
+        else {
+          const customCommand = action.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+            base64.encode(customCommand!)
+          );
+        }
+
+        await sleep(20);
+
+        // send loop status
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(loop ? "1" : "0"),
+        )
+
+        await sleep(20);
+
+        // send button type
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(type === AUX_SWITCH_TYPE.LATCHING ? "0" : "1"),
+        );
+
+        AuxButtonStore.setAuxButtonAction(aux, action);
+        AuxButtonStore.setAuxButtonLoop(aux, loop);
+        AuxButtonStore.setAuxButtonType(aux, type);
+
+        if (aux === AUX_ID.AUX1) {
+          setAux1Action(action);
+          setAux1Loop(loop);
+          setAux1Type(type);
+        } else if (aux === AUX_ID.AUX2) {
+          setAux2Action(action);
+          setAux2Loop(loop);
+          setAux2Type(type);
+        }
+
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device, auxiliaryButtonsEnabled],
+  );
 
   // Enable/disable OEM button control
   const setOEMButtonStatus = useCallback(
@@ -699,6 +811,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     resetModule,
     setOEMButtonHeadlightBypass,
     swapLeftRight,
+    setAuxButton,
+    setAuxiliaryButtonStatus,
     activeCommandName,
   };
 
