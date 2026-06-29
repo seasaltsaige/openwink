@@ -82,6 +82,10 @@ class HeadlightOrientationCharacteristicCallbacks : public NimBLECharacteristicC
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
 
+class AuxButtonCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
+  void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
+};
+
 class OTAUpdateCharacteristicCallbacks : public NimBLECharacteristicCallbacks {
   void onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) override;
 };
