@@ -45,7 +45,7 @@ const moduleSettingsData: Array<{
       pageSymbol: "speedometer-outline",
     },
     {
-      pageName: "Custuomize Auxiliary Buttons",
+      pageName: "Customize Auxiliary Buttons",
       navigationName: "AuxButtons",
       pageSymbol: "flash-outline",
     }
