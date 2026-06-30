@@ -371,7 +371,7 @@ export function AuxSettingsModal({
                     color: colorTheme.headerTextColor,
                   }}
                 >
-                  Apply Action
+                  Apply Changes
                 </Text>
               }
             </Pressable>

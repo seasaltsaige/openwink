@@ -379,7 +379,7 @@ export function AuxButtons() {
           reset={resetAuxActions}
           save={updateAuxAction}
           resetText="Reset Auxiliary"
-          saveText="Save Actions"
+          saveText="Save Settings"
         />
 
       </SafeAreaView>
