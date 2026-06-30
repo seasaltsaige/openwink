@@ -50,6 +50,7 @@ export function Information() {
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [displayedCommand, setDisplayedCommand] = useState(null as CommandOutput | null);
+  const [pairingKeyVisible, setPairingKeyVisible] = useState(false);
 
   const headlightStatus = (connected: boolean, status: number) => (
     connected ? (
@@ -64,8 +65,10 @@ export function Information() {
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
+  const pairingKey = getDevicePasskey();
+  const displayedPairingKey = pairingKeyVisible || pairingKey === "Not Paired" ? pairingKey : "[Hidden]";
+
   const appInfo = {
-    "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   };
@@ -132,9 +135,59 @@ export function Information() {
       />
 
       <ScrollView contentContainerStyle={theme.infoContainer}>
+        <View style={theme.infoBoxOuter}>
+          <Text style={theme.infoBoxOuterText}>
+            App Info
+          </Text>
+
+          <View style={theme.infoBoxInner}>
+            <View style={theme.infoBoxInnerContentView}>
+              <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
+                Pairing Key
+              </Text>
+
+              <Press
+                accessibilityRole="button"
+                accessibilityLabel={pairingKeyVisible ? "Hide pairing key" : "Show pairing key"}
+                hitSlop={8}
+                onPress={() => setPairingKeyVisible((visible) => !visible)}
+                style={{ flexDirection: "row", alignItems: "center", columnGap: 8 }}
+              >
+                {
+                  ({ pressed }) => (
+                    <>
+                      <Text style={theme.infoBoxInnerContentText}>
+                        {displayedPairingKey}
+                      </Text>
+                      <IonIcons
+                        name={pairingKeyVisible ? "eye-off-outline" : "eye-outline"}
+                        size={18}
+                        color={pressed ? colorTheme.buttonColor : colorTheme.textColor}
+                      />
+                    </>
+                  )
+                }
+              </Press>
+            </View>
+
+            {Object.keys(appInfo).map((key) => (
+              <View
+                style={theme.infoBoxInnerContentView}
+                key={key}
+              >
+                <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
+                  {key}
+                </Text>
+
+                <Text style={theme.infoBoxInnerContentText}>
+                  {appInfo[key as keyof typeof appInfo]}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
 
         {[
-          { title: "App Info", data: appInfo },
           { title: "Module Info", data: deviceInfo },
           { title: "Module Settings", data: deviceSettings },
         ].map((section) => (
