@@ -5,7 +5,7 @@ import { ButtonBehaviors, CommandOutput } from "../helper/Types";
 import { AUX_ID, AUX_SWITCH_TYPE, AuxButtonStore, CustomCommandStore } from "../Storage";
 import { SearchBarFilter } from "./SearchBarFilter";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { buttonBehaviorMap, DefaultCommandValueEnglish } from "../helper/Constants";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { ScrollView } from "react-native-gesture-handler";
@@ -158,9 +158,10 @@ export function AuxSettingsModal({
                   >
                     {
                       filteredCommands.map((cmd, i) => (
-                        <>
+                        <Fragment
+                          key={`${cmd.name}-${i}-cmd`}
+                        >
                           <Pressable
-                            key={`${cmd.name}-${i}-cmd`}
                             style={{
                               width: "100%",
                             }}
@@ -205,10 +206,10 @@ export function AuxSettingsModal({
                           </Pressable>
                           {
                             i !== (filteredCommands.length - 1) ? (
-                              <View key={typeof selectedAction === "string" ? `view-${selectedAction}-a` : `view-${selectedAction.name}-b`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                              <View style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
                             ) : <></>
                           }
-                        </>
+                        </Fragment>
                       ))
 
                     }
