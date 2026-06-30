@@ -123,8 +123,7 @@ export function AuxButtons() {
                 onClose={() => setAuxTooltipOpen(false)}
                 content={
                   <Text style={theme.tooltipContainerText}>
-                    TODO:
-                    See `TBA` for more information on Auxiliary button setup.
+                    Auxiliary Buttons are additional buttons that can be routed anywhere in the car, allowing quick access to commonly used actions. When enabled, the actions and behaviors programmed below will take affect. While disabled, auxiliary button actions will not function.
                   </Text>
                 }
                 closeOnBackgroundInteraction

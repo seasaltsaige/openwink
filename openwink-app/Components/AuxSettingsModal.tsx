@@ -224,7 +224,6 @@ export function AuxSettingsModal({
                   flex: 1,
                   width: "95%",
                   paddingHorizontal: 10,
-                  // paddingVertical: 10,
                 }}>
 
                   <ScrollView
@@ -239,8 +238,8 @@ export function AuxSettingsModal({
                     }}>
                       <TooltipHeader
                         tooltipContent={
-                          <Text>
-                            TODO
+                          <Text style={theme.tooltipContainerText}>
+                            Latching and momentary buttons both activate the sequence when switched on. When looping is enabled with a custom macro action, latching switches repeat the action until switched off, while momentary buttons require another press to stop it.
                           </Text>
                         }
                         tooltipTitle="Auxiliary Button Type"
@@ -290,8 +289,8 @@ export function AuxSettingsModal({
                     }}>
                       <TooltipHeader
                         tooltipContent={
-                          <Text>
-                            TODO
+                          <Text style={theme.tooltipContainerText}>
+                            Macro looping is only compatible with custom macros. When enabled, the custom macro will loop continuously until cancelled.
                           </Text>
                         }
                         tooltipTitle="Macro Looping"
