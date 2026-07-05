@@ -105,4 +105,15 @@ export abstract class AuxButtonStore {
   static deleteAux(aux: AUX_ID): void {
     Storage.delete(`${AUX_BUTTON_KEY}-${aux}`);
   }
+
+
+  static reset(): void {
+    this.deleteAux(AUX_ID.AUX1);
+    this.deleteAux(AUX_ID.AUX2);
+    this.setAuxButtonLoop(AUX_ID.AUX1, false);
+    this.setAuxButtonLoop(AUX_ID.AUX2, false);
+    this.setAuxButtonType(AUX_ID.AUX1, AUX_SWITCH_TYPE.LATCHING);
+    this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.LATCHING);
+    this.disable();
+  }
 }
