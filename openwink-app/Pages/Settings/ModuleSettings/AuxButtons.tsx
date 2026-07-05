@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { AuxSettingsModal, HeaderWithBackButton, SettingsToolbar } from "../../../Components";
-import { useRoute } from "@react-navigation/native";
+import { AuxSettingsModal, HeaderWithBackButton, SettingsToolbar, UnsavedChangesModal } from "../../../Components";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Pressable, Text, View } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
@@ -38,7 +38,9 @@ export function AuxButtons() {
   const [type2, setType2] = useState(aux2Type);
 
   const [auxModalOpen, setAuxModalOpen] = useState(false);
-  const [auxToDisplay, setAuxToDisplay] = useState(AUX_ID.AUX1 as AUX_ID)
+  const [auxToDisplay, setAuxToDisplay] = useState(AUX_ID.AUX1 as AUX_ID);
+
+  const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
 
   const updateAuxAction = useCallback(async () => {
     await setAuxButton(AUX_ID.AUX1, aux1, loop1, type1);
@@ -101,6 +103,15 @@ export function AuxButtons() {
     else return false;
   })();
 
+  const navigation = useNavigation();
+  const backWithSaveChanges = () => {
+    if (unsavedAux1 || unsavedAux2) {
+      setUnsavedChangesModalOpen(true);
+      return;
+    } else
+      navigation.goBack();
+  }
+
   return (
     <>
       <SafeAreaView style={[theme.container, { rowGap: 20 }]}>
@@ -108,6 +119,7 @@ export function AuxButtons() {
           backText={backHumanReadable}
           headerText="Auxiliary Buttons"
           deviceStatus
+          pressAction={backWithSaveChanges}
         />
         <View style={{ flexDirection: "column", alignItems: "center", justifyContent: "space-evenly" }}>
 
@@ -401,7 +413,32 @@ export function AuxButtons() {
           setAuxModalOpen(false);
         }}
         auxToDisplay={auxToDisplay}
-        initialValue={auxToDisplay === AUX_ID.AUX1 ? aux1 : aux2}
+        initialValues={{
+          action: auxToDisplay === AUX_ID.AUX1 ? aux1 : aux2,
+          buttonType: auxToDisplay === AUX_ID.AUX1 ? type1 : type2,
+          looping: auxToDisplay === AUX_ID.AUX1 ? loop1 : loop2,
+        }}
+      />
+
+      <UnsavedChangesModal
+        cancel={() => setUnsavedChangesModalOpen(false)}
+        discardChanges={() => {
+          setAux1(aux1Action);
+          setLoop1(aux1Loop);
+          setType1(aux1Type);
+
+          setAux2(aux2Action);
+          setLoop2(aux2Loop);
+          setType2(aux2Type);
+
+          setUnsavedChangesModalOpen(false);
+          navigation.goBack();
+        }}
+        visible={unsavedChangesModalOpen}
+        saveChanges={async () => {
+          await updateAuxAction()
+          navigation.goBack();
+        }}
       />
     </>
   )
