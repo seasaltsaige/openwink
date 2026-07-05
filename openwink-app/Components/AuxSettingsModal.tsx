@@ -26,7 +26,11 @@ interface IAuxSettingsModalProps {
   setAux: (action: ButtonBehaviors | CommandOutput, settings: AUX_SWITCH_SETTINGS) => void;
   close: () => void;
   auxToDisplay: AUX_ID;
-  initialValue: ButtonBehaviors | CommandOutput;
+  initialValues: {
+    action: ButtonBehaviors | CommandOutput;
+    buttonType: AUX_SWITCH_TYPE;
+    looping: boolean;
+  };
 }
 
 export function AuxSettingsModal({
@@ -34,7 +38,7 @@ export function AuxSettingsModal({
   setAux,
   auxToDisplay,
   close,
-  initialValue,
+  initialValues,
 }: IAuxSettingsModalProps) {
 
   const { colorTheme, theme } = useColorTheme();
@@ -45,8 +49,8 @@ export function AuxSettingsModal({
   const [selectedAction, setSelectedAction] = useState({} as CommandOutput);
   const [selectedCategory, setSelectedCategory] = useState("Actions" as typeof auxCategories[number]);
 
-  const [switchType, setSwitchType] = useState(AUX_SWITCH_TYPE.LATCHING);
-  const [looping, setLooping] = useState(false);
+  const [switchType, setSwitchType] = useState(initialValues.buttonType);
+  const [looping, setLooping] = useState(initialValues.looping);
 
   useEffect(() => {
     const commandsFromStorage: CommandOutput[] = [];
@@ -65,18 +69,13 @@ export function AuxSettingsModal({
     }
 
     for (const cmd of commandsFromStorage) {
-      if (typeof initialValue === "string" && initialValue === cmd.name) setSelectedAction(cmd);
-      else if (typeof initialValue === "object" && initialValue.name === cmd.name) setSelectedAction(cmd);
+      if (typeof initialValues.action === "string" && initialValues.action === cmd.name) setSelectedAction(cmd);
+      else if (typeof initialValues.action === "object" && initialValues.action.name === cmd.name) setSelectedAction(cmd);
     }
-
-    const loop = AuxButtonStore.getAuxButtonLoop(auxToDisplay);
-    const type = AuxButtonStore.getAuxButtonType(auxToDisplay);
 
     setCommands(commandsFromStorage);
     setFilteredCommands(commandsFromStorage);
     setSelectedCategory("Actions");
-    setLooping(loop);
-    setSwitchType(type);
   }, [visible]);
 
 
