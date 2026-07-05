@@ -36,7 +36,7 @@ export type BleCommandContextType = {
 
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
-  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping: boolean) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping?: boolean) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
   setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
@@ -541,12 +541,14 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Update OEM button preset for specific number of presses
   const updateOEMButtonPresets = useCallback(
-    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping: boolean) => {
+    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0, looping?: boolean) => {
 
       if (!device) {
         console.warn('No device connected');
         return;
       }
+
+      if (looping === undefined) looping = CustomOEMButtonStore.getLooping(numPresses);
 
       try {
         // Update local storage

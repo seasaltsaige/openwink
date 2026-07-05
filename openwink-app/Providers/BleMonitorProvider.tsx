@@ -400,7 +400,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
 
           try {
             const val = base64.decode(char.value);
-            console.log(val);
             if (val === "0") {
               onInterrupt();
             }
