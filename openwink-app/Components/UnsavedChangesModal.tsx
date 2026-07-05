@@ -5,7 +5,6 @@ import { useColorTheme } from "../hooks/useColorTheme";
 
 interface IUnsavedChangesModalProps {
   visible: boolean;
-  // canSaveChanges: boolean;
   saveChanges: () => void;
   discardChanges: () => void;
   cancel: () => void;
@@ -13,7 +12,6 @@ interface IUnsavedChangesModalProps {
 
 export function UnsavedChangesModal({
   visible,
-  // canSaveChanges,
   cancel,
   discardChanges,
   saveChanges
