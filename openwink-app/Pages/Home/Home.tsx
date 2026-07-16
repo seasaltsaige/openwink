@@ -5,7 +5,8 @@ import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, OnboardingStore, QuickLinksStore } from "../../Storage";
+
 import {
   EditQuickLinksModal,
   LongButton,
@@ -23,6 +24,7 @@ import {
 } from "../../hooks/useUpdateManager";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
+import { Onboarding } from "../Onboarding/Onboarding";
 
 export function Home() {
 
@@ -36,6 +38,8 @@ export function Home() {
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
+
+  const [onboardingDone, setOnboardingDone] = useState(true);
 
   const { updateFirmwareVersion } = useBleMonitor();
 
@@ -137,6 +141,16 @@ export function Home() {
   }
 
   useEffect(() => {
+    OnboardingStore.reset();
+    const onboardingCompleted = OnboardingStore.getStatus();
+
+    if (!onboardingCompleted) {
+      setTimeout(() => {
+        setOnboardingDone(onboardingCompleted);
+      }, 1000);
+      return () => { };
+    }
+
     const autoConn = AutoConnectStore.get();
     if (autoConn && !isConnected) scanForDevice();
     (async () => {
@@ -146,18 +160,20 @@ export function Home() {
 
   useEffect(() => {
     (async () => {
-      if (device !== null)
+      if (isConnected)
         await fetchModuleUpdate();
     })();
   }, [device]);
 
 
+
   return (
     <>
       <SafeAreaView style={theme.tabContainer}>
+
         <MainHeader text="Home" />
 
-        <ScrollView contentContainerStyle={theme.contentContainer} >
+        <ScrollView contentContainerStyle={theme.contentContainer}>
 
           {
             isConnected ? (
@@ -416,6 +432,11 @@ export function Home() {
         version={updateData?.version!}
         startUpdate={startUpdate}
         close={closeModuleUpdate}
+      />
+
+      <Onboarding
+        visible={!onboardingDone}
+        completeOnboarding={() => setOnboardingDone(true)}
       />
     </>
   );
