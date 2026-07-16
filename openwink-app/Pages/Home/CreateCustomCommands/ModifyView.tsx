@@ -117,8 +117,10 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       }
 
       // After set, if connected, send to device for update
-      if (isConnected)
-        await updateOEMButtonPresets(btnAction.presses, command);
+      if (isConnected) {
+        const looping = CustomOEMButtonStore.getLooping(btnAction.presses);
+        await updateOEMButtonPresets(btnAction.presses, command, looping);
+      }
 
     }
   }, [commandName, command]);
