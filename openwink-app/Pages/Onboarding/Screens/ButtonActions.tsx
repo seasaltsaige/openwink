@@ -22,7 +22,15 @@ export function ButtonActions() {
       <View style={{ flex: 1 }} />
 
 
-      <View style={{ width: "100%", transform: [{ rotate: "5deg" }], marginTop: 25, rowGap: 15, alignItems: "center", justifyContent: "center" }}>
+      <View style={{
+        width: "100%",
+        transform: [{ rotate: "5deg" }],
+        marginTop: 25,
+        rowGap: 15,
+        alignItems: "center",
+        justifyContent: "center"
+      }}>
+
         <View
           style={{
             backgroundColor: colorTheme.backgroundSecondaryColor,
@@ -269,7 +277,7 @@ export function ButtonActions() {
         color: `${colorTheme.headerTextColor}B0`,
         marginBottom: 45,
       }}>
-        Assign pre-existing or customized commands to your OEM retractor button and up to two auxiliary buttons.
+        Assign premade or customized commands to your OEM retractor button and up to two auxiliary buttons.
       </Text>
 
     </View>
