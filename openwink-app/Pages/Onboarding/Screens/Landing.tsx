@@ -49,6 +49,10 @@ export function Landing() {
           easing: Easing.linear,
         }),
         withDelay(
+          leftMoveTime * 0.5,
+          withTiming(100, { duration: 0 })
+        ),
+        withDelay(
           LOOP_PAUSE,
           withTiming(100, { duration: 0 }),
         )
@@ -57,28 +61,28 @@ export function Landing() {
       false
     );
 
-    rightWaveStatus.value = withDelay(
-      leftMoveTime * 0.5,
-      withRepeat(
-        withSequence(
-          withTiming(0, {
-            duration: rightMoveTime,
-            easing: Easing.linear,
-          }),
-          withTiming(100, {
-            duration: rightMoveTime,
-            easing: Easing.linear,
-          }),
-          withDelay(
-            LOOP_PAUSE,
-            withTiming(100, { duration: 0 })
-          )
+    rightWaveStatus.value = withRepeat(
+      withSequence(
+        withDelay(
+          leftMoveTime * 0.5,
+          withTiming(100, { duration: 0 }),
         ),
-        -1,
-        false
-      )
+        withTiming(0, {
+          duration: rightMoveTime,
+          easing: Easing.linear,
+        }),
+        withTiming(100, {
+          duration: rightMoveTime,
+          easing: Easing.linear,
+        }),
+        withDelay(
+          LOOP_PAUSE,
+          withTiming(100, { duration: 0 })
+        )
+      ),
+      -1,
+      false,
     );
-
   }, [min]);
 
   useAnimatedReaction(
