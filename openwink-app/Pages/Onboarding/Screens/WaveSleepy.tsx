@@ -433,7 +433,6 @@ export function WaveSleepy() {
         textAlign: "left",
         fontSize: 30,
         color: colorTheme.headerTextColor,
-        // width: "90%",
         marginTop: 20,
       }}>
         Dial in your Settings
@@ -446,9 +445,8 @@ export function WaveSleepy() {
         fontSize: 16.5,
         color: `${colorTheme.headerTextColor}B0`,
         marginBottom: 45,
-        // width: "90%",
       }}>
-        Customize the exact delay between headlight movements when waving hello to other Miatas, allowing for smooth, continuous movement.
+        Customize the exact delay between headlight movements when waving at other miatas. Customize precise position for sleepy eye, allowing unique expression.
       </Text>
 
     </View>
