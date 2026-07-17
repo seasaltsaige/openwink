@@ -266,7 +266,7 @@ export function ButtonActions() {
         color: colorTheme.headerTextColor,
         marginTop: 20,
       }}>
-        Customize your{"\n"}Button Behaviors
+        Customize your{"\n"}button behaviors
       </Text>
 
 

@@ -435,7 +435,7 @@ export function WaveSleepy() {
         color: colorTheme.headerTextColor,
         marginTop: 20,
       }}>
-        Dial in your Settings
+        Dial in your settings
       </Text>
 
 

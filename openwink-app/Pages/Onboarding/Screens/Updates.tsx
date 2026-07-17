@@ -148,7 +148,7 @@ export function Updates() {
         color: colorTheme.headerTextColor,
         marginTop: 20,
       }}>
-        Get firmware updates Wirelessly
+        Get firmware updates wirelessly
       </Text>
 
 

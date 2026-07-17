@@ -146,10 +146,7 @@ export function CreateCustomCommands() {
         color: colorTheme.headerTextColor,
         marginTop: 20,
       }}>
-        Build your own
-        {/* <Text style={{ color: "#EFBF04", textShadowColor: "#EFBF04", textShadowOffset: 0, textShadowRadius: 10 }}> */}
-        {" "}Sequences
-        {/* </Text> */}
+        Build your own sequences
       </Text>
 
 
