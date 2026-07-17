@@ -1,9 +1,31 @@
 import { Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
+import LinearGradient from "react-native-linear-gradient";
+import * as Application from "expo-application";
+import { ColorTheme } from "../../../helper/Constants";
+import { InfoBox } from "../../../Components";
 
 export function ConnectionSecurity() {
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, themeName, theme } = useColorTheme();
+
+  const appInfo = {
+    "Pairing Key": "8rPiGsOqUvI...",
+    "App Version": `v${Application.nativeApplicationVersion!}`,
+    "App Theme": ColorTheme.themeNames[themeName],
+  };
+
+  const deviceInfo = {
+    "Module ID": "24:58:7C:EE:A7:31",
+    "Firmware Version": `v0.12.0`,
+    "Connection Status": "Connected",
+    // "Left Headlight Position": "75%",
+    // "Right Headlight Position": "22%",
+    // "Left Move Time": `589 ms`,
+    // "Right Move Time": `596 ms`,
+  };
+
+
 
   return (
     <View style={{
@@ -14,6 +36,42 @@ export function ConnectionSecurity() {
       paddingHorizontal: 20,
       rowGap: 20,
     }}>
+
+
+      <View style={{ flex: 1 }} />
+
+      <View style={[{
+        transform: [{ rotate: "5deg" }]
+      }]}>
+
+        <View style={[theme.infoContainer, { opacity: 0.6 }]}>
+          <InfoBox
+            data={appInfo}
+            title="App Info"
+          />
+
+          <InfoBox
+            data={deviceInfo}
+            title="Module Info"
+          />
+        </View>
+
+        <LinearGradient
+          start={{ x: 0, y: 1 }}
+          end={{ x: 0, y: 0 }}
+          colors={[colorTheme.backgroundPrimaryColor, "transparent"]}
+          style={{
+            position: "absolute",
+            left: -10,
+            top: 0,
+            height: "115%",
+            width: "110%",
+            zIndex: 1000,
+          }}
+          pointerEvents="none"
+        />
+
+      </View>
 
       <View style={{ flex: 1 }} />
 
