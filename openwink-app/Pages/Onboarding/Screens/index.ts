@@ -6,6 +6,7 @@ import { WaveSleepy } from "./WaveSleepy";
 import { ButtonActions } from "./ButtonActions";
 import { Updates } from "./Updates";
 import { ConnectionSecurity } from "./ConnectionSecurity";
+import { NextSteps } from "./NextSteps";
 
 type ScreensType = () => JSX.Element;
 
@@ -18,4 +19,5 @@ export const ONBOARDING_SCREENS: ScreensType[] = [
   ButtonActions,
   Updates,
   ConnectionSecurity,
+  NextSteps,
 ]
