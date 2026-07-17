@@ -141,13 +141,12 @@ export function Home() {
   }
 
   useEffect(() => {
-    OnboardingStore.reset();
     const onboardingCompleted = OnboardingStore.getStatus();
 
     if (!onboardingCompleted) {
       setTimeout(() => {
         setOnboardingDone(onboardingCompleted);
-      }, 1000);
+      }, 500);
       return () => { };
     }
 
@@ -436,7 +435,10 @@ export function Home() {
 
       <Onboarding
         visible={!onboardingDone}
-        completeOnboarding={() => setOnboardingDone(true)}
+        completeOnboarding={() => {
+          setOnboardingDone(true);
+          OnboardingStore.complete();
+        }}
       />
     </>
   );
