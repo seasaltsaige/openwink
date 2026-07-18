@@ -3,7 +3,7 @@ import { HeaderWithBackButton, LongButton, MainHeader, ModalBlurBackground, Sear
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ApplyType, SettingsPreset, SettingsPresetsStore } from "../../../Storage/SettingsPresetsStore";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { CreatePresetModal } from "./CreatePresetModal";
@@ -45,7 +45,7 @@ export function SystemProfiles() {
       <SafeAreaView style={theme.container}>
         <HeaderWithBackButton
           backText={back}
-          headerText="Profiles"
+          headerText="System Profiles"
           headerTextStyle={theme.settingsHeaderText}
         />
 
@@ -63,12 +63,12 @@ export function SystemProfiles() {
 
           <LongButton
             text="Create New Profile"
-            icons={{ names: [null, "color-wand-outline"], size: [20, 20] }}
+            icons={{ names: [null, "add-outline"], size: [null, 23] }}
             pressableStyle={{
               width: "auto",
               columnGap: 15,
-              marginTop: 10,
-              // marginVertical: 20,
+              marginBottom: 10,
+              // marginTop: 10,
             }}
             onPress={() => setConfirmationModalOpen(true)}
           />
@@ -97,7 +97,7 @@ export function SystemProfiles() {
 
           <View style={{
             flex: 1,
-            width: "85%",
+            width: "90%",
           }}>
             <ScrollView
               contentContainerStyle={{
@@ -110,11 +110,12 @@ export function SystemProfiles() {
             >
               {
 
-                presets.length > 0 ?
+                (presets.length > 0) ?
                   filteredPresets.map((preset, index) => (
-                    <>
+                    <Fragment
+                      key={`${preset.name}-${preset.createdAt}`}
+                    >
                       <Pressable
-                        key={`${preset.name}-${preset.createdAt}`}
                         style={({ pressed }) => ({
                           backgroundColor: pressed ? colorTheme.buttonColor : colorTheme.backgroundSecondaryColor,
                           width: "100%",
@@ -129,14 +130,12 @@ export function SystemProfiles() {
                         onPress={() => setPresetToApply(preset.name)}
                       >
 
-                        {/* 
-                          TODO: Changing settings should remove selected profile status
-                            Creating a preset should auto apply it
-                          */}
-                        {/* Saving/creating a applies it, sure, (it already is), but theres no need to keep track of active ones... pointless imo */}
-
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", columnGap: 8 }}>
-                          <IonIcons name="chevron-forward-circle-outline" size={20} color={colorTheme.textColor} style={{ marginBottom: -2 }} />
+                        <View style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          columnGap: 8
+                        }}>
 
                           <Text style={{
                             color: colorTheme.textColor,
@@ -164,15 +163,21 @@ export function SystemProfiles() {
 
                       </Pressable>
 
-                      {
-                        index === filteredPresets.length - 1 ? <></> : (
-                          <View key={`div${preset.name}-${preset.createdAt}-divider`} style={{ width: "85%", height: 1.2, borderRadius: 2, backgroundColor: `${colorTheme.disabledButtonColor}70`, }} />
-                        )
-                      }
-                    </>
+                    </Fragment>
                   ))
-                  : <Text>
-                    No Profiles Created
+                  : <Text style={{
+                    color: colorTheme.headerTextColor,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    fontSize: 18,
+                    textAlign: "center",
+                  }}>
+                    No Profiles Created {"\n"}
+                    <Text style={{
+                      fontSize: 15,
+                      fontFamily: "IBMPlexSans_400Regular"
+                    }}>
+                      Create one above
+                    </Text>
                   </Text>
               }
             </ScrollView>
