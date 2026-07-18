@@ -28,7 +28,7 @@ export function NextSteps() {
 
         <View style={[theme.contentContainer, { opacity: 0.6 }]}>
           <View
-            style={theme.homeScreenConnectionButton}
+            style={[theme.homeScreenConnectionButton, { backgroundColor: colorTheme.buttonColor }]}
           >
             <Text style={theme.homeScreenConnectionButtonText}>
               Scan for Wink Module

@@ -446,7 +446,7 @@ export function WaveSleepy() {
         color: `${colorTheme.headerTextColor}B0`,
         marginBottom: 45,
       }}>
-        Customize the exact delay between headlight movements when waving at other miatas. Customize precise position for sleepy eye, allowing unique expression.
+        Customize the exact delay and positions of headlight movements, allowing for unique expressions.
       </Text>
 
     </View>
