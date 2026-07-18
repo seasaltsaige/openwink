@@ -16,7 +16,7 @@ import {
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
+import { AutoConnectStore, AUX_SWITCH_TYPE, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
 import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
@@ -45,7 +45,14 @@ export function Information() {
     leftRightSwapped,
     leftMoveTime,
     rightMoveTime,
-    headlightBypass
+    headlightBypass,
+    aux1Action,
+    aux1Loop,
+    aux1Type,
+    aux2Action,
+    aux2Loop,
+    aux2Type,
+    auxiliaryButtonsEnabled,
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -64,30 +71,43 @@ export function Information() {
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
-  const appInfo = {
-    "Pairing Key": getDevicePasskey(),
-    "Application Version": `v${Application.nativeApplicationVersion}`,
-    "Application Theme": ColorTheme.themeNames[themeName],
-  };
 
-  const deviceInfo = {
-    "Module ID": mac || "Not Paired",
-    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
-    "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
-    "Left Headlight Position": headlightStatus(isConnected, leftStatus),
-    "Right Headlight Position": headlightStatus(isConnected, rightStatus),
-    "Left Move Time": `${leftMoveTime} ms`,
-    "Right Move Time": `${rightMoveTime} ms`,
-  };
+  const appInfo = [
+    { "Pairing Key": getDevicePasskey() },
+    { "Application Version": `v${Application.nativeApplicationVersion}` },
+    { "Application Theme": ColorTheme.themeNames[themeName] },
+  ];
 
-  const deviceSettings = {
-    "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
-    "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver",
-    "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
-    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
-    "Press Interval": `${buttonDelay} ms`,
-  };
+  const deviceInfo = [
+    { "Module ID": mac || "Not Paired" },
+    { "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown" },
+    { "Connection Status": connectionStatus(isScanning, isConnecting, isConnected) },
+    { "Left Headlight Position": headlightStatus(isConnected, leftStatus) },
+    { "Right Headlight Position": headlightStatus(isConnected, rightStatus) },
+    { "Left Move Time": `${leftMoveTime} ms` },
+    { "Right Move Time": `${rightMoveTime} ms` },
+  ];
+
+  const deviceSettings = [
+    { "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled" },
+    { "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver" },
+    { "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled" },
+    { "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled" },
+    { "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms` },
+    { "Press Interval": `${buttonDelay} ms` },
+  ];
+
+  const auxButtons = [
+    { "Auxiliary Button Status": auxiliaryButtonsEnabled ? "Enabled" : "Disabled" },
+    { "Auxiliary Button #1": "" },
+    { "Button Action": typeof aux1Action === "string" ? aux1Action : aux1Action.name },
+    { "Button Type": aux1Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
+    { "Macro Looping": typeof aux1Action === "string" ? "N/A" : (aux1Loop ? "Enabled" : "Disabled") },
+    { "Auxiliary Button #2": "" },
+    { "Button Action": typeof aux2Action === "string" ? aux2Action : aux2Action.name },
+    { "Button Type": aux2Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
+    { "Macro Looping": typeof aux2Action === "string" ? "N/A" : (aux2Loop ? "Enabled" : "Disabled") },
+  ]
 
   const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
   const buttonActions = useMemo(() => rawButtonActions.map(action => {
@@ -205,6 +225,11 @@ export function Information() {
           </View>
         </View>
 
+        <InfoBox
+          data={auxButtons}
+          title="Auxiliary Button Settings"
+        />
+
         {
           customCommands.length > 0 ?
             <View
@@ -224,23 +249,47 @@ export function Information() {
                       style={theme.infoBoxInnerContentView}
                       key={command.name}
                     >
-                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6, width: "40%", height: "auto", }]}>
-                        {command.name.length > 14 ? `${command.name.slice(0, 12)}...` : command.name}
+                      <Text
+                        style={[
+                          theme.infoBoxInnerContentText,
+                          {
+                            opacity: 0.6,
+                            width: "40%",
+                            flexShrink: 1,
+                          },
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {command.name}
                       </Text>
 
 
-                      <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 8, }}>
-                        <Text style={[theme.infoBoxInnerContentText, { width: "85%" }]}>
+                      <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 10, }}>
+                        <Text
+                          style={[
+                            theme.infoBoxInnerContentText,
+                            {
+                              flexShrink: 1,
+                            },
+                          ]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
                           {
-                            command.command ? (
-                              command.command.map(c => (
-                                c.delay ?
-                                  `${c.delay} ms Delay` :
-                                  DefaultCommandValueEnglish[c.transmitValue! - 1]
-                              )).slice(0, 2).join(" → ").slice(0, 16) + "..."
-                            ) : "Unknown Error"
+                            command.command
+                              ? command.command
+                                .map(c =>
+                                  c.delay
+                                    ? `${c.delay} ms Delay`
+                                    : DefaultCommandValueEnglish[c.transmitValue! - 1]
+                                )
+                                .slice(0, 2)
+                                .join(" → ")
+                              : "Unknown Error"
                           }
                         </Text>
+
                         {
                           command.command ? (
                             <Press

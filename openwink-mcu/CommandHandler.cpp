@@ -1,5 +1,6 @@
 #include <string>
 #include "CommandHandler.h"
+#include "AuxHandler.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
@@ -228,7 +229,6 @@ void CommandHandler::handleQueuedCustomCommand() {
       delay(time);
     } else {
       int parsedCommand = stoi(cmd);
-      Serial.printf("Command: %d\n", parsedCommand);
       switch (parsedCommand) {
         // Both Up
         case 1:
@@ -388,6 +388,7 @@ void CommandHandler::handleQueuedCustomCommand() {
       setAllOff();
     }
     ButtonHandler::loopButtonHandler();
+    AuxHandler::loopAuxHandler();
 
     if (i == (commandSequence.size() - 1) && CommandHandler::custom_command_loop) i = -1;
   }

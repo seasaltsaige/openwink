@@ -10,4 +10,5 @@ export * from "./QuickLinksStore";
 export * from "./HeadlightOrientationStore";
 export * from "./HeadlightMovementSpeedStore";
 export * from "./CustomButtonFrequencyStore";
+export * from "./AuxButtonStore";
 export * from "./OnboardingStore";

@@ -20,7 +20,6 @@ import {
 import { CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useThrottle } from "../../../helper/Functions";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";

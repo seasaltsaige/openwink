@@ -7,6 +7,7 @@
 #include "BLECallbacks.h"
 #include "MainFunctions.h"
 #include "Storage.h"
+#include "AuxHandler.h"
 #include "constants.h"
 #include "esp32-hal-gpio.h"
 #include <string>
@@ -87,6 +88,7 @@ void ButtonHandler::readOnWakeup() {
     }
   } else {
     if ((wakeupValue != initialButton)) {
+      mainTimer = millis();
       buttonPressCounter++;
       if (initialButton == 1)
         bothUp();
@@ -179,6 +181,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       bothSwap();
       leftUp();
     }
+    setAllOff();
     return;
     
   } else if (response == "13" && customButtonStatusEnabled) {
@@ -206,7 +209,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       leftDown();
     }
 
-    
+    setAllOff();
 
     return;
   } else if (response == "14" && customButtonStatusEnabled) {
@@ -226,6 +229,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
       bothSwap();
       rightUp();
     }
+    setAllOff();
     return;
   } else if (response == "15" && customButtonStatusEnabled) {
     // Right-Left x2
@@ -252,7 +256,7 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
     } else {
       rightDown();
     }
-
+    setAllOff();
     return;
   } else if (response == "12" && customButtonStatusEnabled) {
     bool swap = Storage::getHeadlightOrientation();
@@ -523,14 +527,20 @@ void ButtonHandler::updateHeadlightDelay() {
 }
 
 void ButtonHandler::updateButtonSleep() {
+
   if (!BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms &&
       (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
-
+    
     if (buttonInput == 1)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 0);
     else if (buttonInput == 0)
       esp_sleep_enable_ext0_wakeup((gpio_num_t)OEM_BUTTON_INPUT, 1);
+
+    // any low transition (press, active low) for aux inputs cause wake
+    if (AuxHandler::getAuxStatus()) 
+      esp_sleep_enable_ext1_wakeup((1ULL << AUX1_INPUT) | (1ULL << AUX2_INPUT), ESP_EXT1_WAKEUP_ANY_LOW);
+
 
     if (!BLE::getDeviceConnected())
       esp_deep_sleep_start();

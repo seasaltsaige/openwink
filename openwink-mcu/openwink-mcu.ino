@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "Storage.h"
+#include "AuxHandler.h"
 #include "MainFunctions.h"
 #include "BLE.h"
 #include "ButtonHandler.h"
@@ -28,6 +29,7 @@ void setup() {
   Serial.printf("%02X\n", baseMac[5]);
 
   ButtonHandler::setupGPIO();
+  AuxHandler::setupAuxGPIO();
   ButtonHandler::init();
 
   ButtonHandler::readOnWakeup();
@@ -48,6 +50,11 @@ void setup() {
 
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();
+
+  if (AuxHandler::getAuxStatus()) {
+    AuxHandler::auxReadWakeup();
+    AuxHandler::readWakeupReason();
+  }
 
   xTaskCreate(motionInMonitorTask, "MONITOR", 4096, NULL, 1, NULL);
 }
@@ -80,5 +87,9 @@ void loop() {
     CommandHandler::handleQueuedCustomCommand();
 
   ButtonHandler::loopButtonHandler();
+
+  if (AuxHandler::getAuxStatus())
+    AuxHandler::loopAuxHandler();
+  
   ButtonHandler::updateButtonSleep();
 }

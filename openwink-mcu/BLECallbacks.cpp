@@ -16,6 +16,7 @@
 #include <iostream>
 #include "esp_ota_ops.h"
 #include "CommandHandler.h"
+#include "AuxHandler.h"
 
 using namespace std;
 
@@ -61,8 +62,8 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
   BLE::setDeviceConnected(false);
   awakeTime_ms = 0;
-  BLE::init("OpenWink");
-  BLE::start();
+  // BLE::init("OpenWink");
+  // BLE::start();
 }
 
 void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {
@@ -181,6 +182,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
         Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
       }
     }
+
   } else if (customButtonPressUpdateState == 2) {
     customButtonPressUpdateState = 0;
     bool loopStatus = value.compare("0") == 0 ? false : true;
@@ -238,6 +240,47 @@ void HeadlightOrientationCharacteristicCallbacks::onWrite(NimBLECharacteristic* 
     Storage::setHeadlightOrientation(true);
 }
 
+
+int auxSide = 0; // 1 = AUX1, 2 = AUX2, 0 = idle/unknown
+int auxSetting = 0; // 0 = side, 1 = action, 2 = looping, 3 = switch type
+void AuxButtonCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
+  string value = pChar->getValue();
+
+  if (value == "enable") {
+    Storage::setAuxStatus(true);
+    AuxHandler::setAuxiliaryButtonsStatus(true);
+    return;
+  } else if (value == "disable") {
+    Storage::setAuxStatus(false);
+    AuxHandler::setAuxiliaryButtonsStatus(false);
+    return;
+  }
+
+  // expects side
+  if (auxSetting == 0) {
+    auxSide = stoi(value);
+    auxSetting++;
+  // expects action
+  } else if (auxSetting == 1) {
+    AuxHandler::setAuxSideAction(auxSide, value);
+    Storage::setAuxAction(auxSide, value);
+    auxSetting++;
+  // expects looping
+  } else if (auxSetting == 2) {
+    bool looped = (value == "0") ? false : true;
+    AuxHandler::setAuxLoop(auxSide, looped);
+    Storage::setAuxLooping(auxSide, looped);
+    auxSetting++;
+  // expects switch type
+  } else {
+    int type = stoi(value);
+    AuxHandler::setAuxType(auxSide, type);
+    Storage::setAuxButtonType(auxSide, type);
+    auxSide = 0;
+    auxSetting = 0;
+  }
+
+}
 
 void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
   string value = pChar->getValue();

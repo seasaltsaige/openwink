@@ -10,6 +10,9 @@ import { Device } from "react-native-ble-plx";
 import base64 from "react-native-base64";
 import { getBLEDescriptors, buttonBehaviorMap } from "../helper/Constants";
 import {
+  AUX_ID,
+  AUX_SWITCH_TYPE,
+  AuxButtonStore,
   CustomOEMButtonStore,
   CustomWaveStore,
   DeviceMACStore,
@@ -26,7 +29,7 @@ import {
   SIDE,
 } from "../Storage/HeadlightMovementSpeedStore";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
-import { Presses } from "../helper/Types";
+import { ButtonBehaviors, CommandOutput, Presses } from "../helper/Types";
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -47,6 +50,14 @@ export type BleMonitorContextType = {
   headlightBypass: boolean;
   buttonDelay: number;
 
+  auxiliaryButtonsEnabled: boolean;
+  aux1Action: CommandOutput | ButtonBehaviors;
+  aux2Action: CommandOutput | ButtonBehaviors;
+  aux1Loop: boolean;
+  aux2Loop: boolean;
+  aux1Type: AUX_SWITCH_TYPE;
+  aux2Type: AUX_SWITCH_TYPE;
+
   startMonitoring: (
     device: Device,
     onCustomCommandInterrupt: () => void,
@@ -65,6 +76,13 @@ export type BleMonitorContextType = {
   setHeadlightBypass: React.Dispatch<React.SetStateAction<boolean>>;
   setFirmwareVersion: React.Dispatch<React.SetStateAction<string>>;
   setOemCustomButtonEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setAuxiliaryButtonsEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setAux1Action: React.Dispatch<React.SetStateAction<CommandOutput | ButtonBehaviors>>;
+  setAux2Action: React.Dispatch<React.SetStateAction<CommandOutput | ButtonBehaviors>>;
+  setAux1Loop: React.Dispatch<React.SetStateAction<boolean>>;
+  setAux2Loop: React.Dispatch<React.SetStateAction<boolean>>;
+  setAux1Type: React.Dispatch<React.SetStateAction<AUX_SWITCH_TYPE>>
+  setAux2Type: React.Dispatch<React.SetStateAction<AUX_SWITCH_TYPE>>
   refreshMonitorStatus: () => Promise<void>;
 };
 
@@ -104,6 +122,15 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
   const [leftMoveTime, setLeftMoveTime] = useState(625);
   const [rightMoveTime, setRightMoveTime] = useState(625);
 
+  const [auxiliaryButtonsEnabled, setAuxiliaryButtonsEnabled] = useState(false);
+  const [aux1Action, setAux1Action] = useState("Left Wink" as CommandOutput | ButtonBehaviors);
+  const [aux2Action, setAux2Action] = useState("Right Wink" as CommandOutput | ButtonBehaviors);
+  const [aux1Loop, setAux1Loop] = useState(false);
+  const [aux2Loop, setAux2Loop] = useState(false);
+  const [aux1Type, setAux1Type] = useState(AUX_SWITCH_TYPE.LATCHING);
+  const [aux2Type, setAux2Type] = useState(AUX_SWITCH_TYPE.LATCHING);
+
+
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);
 
@@ -131,10 +158,21 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     ];
     const swap = HeadlightOrientationStore.getStatus();
 
+    const auxButtonEnabled = AuxButtonStore.getStatus();
+    const aux1 = AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1);
+    const aux2 = AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2);
+    const loop1 = AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1);
+    const loop2 = AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2);
+
     const firmwareV = FirmwareStore.getFirmwareVersion();
     setFirmwareVersion(firmwareV ?? "");
 
     setOemCustomButtonEnabled(buttonStatus);
+    setAuxiliaryButtonsEnabled(auxButtonEnabled);
+    setAux1Action(aux1);
+    setAux2Action(aux2);
+    setAux1Loop(loop1);
+    setAux2Loop(loop2);
     setHeadlightBypass(bypass);
     setButtonDelay(bDelay);
     setWaveDelayMulti(waveMult);
@@ -363,7 +401,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
 
           try {
             const val = base64.decode(char.value);
-            console.log(val);
             if (val === "0") {
               onInterrupt();
             }
@@ -562,6 +599,15 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
           ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
           base64.encode("0"),
         );
+
+        await sleep(20);
+
+        // write looping status disable
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+          base64.encode("0"),
+        );
+
       } else {
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
@@ -590,6 +636,14 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
             base64.encode(commandString!),
           );
         }
+
+        await sleep(20);
+
+        // write looping status
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+          base64.encode(CustomOEMButtonStore.getLooping(i as Presses) ? "1" : "0"),
+        )
       }
 
       await sleep(20);
@@ -602,8 +656,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         base64.encode(isLooped ? "1" : "0"),
       )
     }
-
-
 
     // Write stored delay value
     await device.writeCharacteristicWithoutResponseForService(
@@ -626,6 +678,96 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
       ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
       base64.encode(customStatus),
     );
+
+    // Write AUX buttons enabled status
+    const auxStatus = AuxButtonStore.getStatus() ? "enable" : "disable";
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(auxStatus),
+    );
+    setAuxiliaryButtonsEnabled(AuxButtonStore.getStatus());
+
+    await sleep(20);
+
+    // Write AUX actions
+    const aux1 = AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1);
+    const aux2 = AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2);
+    const loop1 = AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1);
+    const loop2 = AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2);
+    const type1 = AuxButtonStore.getAuxButtonType(AUX_ID.AUX1);
+    const type2 = AuxButtonStore.getAuxButtonType(AUX_ID.AUX2);
+    setAux1Action(aux1);
+    setAux2Action(aux2);
+    setAux1Loop(loop1);
+    setAux2Loop(loop2);
+    setAux1Type(type1);
+    setAux2Type(type2);
+
+    // update aux 1
+    // Send AUX1
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode("1"),
+    );
+
+    await sleep(20);
+
+    // send action
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(typeof aux1 === "string" ? buttonBehaviorMap[aux1].toString() : aux1.command?.map((value) =>
+        value.delay ? `d${value.delay}` : value.transmitValue,
+      ).join("-")!),
+    );
+
+    await sleep(20);
+
+    // send loop status
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(loop1 ? "1" : "0"),
+    );
+
+    await sleep(20);
+
+    // send switch type
+    // 0 = latching, 1 = momentary
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(type1 === AUX_SWITCH_TYPE.LATCHING ? "0" : "1"),
+    );
+
+    await sleep(20);
+
+    // update aux 2
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode("2"),
+    );
+
+    await sleep(20);
+
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(typeof aux2 === "string" ? buttonBehaviorMap[aux2].toString() : aux2.command?.map((value) =>
+        value.delay ? `d${value.delay}` : value.transmitValue,
+      ).join("-")!),
+    );
+
+    await sleep(20);
+
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(loop2 ? "1" : "0"),
+    );
+
+    await sleep(20);
+
+    await device.writeCharacteristicWithoutResponseForService(
+      ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+      base64.encode(type2 === AUX_SWITCH_TYPE.LATCHING ? "0" : "1"),
+    );
+
   }, []);
 
   // Read initial values from characteristics
@@ -744,10 +886,23 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     buttonDelay,
     headlightBypass,
     oemCustomButtonEnabled,
-
+    auxiliaryButtonsEnabled,
+    aux1Action,
+    aux2Action,
+    aux1Loop,
+    aux2Loop,
+    aux1Type,
+    aux2Type,
     setButtonDelay,
     setHeadlightBypass,
     setOemCustomButtonEnabled,
+    setAuxiliaryButtonsEnabled,
+    setAux1Action,
+    setAux2Action,
+    setAux1Loop,
+    setAux2Loop,
+    setAux1Type,
+    setAux2Type,
     setWaveDelayMulti,
     setLeftRightSwapped,
     setLeftSleepyEye,

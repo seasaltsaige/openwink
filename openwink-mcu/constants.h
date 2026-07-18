@@ -12,11 +12,16 @@ extern int OUT_PIN_RIGHT_UP;
 // Meaning up should be 1, down should be 0
 #define OEM_BUTTON_INPUT 9
 
+// Auxiliary input buttons
+// Active low, configured as pull ups
+#define AUX1_INPUT 14
+#define AUX2_INPUT 21
+
 // Green wire in wiring harness, indicating busy when high
 extern int OEM_HEADLIGHT_STATUS_RIGHT;
 extern int OEM_HEADLIGHT_STATUS_LEFT; 
 
-#define FIRMWARE_VERSION "0.12.0"
+#define FIRMWARE_VERSION "0.13.1"
 
 #define AUTH_TIME_MS 5000
 
@@ -56,6 +61,7 @@ extern int OEM_HEADLIGHT_STATUS_LEFT;
 #define PASSKEY_UUID "f61146f2-791d-4ef7-95aa-b565097f69c2"
 #define HEADLIGHT_BYPASS_UUID "ada2537e-0399-4d2a-9eab-0c7cb60d3500"
 #define SWAP_ORIENTATION_UUID "3ddd922d-14ca-4785-9cd0-39a530e8b14d"
+#define AUX_BUTTONS_UUID "bf3d4b2c-0620-4b34-9474-37aa6cef28b9"
 
 // END SETTINGS CHARACTERISTICS //
 
