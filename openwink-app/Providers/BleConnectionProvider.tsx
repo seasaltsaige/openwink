@@ -22,12 +22,10 @@ import {
   AutoConnectStore,
   DeviceMACStore,
   FirmwareStore,
-  MockBleStore,
 } from "../Storage";
 import { getDevicePasskey, sleep } from "../helper/Functions";
 import { useBleMonitor } from "./BleMonitorProvider";
 import DeviceInfo from "react-native-device-info";
-import Storage from "../Storage/Storage";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
 
 export type BleConnectionContextType = {

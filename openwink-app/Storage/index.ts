@@ -7,7 +7,7 @@ export * from "./FirmwareStore";
 export * from "./SleepyEyeStore";
 export * from "./ThemeStore";
 export * from "./QuickLinksStore";
-export * from "./MockBleStore";
 export * from "./HeadlightOrientationStore";
 export * from "./HeadlightMovementSpeedStore";
 export * from "./CustomButtonFrequencyStore";
+export * from "./OnboardingStore";

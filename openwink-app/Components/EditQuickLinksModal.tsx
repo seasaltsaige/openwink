@@ -56,7 +56,7 @@ const ROUTES: RouteType[] = [
   },
   {
     display: "Settings",
-    icon: "cog-outline",
+    icon: "settings-outline",
     title: "System Profiles",
     navigation: {
       back: "Home",
