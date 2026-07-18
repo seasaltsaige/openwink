@@ -14,7 +14,10 @@ import {
   CustomCommandStore,
   CustomOEMButtonStore,
   CustomWaveStore,
+  DeviceMACStore,
   FirmwareStore,
+  HeadlightOrientationStore,
+  OnboardingStore,
   QuickLinksStore,
   SleepyEyeStore
 } from "../../../Storage";
@@ -24,6 +27,7 @@ import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import Tooltip from "react-native-walkthrough-tooltip";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
+import Storage from "../../../Storage/Storage";
 
 const moduleSettingsData: Array<{
   pageName: string;
@@ -70,6 +74,7 @@ export function ModuleSettings() {
 
   const {
     leftRightSwapped,
+    setFirmwareVersion,
   } = useBleMonitor();
 
   const {
@@ -99,8 +104,9 @@ export function ModuleSettings() {
 
     await resetModule();
     await unpair();
+    setFirmwareVersion("");
 
-    AutoConnectStore.enable();
+    AutoConnectStore.disable();
     CustomCommandStore.deleteAll();
     CustomOEMButtonStore.disable();
     CustomOEMButtonStore.removeAll();
@@ -109,6 +115,10 @@ export function ModuleSettings() {
     CustomWaveStore.reset();
     QuickLinksStore.reset();
     CustomButtonFrequencyStore.reset();
+    HeadlightOrientationStore.disable();
+    OnboardingStore.reset();
+    DeviceMACStore.forgetMAC();
+
     AuxButtonStore.reset();
     await reset();
 
