@@ -63,6 +63,7 @@ export type BleMonitorContextType = {
   setWaveDelayMulti: React.Dispatch<React.SetStateAction<number>>;
   setButtonDelay: React.Dispatch<React.SetStateAction<number>>;
   setHeadlightBypass: React.Dispatch<React.SetStateAction<boolean>>;
+  setFirmwareVersion: React.Dispatch<React.SetStateAction<string>>;
   setOemCustomButtonEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   refreshMonitorStatus: () => Promise<void>;
 };
@@ -751,6 +752,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     setLeftRightSwapped,
     setLeftSleepyEye,
     setRightSleepyEye,
+    setFirmwareVersion,
 
     startMonitoring,
     stopMonitoring,
