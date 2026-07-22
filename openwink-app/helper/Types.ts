@@ -20,4 +20,5 @@ export type CustomButtonAction = {
   behavior?: BehaviorEnum | null;
   behaviorHumanReadable?: ButtonBehaviors | null;
   presses: Presses;
+  looping: boolean;
 };
