@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { ScrollView } from "react-native-gesture-handler";
@@ -19,8 +19,8 @@ type CustomButtonActionModalProps = {
   action: CustomButtonAction;
   modalType: "edit" | "create";
   close: () => void;
-  update: (action: CustomButtonAction, looping: boolean) => Promise<void>;
-  delete: (action: CustomButtonAction) => Promise<void>;
+  update: (action: CustomButtonAction) => void;
+  delete: (action: CustomButtonAction) => void;
 }
 const MODAL_CATEGORIES = ["Frequently Used", "Left", "Right", "Both", "Macros"] as const;
 
@@ -121,17 +121,20 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
   const saveAction = useCallback(() => {
     if (selectedAction === null) return;
 
+    // if (selectedAction)
     if (typeof selectedAction === "string") {
       props.update({
         presses: props.action.presses,
         behavior: buttonBehaviorMap[selectedAction],
         behaviorHumanReadable: selectedAction,
-      }, false);
+        looping: false,
+      });
     } else {
       props.update({
         presses: props.action.presses,
         customCommand: selectedAction,
-      }, macroLoop);
+        looping: macroLoop,
+      });
     }
 
     CustomButtonFrequencyStore.increment(selectedAction);
@@ -278,9 +281,10 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
               {
                 filteredActions !== null ? (
                   filteredActions.map((action, i) => (
-                    <>
+                    <Fragment
+                      key={typeof action === "string" ? `${action}-${i}` : `${action.name}-${i}`}
+                    >
                       <Pressable
-                        key={typeof action === "string" ? `${action}-${i}` : `${action.name}-${i}`}
                         onPress={() => setSelectedAction(action)}
                         style={{
                           flexDirection: "row",
@@ -312,10 +316,10 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
                       </Pressable>
                       {
                         i !== (filteredActions.length - 1) ? (
-                          <View key={typeof action === "string" ? `view-${action}` : `view-${action.name}`} style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
+                          <View style={{ width: "100%", height: 1.5, borderRadius: 3, backgroundColor: `${colorTheme.disabledButtonColor}70` }} />
                         ) : <></>
                       }
-                    </>
+                    </Fragment>
                   ))
                 ) : (
                   <Text style={{
