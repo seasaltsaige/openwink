@@ -435,9 +435,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return console.warn('No device connected');
 
       try {
-        console.log(updateTo);
-
-
         if (!updateTo) {
           CustomOEMButtonStore.remove(numPresses);
           CustomOEMButtonStore.setLooping(numPresses, false);

@@ -82,7 +82,6 @@ export function CustomWinkButton() {
 
   const fetchActionsFromStorage = () => {
     const storedActions = CustomOEMButtonStore.getAll();
-    console.log(storedActions);
     if (storedActions !== null && storedActions.length > 0) {
       const acts = storedActions.sort((a, b) => a.presses - b.presses);
       setActions(acts);
