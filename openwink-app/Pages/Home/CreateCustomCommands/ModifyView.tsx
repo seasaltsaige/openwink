@@ -1,6 +1,6 @@
 
 import { FlatList, Modal, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -97,9 +97,9 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     onSave();
 
     // UPDATE POTENTIAL CUSTOM BUTTON ACTION
-    const allCustomButtons = CustomOEMButtonStore.getAllBy((press) => typeof press.behavior === "object");
+    const allCustomButtons = CustomOEMButtonStore.getAllBy((press) => press.customCommand !== undefined);
     // All custom command names which map to a custom button action
-    const names = allCustomButtons.map(v => typeof v.behavior === "object" ? ({ name: v.behavior.name, presses: v.numberPresses }) : null).filter(v => v !== null);
+    const names = allCustomButtons.map(v => v.customCommand !== undefined ? ({ name: v.customCommand.name, presses: v.presses }) : null).filter(v => v !== null);
 
     // Filter by current command name in ModifyView : if editing, get by old name (what will be in the custom button panel)
     const filteredNames = names.filter(n => commandName.length >= 1 ? n.name === commandName : n.name === command.name);
@@ -119,7 +119,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       // After set, if connected, send to device for update
       if (isConnected) {
         const looping = CustomOEMButtonStore.getLooping(btnAction.presses);
-        await updateOEMButtonPresets(btnAction.presses, command, looping);
+        await updateOEMButtonPresets(btnAction.presses, { looping, presses: btnAction.presses, customCommand: command });
       }
 
     }
@@ -130,24 +130,24 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       const itemIndex = index;
 
       return (
-        <>
-          <View
-            key={`${item.transmitValue}-${item.delay}-${itemIndex}`}
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              width: 275,
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingVertical: 2,
-              paddingHorizontal: 10,
-              borderStyle: "solid",
-              borderColor: isActive ? colorTheme.buttonColor : colorTheme.headerTextColor,
-              backgroundColor: colorTheme.backgroundPrimaryColor,
-              borderWidth: 1.75,
-              borderRadius: 10,
-              height: 48,
-            }}
+        <Fragment
+          key={`${item.transmitValue}-${item.delay}-${itemIndex}`}>
+
+          <View style={{
+            display: "flex",
+            flexDirection: "row",
+            width: 275,
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingVertical: 2,
+            paddingHorizontal: 10,
+            borderStyle: "solid",
+            borderColor: isActive ? colorTheme.buttonColor : colorTheme.headerTextColor,
+            backgroundColor: colorTheme.backgroundPrimaryColor,
+            borderWidth: 1.75,
+            borderRadius: 10,
+            height: 48,
+          }}
           >
             {/* Up down re-order button */}
             <View style={{
@@ -206,7 +206,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             </Pressable>
 
           </View>
-        </>
+        </Fragment>
       )
     }, [command.command]
   )
@@ -353,6 +353,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             justifyContent: "flex-start",
             rowGap: 12,
           }}
+
           scrollEnabled
           ref={listRef}
           ListFooterComponent={
@@ -377,19 +378,19 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
               key={"custom-command-add"}
             >
               {
-                ({ pressed }) => <>
-
-                  <Text
-                    style={{
-                      color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                      fontSize: 18,
-                      fontFamily: "IBMPlexSans_500Medium"
-                    }}
-                  >
-                    Add Component
-                  </Text>
-                  <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
-                </>
+                ({ pressed }) =>
+                  <>
+                    <Text
+                      style={{
+                        color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                        fontSize: 18,
+                        fontFamily: "IBMPlexSans_500Medium"
+                      }}
+                    >
+                      Add Component
+                    </Text>
+                    <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
+                  </>
               }
             </Pressable>
           }

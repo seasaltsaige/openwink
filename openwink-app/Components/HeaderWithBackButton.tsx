@@ -51,7 +51,14 @@ export function HeaderWithBackButton({ pressAction, backText, headerText, header
         }
       </Pressable>
 
-      <Text style={headerTextStyle ? headerTextStyle : theme.subSettingHeaderText}>
+      <Text style={[
+        headerTextStyle ? headerTextStyle : theme.subSettingHeaderText,
+        {
+          flex: 1,
+          textAlign: "right",
+          maxWidth: "60%",
+        }
+      ]}>
         {headerText}
       </Text>
     </View>

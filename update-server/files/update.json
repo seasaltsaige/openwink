@@ -1,4 +1,4 @@
 {
-  "version": "0.12.0",
-  "description": "Adds configurable button action options for running custom macros in a continuous loop until canceled via button press."
+  "version": "0.12.2",
+  "description": "Fixes bug with custom button actions executing if feature is enabled quickly after press sequence while feature is off."
 }
