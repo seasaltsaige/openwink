@@ -192,9 +192,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         await startMonitoring(
           connection,
           () => {
-            if (!device) {
-              return;
-            }
+            if (!device) return;
 
             // Notify device that command is no longer in progress
             device

@@ -143,6 +143,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;
+    ButtonHandler::init();
     Storage::setCustomOEMButtonStatus(true);
     return;
   } else if (value.compare("disable") == 0) {

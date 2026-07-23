@@ -584,7 +584,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     // Now, instead of reading, we will be writing all of the stored CustomOEMButton values to the MCU on connection
     const sequences = CustomOEMButtonStore.getAll();
     for (let i = 1; i <= 9; i++) {
-      const seq = sequences.find((s) => s.numberPresses === i);
+      const seq = sequences.find((s) => s.presses === i);
 
       if (!seq) {
         // Remove it from MCU if it doesn't exist in the app
@@ -618,19 +618,19 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         // Small delay to prevent overwrite
         await sleep(20);
 
-        if (typeof seq.behavior === "string") {
+        if (seq.behaviorHumanReadable) {
           // Send behavior for that number of presses
           await device.writeCharacteristicWithoutResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-            base64.encode(buttonBehaviorMap[seq.behavior].toString()),
+            base64.encode(buttonBehaviorMap[seq.behaviorHumanReadable].toString()),
           );
+
         } else {
           // Parse to string, NOT including name, as it is unimportant for the module to know
-          const commandString = seq.behavior.command
-            ?.map((value) =>
-              value.delay ? `d${value.delay}` : value.transmitValue,
-            )
-            .join("-");
+          const commandString = seq.customCommand?.command?.map((value) =>
+            value.delay ? `d${value.delay}` : value.transmitValue,
+          ).join("-");
+
           await device.writeCharacteristicWithoutResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(commandString!),

@@ -159,8 +159,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (isLoading) return;
     const iconName = ICON_NAME_BY_THEME[themeName];
     try {
-      //@ts-ignore
-      setAppIcon(iconName);
+      setAppIcon(iconName as any);
     } catch (error) {
       console.warn("Failed to set app icon:", error);
     }
@@ -554,7 +553,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       fontSize: 25,
       fontFamily: "IBMPlexSans_700Bold",
       color: themeColors.headerTextColor,
-      width: "auto",
+      // width: "50%",
       marginRight: 10,
     },
     intervalInfoContainer: {

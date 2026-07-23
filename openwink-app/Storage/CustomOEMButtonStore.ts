@@ -1,4 +1,4 @@
-import { ButtonBehaviors, CommandOutput, Presses } from "../helper/Types";
+import { ButtonBehaviors, CommandOutput, CustomButtonAction, Presses } from "../helper/Types";
 import { buttonBehaviorMap } from "../helper/Constants";
 import Storage from "./Storage";
 
@@ -73,7 +73,7 @@ export abstract class CustomOEMButtonStore {
 
   static getAll() {
 
-    const allCustomizations: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }[] = [];
+    const allCustomizations: CustomButtonAction[] = [];
     const keys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
 
     for (const key of keys) {
@@ -84,14 +84,18 @@ export abstract class CustomOEMButtonStore {
 
       // if contains _ ==> normal
       // if contains - ==> custom cmd --> Parse string into CommandOutput
+
+      // get behavior
       if (storedValue.includes("_")) {
         const [__, strBehavior] = storedValue.split("_").map((v, i) => i === 0 ? parseInt(v) : v) as [Presses, ButtonBehaviors];
-
         allCustomizations.push({
-          behavior: strBehavior,
-          numberPresses: numberOfPresses,
+          behaviorHumanReadable: strBehavior,
+          behavior: buttonBehaviorMap[strBehavior],
+          looping: false,
+          presses: numberOfPresses,
         });
 
+        // parse cmd
       } else if (storedValue.includes("-")) {
 
         const commandParts = storedValue.split("-");
@@ -109,9 +113,12 @@ export abstract class CustomOEMButtonStore {
             customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
         }
 
+        const looping = this.getLooping(numberOfPresses);
+
         allCustomizations.push({
-          numberPresses: numberOfPresses,
-          behavior: customCmd,
+          presses: numberOfPresses,
+          customCommand: customCmd,
+          looping,
         });
       }
     }
@@ -119,7 +126,7 @@ export abstract class CustomOEMButtonStore {
     return allCustomizations;
   }
 
-  static getAllBy(fn: (press: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }) => boolean) {
+  static getAllBy(fn: (press: CustomButtonAction) => boolean) {
     return this.getAll().filter(p => fn(p));
   }
 
