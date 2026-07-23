@@ -17,7 +17,7 @@ import {
   buttonBehaviorMap
 } from "../../helper/Constants";
 import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
-import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
+import { ButtonBehaviors, CommandOutput, CustomButtonAction, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
@@ -89,20 +89,8 @@ export function Information() {
     "Press Interval": `${buttonDelay} ms`,
   };
 
-  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
-  const buttonActions = useMemo(() => rawButtonActions.map(action => {
-    if (typeof action.behavior === "string")
-      return {
-        behaviorHumanReadable: action.behavior,
-        presses: action.numberPresses,
-        behavior: buttonBehaviorMap[action.behavior],
-      }
-    else
-      return {
-        customCommand: action.behavior,
-        presses: action.numberPresses,
-      }
-  }).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
+  const [rawButtonActions, setRawButtonActions] = useState([] as CustomButtonAction[]);
+  const buttonActions = useMemo(() => rawButtonActions.sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
