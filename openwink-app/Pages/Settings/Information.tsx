@@ -146,7 +146,13 @@ export function Information() {
                 columnGap: 10,
               }}>
 
-                <Text style={[theme.infoBoxInnerContentText, { fontSize: showPairingKey ? 16 : 17 }]}>
+                <Text
+                  style={[
+                    theme.infoBoxInnerContentText, {
+                      fontSize: showPairingKey ? 16 : 17,
+                      color: showPairingKey ? colorTheme.headerTextColor : colorTheme.disabledButtonColor
+                    }]}
+                >
                   {
                     pairingKey === "Not Paired" ? "Not Paired" : showPairingKey ? pairingKey : "[ Key Hidden ]"
                   }
@@ -157,7 +163,7 @@ export function Information() {
                       {({ pressed }) => (
                         <IonIcons
                           style={{ marginTop: 3 }}
-                          color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor}
+                          color={pressed ? colorTheme.buttonColor : showPairingKey ? colorTheme.headerTextColor : colorTheme.disabledButtonColor}
                           name={showPairingKey ? "eye-off-outline" : "eye-outline"}
                           size={20}
                         />
