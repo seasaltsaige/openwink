@@ -16,6 +16,7 @@
 #include <iostream>
 #include "esp_ota_ops.h"
 #include "CommandHandler.h"
+#include "public_key.h"
 
 using namespace std;
 
@@ -311,6 +312,8 @@ int buffTotalSize = 0;
 int buffSizeWritten = 0;
 int lastProgress = -1;
 
+UpdaterECDSAVerifier sign(PUBLIC_KEY, PUBLIC_KEY_LEN, HASH_SHA256);
+
 void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
   string charData = pChar->getValue();
@@ -345,8 +348,13 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       int fileSize = stoi(charData);
       buffTotalSize = fileSize;
 
-      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-      if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
+      if (!Update.installSignature(&sign)) {
+        Serial.println("Failed to install signature verification");
+        BLE::setFirmwareUpdateStatus("failed");
+        return;
+      }
+
+      if (!Update.begin(fileSize, U_FLASH)) {
         Update.printError(Serial);
         updateInProgress = false;
         BLE::setFirmwareUpdateStatus("failed");
@@ -359,13 +367,26 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       if (charData == "DONE") {
         if (buffTotalSize != buffSizeWritten) {
           // Something went wrong, buff sizes do not match as expected
+          Serial.printf("Total: %d | vs | Written: %d\n", buffTotalSize, buffSizeWritten);
+          BLE::setFirmwareUpdateStatus("failed");
           Update.end(false);
-        } else if (Update.end(true)) {
+        } else 
+        if (Update.end(true)) {
           BLE::setFirmwareUpdateStatus("success");
           esp_ota_mark_app_valid_cancel_rollback();
           otaUpdateRestartQueued = true;
         } else {
+          Serial.printf("Something went wrong with the OTA update...\n");
+          Serial.printf("Total: %d | vs | Written: %d\n", buffTotalSize, buffSizeWritten);
+
           Update.printError(Serial);
+
+          if (Update.getError() == UPDATE_ERROR_SIGN) {
+            Serial.println("SIGNATURE VERIFICATION FAILED!");
+            Serial.println("The firmware was not signed with the");
+            Serial.println("correct private key or is corrupted.");
+          }
+
         }
         updateInProgress = false;
         return;
