@@ -1,4 +1,4 @@
 {
-  "version": "0.12.2",
-  "description": "Fixes bug with custom button actions executing if feature is enabled quickly after press sequence while feature is off."
+  "version": "0.12.3",
+  "description": "Prep-update for signed firmware verification"
 }
