@@ -91,6 +91,17 @@ export abstract class OTA {
         await sendOTAChunk(chunk);
       }
 
+      // wtf lol
+      // pretty sure that w/ the signed key
+      // and using writeCharacteristicWithoutResponse
+      // the OTA update handler on the ESP checks the bin
+      // against the public key before the bin file is done
+      // transferring.
+      // using WithResponse is WAYYYY too slow, soo....
+      // just wait a bit i guess... 
+      // seems to work ??????
+      await sleep(750);
+
       await sendOTAComplete();
 
       const end = Date.now();
