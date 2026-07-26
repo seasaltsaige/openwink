@@ -25,6 +25,7 @@ import {
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
 import { Onboarding } from "../Onboarding/Onboarding";
+import { UpdatingStatus } from "../../helper/Types";
 
 export function Home() {
 
@@ -41,7 +42,7 @@ export function Home() {
 
   const [onboardingDone, setOnboardingDone] = useState(true);
 
-  const { updateFirmwareVersion } = useBleMonitor();
+  const { updateFirmwareVersion, updatingStatus } = useBleMonitor();
 
   const {
     disconnect: disconnectFromModule,
@@ -59,29 +60,7 @@ export function Home() {
     error,
     checkUpdateAvailable,
     startUpdate,
-  } = useUpdateManager({
-    onError: ({ errorType, errorMessage, errorTitle }) => {
-      Toast.show({
-        type: "error",
-        text1: errorTitle,
-        text2: errorMessage,
-        autoHide: true,
-        visibilityTime: 10000,
-      });
-    },
-    onSuccess: ({ successMessage, successTitle, successType }) => {
-      Toast.show({
-        type: "success",
-        text1: successTitle,
-        text2: successMessage,
-        autoHide: true,
-        visibilityTime: 10000,
-      });
-
-      updateFirmwareVersion(OTA.latestVersion);
-      setModuleUpdateVisible(false);
-    },
-  });
+  } = useUpdateManager();
 
   const closeModuleUpdate = () => {
     setModuleUpdateVisible(false);
@@ -93,14 +72,6 @@ export function Home() {
       visibilityTime: 5000,
     });
   }
-
-  // const updatePanelVisible =
-  //   error === ERROR_TYPE.ERR_NONE &&
-  //   updateData !== null &&
-  //   updateStatus === UPDATE_STATUS.INSTALLING;
-
-
-
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
@@ -163,6 +134,15 @@ export function Home() {
         await fetchModuleUpdate();
     })();
   }, [device]);
+
+
+  useEffect(() => {
+
+    if (
+      updatingStatus !== UpdatingStatus.UPDATING
+    ) setModuleUpdateVisible(false);
+
+  }, [updatingStatus]);
 
 
 
