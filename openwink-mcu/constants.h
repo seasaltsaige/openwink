@@ -16,11 +16,11 @@ extern int OUT_PIN_RIGHT_UP;
 extern int OEM_HEADLIGHT_STATUS_RIGHT;
 extern int OEM_HEADLIGHT_STATUS_LEFT; 
 
-#define FIRMWARE_VERSION "0.11.1"
+#define FIRMWARE_VERSION "0.12.7"
 
 #define AUTH_TIME_MS 5000
 
-/** ---- BEGIN BLE UUID DEFINITIONS ---- **/
+/** ---- BEGIN BLE UUID DEFINITIONS ---- **/ 
 // Service for headlight movements
 #define WINK_SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
 // Service for OTA Update + OTA Status indication

@@ -9,7 +9,7 @@ export abstract class OTA {
   public static latestVersion: FirmwareType = "1.0.0";
   public static updateDescription: string = "";
   private static updateSizeBytes: number = 0;
-  // private static written: number = 0;
+  private static updateInProgress: boolean = false;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
     this.setActiveVersion();
@@ -84,19 +84,45 @@ export abstract class OTA {
       }
       const start = Date.now();
       console.log("[DEBUG] OTA START");
+      this.updateInProgress = true;
+
       await sendOTASize(firmwareBlob.size);
       await sleep(25);
 
+      // Check if update still valid before sending chunks
       for (const chunk of blobChunks) {
+        // Before each chunk
+        if (!this.updateInProgress) {
+          console.log("Update cancelled while sending chunks.");
+          return false;
+        }
         await sendOTAChunk(chunk);
       }
 
+      // wtf lol
+      // pretty sure that w/ the signed key
+      // and using writeCharacteristicWithoutResponse
+      // the OTA update handler on the ESP checks the bin
+      // against the public key before the bin file is done
+      // transferring.
+      // using WithResponse is WAYYYY too slow, soo....
+      // just wait a bit i guess... 
+      // seems to work ??????
+      await sleep(750);
+
+      // Check after chunks finish
+      if (!this.updateInProgress) {
+        console.log("Cancelled after chunks");
+        return false;
+      }
       await sendOTAComplete();
+
+
 
       const end = Date.now();
       console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
 
-      this.activeVersion = this.latestVersion;
+      // this.activeVersion = this.latestVersion;
 
       return true;
     } catch (err) {
@@ -109,6 +135,18 @@ export abstract class OTA {
 
   public static getUpdateSize(): number {
     return this.updateSizeBytes;
+  }
+
+
+  public static updateVersion(): void {
+    this.activeVersion = this.latestVersion;
+  }
+
+  // If an error occurs, the OTA class should
+  // halt the in progress update.
+  public static cancelUpdate(): void {
+    console.log("OTA Update Cancel called");
+    this.updateInProgress = false;
   }
 
   // React Native does not implement Blob#arrayBuffer for some reason... don't ask me

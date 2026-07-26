@@ -25,9 +25,13 @@ const DEFAULTS: QuickLink[] = [
 ]
 export abstract class QuickLinksStore {
 
+  static getDefaultLinks(): QuickLink[] {
+    return DEFAULTS.map(link => ({ ...link, navigation: { ...link.navigation } }));
+  }
+
   static getLinks(): QuickLink[] {
     const linksFromStorage = Storage.getString(QUICKLINKS_KEY);
-    if (!linksFromStorage) return DEFAULTS;
+    if (!linksFromStorage) return QuickLinksStore.getDefaultLinks();
 
     const parsed = JSON.parse(linksFromStorage);
     return parsed as QuickLink[];

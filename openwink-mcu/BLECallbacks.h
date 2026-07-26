@@ -8,6 +8,7 @@
 
 extern double headlightMultiplier;
 extern bool otaUpdateRestartQueued;
+extern unsigned long updateRestartTimer;
 
 enum AuthState {
   UNCLAIMED,
@@ -34,6 +35,8 @@ using namespace std;
  10 : ...
 **/
 extern vector<string> customButtonPressArray;
+extern bool customButtonPressLoopArray[9];
+
 extern int maxTimeBetween_ms;
 extern bool customButtonStatusEnabled;
 extern int queuedCommand;

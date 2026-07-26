@@ -1,4 +1,4 @@
-import { ButtonBehaviors, CommandOutput, Presses } from "../helper/Types";
+import { ButtonBehaviors, CommandOutput, CustomButtonAction, Presses } from "../helper/Types";
 import { buttonBehaviorMap } from "../helper/Constants";
 import Storage from "./Storage";
 
@@ -6,6 +6,7 @@ const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
 const BUTTON_KEY = "oem-button-values";
 const BUTTON_DELAY_KEY = "oem-button-delay";
 const BYPASS_KEY = "headlight-bypass";
+const LOOPING_KEY = "oem-button-loop";
 
 const DEFAULT_DELAY = 500;
 
@@ -39,6 +40,16 @@ export abstract class CustomOEMButtonStore {
     Storage.delete(BYPASS_KEY);
   }
 
+  static setLooping(presses: Presses, looping: boolean): void {
+    if (looping) Storage.set(`${LOOPING_KEY}-${presses}`, looping);
+    else Storage.delete(`${LOOPING_KEY}-${presses}`);
+  }
+
+  static getLooping(presses: Presses): boolean {
+    return Storage.getBoolean(`${LOOPING_KEY}-${presses}`) ? true : false;
+  }
+
+
   static set(presses: Presses, buttonValue: ButtonBehaviors | CommandOutput): void {
     if (typeof buttonValue === "object") {
       // Convert CommandOutput into string
@@ -62,7 +73,7 @@ export abstract class CustomOEMButtonStore {
 
   static getAll() {
 
-    const allCustomizations: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }[] = [];
+    const allCustomizations: CustomButtonAction[] = [];
     const keys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
 
     for (const key of keys) {
@@ -73,14 +84,18 @@ export abstract class CustomOEMButtonStore {
 
       // if contains _ ==> normal
       // if contains - ==> custom cmd --> Parse string into CommandOutput
+
+      // get behavior
       if (storedValue.includes("_")) {
         const [__, strBehavior] = storedValue.split("_").map((v, i) => i === 0 ? parseInt(v) : v) as [Presses, ButtonBehaviors];
-
         allCustomizations.push({
-          behavior: strBehavior,
-          numberPresses: numberOfPresses,
+          behaviorHumanReadable: strBehavior,
+          behavior: buttonBehaviorMap[strBehavior],
+          looping: false,
+          presses: numberOfPresses,
         });
 
+        // parse cmd
       } else if (storedValue.includes("-")) {
 
         const commandParts = storedValue.split("-");
@@ -88,9 +103,7 @@ export abstract class CustomOEMButtonStore {
 
         const customCmd: CommandOutput = {
           name,
-          command: [
-
-          ],
+          command: [],
         }
 
         for (const cmdSection of commandParts) {
@@ -100,9 +113,12 @@ export abstract class CustomOEMButtonStore {
             customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
         }
 
+        const looping = this.getLooping(numberOfPresses);
+
         allCustomizations.push({
-          numberPresses: numberOfPresses,
-          behavior: customCmd,
+          presses: numberOfPresses,
+          customCommand: customCmd,
+          looping,
         });
       }
     }
@@ -110,7 +126,7 @@ export abstract class CustomOEMButtonStore {
     return allCustomizations;
   }
 
-  static getAllBy(fn: (press: { numberPresses: Presses, behavior: ButtonBehaviors | CommandOutput }) => boolean) {
+  static getAllBy(fn: (press: CustomButtonAction) => boolean) {
     return this.getAll().filter(p => fn(p));
   }
 

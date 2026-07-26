@@ -88,22 +88,15 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
           >
             <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
               <Ionicons
-                style={{
-                  height: "100%",
-                  verticalAlign: "middle",
-                }}
-                name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor} />
-              {
-                isFocused ? (
-                  <Text style={[theme.bottomTabsPillFocusedText, {
-                    marginTop: (route.name !== "Home" && isFocused) ? -2 : 0,
-                    height: "100%",
-                    verticalAlign: "middle",
-                  }]}>
-                    {route.name}
-                  </Text>
-                ) : <></>
-              }
+                name={iconName}
+                size={22}
+                color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor}
+              />
+              {isFocused && (
+                <Text style={theme.bottomTabsPillFocusedText}>
+                  {route.name}
+                </Text>
+              )}
             </View>
           </PlatformPressable>
         )

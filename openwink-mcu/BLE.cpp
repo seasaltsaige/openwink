@@ -105,7 +105,7 @@ void BLE::initServiceCharacteristics() {
   firmwareStatus = otaService->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::READ);
 
   firmwareChar->setValue(FIRMWARE_VERSION);
-  firmwareStatus->setValue("idle");
+  firmwareStatus->setValue("0");
   otaUpdateChar->setCallbacks(new OTAUpdateCharacteristicCallbacks());
 
   longTermSleepChar = settingsService->createCharacteristic(LONG_TERM_SLEEP_UUID, NIMBLE_PROPERTY::WRITE_NR);
@@ -199,7 +199,8 @@ void BLE::setBusy(bool busy) {
 
 void BLE::setFirmwareUpdateStatus(string status) {
   if (!initialized) return;
-  firmwareStatus->setValue(status.c_str());
+  Serial.printf("Sending status: %s\n", status.c_str());
+  firmwareStatus->setValue(status);
   firmwareStatus->notify();
 }
 

@@ -67,10 +67,9 @@ void loop() {
     authConnInfo = BLE_HS_CONN_HANDLE_NONE;
   }
 
-  if (otaUpdateRestartQueued) {
-    delay(100);
+  if (otaUpdateRestartQueued && millis() > (updateRestartTimer + 3000))
     ESP.restart();
-  }
+  
 
   if (queuedCommand != -1) {
     // handle sent command

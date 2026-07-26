@@ -15,12 +15,15 @@
 #include <Update.h>
 #include <iostream>
 #include "esp_ota_ops.h"
+#include "CommandHandler.h"
+#include "public_key.h"
 
 using namespace std;
 
 RTC_DATA_ATTR double headlightMultiplier = 0.5;
 
 vector<string> customButtonPressArray(20, "0");
+bool customButtonPressLoopArray[9] = { false, false, false, false, false, false, false, false, false };
 
 RTC_DATA_ATTR int maxTimeBetween_ms = 500;
 RTC_DATA_ATTR bool customButtonStatusEnabled = false;
@@ -28,6 +31,7 @@ int queuedCommand = -1;
 string queuedCustomCommand = "";
 
 bool otaUpdateRestartQueued = false;
+unsigned long updateRestartTimer = 0;
 
 const uint16_t MIN_INTERVAL = 48;
 const uint16_t MAX_INTERVAL = 48;
@@ -128,6 +132,8 @@ void HeadlightCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 
 // 0 : onWrite expects value to be an index, 0-9
 // 1 : index has been read -- now expects value to write
+// 2 : value has been written -- now expects loop status
+
 // 3 : expects update of max time
 int customButtonPressUpdateState = 0;
 int indexToUpdate = 0;
@@ -138,6 +144,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   // TODO: Store in storage
   if (value.compare("enable") == 0) {
     customButtonStatusEnabled = true;
+    ButtonHandler::init();
     Storage::setCustomOEMButtonStatus(true);
     return;
   } else if (value.compare("disable") == 0) {
@@ -157,7 +164,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
     customButtonPressUpdateState = 1;
 
   } else if (customButtonPressUpdateState == 1) {
-    customButtonPressUpdateState = 0;
+    customButtonPressUpdateState = 2;
     if (indexToUpdate == 0) return;
 
     customButtonPressArray[indexToUpdate] = value;
@@ -177,6 +184,13 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
         Storage::setCustomButtonPressArray(i, customButtonPressArray[i + 1]);
       }
     }
+  } else if (customButtonPressUpdateState == 2) {
+    customButtonPressUpdateState = 0;
+    bool loopStatus = value.compare("0") == 0 ? false : true;
+
+    Storage::setCustomButtonPressLoop(indexToUpdate, loopStatus);
+    customButtonPressLoopArray[indexToUpdate] = loopStatus;
+
   } else if (customButtonPressUpdateState == 3) {
     customButtonPressUpdateState = 0;
 
@@ -238,7 +252,9 @@ void CustomCommandCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, 
     else if (stoi(value) == 0)
       ButtonHandler::setCustomCommandActive(false);
     else ButtonHandler::setCustomCommandActive(false);
-  } else
+  } else if (value == "loop")
+    CommandHandler::custom_command_loop = true;
+  else
     queuedCustomCommand = value;
 }
 
@@ -289,13 +305,14 @@ void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
   }
 
   BLE::disconnect(info);
-
 }
 
 bool updateInProgress = false;
 int buffTotalSize = 0;
 int buffSizeWritten = 0;
 int lastProgress = -1;
+
+UpdaterECDSAVerifier sign(PUBLIC_KEY, PUBLIC_KEY_LEN, HASH_SHA256);
 
 void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLEConnInfo& info) {
 
@@ -320,9 +337,9 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     updateInProgress = true;
     buffTotalSize = 0;
     buffSizeWritten = 0;
-    BLE::setFirmwareUpdateStatus("updating");
+    BLE::setFirmwareUpdateStatus("1");  // UPDATING
     return;
-  } 
+  }
 
   if (updateInProgress) {
     // Update in progress, but no file size written yet, needs to be set
@@ -331,11 +348,19 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       int fileSize = stoi(charData);
       buffTotalSize = fileSize;
 
-      uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-      if (!Update.begin(maxSketchSpace, U_FLASH)) {  // start with max available size
-        Update.printError(Serial);
+      if (!Update.installSignature(&sign)) {
+        Serial.println("Failed to install signature verification");
         updateInProgress = false;
-        BLE::setFirmwareUpdateStatus("failed");
+        Update.abort();
+        BLE::setFirmwareUpdateStatus("3");  // ERROR_VERIFICATION_INIT
+        return;
+      }
+
+      if (!Update.begin(fileSize, U_FLASH)) {
+        Update.printError(Serial);
+        Update.abort();
+        updateInProgress = false;
+        BLE::setFirmwareUpdateStatus("2");  // ERROR_FLASH_INIT
         return;
       }
     } else {
@@ -343,15 +368,26 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       // handle finish ota update
       // restart and apply firmware if update successful
       if (charData == "DONE") {
+
         if (buffTotalSize != buffSizeWritten) {
           // Something went wrong, buff sizes do not match as expected
-          Update.end(false);
+          Serial.printf("Total: %d | vs | Written: %d\n", buffTotalSize, buffSizeWritten);
+          BLE::setFirmwareUpdateStatus("4");  // ERROR_INVALID_SIZE
+          Update.abort();
         } else if (Update.end(true)) {
-          BLE::setFirmwareUpdateStatus("success");
+          BLE::setFirmwareUpdateStatus("7");  // SUCCESS
           esp_ota_mark_app_valid_cancel_rollback();
           otaUpdateRestartQueued = true;
+          updateRestartTimer = millis();
         } else {
+          Serial.printf("Something went wrong with the OTA update...\n");
+
           Update.printError(Serial);
+
+          if (Update.getError() == UPDATE_ERROR_SIGN)
+            BLE::setFirmwareUpdateStatus("5");  // ERROR_VERIFICATION_SIGN
+
+          Update.abort();
         }
         updateInProgress = false;
         return;
@@ -363,7 +399,8 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
         if (writtenSize != len) {
           // Something went wrong writting data, update void
           updateInProgress = false;
-          BLE::setFirmwareUpdateStatus("failed");
+          BLE::setFirmwareUpdateStatus("6");  // ERROR_CHUNK_WRITE
+          Update.abort();
           return;
         }
 

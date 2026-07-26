@@ -2,3 +2,5 @@
 .netlify
 /openwink-mcu/build
 .env
+.DS_Store
+.idea/
