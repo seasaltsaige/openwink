@@ -31,6 +31,7 @@ int queuedCommand = -1;
 string queuedCustomCommand = "";
 
 bool otaUpdateRestartQueued = false;
+unsigned long updateRestartTimer = 0;
 
 const uint16_t MIN_INTERVAL = 48;
 const uint16_t MAX_INTERVAL = 48;
@@ -186,7 +187,7 @@ void CustomButtonPressCharacteristicCallbacks::onWrite(NimBLECharacteristic* pCh
   } else if (customButtonPressUpdateState == 2) {
     customButtonPressUpdateState = 0;
     bool loopStatus = value.compare("0") == 0 ? false : true;
-    
+
     Storage::setCustomButtonPressLoop(indexToUpdate, loopStatus);
     customButtonPressLoopArray[indexToUpdate] = loopStatus;
 
@@ -304,7 +305,6 @@ void PassKeyCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimBLE
   }
 
   BLE::disconnect(info);
-
 }
 
 bool updateInProgress = false;
@@ -337,9 +337,9 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
     updateInProgress = true;
     buffTotalSize = 0;
     buffSizeWritten = 0;
-    BLE::setFirmwareUpdateStatus("updating");
+    BLE::setFirmwareUpdateStatus("1");  // UPDATING
     return;
-  } 
+  }
 
   if (updateInProgress) {
     // Update in progress, but no file size written yet, needs to be set
@@ -350,14 +350,17 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
 
       if (!Update.installSignature(&sign)) {
         Serial.println("Failed to install signature verification");
-        BLE::setFirmwareUpdateStatus("failed");
+        updateInProgress = false;
+        Update.abort();
+        BLE::setFirmwareUpdateStatus("3");  // ERROR_VERIFICATION_INIT
         return;
       }
 
       if (!Update.begin(fileSize, U_FLASH)) {
         Update.printError(Serial);
+        Update.abort();
         updateInProgress = false;
-        BLE::setFirmwareUpdateStatus("failed");
+        BLE::setFirmwareUpdateStatus("2");  // ERROR_FLASH_INIT
         return;
       }
     } else {
@@ -365,28 +368,26 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
       // handle finish ota update
       // restart and apply firmware if update successful
       if (charData == "DONE") {
+
         if (buffTotalSize != buffSizeWritten) {
           // Something went wrong, buff sizes do not match as expected
           Serial.printf("Total: %d | vs | Written: %d\n", buffTotalSize, buffSizeWritten);
-          BLE::setFirmwareUpdateStatus("failed");
-          Update.end(false);
-        } else 
-        if (Update.end(true)) {
-          BLE::setFirmwareUpdateStatus("success");
+          BLE::setFirmwareUpdateStatus("4");  // ERROR_INVALID_SIZE
+          Update.abort();
+        } else if (Update.end(true)) {
+          BLE::setFirmwareUpdateStatus("7");  // SUCCESS
           esp_ota_mark_app_valid_cancel_rollback();
           otaUpdateRestartQueued = true;
+          updateRestartTimer = millis();
         } else {
           Serial.printf("Something went wrong with the OTA update...\n");
-          Serial.printf("Total: %d | vs | Written: %d\n", buffTotalSize, buffSizeWritten);
 
           Update.printError(Serial);
 
-          if (Update.getError() == UPDATE_ERROR_SIGN) {
-            Serial.println("SIGNATURE VERIFICATION FAILED!");
-            Serial.println("The firmware was not signed with the");
-            Serial.println("correct private key or is corrupted.");
-          }
+          if (Update.getError() == UPDATE_ERROR_SIGN)
+            BLE::setFirmwareUpdateStatus("5");  // ERROR_VERIFICATION_SIGN
 
+          Update.abort();
         }
         updateInProgress = false;
         return;
@@ -398,7 +399,8 @@ void OTAUpdateCharacteristicCallbacks::onWrite(NimBLECharacteristic* pChar, NimB
         if (writtenSize != len) {
           // Something went wrong writting data, update void
           updateInProgress = false;
-          BLE::setFirmwareUpdateStatus("failed");
+          BLE::setFirmwareUpdateStatus("6");  // ERROR_CHUNK_WRITE
+          Update.abort();
           return;
         }
 
