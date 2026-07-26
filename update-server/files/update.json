@@ -1,4 +1,4 @@
 {
-  "version": "0.12.3",
-  "description": "Prep-update for signed firmware verification"
+  "version": "0.12.7",
+  "description": "Fixes some issues with OTA udpate system and improves error handling/display. App update is required after firmware update."
 }
