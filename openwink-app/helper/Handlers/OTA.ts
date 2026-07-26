@@ -9,7 +9,7 @@ export abstract class OTA {
   public static latestVersion: FirmwareType = "1.0.0";
   public static updateDescription: string = "";
   private static updateSizeBytes: number = 0;
-  // private static written: number = 0;
+  private static updateInProgress: boolean = false;
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
     this.setActiveVersion();
@@ -84,10 +84,18 @@ export abstract class OTA {
       }
       const start = Date.now();
       console.log("[DEBUG] OTA START");
+      this.updateInProgress = true;
+
       await sendOTASize(firmwareBlob.size);
       await sleep(25);
 
+      // Check if update still valid before sending chunks
       for (const chunk of blobChunks) {
+        // Before each chunk
+        if (!this.updateInProgress) {
+          console.log("Update cancelled while sending chunks.");
+          return false;
+        }
         await sendOTAChunk(chunk);
       }
 
@@ -102,12 +110,19 @@ export abstract class OTA {
       // seems to work ??????
       await sleep(750);
 
+      // Check after chunks finish
+      if (!this.updateInProgress) {
+        console.log("Cancelled after chunks");
+        return false;
+      }
       await sendOTAComplete();
+
+
 
       const end = Date.now();
       console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
 
-      this.activeVersion = this.latestVersion;
+      // this.activeVersion = this.latestVersion;
 
       return true;
     } catch (err) {
@@ -120,6 +135,18 @@ export abstract class OTA {
 
   public static getUpdateSize(): number {
     return this.updateSizeBytes;
+  }
+
+
+  public static updateVersion(): void {
+    this.activeVersion = this.latestVersion;
+  }
+
+  // If an error occurs, the OTA class should
+  // halt the in progress update.
+  public static cancelUpdate(): void {
+    console.log("OTA Update Cancel called");
+    this.updateInProgress = false;
   }
 
   // React Native does not implement Blob#arrayBuffer for some reason... don't ask me
