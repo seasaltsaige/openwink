@@ -172,30 +172,16 @@ export function ModuleUpdateModal({
               </>
             ) : (
               <>
-                {
-                  updatingStatus === "Idle" ?
-                    <View style={{
-                      flexDirection: "row",
-                      columnGap: 10,
-                    }}>
-                      <Text style={{
-                        color: colorTheme.textColor,
-                        fontFamily: "IBMPlexSans_500Medium",
-                        fontSize: 16,
-                      }}>
-                        Connecting to Module...
-                      </Text>
-                      <ActivityIndicator size={"small"} color={colorTheme.buttonColor} />
-                    </View>
-                    :
-                    <Text style={{
-                      color: colorTheme.textColor,
-                      fontFamily: "IBMPlexSans_500Medium",
-                      fontSize: 16,
-                    }}>
-                      Updating Firmware... ({updateProgress}%)
-                    </Text>
-                }
+
+                <Text style={{
+                  color: colorTheme.textColor,
+                  fontFamily: "IBMPlexSans_500Medium",
+                  fontSize: 16,
+                }}>
+                  Updating Firmware... ({updateProgress}%)
+                </Text>
+
+
                 <View style={{
                   width: "100%",
                   marginHorizontal: 10,
