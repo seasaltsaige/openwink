@@ -58,20 +58,33 @@ export function StandardCommands() {
   };
 
   return (
-    <SafeAreaView>
-      <ScrollView contentContainerStyle={{ width: "100%", padding: 15, rowGap: 10, backgroundColor: colorTheme.backgroundPrimaryColor, height: "100%" }}>
-        <HeaderWithBackButton
-          backText={back}
-          headerText="Commands"
-          headerTextStyle={theme.settingsHeaderText}
-          deviceStatus
-        />
+    <SafeAreaView style={theme.tabContainer}>
+      <HeaderWithBackButton
+        backText={back}
+        headerText="Commands"
+        headerTextStyle={theme.settingsHeaderText}
+        deviceStatus
+      />
 
-        <View style={[theme.contentContainer, { rowGap: 12 }]}>
-          <MiataHeadlights
-            leftStatus={leftStatus}
-            rightStatus={rightStatus}
-          />
+      <MiataHeadlights
+        leftStatus={leftStatus}
+        rightStatus={rightStatus}
+      />
+
+      <View
+        style={{
+          flex: 1
+        }}
+      >
+        <ScrollView
+          contentContainerStyle={
+            [
+              theme.contentContainer, {
+                rowGap: 12,
+                alignItems: "center",
+                width: "100%"
+              }
+            ]}>
 
           <View style={[theme.defaultCommandSectionContainer, {}]}>
             <Text style={theme.commandSectionHeader}>Manual</Text>
@@ -233,8 +246,8 @@ export function StandardCommands() {
             </View>
 
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView >
   );
 }
