@@ -1,0 +1,6 @@
+# WARNING
+This file is volatile, as the Module code base will be refactored to use the ESP-IDF toolchain, and migrate away from the Arduino IDE. Changes to this file will come. (See [Issue #14](https://github.com/seasaltsaige/openwink/issues/14))
+
+TODO: 
+
+Simple flashing instructions for Arduino IDE use.
