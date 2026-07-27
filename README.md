@@ -32,8 +32,8 @@ Join the Discord!<br>
 * **Built in animations:** Your classic winks, blinks, waves, sleepy eye, and independent control for both headlights.
 * **Custom commands:** Create and save your own headlight animation sequences.
 * **Works without the app:** Your configured button actions are stored on the module for quick everyday use while driving.
-* **Wireless firmware updates:** Download and install bug fixes and new features through the app without removing the module.
-* **Completely open source:** Modify, repair, or contribute to the firmware, mobile app, update server, and [hardware design](https://github.com/pyroxenes/openwink-hardware-module).
+* **Wireless firmware updates:** Download and install bug fixes and brand new features through the app, all without removing the module from the car.
+* **Entirely open source:** Modify, repair, inspect and verify, or make a contribution to the firmware, mobile app, update server, or [hardware design](https://github.com/pyroxenes/openwink-hardware-module).
 
 ## Compatibility
 OpenWink is designed for **1989 to 1997 NA Mazda MX5 Miatas** with pop up headlights.<br>
