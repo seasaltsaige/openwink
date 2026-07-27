@@ -207,32 +207,6 @@ export function CustomCommands() {
           </View>
         </View>
 
-
-        <View style={[theme.mainLongButtonPressableContainer, { backgroundColor: undefined, padding: 0, marginBottom: -20, width: "auto", columnGap: 20 }]}>
-          <View style={theme.mainLongButtonPressableView}>
-            <IonIcons name="infinite-outline" size={25} color={colorTheme.headerTextColor} style={{ marginTop: 2 }} />
-
-            <Text style={theme.mainLongButtonPressableText}>
-              Loop Commands
-            </Text>
-          </View>
-
-          <View style={[theme.mainLongButtonPressableIcon, { marginTop: 2 }]}>
-
-            <ToggleSwitch
-              onColor={colorTheme.buttonColor}
-              offColor={colorTheme.disabledButtonColor}
-              isOn={commandLoop}
-              size="medium"
-              hitSlop={10}
-              circleColor={colorTheme.buttonTextColor}
-              onToggle={(isOn) => { setCommandLoop(isOn) }}
-            />
-
-          </View>
-        </View>
-
-
         <View style={{ height: "80%", width: "100%" }}>
           <ScrollView
             contentContainerStyle={{
