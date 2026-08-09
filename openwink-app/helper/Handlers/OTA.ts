@@ -26,7 +26,20 @@ export abstract class OTA {
   public static updateFirmwareVersions: FirmwareType[] = [];
   public static updateAppVersions: FirmwareType[] = [];
 
+  public static restartQueued: boolean = false;
+
   private static updateInProgress: boolean = false;
+
+  public static reset(): void {
+    this.updateInProgress = false;
+    this.updateCount = 0;
+    this.updateSizesBytes = [];
+    this.updateDescriptions = [];
+    this.updateFirmwareVersions = [];
+    this.updateAppVersions = [];
+    this.restartQueued = false;
+    this.setActiveVersion();
+  }
 
   public static async fetchUpdateAvailable(): Promise<boolean> {
 
