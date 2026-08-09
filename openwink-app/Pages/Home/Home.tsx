@@ -133,30 +133,11 @@ export function Home() {
   }, []);
 
 
-  // TODO: This is correct, remove the useFocusEffect
-  // useEffect(() => {
-  //   (async () => {
-  //     if (isConnected)
-  //       await fetchModuleUpdate();
-  //   })();
-  // }, [isConnected]);
-
-  useFocusEffect(useCallback(() => {
-    // OTA.fetchUpdateAvailable();
-
-    (async () => {
-      if (isConnected)
-        await fetchModuleUpdate();
-    })();
-  }, []));
-
   useEffect(() => {
-    if (
-      updatingStatus !== UpdatingStatus.UPDATING
-    ) setModuleUpdateVisible(false);
-  }, [updatingStatus]);
-
-
+    (async () => {
+      if (isConnected) await fetchModuleUpdate();
+    })();
+  }, [isConnected]);
 
   return (
     <>
