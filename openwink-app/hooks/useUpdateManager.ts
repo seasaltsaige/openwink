@@ -23,17 +23,18 @@ export enum ERROR_TYPE {
   ERR_DISCONNECT,
 }
 
-type UpdateData = {
+export type UpdateData = {
   version: string;
+  app_version: string;
   description: string;
   size: number;
 };
 
 type UpdateManagerReturnType = {
   updateStatus: UPDATE_STATUS;
-  updateData: UpdateData | null;
+  updateData: UpdateData[] | null;
   error: ERROR_TYPE;
-  startUpdate: () => Promise<void>;
+  startUpdate: (version: string) => Promise<void>;
   checkUpdateAvailable: () => Promise<boolean>;
 };
 
@@ -48,7 +49,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
 
   const [updateStatus, setUpdateStatus] = useState(UPDATE_STATUS.IDLE);
   const [error, setError] = useState(ERROR_TYPE.ERR_NONE);
-  const [updateData, setUpdateData] = useState(null as UpdateData | null);
+  const [updateData, setUpdateData] = useState(null as UpdateData[] | null);
 
   useEffect(() => {
     if (!isConnected) return setUpdateStatus(UPDATE_STATUS.IDLE);
@@ -76,7 +77,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
   }, [updatingStatus, updateStatus, isConnected]);
 
   const startUpdate = useCallback(
-    async () => {
+    async (version: string) => {
       if (!isConnected) return;
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
       setError(ERROR_TYPE.ERR_NONE);
@@ -85,6 +86,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
       await sleep(50);
 
       await OTA.updateFirmware(
+        version,
         device?.mtu! - OTA_HEADER_SIZE,
         sendOTAChunk,
         sendOTASize,
@@ -116,13 +118,17 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         return false;
       }
 
-      const updateInfo: UpdateData = {
-        description: OTA.updateDescription,
-        size: OTA.getUpdateSize(),
-        version: OTA.latestVersion,
-      };
+      const updateInfo: UpdateData[] = [];
+      for (let i = 0; i < OTA.updateFirmwareVersions.length; i++) {
+        updateInfo.push({
+          version: OTA.updateFirmwareVersions[i],
+          app_version: OTA.updateAppVersions[i],
+          description: OTA.updateDescriptions[i],
+          size: OTA.updateSizesBytes[i],
+        })
+      }
 
-      setUpdateData(() => updateInfo);
+      setUpdateData(updateInfo);
       setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
       return true;
