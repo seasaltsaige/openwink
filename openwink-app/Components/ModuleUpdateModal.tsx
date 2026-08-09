@@ -1,4 +1,4 @@
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
 import { ModalBlurBackground } from "./ModalBlurBackground";
@@ -106,9 +106,9 @@ export function ModuleUpdateModal({
     close();
   }
 
-  useFocusEffect(() => {
+  useEffect(() => {
     if (visible) setModalState(ModalState.ERROR_APP_VERSION);
-  });
+  }, [visible]);
 
   return (
     <Modal
@@ -372,7 +372,7 @@ export function ModuleUpdateModal({
                   {/* TODO: This needs some serious UI work before i am satisfied with this */}
                   <Text style={{
                     color: colorTheme.textColor,
-                    fontFamily: "IBMPlexSans_500Medium",
+                    fontFamily: "IBMPlexSans_700Bold",
                     fontSize: 18,
                     textAlign: "center"
                   }}>
@@ -382,24 +382,21 @@ export function ModuleUpdateModal({
                   <Text style={{
                     color: colorTheme.textColor,
                     fontFamily: "IBMPlexSans_400Regular",
-                    fontSize: 15,
+                    fontSize: 16,
                     textAlign: "center"
                   }}>
                     Upgrading Module Firmware{"\n"}
-                    <Text style={{
-                      color: "#EED202"
-                    }}>
-                      v{firmwareVersion} → v{updateData![displayIndex].version}
-                    </Text>
+                    v{firmwareVersion} → v{updateData![displayIndex].version}
                   </Text>
 
                   <Text style={{
                     color: colorTheme.textColor,
                     fontFamily: "IBMPlexSans_400Regular",
-                    fontSize: 16,
-                    textAlign: "center"
+                    fontSize: 14,
+                    textAlign: "center",
+                    width: "80%",
                   }}>
-                    Please update the app from v{getVersion()} → v{updateData![displayIndex].app_version} before proceeding
+                    App version v{updateData![displayIndex].app_version} is required before proceeding with updates.
                   </Text>
 
 
@@ -409,10 +406,14 @@ export function ModuleUpdateModal({
                       paddingHorizontal: 18,
                       paddingVertical: 6,
                       borderRadius: 20,
+                      marginBottom: 5,
                       boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
                     })}
-                    onPress={() => {
-                      close();
+                    onPress={async () => {
+                      // Eventually should open corresponding app store page
+                      // iOS/Android check
+                      await Linking.openURL(`https://github.com/seasaltsaige/openwink/releases/`);
+                      // close();
                       /* TODO: Go to app store page in production, but rn just go to github release page */
                     }}
                   >
