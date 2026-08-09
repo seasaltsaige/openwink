@@ -10,6 +10,7 @@ import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { AutoConnectStore } from "../Storage";
 import { getVersion } from "react-native-device-info";
 import { compareVersions, sleep } from "../helper/Functions";
+import { useFocusEffect } from "@react-navigation/native";
 
 enum ModalState {
   DESCRIPTION,
@@ -90,14 +91,14 @@ export function ModuleUpdateModal({
   }, [updateStatus, displayIndex]);
 
 
-  useEffect(() => {
-    // if device connects while modal is in waiting state
-    if (modalState === ModalState.WAITING && isConnected) {
-      setDisplayIndex(displayIndex + 1);
-      setModalState(ModalState.UPDATE);
-      __startUpdate(displayIndex + 1);
-    }
-  }, [isConnected, displayIndex]);
+  // useEffect(() => {
+  //   // if device connects while modal is in waiting state
+  //   if (modalState === ModalState.WAITING && isConnected) {
+  //     setDisplayIndex(displayIndex + 1);
+  //     setModalState(ModalState.UPDATE);
+  //     __startUpdate(displayIndex + 1);
+  //   }
+  // }, [isConnected, displayIndex]);
 
 
   const __requestClose = () => {
@@ -105,9 +106,9 @@ export function ModuleUpdateModal({
     close();
   }
 
-  useEffect(() => {
-    if (visible) setModalState(ModalState.DESCRIPTION);
-  }, [visible]);
+  useFocusEffect(() => {
+    if (visible) setModalState(ModalState.ERROR_APP_VERSION);
+  });
 
   return (
     <Modal
@@ -183,6 +184,7 @@ export function ModuleUpdateModal({
                         alignItems: "center",
                         justifyContent: "center",
                         rowGap: 6,
+                        width: "80%"
                       }}
                     >
 
@@ -196,7 +198,6 @@ export function ModuleUpdateModal({
                         }}
                       >
                         Update <Text style={{ fontFamily: "IBMPlexSans_500Medium" }}>v{updateData![displayIndex]?.version}</Text>
-
                       </Text>
 
 
@@ -206,9 +207,6 @@ export function ModuleUpdateModal({
                           fontFamily: "IBMPlexSans_400Regular",
                           fontSize: 15,
                           textAlign: "center",
-                          // flex: 1,
-                          // maxWidth: "50%"
-                          width: "85%"
                         }}
                         numberOfLines={10}
                       >
@@ -245,10 +243,10 @@ export function ModuleUpdateModal({
                   <Text
                     style={{
                       color: colorTheme.textColor,
-                      fontFamily: "IBMPlexSans_400Regular",
+                      fontFamily: "IBMPlexSans_300Light",
                       fontSize: 12,
                       textAlign: "center",
-                      marginTop: -10,
+                      marginTop: -15,
                     }}>
                     {displayIndex + 1} / {totalUpdateCount}
                   </Text>
@@ -307,43 +305,64 @@ export function ModuleUpdateModal({
                 <View style={{
                   rowGap: 5,
                 }}>
+
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_700Bold",
+                    fontSize: 18,
+                    textAlign: "center"
+                  }}>
+                    Module Rebooting
+                  </Text>
+
                   <View style={{
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "center",
                     columnGap: 15,
-                    width: "100%",
                     marginVertical: 8,
                   }}>
                     <Text style={{
                       color: colorTheme.textColor,
                       fontFamily: "IBMPlexSans_500Medium",
-                      fontSize: 18,
+                      fontSize: 16,
                       textAlign: "center"
                     }}>
-                      Waiting for Module to Restart
+                      {isConnecting ? "Reconnecting to Module..." : isScanning ? "Scanning for Module..." : (isConnected || (!isConnected && !isConnecting && !isScanning)) ? "Disconnecting from Module..." : "Unknown State"}
                     </Text>
 
                     <ActivityIndicator color={colorTheme.buttonColor} size={"small"} />
                   </View>
 
-                  <Text style={{
-                    color: colorTheme.textColor,
-                    fontFamily: "IBMPlexSans_500Medium",
-                    fontSize: 18,
-                    textAlign: "center"
-                  }}>
-                    {isConnecting ? "Connecting..." : isScanning ? "Scanning..." : isConnected ? "Connected..." : "Unknown State"}
-                  </Text>
 
                   <Text style={{
                     color: colorTheme.textColor,
                     fontFamily: "IBMPlexSans_400Regular",
-                    fontSize: 16,
-                    textAlign: "center"
+                    fontSize: 14,
+                    textAlign: "center",
+                    // width: "80%",
                   }}>
-                    Update {displayIndex + 1}/{totalUpdateCount} successfully installed. Waiting for module to restart.
+                    Update {displayIndex + 1}/{totalUpdateCount} successfully installed.{"\n"}Waiting for module to reconnect.
                   </Text>
+
+                  <View style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 5,
+                    marginTop: 10,
+                  }}>
+                    <IonIcons name="warning-outline" color={colorTheme.warning} size={17} />
+
+                    <Text style={{
+                      color: colorTheme.warning,
+                      fontFamily: "IBMPlexSans_400Regular",
+                      fontSize: 11,
+                      textAlign: "center",
+                    }}>
+                      Do not close the app while updates are in progress
+                    </Text>
+                  </View>
                 </View>
               ) : modalState === ModalState.ERROR_APP_VERSION ? (
                 <>
@@ -481,7 +500,7 @@ export function ModuleUpdateModal({
                       fontSize: 11,
                       textAlign: "center"
                     }}>
-                      Do not disconnect while module update is in progress
+                      Do not disconnect while module updates are in progress
                     </Text>
                   </View>
                 </>
