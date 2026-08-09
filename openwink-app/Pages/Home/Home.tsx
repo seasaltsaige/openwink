@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
@@ -87,22 +87,26 @@ export function Home() {
     // Open app store...
   }
 
-  const fetchModuleUpdate = async () => {
-    if (!device) return;
-    const available = await checkUpdateAvailable();
-    if (available) {
-      Toast.show({
-        // Custom toast with install buttons
-        text2: "Firmware Update Available",
-        type: "update",
-        props: {
-          downloadAction: () => { setModuleUpdateVisible(true); },
-        },
-        swipeable: false,
-        autoHide: false,
-      });
-    }
-  }
+  const fetchModuleUpdate = useCallback(
+    async () => {
+      if (!isConnected) return console.log("No device connected");
+      if (OTA.getUpdateInProgress()) return console.log("Update already in progress");
+
+      const available = await checkUpdateAvailable();
+      if (available) {
+        Toast.show({
+          // Custom toast with install buttons
+          text2: "Firmware Update Available",
+          type: "update",
+          props: {
+            downloadAction: () => { setModuleUpdateVisible(true); },
+          },
+          swipeable: false,
+          autoHide: false,
+        });
+      }
+    }, [isConnected]
+  )
 
   const installModuleUpdate = async () => setModuleUpdateVisible(true);
 
@@ -128,20 +132,28 @@ export function Home() {
     })();
   }, []);
 
-  useEffect(() => {
+
+  // TODO: This is correct, remove the useFocusEffect
+  // useEffect(() => {
+  //   (async () => {
+  //     if (isConnected)
+  //       await fetchModuleUpdate();
+  //   })();
+  // }, [isConnected]);
+
+  useFocusEffect(useCallback(() => {
+    // OTA.fetchUpdateAvailable();
+
     (async () => {
       if (isConnected)
         await fetchModuleUpdate();
     })();
-  }, [device]);
-
+  }, []));
 
   useEffect(() => {
-
     if (
       updatingStatus !== UpdatingStatus.UPDATING
     ) setModuleUpdateVisible(false);
-
   }, [updatingStatus]);
 
 
@@ -188,6 +200,8 @@ export function Home() {
               )
             )
           }
+
+
 
           {/* COMMANDS */}
           <View style={theme.homeScreenButtonsContainer}>
@@ -406,10 +420,11 @@ export function Home() {
 
       <ModuleUpdateModal
         visible={moduleUpdateVisible}
-        binSizeBytes={updateData?.size!}
-        description={updateData?.description!}
-        version={updateData?.version!}
-        startUpdate={startUpdate}
+        updateInfo={updateData}
+        // binSizeBytes={updateData?.size!}
+        // description={updateData?.description!}
+        // version={updateData?.version!}
+        // startUpdate={startUpdate}
         close={closeModuleUpdate}
       />
 
