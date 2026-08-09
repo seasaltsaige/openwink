@@ -1,4 +1,22 @@
 {
-  "version": "0.12.7",
-  "description": "Fixes some issues with OTA udpate system and improves error handling/display. App update is required after firmware update."
+  "updates": [
+    {
+      "version": "0.12.7",
+      "description": "Fixes some issues with OTA udpate system and improves error handling/display. App update is required after firmware update.",
+      "required_firmware_version": "0.12.6",
+      "required_app_version": "1.0.4"
+    },
+    {
+      "version": "0.12.8",
+      "description": "Testing out dependency stuff?",
+      "required_firmware_version": "0.12.4",
+      "required_app_version": "1.0.4"
+    },
+    {
+      "version": "0.12.9",
+      "description": "Update that should depend on 0.12.8",
+      "required_firmware_version": "0.12.8",
+      "required_app_version": "1.0.9"
+    }
+  ]
 }
