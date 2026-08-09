@@ -83,7 +83,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  // const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+
 
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
