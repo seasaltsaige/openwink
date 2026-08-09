@@ -58,8 +58,10 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
     if (updatingStatus === UpdatingStatus.UPDATING)
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
     // if new status is "Success", set current status to up to date
-    else if (updatingStatus === UpdatingStatus.SUCCESS)
+    else if (updatingStatus === UpdatingStatus.SUCCESS) {
       setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+      OTA.restartQueued = true;
+    }
     // if previous status is "Installing"
     else if (updateStatus === UPDATE_STATUS.INSTALLING) {
       // and new status is some error
