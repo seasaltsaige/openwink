@@ -9,14 +9,14 @@
     {
       "version": "0.12.8",
       "description": "Testing out dependency stuff?",
-      "required_firmware_version": "0.12.4",
+      "required_firmware_version": "0.12.7",
       "required_app_version": "1.0.4"
     },
     {
       "version": "0.12.9",
       "description": "Update that should depend on 0.12.8",
       "required_firmware_version": "0.12.8",
-      "required_app_version": "1.0.9"
+      "required_app_version": "1.0.4"
     }
   ]
 }
