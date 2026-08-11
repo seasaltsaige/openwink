@@ -7,16 +7,16 @@
       "required_app_version": "1.0.4"
     },
     {
-      "version": "0.12.8",
-      "description": "Testing out dependency stuff?",
+      "version": "0.13.0",
+      "description": "Improves OTA update system, allowing for more streamlined update flow.",
       "required_firmware_version": "0.12.7",
-      "required_app_version": "1.0.4"
+      "required_app_version": "1.1.0"
     },
     {
-      "version": "0.12.9",
-      "description": "Update that should depend on 0.12.8",
+      "version": "0.13.1",
+      "description": "Fixes minor bugs in new update system.",
       "required_firmware_version": "0.12.8",
-      "required_app_version": "1.0.4"
+      "required_app_version": "1.1.0"
     }
   ]
 }
