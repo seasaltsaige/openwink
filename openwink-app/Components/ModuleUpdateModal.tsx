@@ -107,7 +107,10 @@ export function ModuleUpdateModal({
   }
 
   useEffect(() => {
-    if (visible) setModalState(ModalState.DESCRIPTION);
+    if (visible) {
+      setModalState(ModalState.DESCRIPTION);
+      Toast.hide();
+    }
   }, [visible]);
 
   return (

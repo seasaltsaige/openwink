@@ -379,11 +379,14 @@ export function Home() {
                 </View>
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
-                <LongButton
-                  onPress={() => installModuleUpdate()}
-                  icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
-                  text="Unknown Update State: Report Here"
-                />
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Unknown Status
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                </View>
               )
             }
           </View>
