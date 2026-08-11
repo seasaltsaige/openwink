@@ -62,15 +62,16 @@ export function Home() {
     startUpdate,
   } = useUpdateManager();
 
-  const closeModuleUpdate = () => {
+  const closeModuleUpdate = (showToast: boolean) => {
     setModuleUpdateVisible(false);
-    Toast.show({
-      type: "success",
-      text1: "Update Dismissed",
-      text2: "Firmware update dismissed. Consider updating soon.",
-      autoHide: true,
-      visibilityTime: 5000,
-    });
+    if (showToast)
+      Toast.show({
+        type: "success",
+        text1: "Update Dismissed",
+        text2: "Firmware update dismissed. Consider updating soon.",
+        autoHide: true,
+        visibilityTime: 5000,
+      });
   }
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {

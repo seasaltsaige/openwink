@@ -11,6 +11,8 @@ import { AutoConnectStore } from "../Storage";
 import { getVersion } from "react-native-device-info";
 import { compareVersions, sleep } from "../helper/Functions";
 import { useFocusEffect } from "@react-navigation/native";
+import Tooltip from "react-native-walkthrough-tooltip";
+import Toast from "react-native-toast-message";
 
 enum ModalState {
   DESCRIPTION,
@@ -22,7 +24,7 @@ enum ModalState {
 interface IModuleUpdateModal {
   visible: boolean;
   updateInfo: UpdateData[] | null,
-  close: () => void;
+  close: (showToast: boolean) => void;
 }
 
 export function ModuleUpdateModal({
@@ -32,7 +34,7 @@ export function ModuleUpdateModal({
 }: IModuleUpdateModal) {
 
 
-  const { colorTheme } = useColorTheme();
+  const { colorTheme, theme } = useColorTheme();
   const { updateProgress, updatingStatus, firmwareVersion } = useBleMonitor();
   const { isConnected, isConnecting, isScanning, scanForModule, disconnect } = useBleConnection();
   const { startUpdate, updateStatus } = useUpdateManager();
@@ -41,8 +43,7 @@ export function ModuleUpdateModal({
   const [displayIndex, setDisplayIndex] = useState(0);
   const [updateData, setUpdateData] = useState(updateInfo as UpdateData[] | null);
 
-
-  // const [prevUpdateStatus, setPrevUpdateStatus] = useState(updateStatus);
+  const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
 
   const updateSizeKB = updateData !== null && updateData.length > 0 ? updateData[displayIndex].size / 1000 : 0;
   const version = updateData !== null && updateData.length > 0 ? updateData[displayIndex].version : "";
@@ -60,6 +61,8 @@ export function ModuleUpdateModal({
 
       // if the target app version is "larger" than the current version, then the current
       // app is out of date for the firmware update
+      setDisplayIndex(index);
+
       if (compareVersions(updateData![index].app_version, getVersion()) > 0)
         return setModalState(ModalState.ERROR_APP_VERSION);
 
@@ -83,31 +86,28 @@ export function ModuleUpdateModal({
           setDisplayIndex(0);
           setModalState(ModalState.DESCRIPTION);
           OTA.reset();
-
-          close();
+          close(false);
         }
       }
     })();
   }, [updateStatus, displayIndex]);
 
 
-  // useEffect(() => {
-  //   // if device connects while modal is in waiting state
-  //   if (modalState === ModalState.WAITING && isConnected) {
-  //     setDisplayIndex(displayIndex + 1);
-  //     setModalState(ModalState.UPDATE);
-  //     __startUpdate(displayIndex + 1);
-  //   }
-  // }, [isConnected, displayIndex]);
+  useEffect(() => {
+    // if device connects while modal is in waiting state
+    if (modalState === ModalState.WAITING && isConnected)
+      __startUpdate(displayIndex + 1);
+
+  }, [isConnected, displayIndex]);
 
 
   const __requestClose = () => {
     if (modalState === ModalState.UPDATE || modalState === ModalState.WAITING) return;
-    close();
+    close(true);
   }
 
   useEffect(() => {
-    if (visible) setModalState(ModalState.ERROR_APP_VERSION);
+    if (visible) setModalState(ModalState.DESCRIPTION);
   }, [visible]);
 
   return (
@@ -142,7 +142,7 @@ export function ModuleUpdateModal({
                   }}>
                     <Text style={{
                       color: colorTheme.textColor,
-                      fontFamily: "IBMPlexSans_500Medium",
+                      fontFamily: "IBMPlexSans_700Bold",
                       fontSize: 18,
                     }}>
                       Update Module Firmware
@@ -192,12 +192,12 @@ export function ModuleUpdateModal({
                       <Text
                         style={{
                           color: colorTheme.textColor,
-                          fontFamily: "IBMPlexSans_400Regular",
+                          fontFamily: "IBMPlexSans_500Medium",
                           fontSize: 16,
                           textAlign: "center",
                         }}
                       >
-                        Update <Text style={{ fontFamily: "IBMPlexSans_500Medium" }}>v{updateData![displayIndex]?.version}</Text>
+                        Update v{updateData![displayIndex]?.version}
                       </Text>
 
 
@@ -205,7 +205,7 @@ export function ModuleUpdateModal({
                         style={{
                           color: colorTheme.textColor,
                           fontFamily: "IBMPlexSans_400Regular",
-                          fontSize: 15,
+                          fontSize: 14,
                           textAlign: "center",
                         }}
                         numberOfLines={10}
@@ -239,18 +239,6 @@ export function ModuleUpdateModal({
 
                   </View>
 
-
-                  <Text
-                    style={{
-                      color: colorTheme.textColor,
-                      fontFamily: "IBMPlexSans_300Light",
-                      fontSize: 12,
-                      textAlign: "center",
-                      marginTop: -15,
-                    }}>
-                    {displayIndex + 1} / {totalUpdateCount}
-                  </Text>
-
                   <View style={{
                     rowGap: 7,
                     marginTop: 5,
@@ -282,14 +270,13 @@ export function ModuleUpdateModal({
 
 
                     <Pressable
-                      onPress={close}
-                    // disabled={disableConfirmation}
+                      onPress={() => close(true)}
                     >
                       {({ pressed }) =>
                         <Text
                           style={{
                             textAlign: "center",
-                            fontSize: 17,
+                            fontSize: 16,
                             fontFamily: "IBMPlexSans_500Medium",
                             color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                             textDecorationLine: "underline"
@@ -356,7 +343,7 @@ export function ModuleUpdateModal({
 
                     <Text style={{
                       color: colorTheme.warning,
-                      fontFamily: "IBMPlexSans_400Regular",
+                      fontFamily: "IBMPlexSans_500Medium",
                       fontSize: 11,
                       textAlign: "center",
                     }}>
@@ -366,10 +353,6 @@ export function ModuleUpdateModal({
                 </View>
               ) : modalState === ModalState.ERROR_APP_VERSION ? (
                 <>
-                  {/* TODO: Error display for out of date app version. */}
-                  {/* Updates should stop, and force the user to update the app before */}
-
-                  {/* TODO: This needs some serious UI work before i am satisfied with this */}
                   <Text style={{
                     color: colorTheme.textColor,
                     fontFamily: "IBMPlexSans_700Bold",
@@ -413,8 +396,7 @@ export function ModuleUpdateModal({
                       // Eventually should open corresponding app store page
                       // iOS/Android check
                       await Linking.openURL(`https://github.com/seasaltsaige/openwink/releases/`);
-                      // close();
-                      /* TODO: Go to app store page in production, but rn just go to github release page */
+                      close(false);
                     }}
                   >
                     {({ pressed }) =>
@@ -493,13 +475,15 @@ export function ModuleUpdateModal({
                     justifyContent: "center",
                     columnGap: 5,
                   }}>
-                    <IonIcons name="warning-outline" color={colorTheme.warning} size={17} />
+                    <IonIcons name="warning-outline" color={colorTheme.warning} size={15} />
 
                     <Text style={{
                       color: colorTheme.warning,
                       fontFamily: "IBMPlexSans_400Regular",
-                      fontSize: 11,
-                      textAlign: "center"
+                      fontSize: 10,
+                      // backgroundColor: "orange",
+                      // width: "auto",
+                      // textAlign: "center"
                     }}>
                       Do not disconnect while module updates are in progress
                     </Text>
@@ -507,6 +491,60 @@ export function ModuleUpdateModal({
                 </>
               )
             )}
+
+
+          {
+            totalUpdateCount > 1 &&
+            <View
+              style={{
+                alignItems: "flex-start",
+                width: "100%",
+                flexDirection: "row",
+                marginTop: -10,
+              }}
+            >
+              <Tooltip
+                isVisible={infoTooltipOpen}
+                onClose={() => setInfoTooltipOpen(false)}
+                content={
+                  <Text style={theme.tooltipContainerText}>
+                    All updates are required and will be installed sequentially. The module will restart multiple times throughout the process.
+                  </Text>
+                }
+                placement="bottom"
+                contentStyle={theme.tooltipContainer}
+                useReactNativeModal
+              >
+                <Pressable
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    columnGap: 10,
+                  }}
+                  hitSlop={10}
+                  onPress={() => setInfoTooltipOpen(true)}
+                >
+                  {({ pressed }) => (
+                    <>
+                      <Text style={{
+                        color: pressed ? colorTheme.buttonColor : colorTheme.textColor,
+                        fontSize: 12,
+                        fontFamily: "IBMPlexSans_300Light",
+                        textAlign: "left",
+                      }}>
+                        Update {displayIndex + 1} / {totalUpdateCount}
+                      </Text>
+
+                      <IonIcons name="help-circle-outline" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={17} />
+                    </>)
+                  }
+                </Pressable>
+              </Tooltip>
+
+              <View style={{ flex: 1 }} />
+
+            </View>
+          }
         </View>
       </ModalBlurBackground>
     </Modal>
