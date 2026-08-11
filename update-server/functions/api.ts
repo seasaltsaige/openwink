@@ -26,40 +26,39 @@ const compareFirmwareVersions = (a: string, b: string) => {
 }
 
 const calculateNextFirmware = (currentVersion: string): Array<{
-    version: string;
-    size: number;
-    app_version: string;
-  }> | null | undefined => {
-    const updateData = fs.readFileSync(path.join(__dirname, "../files/update.json"), "ascii");
-    const jsonData = JSON.parse(updateData) as { 
-      updates: Array<{ 
-        version: string; 
-        description: string; 
-        required_firmware_version: string; 
-        required_app_version: string; 
-      }> 
-    };
+  version: string;
+  size: number;
+  app_version: string;
+}> | null | undefined => {
+  const updateData = fs.readFileSync(path.join(__dirname, "../files/update.json"), "ascii");
+  const jsonData = JSON.parse(updateData) as {
+    updates: Array<{
+      version: string;
+      description: string;
+      required_firmware_version: string;
+      required_app_version: string;
+    }>
+  };
 
-    let nextUpdate = jsonData.updates[jsonData.updates.length - 1];
+  let nextUpdate = jsonData.updates[jsonData.updates.length - 1];
 
-    // if current version is the latest update version or more (somehow) then no update is needed so return null
-    if (compareFirmwareVersions(currentVersion, nextUpdate.version) >= 0) return null;
+  // if current version is the latest update version or more (somehow) then no update is needed so return null
+  if (compareFirmwareVersions(currentVersion, nextUpdate.version) >= 0) return null;
 
-    let latestFound = false;
-    let numUpdatesNeeded = 0;
-    const updatesToDo: string[] = [];
-    const appVersions: string[] = [];
-    const binarySizes: number[] = [];
-    const descriptions: string[] = [];
+  let latestFound = false;
+  let numUpdatesNeeded = 0;
+  const updatesToDo: string[] = [];
+  const appVersions: string[] = [];
+  const binarySizes: number[] = [];
+  const descriptions: string[] = [];
 
-    while (!latestFound) {
+  while (!latestFound) {
+    // if current version is older than update version
+    if (compareFirmwareVersions(currentVersion, nextUpdate.version) < 0) {
+      updatesToDo.push(nextUpdate.version);
+      appVersions.push(nextUpdate.required_app_version);
 
-      // if current version is older than update version
-      if (compareFirmwareVersions(currentVersion, nextUpdate.version) < 0) {
-        updatesToDo.push(nextUpdate.version);
-        appVersions.push(nextUpdate.required_app_version);
-
-        if (fs.existsSync(path.join(__dirname, `../files/firmware/update-${nextUpdate.version}.bin`))) {
+      if (fs.existsSync(path.join(__dirname, `../files/firmware/update-${nextUpdate.version}.bin`))) {
         const binFile = fs.readFileSync(path.join(__dirname, `../files/firmware/update-${nextUpdate.version}.bin`), "binary");
         binarySizes.push(binFile.length);
         descriptions.push(nextUpdate.description);
@@ -69,7 +68,7 @@ const calculateNextFirmware = (currentVersion: string): Array<{
         if (compareFirmwareVersions(currentVersion, nextUpdate.required_firmware_version) >= 0) {
           latestFound = true;
           numUpdatesNeeded++;
-        // if the current version is older
+          // if the current version is older
         } else {
 
           // find index
@@ -83,27 +82,27 @@ const calculateNextFirmware = (currentVersion: string): Array<{
         }
       }
     }
-    }
-
-
-    const data: Array<{
-      version: string;
-      size: number;
-      app_version: string;
-      description: string;
-    }> = [];
-
-    for (let i = 0; i < updatesToDo.length; i++) {
-      data.push({
-        version: updatesToDo[i],
-        size: binarySizes[i],
-        app_version: appVersions[i],
-        description: descriptions[i],
-      });
-    }
-    
-    return data.reverse();
   }
+
+
+  const data: Array<{
+    version: string;
+    size: number;
+    app_version: string;
+    description: string;
+  }> = [];
+
+  for (let i = 0; i < updatesToDo.length; i++) {
+    data.push({
+      version: updatesToDo[i],
+      size: binarySizes[i],
+      app_version: appVersions[i],
+      description: descriptions[i],
+    });
+  }
+
+  return data.reverse();
+}
 
 
 
@@ -125,7 +124,7 @@ router.get("/:version", auth, async (req, res) => {
   if (!version) return res.status(404).json({ error: "Missing current firmware version." });
 
   const pathToUpdateJson = path.join(__dirname, "../files/update.json");
-  
+
   if (fs.existsSync(pathToUpdateJson)) {
     const updateData = calculateNextFirmware(version);
     if (updateData === null) {
@@ -137,10 +136,10 @@ router.get("/:version", auth, async (req, res) => {
         versions: updateData,
         updateNeeded: true,
       };
-    
+
       res.status(200).json(data);
     }
-  
+
   } else res.status(500).json({ error: "Update JSON file not found." });
 });
 
