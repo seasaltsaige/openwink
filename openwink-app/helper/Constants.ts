@@ -62,8 +62,8 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 // If you are a user working on your own build of the app
 // you will need to update the local IP to your own runtimes IP.
 // use ipconfig or ifconfig to view your local IP addr.
-export const UPDATE_URL = __DEV__ 
-  ? "http://172.20.9.16:3000/.netlify/functions/api/update" 
+export const UPDATE_URL = __DEV__
+  ? "http://172.20.9.16:3000/.netlify/functions/api/update"
   : "https://update-server.netlify.app/.netlify/functions/api/update";
 
 export const jkYSbsSAIDns = "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
@@ -142,7 +142,7 @@ export const SETTINGS_DATA: Array<{
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
-        {
+    {
       pageName: "System Profiles",
       navigationName: "SettingsProfiles",
       pageSymbol: "settings-outline"
@@ -212,11 +212,11 @@ export enum DefaultCommandValue {
   RIGHT_LEFT_X2,
 }
 
-export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", 
-                                           "Left Up", "Left Down", "Left Wink", 
-                                           "Right Up", "Right Down", "Right Wink", 
-                                           "Left Wave", "Right Wave", "Left-Right", 
-                                           "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
+export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink",
+  "Left Up", "Left Down", "Left Wink",
+  "Right Up", "Right Down", "Right Wink",
+  "Left Wave", "Right Wave", "Left-Right",
+  "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
 
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {

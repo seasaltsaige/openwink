@@ -291,7 +291,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const statusValue = parseInt(base64.decode(char.value)) as UpdatingStatus;
 
-          console.log(statusValue);
           setUpdatingStatus(statusValue);
 
           // Reset progress when either succes or failure
@@ -353,6 +352,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
 
 
             if (statusValue === UpdatingStatus.SUCCESS) {
+
               Toast.show({
                 type: "success",
                 text1: "Update Success",
@@ -417,7 +417,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
 
           try {
             const val = base64.decode(char.value);
-            console.log(val);
             if (val === "0") {
               onInterrupt();
             }

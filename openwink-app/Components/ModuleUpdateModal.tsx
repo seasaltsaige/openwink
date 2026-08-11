@@ -1,53 +1,118 @@
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Modal, Pressable, Text, View } from "react-native";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { useBleMonitor } from "../Providers/BleMonitorProvider";
 import { ModalBlurBackground } from "./ModalBlurBackground";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import { UPDATE_STATUS, UpdateData, useUpdateManager } from "../hooks/useUpdateManager";
+import { OTA } from "../helper/Handlers/OTA";
+import { useBleConnection } from "../Providers/BleConnectionProvider";
+import { AutoConnectStore } from "../Storage";
+import { getVersion } from "react-native-device-info";
+import { compareVersions, sleep } from "../helper/Functions";
+import { useFocusEffect } from "@react-navigation/native";
+import Tooltip from "react-native-walkthrough-tooltip";
+import Toast from "react-native-toast-message";
 
 enum ModalState {
   DESCRIPTION,
   UPDATE,
+  WAITING,
+  ERROR_APP_VERSION,
 }
 
 interface IModuleUpdateModal {
-  version: string;
-  description: string;
   visible: boolean;
-  binSizeBytes: number;
-  startUpdate: () => Promise<void>;
-  close: () => void;
+  updateInfo: UpdateData[] | null,
+  close: (showToast: boolean) => void;
 }
 
 export function ModuleUpdateModal({
-  version,
-  description,
   visible,
-  binSizeBytes,
+  updateInfo,
   close,
-  startUpdate,
 }: IModuleUpdateModal) {
 
-  const { colorTheme } = useColorTheme();
+
+  const { colorTheme, theme } = useColorTheme();
   const { updateProgress, updatingStatus, firmwareVersion } = useBleMonitor();
+  const { isConnected, isConnecting, isScanning, scanForModule, disconnect } = useBleConnection();
+  const { startUpdate, updateStatus } = useUpdateManager();
 
   const [modalState, setModalState] = useState(ModalState.DESCRIPTION);
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [updateData, setUpdateData] = useState(updateInfo as UpdateData[] | null);
 
-  const __startUpdate = () => {
-    setModalState(ModalState.UPDATE);
-    startUpdate();
-  }
+  const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
+
+  const updateSizeKB = updateData !== null && updateData.length > 0 ? updateData[displayIndex].size / 1000 : 0;
+  const version = updateData !== null && updateData.length > 0 ? updateData[displayIndex].version : "";
+  const description = updateData !== null && updateData.length > 0 ? updateData[displayIndex].description : "";
+
+  useEffect(() => {
+    setUpdateData(updateInfo);
+  }, [visible]);
+
+  const totalUpdateCount = OTA.updateCount;
+
+  const __startUpdate = useCallback(
+    (index: number) => {
+      if (updateData === null) return;
+
+      // if the target app version is "larger" than the current version, then the current
+      // app is out of date for the firmware update
+      setDisplayIndex(index);
+
+      if (compareVersions(updateData![index].app_version, getVersion()) > 0)
+        return setModalState(ModalState.ERROR_APP_VERSION);
+
+      setModalState(ModalState.UPDATE);
+      startUpdate(updateData![index].version);
+    }, [updateData]
+  );
+
+
+  useEffect(() => {
+    (async () => {
+      // if update status updates to "up to date"
+      // check to see where we are in the update queue
+      if (updateStatus === UPDATE_STATUS.UP_TO_DATE) {
+
+        // Updates not finished
+        if (totalUpdateCount > 1 && displayIndex < (totalUpdateCount - 1))
+          setModalState(ModalState.WAITING);
+        else {
+          // Udpates finished
+          setDisplayIndex(0);
+          setModalState(ModalState.DESCRIPTION);
+          OTA.reset();
+          close(false);
+        }
+      }
+    })();
+  }, [updateStatus, displayIndex]);
+
+
+  useEffect(() => {
+    // if device connects while modal is in waiting state
+    if (modalState === ModalState.WAITING && isConnected)
+      __startUpdate(displayIndex + 1);
+
+  }, [isConnected, displayIndex]);
+
 
   const __requestClose = () => {
-    if (modalState === ModalState.UPDATE) return;
-    close();
+    if (modalState === ModalState.UPDATE || modalState === ModalState.WAITING) return;
+    close(true);
   }
 
   useEffect(() => {
-    if (visible) setModalState(ModalState.DESCRIPTION);
+    if (visible) {
+      setModalState(ModalState.DESCRIPTION);
+      Toast.hide();
+    }
   }, [visible]);
 
-  const updateSizeKB = binSizeBytes / 1000;
   return (
     <Modal
       transparent
@@ -71,69 +136,271 @@ export function ModuleUpdateModal({
           }}
         >
           {
-            modalState === ModalState.DESCRIPTION ? (
-              <>
+            updateData !== null && (
+              modalState === ModalState.DESCRIPTION ? (
+                <>
+                  <View style={{
+                    flexDirection: "row",
+                    columnGap: 10,
+                  }}>
+                    <Text style={{
+                      color: colorTheme.textColor,
+                      fontFamily: "IBMPlexSans_700Bold",
+                      fontSize: 18,
+                    }}>
+                      Update Module Firmware
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: totalUpdateCount > 1 ? "space-between" : "center",
+                      width: "100%",
+                    }}
+                  >
+
+                    <Pressable
+                      hitSlop={10}
+                      onPress={() => displayIndex > 0 ? setDisplayIndex(displayIndex - 1) : undefined}
+                      disabled={displayIndex === 0}
+                    >
+                      {
+                        ({ pressed }) => (
+                          <IonIcons
+                            name="chevron-back-outline"
+                            size={24}
+                            color={
+                              displayIndex === 0 ?
+                                colorTheme.disabledButtonColor :
+                                pressed ?
+                                  colorTheme.buttonColor :
+                                  colorTheme.textColor} />
+                        )
+                      }
+                    </Pressable>
+
+
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        rowGap: 6,
+                        width: "80%"
+                      }}
+                    >
+
+
+                      <Text
+                        style={{
+                          color: colorTheme.textColor,
+                          fontFamily: "IBMPlexSans_500Medium",
+                          fontSize: 16,
+                          textAlign: "center",
+                        }}
+                      >
+                        Update v{updateData![displayIndex]?.version}
+                      </Text>
+
+
+                      <Text
+                        style={{
+                          color: colorTheme.textColor,
+                          fontFamily: "IBMPlexSans_400Regular",
+                          fontSize: 14,
+                          textAlign: "center",
+                        }}
+                        numberOfLines={10}
+                      >
+                        {updateData![displayIndex]?.description}
+                      </Text>
+
+
+                    </View>
+
+
+                    <Pressable
+                      hitSlop={10}
+                      onPress={() => displayIndex < totalUpdateCount - 1 ? setDisplayIndex(displayIndex + 1) : undefined}
+                      disabled={displayIndex === totalUpdateCount - 1}
+                    >
+                      {
+                        ({ pressed }) => (
+                          <IonIcons
+                            name="chevron-forward-outline"
+                            size={24}
+                            color={
+                              displayIndex === totalUpdateCount - 1 ?
+                                colorTheme.disabledButtonColor :
+                                pressed ?
+                                  colorTheme.buttonColor :
+                                  colorTheme.textColor} />
+                        )
+                      }
+                    </Pressable>
+
+                  </View>
+
+                  <View style={{
+                    rowGap: 7,
+                    marginTop: 5,
+                  }}>
+                    <Pressable
+                      style={({ pressed }) => ({
+                        backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
+                        // width: "60%",
+                        paddingHorizontal: 18,
+                        paddingVertical: 6,
+                        borderRadius: 20,
+                        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
+                      })}
+                      onPress={() => __startUpdate(0)}
+                    >
+                      {({ pressed }) =>
+                        <Text
+                          style={{
+                            textAlign: "center",
+                            fontSize: 18,
+                            fontFamily: "IBMPlexSans_500Medium",
+                            color: colorTheme.headerTextColor,
+                          }}
+                        >
+                          Install Update{totalUpdateCount > 1 ? "s" : ""}
+                        </Text>
+                      }
+                    </Pressable>
+
+
+                    <Pressable
+                      onPress={() => close(true)}
+                    >
+                      {({ pressed }) =>
+                        <Text
+                          style={{
+                            textAlign: "center",
+                            fontSize: 16,
+                            fontFamily: "IBMPlexSans_500Medium",
+                            color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                            textDecorationLine: "underline"
+                          }}
+                        >
+                          Not Now
+                        </Text>
+                      }
+                    </Pressable>
+                  </View>
+                </>
+              ) : modalState === ModalState.WAITING ? (
                 <View style={{
-                  flexDirection: "row",
-                  columnGap: 10,
+                  rowGap: 5,
                 }}>
+
                   <Text style={{
                     color: colorTheme.textColor,
-                    fontFamily: "IBMPlexSans_500Medium",
-                    fontSize: 17,
+                    fontFamily: "IBMPlexSans_700Bold",
+                    fontSize: 18,
+                    textAlign: "center"
                   }}>
-                    Update Module Firmware
+                    Module Rebooting
                   </Text>
+
+                  <View style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 15,
+                    marginVertical: 8,
+                  }}>
+                    <Text style={{
+                      color: colorTheme.textColor,
+                      fontFamily: "IBMPlexSans_500Medium",
+                      fontSize: 16,
+                      textAlign: "center"
+                    }}>
+                      {isConnecting ? "Reconnecting to Module..." : isScanning ? "Scanning for Module..." : (isConnected || (!isConnected && !isConnecting && !isScanning)) ? "Disconnecting from Module..." : "Unknown State"}
+                    </Text>
+
+                    <ActivityIndicator color={colorTheme.buttonColor} size={"small"} />
+                  </View>
+
+
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_400Regular",
+                    fontSize: 14,
+                    textAlign: "center",
+                    // width: "80%",
+                  }}>
+                    Update {displayIndex + 1}/{totalUpdateCount} successfully installed.{"\n"}Waiting for module to reconnect.
+                  </Text>
+
+                  <View style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 5,
+                    marginTop: 10,
+                  }}>
+                    <IonIcons name="warning-outline" color={colorTheme.warning} size={17} />
+
+                    <Text style={{
+                      color: colorTheme.warning,
+                      fontFamily: "IBMPlexSans_500Medium",
+                      fontSize: 11,
+                      textAlign: "center",
+                    }}>
+                      Do not close the app while updates are in progress
+                    </Text>
+                  </View>
                 </View>
-
-
-
-                <Text style={{
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_400Regular",
-                  fontSize: 15,
-                  textAlign: "center",
-                }}>
-                  Upgrade from
-                  <Text
-                    style={{
-                      fontFamily: "IBMPlexSans_500Medium"
-                    }}>
-                    {" "}v{firmwareVersion}
+              ) : modalState === ModalState.ERROR_APP_VERSION ? (
+                <>
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_700Bold",
+                    fontSize: 18,
+                    textAlign: "center"
+                  }}>
+                    App Out of Date
                   </Text>
-                  {" "}to{" "}
-                  <Text
-                    style={{
-                      fontFamily: "IBMPlexSans_500Medium"
-                    }}>
-                    v{version || "Unknown"}
+
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_400Regular",
+                    fontSize: 16,
+                    textAlign: "center"
+                  }}>
+                    Upgrading Module Firmware{"\n"}
+                    v{firmwareVersion} → v{updateData![displayIndex].version}
                   </Text>
-                </Text>
 
-                <Text style={{
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_400Regular",
-                  fontSize: 14,
-                  textAlign: "center",
-                }}>
-                  {description || "Unknown Description"}
-                </Text>
+                  <Text style={{
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_400Regular",
+                    fontSize: 14,
+                    textAlign: "center",
+                    width: "80%",
+                  }}>
+                    App version v{updateData![displayIndex].app_version} is required before proceeding with updates.
+                  </Text>
 
 
-                <View style={{
-                  rowGap: 7,
-                  marginTop: 5,
-                }}>
                   <Pressable
                     style={({ pressed }) => ({
                       backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
-                      // width: "60%",
                       paddingHorizontal: 18,
                       paddingVertical: 6,
                       borderRadius: 20,
+                      marginBottom: 5,
                       boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
                     })}
-                    onPress={__startUpdate}
+                    onPress={async () => {
+                      // Eventually should open corresponding app store page
+                      // iOS/Android check
+                      await Linking.openURL(`https://github.com/seasaltsaige/openwink/releases/`);
+                      close(false);
+                    }}
                   >
                     {({ pressed }) =>
                       <Text
@@ -144,105 +411,142 @@ export function ModuleUpdateModal({
                           color: colorTheme.headerTextColor,
                         }}
                       >
-                        Install Update
+                        Update App
                       </Text>
                     }
                   </Pressable>
 
 
-                  <Pressable
-                    onPress={close}
-                  // disabled={disableConfirmation}
-                  >
-                    {({ pressed }) =>
-                      <Text
-                        style={{
-                          textAlign: "center",
-                          fontSize: 17,
-                          fontFamily: "IBMPlexSans_500Medium",
-                          color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
-                          textDecorationLine: "underline"
-                        }}
-                      >
-                        Not Now
-                      </Text>
-                    }
-                  </Pressable>
-                </View>
-              </>
-            ) : (
-              <>
-
-                <Text style={{
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_500Medium",
-                  fontSize: 16,
-                }}>
-                  Updating Firmware... ({updateProgress}%)
-                </Text>
-
-
-                <View style={{
-                  width: "100%",
-                  marginHorizontal: 10,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  position: "relative",
-                }}>
-                  <View style={{
-                    width: "100%",
-                    backgroundColor: `${colorTheme.disabledButtonColor}80`,
-                    height: 16,
-                    position: "absolute",
-                    borderRadius: 10,
-                  }} />
-                  <View style={{
-                    width: `${updateProgress}%`,
-                    backgroundColor: colorTheme.buttonColor,
-                    height: 16,
-                    position: "absolute",
-                    borderRadius: 10,
-                  }} />
-                </View>
-
-                <Text style={{
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_400Regular",
-                  fontSize: 14,
-                  textAlign: "center",
-                }}>
-                  ({updateSizeKB ? ((updateSizeKB * updateProgress) / 100).toFixed(2) : "Unknown "}KB/{updateSizeKB ? (updateSizeKB).toFixed(2) : "Unknown "}KB) – {version ? `v${version}` : "Unkown Version"}
-                </Text>
-
-                <Text style={{
-                  marginTop: -10,
-                  color: colorTheme.textColor,
-                  fontFamily: "IBMPlexSans_400Regular",
-                  fontSize: 14,
-                  textAlign: "center"
-                }}>
-                  {description || "Unknown Description"}
-                </Text>
-
-                <View style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  columnGap: 5,
-                }}>
-                  <IonIcons name="warning-outline" color={colorTheme.warning} size={17} />
+                </>
+              ) : (
+                <>
 
                   <Text style={{
-                    color: colorTheme.warning,
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    fontSize: 16,
+                  }}>
+                    Updating Firmware... ({updateProgress}%)
+                  </Text>
+
+
+                  <View style={{
+                    width: "100%",
+                    marginHorizontal: 10,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    position: "relative",
+                  }}>
+                    <View style={{
+                      width: "100%",
+                      backgroundColor: `${colorTheme.disabledButtonColor}80`,
+                      height: 16,
+                      position: "absolute",
+                      borderRadius: 10,
+                    }} />
+                    <View style={{
+                      width: `${updateProgress}%`,
+                      backgroundColor: colorTheme.buttonColor,
+                      height: 16,
+                      position: "absolute",
+                      borderRadius: 10,
+                    }} />
+                  </View>
+
+                  <Text style={{
+                    color: colorTheme.textColor,
                     fontFamily: "IBMPlexSans_400Regular",
-                    fontSize: 11,
+                    fontSize: 14,
+                    textAlign: "center",
+                  }}>
+                    ({updateSizeKB ? ((updateSizeKB * updateProgress) / 100).toFixed(2) : "Unknown "}KB/{updateSizeKB ? (updateSizeKB).toFixed(2) : "Unknown "}KB) – {`v${version}`}
+                  </Text>
+
+                  <Text style={{
+                    marginTop: -10,
+                    color: colorTheme.textColor,
+                    fontFamily: "IBMPlexSans_400Regular",
+                    fontSize: 14,
                     textAlign: "center"
                   }}>
-                    Do not disconnect while module update is in progress
+                    {description}
                   </Text>
-                </View>
-              </>
-            )
+
+                  <View style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    columnGap: 5,
+                  }}>
+                    <IonIcons name="warning-outline" color={colorTheme.warning} size={15} />
+
+                    <Text style={{
+                      color: colorTheme.warning,
+                      fontFamily: "IBMPlexSans_400Regular",
+                      fontSize: 10,
+                      // backgroundColor: "orange",
+                      // width: "auto",
+                      // textAlign: "center"
+                    }}>
+                      Do not disconnect while module updates are in progress
+                    </Text>
+                  </View>
+                </>
+              )
+            )}
+
+
+          {
+            totalUpdateCount > 1 &&
+            <View
+              style={{
+                alignItems: "flex-start",
+                width: "100%",
+                flexDirection: "row",
+                marginTop: -10,
+              }}
+            >
+              <Tooltip
+                isVisible={infoTooltipOpen}
+                onClose={() => setInfoTooltipOpen(false)}
+                content={
+                  <Text style={theme.tooltipContainerText}>
+                    All updates are required and will be installed sequentially. The module will restart multiple times throughout the process.
+                  </Text>
+                }
+                placement="bottom"
+                contentStyle={theme.tooltipContainer}
+                useReactNativeModal
+              >
+                <Pressable
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    columnGap: 10,
+                  }}
+                  hitSlop={10}
+                  onPress={() => setInfoTooltipOpen(true)}
+                >
+                  {({ pressed }) => (
+                    <>
+                      <Text style={{
+                        color: pressed ? colorTheme.buttonColor : colorTheme.textColor,
+                        fontSize: 12,
+                        fontFamily: "IBMPlexSans_300Light",
+                        textAlign: "left",
+                      }}>
+                        Update {displayIndex + 1} / {totalUpdateCount}
+                      </Text>
+
+                      <IonIcons name="help-circle-outline" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={17} />
+                    </>)
+                  }
+                </Pressable>
+              </Tooltip>
+
+              <View style={{ flex: 1 }} />
+
+            </View>
           }
         </View>
       </ModalBlurBackground>
