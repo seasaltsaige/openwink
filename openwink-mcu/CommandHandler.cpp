@@ -83,7 +83,6 @@ void CommandHandler::handleQueuedCommand() {
         sleepyReset(true, false);
       leftWink();
       if (wasSleepy) {
-        Serial.printf("Resetting sleepy in left wink switch\n");
         sleepyEye(true, false);
       }
       break;
@@ -110,7 +109,6 @@ void CommandHandler::handleQueuedCommand() {
       rightWink();
 
       if (wasSleepy) {
-        Serial.printf("Resetting sleepy in right wink switch\n");
         sleepyEye(false, true);
       }
       break;
