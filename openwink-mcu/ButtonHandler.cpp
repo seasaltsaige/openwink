@@ -271,11 +271,9 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
   if (response.length() == 1) {
     int parsed = stoi(response);
     bool wasSleepy = false;
-    if (isSleepy()) {
-      sleepyReset(true, true);
-      if (parsed != 1)
-        wasSleepy = true;
-    }
+
+    if (isSleepy())
+      wasSleepy = true;
 
     BLE::setBusy(true);
 
@@ -289,38 +287,63 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
 
       rightStatus = initialButton;
       leftStatus = initialButton;
+      wasSleepy = false;
       break;
 
-    // TODO: If in sleepy eye, exit, execute, re-enter SAME WITH OTHER WAYS OF
-    // EXECUTING COMMANDS
     case 2:
+      if (wasSleepy)
+        sleepyReset(true, false);
       leftWink();
+      if (wasSleepy)
+        sleepyEye(true, false);
       break;
 
     case 3:
+      if (wasSleepy)
+        sleepyReset(true, false);
       leftWink();
       leftWink();
+      if (wasSleepy)
+        sleepyEye(true, false);
       break;
 
     case 4:
+      if (wasSleepy)
+        sleepyReset(false, true);
       rightWink();
+      if (wasSleepy)
+        sleepyEye(false, true);
       break;
 
     case 5:
+      if (wasSleepy)
+        sleepyReset(false, true);
       rightWink();
       rightWink();
+      if (wasSleepy)
+        sleepyEye(false, true);
       break;
 
     case 6:
+      if (wasSleepy)
+        sleepyReset(true, true);
       bothBlink();
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     case 7:
+      if (wasSleepy)
+        sleepyReset(true, true);
       bothBlink();
       bothBlink();
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     case 8:
+      if (wasSleepy)
+        sleepyReset(true, true);
       if (leftStatus != rightStatus) {
         if (leftStatus == 1)
           rightUp();
@@ -330,9 +353,13 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
         BLE::updateHeadlightChars();
       }
       waveHeadlights(WAVE_START_SIDE::LEFT);
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     case 9:
+      if (wasSleepy)
+        sleepyReset(true, true);
       if (leftStatus != rightStatus) {
         if (rightStatus == 1)
           leftUp();
@@ -342,11 +369,11 @@ void ButtonHandler::handleButtonPressesResponse(int numberOfPresses) {
         BLE::updateHeadlightChars();
       }
       waveHeadlights(WAVE_START_SIDE::RIGHT);
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
     }
 
-    if (wasSleepy)
-      sleepyEye(true, true);
   } else {
     // Check press index for looping
     if (numberOfPresses < 9 && customButtonPressLoopArray[numberOfPresses])

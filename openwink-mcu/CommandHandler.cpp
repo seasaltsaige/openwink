@@ -32,11 +32,8 @@ void CommandHandler::handleQueuedCommand() {
   int command = queuedCommand;
 
   bool wasSleepy = false;
-  if (isSleepy()) {
-    if (command != 1 && command != 2)
-      wasSleepy = true;
-    sleepyReset(true, true);
-  }
+  if (isSleepy())
+    wasSleepy = true;
 
 
   queuedCommand = -1;
@@ -44,51 +41,82 @@ void CommandHandler::handleQueuedCommand() {
   switch (command) {
     // Both Up
     case 1:
+      if (wasSleepy)
+        sleepyReset(true, true);
       bothUp();
       break;
 
     // Both Down
     case 2:
+      if (wasSleepy)
+        sleepyReset(true, true);
       bothDown();
       break;
     // Both Blink
     case 3:
       // Should function regardless of current headlight position (ie: Left is up, right is down -> Blink Command -> Left Down Left Up AND Right Up Right Down)
+      if (wasSleepy)
+        sleepyReset(true, true);
       bothBlink();
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     // Left Up
     case 4:
+      if (wasSleepy)
+        sleepyReset(true, false);
       leftUp();
       break;
 
     // Left Down
     case 5:
+      if (wasSleepy)
+        sleepyReset(true, false);
       leftDown();
+      wasSleepy = false;
       break;
 
     // Left Blink (Wink)
     case 6:
+      if (wasSleepy)
+        sleepyReset(true, false);
       leftWink();
+      if (wasSleepy) {
+        sleepyEye(true, false);
+      }
       break;
 
     // Right Up
     case 7:
+      if (wasSleepy)
+        sleepyReset(false, true);
       rightUp();
       break;
 
     // Right Down
     case 8:
+      if (wasSleepy)
+        sleepyReset(false, true);
       rightDown();
       break;
 
     // Right Blink (Wink)
     case 9:
+      if (wasSleepy)
+        sleepyReset(false, true);
+
       rightWink();
+
+      if (wasSleepy) {
+        sleepyEye(false, true);
+      }
       break;
 
     // "Wave" left first
     case 10:
+      if (wasSleepy)
+        sleepyReset(true, true);
 
       if (leftStatus != rightStatus) {
         if (leftStatus == 1) rightUp();
@@ -97,10 +125,15 @@ void CommandHandler::handleQueuedCommand() {
         BLE::updateHeadlightChars();
       }
       waveHeadlights(WAVE_START_SIDE::LEFT);
+
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     // "Wave" right first
     case 11:
+      if (wasSleepy)
+        sleepyReset(true, true);
 
       if (leftStatus != rightStatus) {
         if (rightStatus == 1) leftUp();
@@ -109,11 +142,17 @@ void CommandHandler::handleQueuedCommand() {
         BLE::updateHeadlightChars();
       }
       waveHeadlights(WAVE_START_SIDE::RIGHT);
+
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
 
     // left - right sequence
     case 12:
 
+      if (wasSleepy)
+        sleepyReset(true, true);
+
       if (leftStatus == 0) rightDown();
       else rightUp();
 
@@ -129,9 +168,15 @@ void CommandHandler::handleQueuedCommand() {
         leftUp();
       }
 
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
     // left - right x2
     case 13:
+
+      if (wasSleepy)
+        sleepyReset(true, true);
+
       if (leftStatus == 0) rightDown();
       else rightUp();
 
@@ -153,9 +198,16 @@ void CommandHandler::handleQueuedCommand() {
       } else {
         leftDown();
       }
+
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
     // right - left
     case 14:
+
+      if (wasSleepy)
+        sleepyReset(true, true);
+
       if (rightStatus == 0) leftDown();
       else leftUp();
 
@@ -170,9 +222,16 @@ void CommandHandler::handleQueuedCommand() {
         bothSwap();
         rightUp();
       }
+
+      if (wasSleepy)
+        sleepyEye(true, true);
       break;
     // right - left x2
     case 15:
+
+      if (wasSleepy)
+        sleepyReset(true, true);
+
       if (rightStatus == 0) leftDown();
       else leftUp();
 
@@ -195,11 +254,12 @@ void CommandHandler::handleQueuedCommand() {
       } else {
         rightDown();
       }
+
+      if (wasSleepy)
+        sleepyEye(true, true);
+
       break;
   }
-
-  if (wasSleepy)
-    sleepyEye(true, true);
 
   setAllOff();
   BLE::setBusy(false);
