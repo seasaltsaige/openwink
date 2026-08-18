@@ -1,7 +1,7 @@
 import Storage from "./Storage";
 import { ColorTheme } from "../helper/Constants";
 import { QuickLink } from "../Components";
-import { CommandOutput, ButtonBehaviors, Presses } from "../helper/Types";
+import { CommandOutput, ButtonBehaviors, Presses, CustomButtonAction } from "../helper/Types";
 import {
   AutoConnectStore,
   CustomCommandStore,
@@ -64,7 +64,7 @@ export interface SettingsPreset {
   customCommands: CommandOutput[];
   customOEMButtonEnabled: boolean;
   customOEMBypassEnabled: boolean;
-  customOEMButtons: CustomOEMButtonPresetItem[];
+  customOEMButtons: CustomButtonAction[];
   customOEMButtonDelay: number;
 
   deviceUUID: string | null;
@@ -116,7 +116,7 @@ export abstract class SettingsPresetsStore {
     AutoConnectStore.set(preset.autoConnect);
     if (preset.colorTheme)
       ThemeStore.setTheme(preset.colorTheme)
-    
+
     if (preset.headlightOrientation)
       HeadlightOrientationStore.enable();
     else
@@ -131,7 +131,7 @@ export abstract class SettingsPresetsStore {
     SleepyEyeStore.set("right", preset.sleepyEye.right);
 
     QuickLinksStore.setLinks(preset.quickLinks);
-    
+
     CustomCommandStore.deleteAll();
     for (const cmd of preset.customCommands) {
       if (!cmd.command) continue;
@@ -140,7 +140,7 @@ export abstract class SettingsPresetsStore {
 
     if (preset.customOEMButtonEnabled)
       CustomOEMButtonStore.enable();
-    else 
+    else
       CustomOEMButtonStore.disable();
 
     if (preset.customOEMBypassEnabled)
@@ -149,9 +149,9 @@ export abstract class SettingsPresetsStore {
       CustomOEMButtonStore.disableBypass();
 
     for (let i = 1; i <= 9; i++) {
-      const pressPreset = preset.customOEMButtons.find(v => v.numberPresses === i);
+      const pressPreset = preset.customOEMButtons.find(v => v.presses === i);
       if (!pressPreset) CustomOEMButtonStore.remove(i as Presses);
-      else CustomOEMButtonStore.set(pressPreset.numberPresses, pressPreset.behavior);
+      else CustomOEMButtonStore.set(pressPreset.presses, pressPreset.behaviorHumanReadable ? pressPreset.behaviorHumanReadable : pressPreset.customCommand!);
     }
 
     CustomOEMButtonStore.setDelay(preset.customOEMButtonDelay);
@@ -167,12 +167,12 @@ export abstract class SettingsPresetsStore {
         FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
     }
     return true;
-  } 
+  }
 
   static existsByName(name: string) {
     return this.getPreset(name) !== null;
   }
-  
+
   static saveFromCurrent(name: string) {
     const exists = this.getPreset(name);
 
