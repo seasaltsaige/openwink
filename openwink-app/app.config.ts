@@ -5,11 +5,13 @@ require('ts-node/register/transpile-only');
 
 dotenv.config();
 
+const variant = process.env.APP_VARIANT ?? 'production';
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "OpenWink",
+  name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "1.1.0",
+  version: "1.1.1",
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
@@ -21,7 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.seasaltsaige.openwink",
+    bundleIdentifier: variant === "development" ? "com.seasaltsaige.openwink.dev" : "com.seasaltsaige.openwink",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false
     }
@@ -37,7 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "android.permission.BLUETOOTH_CONNECT",
       "android.permission.ACCESS_FINE_LOCATION"
     ],
-    package: "com.seasaltsaige.openwink"
+    package: variant === "development" ? "com.seasaltsaige.openwink.dev" : "com.seasaltsaige.openwink"
   },
   web: {
     favicon: "./assets/favicon.png"
@@ -86,7 +88,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           android: "./assets/icon_british_racing_green_android.png"
         }
       }
-    ]
+    ],
+    [
+      "expo-dev-client",
+      {
+        "launchMode": "most-recent",
+      }
+    ],
   ],
   owner: process.env.EXPO_OWNER,
   extra: {

@@ -1,18 +1,24 @@
 {
-  "cli": {
-    "appVersionSource": "remote"
-  },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": {
-        "simulator": true
+      "env": {
+        "APP_VARIANT": "development"
       }
     },
+
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "preview"
+      }
     },
-    "production": {}
+
+    "production": {
+      "env": {
+        "APP_VARIANT": "production"
+      }
+    }
   }
 }
