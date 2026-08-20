@@ -25,7 +25,7 @@ extern int OEM_HEADLIGHT_STATUS_LEFT;
 
 #define AUTH_TIME_MS 5000
 
-/** ---- BEGIN BLE UUID DEFINITIONS ---- **/
+/** ---- BEGIN BLE UUID DEFINITIONS ---- **/ 
 // Service for headlight movements
 #define WINK_SERVICE_UUID "a144c6b0-5e1a-4460-bb92-3674b2f51520"
 // Service for OTA Update + OTA Status indication

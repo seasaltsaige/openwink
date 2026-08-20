@@ -29,7 +29,9 @@ import {
   SIDE,
 } from "../Storage/HeadlightMovementSpeedStore";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
-import { ButtonBehaviors, CommandOutput, Presses } from "../helper/Types";
+import { ButtonBehaviors, CommandOutput, ErrorTypes, Presses, UpdatingStatus } from "../helper/Types";
+import Toast from "react-native-toast-message";
+import { OTA } from "../helper/Handlers/OTA";
 
 export type BleMonitorContextType = {
   // isConnected: boolean;
@@ -38,7 +40,7 @@ export type BleMonitorContextType = {
   leftStatus: number;
   rightStatus: number;
   updateProgress: number;
-  updatingStatus: "Idle" | "Updating" | "Failed" | "Success" | "Canceled";
+  updatingStatus: UpdatingStatus;
   firmwareVersion: string;
   leftMoveTime: number;
   rightMoveTime: number;
@@ -86,9 +88,7 @@ export type BleMonitorContextType = {
   refreshMonitorStatus: () => Promise<void>;
 };
 
-export const BleMonitorContext = createContext<BleMonitorContextType | null>(
-  null,
-);
+export const BleMonitorContext = createContext<BleMonitorContextType | null>(null);
 
 export const useBleMonitor = () => {
   const context = useContext(BleMonitorContext);
@@ -106,9 +106,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
   const [leftStatus, setLeftStatus] = useState(0);
   const [rightStatus, setRightStatus] = useState(0);
   const [updateProgress, setUpdateProgress] = useState(0);
-  const [updatingStatus, setUpdatingStatus] = useState<
-    "Idle" | "Updating" | "Failed" | "Success" | "Canceled"
-  >("Idle");
+  const [updatingStatus, setUpdatingStatus] = useState(UpdatingStatus.IDLE);
   const [firmwareVersion, setFirmwareVersion] = useState("");
 
   // Settings state
@@ -329,24 +327,80 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!char?.value) return;
 
         try {
-          const statusValue = toProperCase(
-            base64.decode(char.value) as
-            | "idle"
-            | "updating"
-            | "failed"
-            | "success"
-            | "canceled",
-          );
+          const statusValue = parseInt(base64.decode(char.value)) as UpdatingStatus;
+
           setUpdatingStatus(statusValue);
+
           // Reset progress when either succes or failure
           if (
-            statusValue === "Success" ||
-            statusValue === "Failed" ||
-            statusValue === "Canceled"
+            statusValue !== UpdatingStatus.UPDATING &&
+            statusValue !== UpdatingStatus.IDLE
           ) {
             setUpdateProgress(0);
-            // Reset status after a delay to show success state
-            setTimeout(() => setUpdatingStatus("Idle"), 2000);
+
+            // Error with flash init for OTA update
+            if (statusValue === UpdatingStatus.ERROR_FLASH_INIT) {
+              Toast.show({
+                type: "error",
+                text1: "Update Error",
+                text2: `Something went wrong while initializing the update. Please try again. (${ErrorTypes.ota_flash_init})`,
+                visibilityTime: 10000,
+              });
+
+              OTA.cancelUpdate();
+              // Initialization of the signature verification service failed
+            } else if (statusValue === UpdatingStatus.ERROR_VERIFICATION_INIT) {
+              Toast.show({
+                type: "error",
+                text1: "Update Error",
+                text2: `Something went wrong while initializing the update. Please try again. (${ErrorTypes.ota_verification_init})`,
+                visibilityTime: 10000,
+              });
+
+              OTA.cancelUpdate();
+              // After download, expected size vs actual size differs
+            } else if (statusValue === UpdatingStatus.ERROR_INVALID_SIZE) {
+
+              Toast.show({
+                type: "error",
+                text1: "Update Error",
+                text2: `Expected update size differs from received update size. Please try again. (${ErrorTypes.ota_invalid_size})`,
+                visibilityTime: 10000,
+              });
+              OTA.cancelUpdate();
+              // AFter download, the signature verification failed (corruption, differing, modified, etc)
+            } else if (statusValue === UpdatingStatus.ERROR_VERIFICATION_SIGN) {
+
+              Toast.show({
+                type: "error",
+                text1: "Update Error",
+                text2: `Something went wrong while verifying the firmware signature. Please report this error. (${ErrorTypes.ota_verification_sign})`,
+                visibilityTime: 10000,
+              });
+              OTA.cancelUpdate();
+            } else if (statusValue === UpdatingStatus.ERROR_CHUNK_WRITE) {
+              Toast.show({
+                type: "error",
+                text1: "Update Error",
+                text2: `Something went wrong while writing the firmware to the module. Please try again. (${ErrorTypes.ota_chunk_write})`,
+                visibilityTime: 10000,
+              });
+              OTA.cancelUpdate();
+            }
+
+
+            if (statusValue === UpdatingStatus.SUCCESS) {
+
+              Toast.show({
+                type: "success",
+                text1: "Update Success",
+                text2: `The module was updated successfully and will now restart to apply the firmware.`,
+                visibilityTime: 10000,
+              });
+
+              OTA.updateVersion();
+              setFirmwareVersion(OTA.latestVersion);
+            }
           }
         } catch (error) {
           console.error("Error decoding UPDATE_STATUS value:", error);

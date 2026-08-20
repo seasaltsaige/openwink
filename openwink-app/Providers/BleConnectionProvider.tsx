@@ -27,6 +27,7 @@ import { getDevicePasskey, sleep } from "../helper/Functions";
 import { useBleMonitor } from "./BleMonitorProvider";
 import DeviceInfo from "react-native-device-info";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
+import { OTA } from "../helper/Handlers/OTA";
 
 export type BleConnectionContextType = {
   device: Device | null;
@@ -59,10 +60,6 @@ export const useBleConnection = () => {
   return context;
 };
 
-const isSimulator = (): boolean => {
-  return DeviceInfo.isEmulatorSync();
-};
-
 const createBleManager = (): BleManager => {
   return new BleManager();
 };
@@ -84,6 +81,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoConnectEnabled, setAutoConnectEnabled] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  // const [isConnected, setIsConnected] = useState(true);
+
+  const isConnectedRef = useRef(isConnected);
+  const scanForModuleRef = useRef<() => Promise<void>>(async () => { });
+
+  const setConnected = (connected: boolean) => {
+    setIsConnected(connected);
+    isConnectedRef.current = connected;
+  }
 
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
@@ -248,7 +254,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         await readInitialValues(connection);
 
         // Once all is initialized and nothing failed, device has successfully connected.
-        setIsConnected(true);
+        setConnected(true);
 
         // Setup disconnect handler
         connection.onDisconnected(async (err, disconnectedDevice) => {
@@ -261,12 +267,13 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           // Cleanup
           stopMonitoring();
           setDevice(null);
-          setIsConnected(false);
+          setConnected(false);
 
           // Auto-reconnect if enabled
-          if (autoConnectRef.current) {
-            console.log("Auto-reconnect enabled, scanning...");
-            await scanForModule();
+          if (autoConnectRef.current || OTA.restartQueued) {
+            OTA.restartQueued = false;
+            await sleep(1500);
+            await scanForModuleRef.current();
           }
         });
       } catch (error) {
@@ -280,7 +287,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   // Connect to a specific device with retry logic
   const connectToDevice = useCallback(
     async (deviceId: string) => {
-      if (isConnecting || device) {
+      if (isConnecting || isConnectedRef.current) {
         console.log("Already connecting or connected");
         return;
       }
@@ -325,8 +332,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // If auto-connect is enabled, start scanning again
         if (autoConnectRef.current) {
-          setIsScanning(true);
-          await scanForModule();
+          await scanForModuleRef.current();
         }
       }
     },
@@ -353,9 +359,16 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   // Scan for module
   const scanForModule = useCallback(async () => {
     // Prevent multiple simultaneous scans
-    if (device !== null || isScanning || isConnecting) {
+    if (isConnectedRef.current || isScanning || isConnecting) {
       console.log("Scan already in progress or device connected");
       return;
+    }
+
+
+    try {
+      await manager.stopDeviceScan();
+    } catch (err) {
+      console.log("Failed to stop device scan pre-scan start: ", err);
     }
 
     setIsScanning(true);
@@ -367,10 +380,11 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       clearTimeout(scanTimeoutRef.current);
     }
 
-    console.log("Starting scan for module...");
+
 
     // Setup scan timeout
     scanTimeoutRef.current = setTimeout(async () => {
+
       if (!deviceFound) {
         console.log("Scan timeout reached, no device found");
 
@@ -389,7 +403,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (autoConnectEnabled) {
           console.log("Auto-connect enabled, restarting scan...");
-          await scanForModule();
+          await scanForModuleRef.current();
         } else {
           Toast.show({
             type: "info",
@@ -405,12 +419,14 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     manager.startDeviceScan(
       null,
       {
-        allowDuplicates: false,
-        callbackType: ScanCallbackType.FirstMatch,
+        allowDuplicates: true,
+        callbackType: ScanCallbackType.AllMatches,
         legacyScan: false,
         scanMode: ScanMode.LowLatency,
       },
       async (error, scannedDevice) => {
+
+
         if (error) {
           console.error("Scan error:", error);
 
@@ -454,7 +470,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       },
     );
   }, [
-    device,
     isScanning,
     isConnecting,
     manager,
@@ -479,7 +494,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           stopMonitoring();
           await device.cancelConnection();
-          setIsConnected(false);
+          setDevice(null);
+          setIsConnecting(false);
+          setIsScanning(false);
+          setConnected(false);
 
           if (showToast) {
             Toast.show({
@@ -578,6 +596,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
   }, [device, manager]);
+
+  useEffect(() => {
+    scanForModuleRef.current = scanForModule;
+  }, [scanForModule]);
 
   const value: BleConnectionContextType = {
     device,

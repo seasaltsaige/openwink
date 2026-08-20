@@ -1,4 +1,28 @@
 {
-  "version": "0.12.2",
-  "description": "Fixes bug with custom button actions executing if feature is enabled quickly after press sequence while feature is off."
+  "updates": [
+    {
+      "version": "0.12.7",
+      "description": "Fixes some issues with OTA udpate system and improves error handling/display. App update is required after firmware update.",
+      "required_firmware_version": "0.12.6",
+      "required_app_version": "1.0.4"
+    },
+    {
+      "version": "0.13.0",
+      "description": "Improves OTA update system, allowing for more streamlined update flow.",
+      "required_firmware_version": "0.12.7",
+      "required_app_version": "1.1.0"
+    },
+    {
+      "version": "0.13.1",
+      "description": "Fixes minor bugs in new update system.",
+      "required_firmware_version": "0.13.0",
+      "required_app_version": "1.1.0"
+    },
+    {
+      "version": "0.13.2",
+      "description": "Improves functionality of commands while headlights are in active sleepy eye position.",
+      "required_app_version": "1.1.0",
+      "required_firmware_version": "0.13.0"
+    }
+  ]
 }

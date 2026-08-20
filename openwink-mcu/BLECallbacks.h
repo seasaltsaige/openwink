@@ -8,6 +8,7 @@
 
 extern double headlightMultiplier;
 extern bool otaUpdateRestartQueued;
+extern unsigned long updateRestartTimer;
 
 enum AuthState {
   UNCLAIMED,

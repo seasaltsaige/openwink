@@ -4,6 +4,7 @@ import { getBLEDescriptors } from "../helper/Constants";
 import base64 from "react-native-base64";
 import Toast from "react-native-toast-message";
 import { sleep } from "../helper/Functions";
+import { useBleMonitor } from "./BleMonitorProvider";
 
 type OTAUpdateContextType = {
   startOTAService: () => Promise<void>;
@@ -26,24 +27,15 @@ export const useOtaUpdate = () => {
 export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const { device } = useBleConnection();
+  const { updatingStatus } = useBleMonitor();
+
   // Used to communicate cancelation to OTA handler
-  const otaUpdateInProgressRef = useRef<boolean>(false);
-
-  const setUpdateInProgress = (value: boolean) => {
-    otaUpdateInProgressRef.current = value;
-  }
-
 
   // Start OTA (Over-The-Air) firmware update service
   const startOTAService = useCallback(
     async () => {
       if (!device) {
         console.warn('No device connected');
-        return;
-      }
-
-      if (otaUpdateInProgressRef.current) {
-        console.warn("OTA Update already in progress");
         return;
       }
 
@@ -55,14 +47,12 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         console.log("Starting OTA service");
 
-        setUpdateInProgress(true);
-
         await sleep(100);
       } catch (error) {
         console.error('Error starting OTA service:', error);
       }
     },
-    [device, otaUpdateInProgressRef]
+    [device]
   );
 
   // Halt update early if canceled
@@ -73,10 +63,6 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      if (!otaUpdateInProgressRef.current) {
-        console.warn("No Update in progress");
-        return;
-      }
 
       try {
         await device.writeCharacteristicWithoutResponseForService(
@@ -86,21 +72,19 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         console.log("Halting OTA service");
 
-        setUpdateInProgress(false);
       } catch (error) {
         console.error('Error stopping OTA service:', error);
       }
 
     },
-    [device, otaUpdateInProgressRef],
+    [device],
   );
 
   const sendOTAChunk = useCallback(
     async (chunk: Uint8Array) => {
       if (chunk.length < 1) return false;
       if (!device || !device.mtu) return false;
-      // If not in progress, send value to OTA handler
-      if (!otaUpdateInProgressRef.current) return false;
+
       try {
         // if chunk length is for some reason larger than negotiated MTU, split it to allowed size
         if (chunk.length > device.mtu) {
@@ -134,18 +118,13 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
     },
-    [device, otaUpdateInProgressRef],
+    [device, updatingStatus],
   );
 
   const sendOTASize = useCallback(
     async (otaSize: number) => {
       if (!device) {
         console.warn('No device connected');
-        return;
-      }
-
-      if (!otaUpdateInProgressRef.current) {
-        console.warn("No Update in progress (OTA SIZE)");
         return;
       }
 
@@ -162,7 +141,7 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await haltOTAUpdate();
       }
     },
-    [device, otaUpdateInProgressRef],
+    [device],
   );
 
   const sendOTAComplete = useCallback(
@@ -172,25 +151,18 @@ export const OTAUpdateProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      if (!otaUpdateInProgressRef.current) {
-        console.warn("No Update in progress");
-        return;
-      }
-
       try {
         await device.writeCharacteristicWithoutResponseForService(
           ...getBLEDescriptors("OTA", "OTA_COMMAND"),
           base64.encode("DONE"),
         );
 
-        setUpdateInProgress(false);
-
         console.log("Sending OTA DONE");
       } catch (err) {
         console.error("Failed to send finalize OTA Update Command");
       }
     },
-    [device, otaUpdateInProgressRef],
+    [device],
   );
 
   const value: OTAUpdateContextType = {

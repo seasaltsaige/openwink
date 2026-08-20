@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
@@ -25,6 +25,7 @@ import {
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
 import { Onboarding } from "../Onboarding/Onboarding";
+import { UpdatingStatus } from "../../helper/Types";
 
 export function Home() {
 
@@ -41,7 +42,7 @@ export function Home() {
 
   const [onboardingDone, setOnboardingDone] = useState(true);
 
-  const { updateFirmwareVersion } = useBleMonitor();
+  const { updateFirmwareVersion, updatingStatus } = useBleMonitor();
 
   const {
     disconnect: disconnectFromModule,
@@ -59,48 +60,19 @@ export function Home() {
     error,
     checkUpdateAvailable,
     startUpdate,
-  } = useUpdateManager({
-    onError: ({ errorType, errorMessage, errorTitle }) => {
-      Toast.show({
-        type: "error",
-        text1: errorTitle,
-        text2: errorMessage,
-        autoHide: true,
-        visibilityTime: 10000,
-      });
-    },
-    onSuccess: ({ successMessage, successTitle, successType }) => {
+  } = useUpdateManager();
+
+  const closeModuleUpdate = (showToast: boolean) => {
+    setModuleUpdateVisible(false);
+    if (showToast)
       Toast.show({
         type: "success",
-        text1: successTitle,
-        text2: successMessage,
+        text1: "Update Dismissed",
+        text2: "Firmware update dismissed. Consider updating soon.",
         autoHide: true,
-        visibilityTime: 10000,
+        visibilityTime: 5000,
       });
-
-      updateFirmwareVersion(OTA.latestVersion);
-      setModuleUpdateVisible(false);
-    },
-  });
-
-  const closeModuleUpdate = () => {
-    setModuleUpdateVisible(false);
-    Toast.show({
-      type: "success",
-      text1: "Update Dismissed",
-      text2: "Firmware update dismissed. Consider updating soon.",
-      autoHide: true,
-      visibilityTime: 5000,
-    });
   }
-
-  // const updatePanelVisible =
-  //   error === ERROR_TYPE.ERR_NONE &&
-  //   updateData !== null &&
-  //   updateStatus === UPDATE_STATUS.INSTALLING;
-
-
-
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
@@ -116,22 +88,26 @@ export function Home() {
     // Open app store...
   }
 
-  const fetchModuleUpdate = async () => {
-    if (!device) return;
-    const available = await checkUpdateAvailable();
-    if (available) {
-      Toast.show({
-        // Custom toast with install buttons
-        text2: "Firmware Update Available",
-        type: "update",
-        props: {
-          downloadAction: () => { setModuleUpdateVisible(true); },
-        },
-        swipeable: false,
-        autoHide: false,
-      });
-    }
-  }
+  const fetchModuleUpdate = useCallback(
+    async () => {
+      if (!isConnected) return console.log("No device connected");
+      if (OTA.getUpdateInProgress()) return console.log("Update already in progress");
+
+      const available = await checkUpdateAvailable();
+      if (available) {
+        Toast.show({
+          // Custom toast with install buttons
+          text2: "Firmware Update Available",
+          type: "update",
+          props: {
+            downloadAction: () => { setModuleUpdateVisible(true); },
+          },
+          swipeable: false,
+          autoHide: false,
+        });
+      }
+    }, [isConnected]
+  )
 
   const installModuleUpdate = async () => setModuleUpdateVisible(true);
 
@@ -157,14 +133,12 @@ export function Home() {
     })();
   }, []);
 
+
   useEffect(() => {
     (async () => {
-      if (isConnected)
-        await fetchModuleUpdate();
+      if (isConnected) await fetchModuleUpdate();
     })();
-  }, [device]);
-
-
+  }, [isConnected]);
 
   return (
     <>
@@ -208,6 +182,8 @@ export function Home() {
               )
             )
           }
+
+
 
           {/* COMMANDS */}
           <View style={theme.homeScreenButtonsContainer}>
@@ -403,11 +379,14 @@ export function Home() {
                 </View>
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
-                <LongButton
-                  onPress={() => installModuleUpdate()}
-                  icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
-                  text="Unknown Update State: Report Here"
-                />
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Unknown Status
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                </View>
               )
             }
           </View>
@@ -426,10 +405,11 @@ export function Home() {
 
       <ModuleUpdateModal
         visible={moduleUpdateVisible}
-        binSizeBytes={updateData?.size!}
-        description={updateData?.description!}
-        version={updateData?.version!}
-        startUpdate={startUpdate}
+        updateInfo={updateData}
+        // binSizeBytes={updateData?.size!}
+        // description={updateData?.description!}
+        // version={updateData?.version!}
+        // startUpdate={startUpdate}
         close={closeModuleUpdate}
       />
 

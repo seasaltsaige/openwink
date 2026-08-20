@@ -14,7 +14,6 @@ export interface CommandOutput {
   command?: CommandInput[];
 }
 
-
 export type CustomButtonAction = {
   customCommand?: CommandOutput,
   behavior?: BehaviorEnum | null;
@@ -22,3 +21,23 @@ export type CustomButtonAction = {
   presses: Presses;
   looping: boolean;
 };
+
+export enum UpdatingStatus {
+  IDLE,
+  UPDATING,
+  ERROR_FLASH_INIT,
+  ERROR_VERIFICATION_INIT,
+  ERROR_INVALID_SIZE,
+  ERROR_VERIFICATION_SIGN,
+  ERROR_CHUNK_WRITE,
+  SUCCESS,
+}
+
+export const ErrorTypes = {
+  ota_unknown: "E1110",
+  ota_flash_init: "E1111",
+  ota_verification_init: "E1112",
+  ota_invalid_size: "E1113",
+  ota_verification_sign: "E1114",
+  ota_chunk_write: "E1115",
+}

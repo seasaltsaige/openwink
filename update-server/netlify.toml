@@ -3,4 +3,4 @@
   node_bundler = "esbuild"
 
 [functions]
-  included_files = ["files/*"]
+  included_files = ["files/**"]
