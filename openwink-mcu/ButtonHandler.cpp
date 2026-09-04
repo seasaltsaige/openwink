@@ -555,7 +555,7 @@ void ButtonHandler::updateHeadlightDelay() {
 
 void ButtonHandler::updateButtonSleep() {
 
-  if (!BLE::getDeviceConnected() && (millis() - mainTimer) > advertiseTime_ms &&
+  if (!BLE::getDeviceConnected() && !CommandHandler::custom_command_loop && (millis() - mainTimer) > advertiseTime_ms &&
       (millis() - mainTimer) > awakeTime_ms) {
     int buttonInput = digitalRead(OEM_BUTTON_INPUT);
     
