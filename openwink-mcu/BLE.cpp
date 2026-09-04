@@ -53,6 +53,8 @@ NimBLECharacteristic *BLE::resetChar;
 NimBLECharacteristic *BLE::passkeyChar;
 NimBLECharacteristic *BLE::headlightBypassChar;
 NimBLECharacteristic *BLE::headlightOrientationChar;
+NimBLECharacteristic *BLE::auxButtonsChar;
+
 
 bool BLE::deviceConnected = false;
 bool BLE::initialized = false;
@@ -118,7 +120,7 @@ void BLE::initServiceCharacteristics() {
   passkeyChar = settingsService->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
   headlightBypassChar = settingsService->createCharacteristic(HEADLIGHT_BYPASS_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
   headlightOrientationChar = settingsService->createCharacteristic(SWAP_ORIENTATION_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-
+  auxButtonsChar = settingsService->createCharacteristic(AUX_BUTTONS_UUID, NIMBLE_PROPERTY::WRITE_NR);
 
   // headlightMotionChar->setValue(to_string(HEADLIGHT_MOVEMENT_DELAY));
   headlightMotionChar->setValue(to_string(ButtonHandler::leftMoveTime) + "-" + to_string(ButtonHandler::rightMoveTime));
@@ -141,7 +143,7 @@ void BLE::initServiceCharacteristics() {
   passkeyChar->setCallbacks(new PassKeyCharacteristicCallbacks());
   headlightBypassChar->setCallbacks(new HeadlightBypassCharacteristicCallbacks());
   headlightOrientationChar->setCallbacks(new HeadlightOrientationCharacteristicCallbacks());
-
+  auxButtonsChar->setCallbacks(new AuxButtonCharacteristicCallbacks());
 }
 
 void BLE::initAdvertising() {

@@ -38,6 +38,7 @@ export const BLE = {
         AUTH: "f61146f2-791d-4ef7-95aa-b565097f69c2",
         HEADLIGHT_BYPASS: "ada2537e-0399-4d2a-9eab-0c7cb60d3500",
         SWAP_ORIENTATION: "3ddd922d-14ca-4785-9cd0-39a530e8b14d",
+        AUX_BUTTONS: "bf3d4b2c-0620-4b34-9474-37aa6cef28b9",
       },
     },
   },

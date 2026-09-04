@@ -22,6 +22,7 @@ interface BaseSearchBarFilter<
   onFilteredItemsUpdate: (filteredItems: K) => void;
   filterables: K;
   placeholderText: string;
+  backgroundColor?: string;
 }
 
 interface SearchBarFilterWithFilters<
@@ -76,6 +77,7 @@ export function SearchBarFilter<
   onFilteredItemsUpdate,
   filterFn,
   placeholderText,
+  backgroundColor
 }: ISearchBarFilter<T, K, I>) {
 
   const { colorTheme } = useColorTheme();
@@ -149,7 +151,7 @@ export function SearchBarFilter<
         <TextInput
           style={{
             height: 40,
-            backgroundColor: colorTheme.backgroundSecondaryColor,
+            backgroundColor: backgroundColor ? backgroundColor : colorTheme.backgroundSecondaryColor,
             paddingHorizontal: 40,
             paddingRight: 10,
             borderRadius: 100,

@@ -48,6 +48,8 @@ private:
   static NimBLECharacteristic* resetChar;
   static NimBLECharacteristic* headlightBypassChar;
   static NimBLECharacteristic* headlightOrientationChar;
+  static NimBLECharacteristic* auxButtonsChar;
+  
 
   static NimBLECharacteristic* passkeyChar;
 
