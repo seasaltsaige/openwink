@@ -20,7 +20,7 @@ export function HeaderWithBackButton({ pressAction, backText, headerText, header
   const navigation = useNavigation();
 
   return (
-    <View style={theme.headerContainer}>
+    <View style={[theme.headerContainer, { columnGap: 20, alignItems: "flex-start" }]}>
       <Pressable
         style={theme.backButtonContainer}
         onPress={() => pressAction ? pressAction() : navigation.goBack()}

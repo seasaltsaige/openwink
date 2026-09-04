@@ -23,6 +23,18 @@
       "description": "Improves functionality of commands while headlights are in active sleepy eye position.",
       "required_app_version": "1.1.0",
       "required_firmware_version": "0.13.0"
+    },
+    {
+      "version": "0.14.0",
+      "description": "Adds auxiliary button compatibility, allowing for custom button routing and customization.",
+      "required_app_version": "1.2.0",
+      "required_firmware_version": "0.13.0"
+    },
+    {
+      "version": "0.14.1",
+      "description": "Improves auxiliary button functionality. Fixes some bugs.",
+      "required_app_version": "1.2.0",
+      "required_firmware_version": "0.13.0"
     }
   ]
 }

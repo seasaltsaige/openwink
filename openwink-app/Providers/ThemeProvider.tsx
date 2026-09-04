@@ -436,7 +436,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
       columnGap: 10,
-      height: "100%"
+      // height: "100%"
     },
     backButtonContainerText: {
       color: themeColors.headerTextColor,

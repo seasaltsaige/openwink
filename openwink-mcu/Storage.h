@@ -36,6 +36,11 @@ public:
 
   static void setMotionIn(SIDE side, int timing);
 
+  static void setAuxStatus(bool enabled);
+  static void setAuxAction(int aux, string value);
+  static void setAuxLooping(int aux, bool looping);
+  static void setAuxButtonType(int aux, int type);
+
   static void setBond(string passkey);
   static void resetBond();
   static string getBond();

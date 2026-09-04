@@ -9,6 +9,7 @@ import ToggleSwitch from "toggle-switch-react-native";
 
 import {
   AutoConnectStore,
+  AuxButtonStore,
   CustomButtonFrequencyStore,
   CustomCommandStore,
   CustomOEMButtonStore,
@@ -48,6 +49,11 @@ const moduleSettingsData: Array<{
       navigationName: "CustomWinkButton",
       pageSymbol: "speedometer-outline",
     },
+    {
+      pageName: "Customize Auxiliary Buttons",
+      navigationName: "AuxButtons",
+      pageSymbol: "flash-outline",
+    }
   ]
 
 export function ModuleSettings() {
@@ -113,6 +119,7 @@ export function ModuleSettings() {
     OnboardingStore.reset();
     DeviceMACStore.forgetMAC();
 
+    AuxButtonStore.reset();
     await reset();
 
     Toast.show({
@@ -189,7 +196,7 @@ export function ModuleSettings() {
       <SafeAreaView style={theme.moduleSettingsContainer}>
         <HeaderWithBackButton
           backText={back}
-          headerText="Module"
+          headerText="Module Settings"
           deviceStatus
         />
 
