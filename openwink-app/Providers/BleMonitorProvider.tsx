@@ -132,18 +132,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
   // Track active subscriptions for cleanup
   const subscriptionsRef = useRef<(() => void)[]>([]);
 
-  // Load persisted firmware version on mount
-  useEffect(() => {
-    const storedFirmware = FirmwareStore.getFirmwareVersion();
-    if (storedFirmware) {
-      setFirmwareVersion(storedFirmware);
-    }
-
-    const left = HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT);
-    const right = HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT);
-    setLeftMoveTime(left);
-    setRightMoveTime(right);
-  }, []);
 
   const refreshMonitorStatus = useCallback(async () => {
     const buttonStatus = CustomOEMButtonStore.isEnabled();
@@ -178,6 +166,23 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     setRightSleepyEye(rSleepy);
     setLeftRightSwapped(swap === ORIENTATION.OUTSIDE);
   }, []);
+
+  // Load persisted firmware version on mount
+  useEffect(() => {
+    const storedFirmware = FirmwareStore.getFirmwareVersion();
+    if (storedFirmware) {
+      setFirmwareVersion(storedFirmware);
+    }
+
+    const left = HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT);
+    const right = HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT);
+    setLeftMoveTime(left);
+    setRightMoveTime(right);
+
+    refreshMonitorStatus();
+  }, []);
+
+
 
   // Parse and set status value (handles the special encoding)
   const parseAndSetStatus = useCallback(
