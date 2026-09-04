@@ -63,7 +63,9 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-walkthrough-tooltip": "^1.6.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "expo-file-system": "~18.0.12",
+    "expo-sharing": "~13.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
