@@ -65,7 +65,8 @@
     "rn-vertical-slider-matyno": "^1.0.1",
     "toggle-switch-react-native": "^3.3.0",
     "expo-file-system": "~18.0.12",
-    "expo-sharing": "~13.0.1"
+    "expo-sharing": "~13.0.1",
+    "expo-document-picker": "~13.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
