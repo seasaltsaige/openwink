@@ -239,9 +239,6 @@ function createThemeStyles(themeColors: ThemeColors) {
       rowGap: 15,
     },
     infoBoxOuter: {
-      display: "flex",
-      flexDirection: "column",
-      width: "100%",
       alignItems: "center",
       justifyContent: "flex-start",
       rowGap: 5
