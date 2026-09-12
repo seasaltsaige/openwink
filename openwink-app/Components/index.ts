@@ -20,3 +20,4 @@ export * from "./SettingsToolbar"
 export * from "./UnsavedChangesModal"
 export * from "./ThemedSplash"
 export * from "./AuxSettingsModal";
+export * from "./ExportModal";
