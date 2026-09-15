@@ -69,3 +69,16 @@ export const getDevicePasskey = () => {
   if (!uuidValue) uuidValue = "Not Paired";
   return uuidValue;
 }
+
+
+export const compareVersions = (a: string, b: string) => {
+  const aParsed = a.split(".").map(v => parseInt(v));
+  const bParsed = b.split(".").map(v => parseInt(v));
+
+  for (let i = 0; i < 3; i++) {
+    if (aParsed[i] < bParsed[i]) return -1;
+    if (aParsed[i] > bParsed[i]) return 1;
+  }
+
+  return 0;
+}

@@ -1,0 +1,1 @@
+bin_signing --verify ..\update-server\files\update.bin --pubkey .\public_key.pem --hash sha25

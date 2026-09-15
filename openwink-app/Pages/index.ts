@@ -15,3 +15,4 @@ export * from "./Settings/ModuleSettings/ModuleSettings";
 export * from "./Settings/ModuleSettings/CustomWinkButton";
 export * from "./Settings/ModuleSettings/SleepyEyeSettings";
 export * from "./Settings/ModuleSettings/WaveDelaySettings";
+export * from "./Settings/ModuleSettings/AuxButtons";

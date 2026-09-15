@@ -22,6 +22,7 @@ import {
   WaveDelaySettings,
   SleepyEyeSettings,
   SystemProfiles,
+  AuxButtons,
 } from "./Pages";
 import Toast, { BaseToast, ToastConfig, ToastConfigParams } from "react-native-toast-message";
 import { useBleConnection } from "./Providers/BleConnectionProvider";
@@ -88,22 +89,15 @@ const CustomBottomTabs = ({ descriptors, insets, navigation, state }: BottomTabB
           >
             <View style={isFocused ? theme.bottomTabsPillActive : theme.bottomTabsPill}>
               <Ionicons
-                style={{
-                  height: "100%",
-                  verticalAlign: "middle",
-                }}
-                name={iconName} size={26} color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor} />
-              {
-                isFocused ? (
-                  <Text style={[theme.bottomTabsPillFocusedText, {
-                    marginTop: (route.name !== "Home" && isFocused) ? -2 : 0,
-                    height: "100%",
-                    verticalAlign: "middle",
-                  }]}>
-                    {route.name}
-                  </Text>
-                ) : <></>
-              }
+                name={iconName}
+                size={22}
+                color={isFocused ? colorTheme.buttonColor : colorTheme.bottomTabsTextColor}
+              />
+              {isFocused && (
+                <Text style={theme.bottomTabsPillFocusedText}>
+                  {route.name}
+                </Text>
+              )}
             </View>
           </PlatformPressable>
         )
@@ -298,6 +292,7 @@ export function AppNavigator() {
         <Stack.Screen name="SleepyEyeSettings" component={SleepyEyeSettings} />
         <Stack.Screen name="CustomWinkButton" component={CustomWinkButton} />
         <Stack.Screen name="SettingsProfiles" component={SystemProfiles} />
+        <Stack.Screen name="AuxButtons" component={AuxButtons} />
 
       </Stack.Navigator>
 

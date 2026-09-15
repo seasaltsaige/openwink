@@ -9,15 +9,15 @@ import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
 import { getDevicePasskey } from "../../helper/Functions";
-import { CommandSequenceBottomSheet, HeaderWithBackButton, InfoBox } from "../../Components";
+import { CommandSequenceBottomSheet, ConfirmationModal, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
   countToEnglish,
   DefaultCommandValueEnglish,
   buttonBehaviorMap
 } from "../../helper/Constants";
-import { AutoConnectStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
-import { ButtonBehaviors, CommandOutput, Presses } from "../../helper/Types";
+import { AutoConnectStore, AUX_SWITCH_TYPE, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, FirmwareStore, HeadlightOrientationStore, ORIENTATION, ThemeStore } from "../../Storage";
+import { ButtonBehaviors, CommandOutput, CustomButtonAction, Presses } from "../../helper/Types";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../Providers/BleConnectionProvider";
@@ -45,7 +45,14 @@ export function Information() {
     leftRightSwapped,
     leftMoveTime,
     rightMoveTime,
-    headlightBypass
+    headlightBypass,
+    aux1Action,
+    aux1Loop,
+    aux1Type,
+    aux2Action,
+    aux2Loop,
+    aux2Type,
+    auxiliaryButtonsEnabled,
   } = useBleMonitor();
 
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -57,52 +64,55 @@ export function Information() {
         "Up" :
         status === 0 ?
           "Down" :
-          `%${status * 100}`
+          `${status * 100}%`
     ) : "Unavailable"
   );
   const connectionStatus = (scanning: boolean, connecting: boolean, connected: boolean) => (
     scanning ? "Scanning" : connecting ? "Connecting" : connected ? "Connected" : "Not Connected"
   );
 
+  const pairingKey = getDevicePasskey();
+  // const pairingKey = "Not Paired"
+  const [showPairingKey, setShowPairingKey] = useState(false);
+
   const appInfo = {
-    "Pairing Key": getDevicePasskey(),
     "Application Version": `v${Application.nativeApplicationVersion}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   };
 
-  const deviceInfo = {
-    "Module ID": mac || "Not Paired",
-    "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown",
-    "Connection Status": connectionStatus(isScanning, isConnecting, isConnected),
-    "Left Headlight Position": headlightStatus(isConnected, leftStatus),
-    "Right Headlight Position": headlightStatus(isConnected, rightStatus),
-    "Left Move Time": `${leftMoveTime} ms`,
-    "Right Move Time": `${rightMoveTime} ms`,
-  };
+  const deviceInfo = [
+    { "Module ID": mac || "Not Paired" },
+    { "Firmware Version": firmwareVersion ? `v${firmwareVersion}` : "Unknown" },
+    { "Connection Status": connectionStatus(isScanning, isConnecting, isConnected) },
+    { "Left Headlight Position": headlightStatus(isConnected, leftStatus) },
+    { "Right Headlight Position": headlightStatus(isConnected, rightStatus) },
+    { "Left Move Time": `${leftMoveTime} ms` },
+    { "Right Move Time": `${rightMoveTime} ms` },
+  ];
 
-  const deviceSettings = {
-    "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled",
-    "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver",
-    "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled",
-    "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled",
-    "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms`,
-    "Press Interval": `${buttonDelay} ms`,
-  };
+  const deviceSettings = [
+    { "Auto Connect": autoConnectEnabled ? "Enabled" : "Disabled" },
+    { "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver" },
+    { "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled" },
+    { "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled" },
+    { "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms` },
+    { "Press Interval": `${buttonDelay} ms` },
+  ];
 
-  const [rawButtonActions, setRawButtonActions] = useState([] as { numberPresses: Presses; behavior: ButtonBehaviors | CommandOutput; }[]);
-  const buttonActions = useMemo(() => rawButtonActions.map(action => {
-    if (typeof action.behavior === "string")
-      return {
-        behaviorHumanReadable: action.behavior,
-        presses: action.numberPresses,
-        behavior: buttonBehaviorMap[action.behavior],
-      }
-    else
-      return {
-        customCommand: action.behavior,
-        presses: action.numberPresses,
-      }
-  }).sort((a, b) => a.presses - b.presses), [rawButtonActions]);
+  const auxButtons = [
+    { "Auxiliary Button Status": auxiliaryButtonsEnabled ? "Enabled" : "Disabled" },
+    { "Auxiliary Button #1": "" },
+    { "Button Action": typeof aux1Action === "string" ? aux1Action : aux1Action.name },
+    { "Button Type": aux1Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
+    { "Macro Looping": typeof aux1Action === "string" ? "N/A" : (aux1Loop ? "Enabled" : "Disabled") },
+    { "Auxiliary Button #2": "" },
+    { "Button Action": typeof aux2Action === "string" ? aux2Action : aux2Action.name },
+    { "Button Type": aux2Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
+    { "Macro Looping": typeof aux2Action === "string" ? "N/A" : (aux2Loop ? "Enabled" : "Disabled") },
+  ]
+
+  const [rawButtonActions, setRawButtonActions] = useState([] as CustomButtonAction[]);
+  const buttonActions = useMemo(() => rawButtonActions.sort((a, b) => a.presses - b.presses), [rawButtonActions]);
 
   const [customCommands, setCustomCommands] = useState([] as CommandOutput[]);
 
@@ -124,144 +134,256 @@ export function Information() {
   const { back } = route.params;
 
   return (
-    <SafeAreaView style={theme.container}>
-      <HeaderWithBackButton
-        backText={back}
-        headerText="System Info"
-        headerTextStyle={theme.settingsHeaderText}
-      />
+    <>
 
-      <ScrollView contentContainerStyle={theme.infoContainer}>
+      <SafeAreaView style={theme.container}>
+        <HeaderWithBackButton
+          backText={back}
+          headerText="System Info"
+          headerTextStyle={theme.settingsHeaderText}
+        />
 
-        {[
-          { title: "App Info", data: appInfo },
-          { title: "Module Info", data: deviceInfo },
-          { title: "Module Settings", data: deviceSettings },
-        ].map((section) => (
-          <InfoBox
-            key={section.title}
-            title={section.title}
-            data={section.data}
-          />
-        ))}
+        <ScrollView contentContainerStyle={theme.infoContainer}>
 
-        <View
-          style={theme.infoBoxOuter}
-          key={"Button Quick Actions"}
-        >
 
-          <Text
-            style={theme.infoBoxOuterText}>
-            Button Quick Actions
-          </Text>
+          <View style={theme.infoBoxOuter}>
 
-          <View style={theme.infoBoxInner}>
-            <View
-              style={theme.infoBoxInnerContentView}
-              key={"Single Press"}
-            >
-              <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
-                Single Press
-              </Text>
 
-              <Text style={theme.infoBoxInnerContentText}>
-                Default Behavior
-              </Text>
-            </View>
 
-            {
-              buttonActions.map(action => (
+            <Text style={theme.infoBoxOuterText}>
+              App Info
+            </Text>
+
+
+
+            <View style={theme.infoBoxInner}>
+
+              <View style={theme.infoBoxInnerContentView}>
+                <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
+                  Pairing Key
+                </Text>
+                <View style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  columnGap: 10,
+                }}>
+
+                  <Text
+                    style={[
+                      theme.infoBoxInnerContentText, {
+                        fontSize: showPairingKey ? 16 : 17,
+                        color: showPairingKey ? colorTheme.headerTextColor : colorTheme.disabledButtonColor
+                      }]}
+                  >
+                    {
+                      pairingKey === "Not Paired" ? "Not Paired" : showPairingKey ? pairingKey : "[ Key Hidden ]"
+                    }
+                  </Text>
+                  {
+                    pairingKey !== "Not Paired" ? (
+                      <Press hitSlop={15} onPress={() => setShowPairingKey(!showPairingKey)}>
+                        {({ pressed }) => (
+                          <IonIcons
+                            style={{ marginTop: 3 }}
+                            color={pressed ? colorTheme.buttonColor : showPairingKey ? colorTheme.headerTextColor : colorTheme.disabledButtonColor}
+                            name={showPairingKey ? "eye-off-outline" : "eye-outline"}
+                            size={20}
+                          />
+                        )}
+                      </Press>
+                    ) : <></>
+                  }
+                </View>
+              </View>
+
+              {Object.keys(appInfo).map((key) => (
                 <View
                   style={theme.infoBoxInnerContentView}
-                  key={countToEnglish[action.presses]}
+                  key={key}
                 >
                   <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
-                    {countToEnglish[action.presses]}
+                    {key}
                   </Text>
 
-                  <View style={{ flexDirection: "row", alignItems: "center", columnGap: 8, }}>
-
-                    <Text style={theme.infoBoxInnerContentText}>
-                      {
-                        action.customCommand ?
-                          action.customCommand.name :
-                          action.behaviorHumanReadable
-                      }
-                    </Text>
-                    {
-                      action.customCommand ?
-                        // TODO: Make pressable --> Open bottom drawer and show sequence
-                        <IonIcons name="sparkles-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
-                    }
-                  </View>
+                  <Text style={theme.infoBoxInnerContentText}>
+                    {appInfo[key as keyof typeof appInfo]}
+                  </Text>
                 </View>
-              ))
-            }
-          </View>
-        </View>
-
-        {
-          customCommands.length > 0 ?
-            <View
-              style={theme.infoBoxOuter}
-              key={"Custom Command Presets"}
-            >
-
-              <Text style={theme.infoBoxOuterText}>
-                Custom Command Presets
-              </Text>
-
-              <View style={theme.infoBoxInner}>
-
-                {
-                  customCommands.map(command => (
-                    <View
-                      style={theme.infoBoxInnerContentView}
-                      key={command.name}
-                    >
-                      <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6, width: "40%", height: "auto", }]}>
-                        {command.name.length > 14 ? `${command.name.slice(0, 12)}...` : command.name}
-                      </Text>
-
-
-                      <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 8, }}>
-                        <Text style={[theme.infoBoxInnerContentText, { width: "85%" }]}>
-                          {
-                            command.command ? (
-                              command.command.map(c => (
-                                c.delay ?
-                                  `${c.delay} ms Delay` :
-                                  DefaultCommandValueEnglish[c.transmitValue! - 1]
-                              )).slice(0, 2).join(" → ").slice(0, 16) + "..."
-                            ) : "Unknown Error"
-                          }
-                        </Text>
-                        {
-                          command.command ? (
-                            <Press
-                              style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
-                              onPressOut={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
-                              hitSlop={5}
-                            >
-                              {
-                                ({ pressed }) =>
-                                  <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={25} />
-                              }
-                            </Press>
-                          ) : <></>
-                        }
-                      </View>
-                    </View>
-                  ))
-                }
-              </View>
+              ))}
             </View>
 
+          </View>
 
-            : <></>
-        }
 
-      </ScrollView>
+          {[
+            { title: "Module Info", data: deviceInfo },
+            { title: "Module Settings", data: deviceSettings },
+          ].map((section) => (
+            <InfoBox
+              key={section.title}
+              title={section.title}
+              data={section.data}
+            />
+          ))}
+
+          <View
+            style={theme.infoBoxOuter}
+            key={"Button Quick Actions"}
+          >
+
+            <Text
+              style={theme.infoBoxOuterText}>
+              Button Quick Actions
+            </Text>
+
+            <View style={theme.infoBoxInner}>
+              <View
+                style={theme.infoBoxInnerContentView}
+                key={"Single Press"}
+              >
+                <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
+                  Single Press
+                </Text>
+
+                <Text style={theme.infoBoxInnerContentText}>
+                  Default Behavior
+                </Text>
+              </View>
+
+              {
+                buttonActions.map(action => (
+                  <View
+                    style={theme.infoBoxInnerContentView}
+                    key={countToEnglish[action.presses]}
+                  >
+                    <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
+                      {countToEnglish[action.presses]}
+                    </Text>
+
+                    <View style={{ flexDirection: "row", alignItems: "center", columnGap: 8, }}>
+
+                      <Text style={theme.infoBoxInnerContentText}>
+                        {
+                          action.customCommand ?
+                            action.customCommand.name :
+                            action.behaviorHumanReadable
+                        }
+                      </Text>
+                      {
+                        action.customCommand ?
+                          // TODO: Make pressable --> Open bottom drawer and show sequence
+                          <IonIcons name="sparkles-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
+                      }
+
+                      {
+                        CustomOEMButtonStore.getLooping(action.presses) ?
+                          <IonIcons name="infinite-outline" size={18} color={colorTheme.textColor} style={{ marginTop: 1, }} /> : <></>
+                      }
+                    </View>
+                  </View>
+                ))
+              }
+            </View>
+          </View>
+
+          <InfoBox
+            data={auxButtons}
+            title="Auxiliary Button Settings"
+          />
+
+          {
+            customCommands.length > 0 ?
+              <View
+                style={theme.infoBoxOuter}
+                key={"Custom Command Presets"}
+              >
+
+                <Text style={theme.infoBoxOuterText}>
+                  Custom Command Presets
+                </Text>
+
+                <View style={theme.infoBoxInner}>
+
+                  {
+                    customCommands.map(command => (
+                      <View
+                        style={theme.infoBoxInnerContentView}
+                        key={command.name}
+                      >
+                        <Text
+                          style={[
+                            theme.infoBoxInnerContentText,
+                            {
+                              opacity: 0.6,
+                              width: "40%",
+                              flexShrink: 1,
+                            },
+                          ]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
+                          {command.name}
+                        </Text>
+
+
+                        <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "55%", height: "auto", columnGap: 10, }}>
+                          <Text
+                            style={[
+                              theme.infoBoxInnerContentText,
+                              {
+                                flexShrink: 1,
+                              },
+                            ]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {
+                              command.command
+                                ? command.command
+                                  .map(c =>
+                                    c.delay
+                                      ? `${c.delay} ms Delay`
+                                      : DefaultCommandValueEnglish[c.transmitValue! - 1]
+                                  )
+                                  .slice(0, 2)
+                                  .join(" → ")
+                                : "Unknown Error"
+                            }
+                          </Text>
+
+                          {
+                            command.command ? (
+                              <Press
+                                style={{ alignSelf: "flex-start", marginTop: 2, marginRight: 8 }}
+                                onPressOut={() => { setDisplayedCommand(command); bottomSheetRef.current?.expand() }}
+                                hitSlop={5}
+                              >
+                                {
+                                  ({ pressed }) =>
+                                    <IonIcons name="ellipsis-horizontal" color={pressed ? colorTheme.buttonColor : colorTheme.textColor} size={25} />
+                                }
+                              </Press>
+                            ) : <></>
+                          }
+                        </View>
+                      </View>
+                    ))
+                  }
+                </View>
+              </View>
+
+
+              : <></>
+          }
+
+        </ScrollView>
+
+
+
+      </SafeAreaView>
+
+
 
       <CommandSequenceBottomSheet
         bottomSheetRef={bottomSheetRef}
@@ -269,6 +391,8 @@ export function Information() {
         command={displayedCommand!}
       />
 
-    </SafeAreaView>
+
+
+    </>
   )
 }

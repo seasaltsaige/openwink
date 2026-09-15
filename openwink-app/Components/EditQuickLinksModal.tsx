@@ -22,6 +22,50 @@ type RouteType = QuickLink & { display: string; visible: boolean; };
 
 const ROUTES: RouteType[] = [
   {
+    display: "Module Settings",
+    icon: "radio-outline",
+    title: "Wave Delay Settings",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "WaveDelaySettings",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "eye-outline",
+    title: "Sleepy Eye Settings",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "SleepyEyeSettings",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "speedometer-outline",
+    title: "Customize Button Actions",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "CustomWinkButton",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "flash-outline",
+    title: "Customize Auxiliary Buttons",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "AuxButtons",
+    },
+    visible: false
+  },
+  {
     display: "Settings",
     icon: "information-circle-outline",
     title: "System Information",
@@ -56,7 +100,7 @@ const ROUTES: RouteType[] = [
   },
   {
     display: "Settings",
-    icon: "cog-outline",
+    icon: "settings-outline",
     title: "System Profiles",
     navigation: {
       back: "Home",
@@ -64,40 +108,7 @@ const ROUTES: RouteType[] = [
       page: "SettingsProfiles",
     },
     visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "radio-outline",
-    title: "Wave Delay Settings",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "WaveDelaySettings",
-    },
-    visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "eye-outline",
-    title: "Sleepy Eye Settings",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "SleepyEyeSettings",
-    },
-    visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "speedometer-outline",
-    title: "Customize Button Actions",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "CustomWinkButton",
-    },
-    visible: false,
-  },
+  }
 ];
 type Action =
   | {
@@ -113,18 +124,21 @@ interface IEditQuickLinksModal {
   visible: boolean;
   close: () => void;
   initialLinks: (QuickLink)[];
+  defaultLinks: (QuickLink)[];
   onUpdateLinks: (updatedLinks: (QuickLink)[]) => void;
   resetToDefault: () => void;
 }
 
 export function EditQuickLinksModal({
   close,
+  defaultLinks,
   initialLinks,
   onUpdateLinks,
   visible,
   resetToDefault,
 }: IEditQuickLinksModal) {
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
+  const mappedDefaultLinks = useMemo(() => defaultLinks.map(l => l.title), [defaultLinks]);
 
   const { colorTheme, theme } = useColorTheme();
 
@@ -165,8 +179,8 @@ export function EditQuickLinksModal({
     }
   }
 
-  const setInitialValues = () => {
-    const mappedLinks = ROUTES.map(r => mappedInitialLinks.includes(r.title) ? { ...r, visible: true } : r);
+  const setLinkValues = (visibleTitles: string[]) => {
+    const mappedLinks = ROUTES.map(r => visibleTitles.includes(r.title) ? { ...r, visible: true } : r);
     const visible = mappedLinks.filter(r => r.visible);
     const hidden = mappedLinks.filter(r => !r.visible);
 
@@ -174,11 +188,9 @@ export function EditQuickLinksModal({
     setFilteredLinks([...visible, ...hidden]);
   }
 
-  useEffect(() => setInitialValues(), []);
-  useEffect(() => {
-    setInitialValues();
-  }, [mappedInitialLinks]);
+  useEffect(() => setLinkValues(mappedInitialLinks), [mappedInitialLinks]);
 
+  const resetToStart = () => setLinkValues(mappedDefaultLinks);
   const __saveLinksOnClose = () => {
     onUpdateLinks(allLinks.filter(l => l.visible).map(l => ({ icon: l.icon, navigation: l.navigation, title: l.title })));
     close();
@@ -200,7 +212,7 @@ export function EditQuickLinksModal({
           padding: 13,
           paddingHorizontal: 13,
           borderRadius: 10,
-          backgroundColor: colorTheme.backgroundSecondaryColor,
+          backgroundColor: colorTheme.backgroundPrimaryColor,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
@@ -283,7 +295,7 @@ export function EditQuickLinksModal({
             paddingVertical: 15,
             paddingHorizontal: 20,
             rowGap: 15,
-            backgroundColor: colorTheme.backgroundPrimaryColor,
+            backgroundColor: colorTheme.backgroundSecondaryColor,
             width: "90%",
             borderRadius: 15,
             boxShadow: "0 3 5px rgba(0, 0, 0, 0.2)"
@@ -356,6 +368,7 @@ export function EditQuickLinksModal({
               onFilteredItemsUpdate={(filteredRoutes) => {
                 setFilteredLinks(filteredRoutes);
               }}
+              backgroundColor={colorTheme.backgroundPrimaryColor}
             />
           </View>
 

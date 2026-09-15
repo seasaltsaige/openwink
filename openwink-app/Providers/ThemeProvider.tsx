@@ -1,8 +1,18 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, TextStyle, ViewStyle } from "react-native";
+import { setAppIcon } from "@howincodes/expo-dynamic-app-icon";
 
 import { ColorTheme, ThemeColors } from "../helper/Constants";
 import { ThemeStore } from "../Storage";
+
+const ICON_NAME_BY_THEME: Record<ColorTheme.ThemeKey, string> = {
+  crystalWhite: "white",
+  brilliantBlack: "black",
+  classicRed: "red",
+  sunburstYellow: "yellow",
+  marinerBlue: "blue",
+  britishRacingGreen: "green",
+};
 
 interface StyleSheetInterface {
   tabContainer: ViewStyle;
@@ -120,7 +130,7 @@ export type ThemeContextType = {
   themeName: keyof typeof ColorTheme.themeNames;
 };
 
-const defaultName: keyof typeof ColorTheme.themeNames = "brilliantBlack";
+const defaultName: keyof typeof ColorTheme.themeNames = "britishRacingGreen";
 
 export const ThemeContext = createContext<ThemeContextType | null>(null);
 
@@ -144,6 +154,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const iconName = ICON_NAME_BY_THEME[themeName];
+    try {
+      setAppIcon(iconName as any);
+    } catch (error) {
+      console.warn("Failed to set app icon:", error);
+    }
+  }, [themeName, isLoading]);
 
   const refresh = useCallback(() => {
     const storedTheme = ThemeStore.getStoredTheme();
@@ -199,7 +219,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       flexDirection: "column",
       alignItems: "center",
       rowGap: 18,
-      margin: 10,
+      // margin: 10,
     },
     container: {
       backgroundColor: themeColors.backgroundPrimaryColor,
@@ -219,9 +239,6 @@ function createThemeStyles(themeColors: ThemeColors) {
       rowGap: 15,
     },
     infoBoxOuter: {
-      display: "flex",
-      flexDirection: "column",
-      width: "100%",
       alignItems: "center",
       justifyContent: "flex-start",
       rowGap: 5
@@ -416,7 +433,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
       columnGap: 10,
-      height: "100%"
+      // height: "100%"
     },
     backButtonContainerText: {
       color: themeColors.headerTextColor,
@@ -533,8 +550,8 @@ function createThemeStyles(themeColors: ThemeColors) {
       fontSize: 25,
       fontFamily: "IBMPlexSans_700Bold",
       color: themeColors.headerTextColor,
-      width: "auto",
-      // marginRight: 10,
+      // width: "50%",
+      marginRight: 10,
     },
     intervalInfoContainer: {
       backgroundColor: themeColors.backgroundPrimaryColor,
@@ -700,23 +717,21 @@ function createThemeStyles(themeColors: ThemeColors) {
       justifyContent: "space-around",
     },
     bottomTabsPill: {
-      display: "flex",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      columnGap: 7,
-      width: 115,
+      columnGap: 6,
+      paddingHorizontal: 14,
       height: 40,
       borderRadius: 20,
       backgroundColor: themeColors.bottomTabsBackground,
     },
     bottomTabsPillActive: {
-      display: "flex",
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      columnGap: 7,
-      width: 115,
+      columnGap: 6,
+      paddingHorizontal: 16,
       height: 40,
       borderRadius: 20,
       backgroundColor: themeColors.bottomTabsPill,
@@ -724,7 +739,8 @@ function createThemeStyles(themeColors: ThemeColors) {
     bottomTabsPillFocusedText: {
       color: themeColors.buttonColor,
       fontFamily: "IBMPlexSans_700Bold",
-      fontSize: 16,
+      fontSize: 15,
+      includeFontPadding: false,
     },
     waveTextEntry: {
       backgroundColor: themeColors.backgroundPrimaryColor,

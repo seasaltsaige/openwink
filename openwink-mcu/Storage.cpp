@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "BLECallbacks.h"
 #include "ButtonHandler.h"
+#include "AuxHandler.h"
 #include <string>
 using namespace std;
 
@@ -39,7 +40,13 @@ void Storage::getFromStorage() {
     String val = storage.getString(key, String(customButtonPressArrayDefaults[i].c_str()));
     customButtonPressArray[i] = string(val.c_str());
   }
-  Serial.println();
+
+  // Get loop data from storage
+  for (int i = 0; i < 9; i++) {
+    snprintf(key, sizeof(key), "loop-%d", i);
+    bool value = storage.getBool(key, false);
+    customButtonPressLoopArray[i] = value;
+  }
 
   const char *delayKey = "delay-key";
   int del = storage.getUInt(delayKey, maxTimeBetween_msDefault);
@@ -56,6 +63,37 @@ void Storage::getFromStorage() {
   const char *headlightBypassKey = "hl-bypass";
   bool bypass = storage.getBool(headlightBypassKey);
   bypassHeadlightOverride = bypass;
+
+  const char *auxKey = "aux-buttons";
+  bool auxEnabled = storage.getBool(auxKey);
+  // Set aux enable status
+  AuxHandler::setAuxiliaryButtonsStatus(auxEnabled);
+
+  const char *auxKey1 = "aux-side-1";
+  const char *auxKey2 = "aux-side-2";
+  const char *auxLoopKey1 = "aux-loop-1";
+  const char *auxLoopKey2 = "aux-loop-2";
+  const char *auxBtnTypeKey1 = "aux-type-1";
+  const char *auxBtnTypeKey2 = "aux-type-2";
+
+
+  // left wink default
+  String aux1 = storage.getString(auxKey1, String("2"));
+  // right wink default
+  String aux2 = storage.getString(auxKey2, String("4"));
+
+  bool loop1 = storage.getBool(auxLoopKey1, false);
+  bool loop2 = storage.getBool(auxLoopKey2, false);
+
+  int type1 = storage.getInt(auxBtnTypeKey1, 0);
+  int type2 = storage.getInt(auxBtnTypeKey2, 0);
+
+  AuxHandler::setAuxSideAction(1, string(aux1.c_str()));
+  AuxHandler::setAuxSideAction(2, string(aux2.c_str()));
+  AuxHandler::setAuxLoop(1, loop1);
+  AuxHandler::setAuxLoop(2, loop2);
+  AuxHandler::setAuxType(1, type1);
+  AuxHandler::setAuxType(2, type2);
 
 
   const char *leftSleepyHeadlightKey = "sleepy-left";
@@ -115,10 +153,39 @@ void Storage::reset() {
   storage.remove(leftMotion);
   storage.remove(rightMotion);
 
+  const char *auxKey = "aux-buttons";
+  storage.remove(auxKey);
+  AuxHandler::setAuxiliaryButtonsStatus(false);
+
+  const char *auxKey1 = "aux-side-1";
+  const char *auxKey2 = "aux-side-2";
+  const char *auxLoopKey1 = "aux-loop-1";
+  const char *auxLoopKey2 = "aux-loop-2";
+  const char *auxBtnTypeKey1 = "aux-type-1";
+  const char *auxBtnTypeKey2 = "aux-type-2";
+
+  storage.remove(auxKey1);
+  storage.remove(auxKey2);
+  storage.remove(auxLoopKey1);
+  storage.remove(auxLoopKey2);
+  storage.remove(auxBtnTypeKey1);
+  storage.remove(auxBtnTypeKey2);
+  AuxHandler::setAuxSideAction(1, string("6"));
+  AuxHandler::setAuxSideAction(2, string("9"));
+  AuxHandler::setAuxLoop(1, false);
+  AuxHandler::setAuxLoop(2, false);
+  AuxHandler::setAuxType(1, 0);
+  AuxHandler::setAuxType(2, 0);
+
   char pressesKey[15];
 
   for (int i = 0; i < 10; i++) {
     snprintf(pressesKey, sizeof(pressesKey), "presses-%d", i);
+    storage.remove(pressesKey);
+  }
+
+  for (int i = 0; i < 9; i++) {
+    snprintf(pressesKey, sizeof(pressesKey), "loop-%d", i);
     storage.remove(pressesKey);
   }
 
@@ -152,6 +219,26 @@ void Storage::setMotionIn(SIDE side, int timing) {
   storage.putInt(static_cast<const char *>(key.c_str()), timing);
 }
 
+void Storage::setAuxStatus(bool enabled) {
+  const char *auxKey = "aux-buttons";
+  storage.putBool(auxKey, enabled);
+}
+
+void Storage::setAuxAction(int aux, string value) {
+  string auxSideKey = "aux-side-" + to_string(aux);
+  storage.putString(auxSideKey.c_str(), String(value.c_str()));
+}
+
+
+void Storage::setAuxLooping(int aux, bool looping) {
+  string auxLoopKey = "aux-loop-" + to_string(aux);
+  storage.putBool(auxLoopKey.c_str(), looping);
+}
+void Storage::setAuxButtonType(int aux, int type) {
+  string auxBtnTypeKey = "aux-type-" + to_string(aux);
+  storage.putInt(auxBtnTypeKey.c_str(), type);
+}
+
 void Storage::setCustomOEMButtonStatus(bool status) {
   const char *customOemKey = "oem-button-key";
   storage.putBool(customOemKey, status);
@@ -163,6 +250,12 @@ void Storage::setCustomButtonPressArray(int index, string value) {
   if (string(storedVal.c_str()) != value)
     storage.putString(key.c_str(), value.c_str());
 }
+
+void Storage::setCustomButtonPressLoop(int index, bool loop) {
+  string key = "loop-" + to_string(index);
+  storage.putBool(key.c_str(), loop);
+}
+
 
 void Storage::setHeadlightBypass(bool value) {
   const char *key = "hl-bypass";

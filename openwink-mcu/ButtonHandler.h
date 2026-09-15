@@ -7,7 +7,6 @@ extern bool bypassHeadlightOverride;
 class ButtonHandler {
 
 private:
-  static unsigned long mainTimer;
   static unsigned long buttonTimer;
   static bool resetArmed;
   static int buttonPressCounter;
@@ -21,6 +20,8 @@ private:
   static void updateHeadlightDelay();
 
 public:
+  static unsigned long mainTimer;
+
   // Used for up/down actions (or blinks) --- any action which results in complete movement baseically
   static unsigned long leftTimer;
   static unsigned long rightTimer;

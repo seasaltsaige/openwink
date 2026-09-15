@@ -15,7 +15,17 @@ bool isSleepy() {
 
 void sleepyEye(bool leftSet, bool rightSet) {
   if (!leftSet && !rightSet) return;
-  if (isSleepy()) return;
+
+  if ((leftSet && !rightSet && ((leftStatus != 0 && leftStatus != 1)))) return;
+  else if (rightSet && !leftSet && ((rightStatus != 0 && rightStatus != 1))) return;
+  else if (leftSet && rightSet && ((leftStatus != 0 && leftStatus != 1) && (rightStatus != 0 && rightStatus != 1))) return;
+
+
+  if (leftSet && rightSet && (isSleepy())) {
+    if ((leftStatus != 0 && leftStatus != 1)) leftSet = false;
+    else if ((rightStatus != 0 && rightStatus != 1)) rightSet = false;
+  }
+  // if (isSleepy()) return;
 
   BLE::setBusy(true);
 
@@ -25,10 +35,17 @@ void sleepyEye(bool leftSet, bool rightSet) {
   double left = leftSleepyValue / 100;
   double right = rightSleepyValue / 100;
 
-  if (leftStatus == 1 || rightStatus == 1) {
+  if ((leftSet && rightSet) && (leftStatus == 1 || rightStatus == 1)) {
     bothDown();
     setAllOff();
+  } else if (leftSet && leftStatus == 1) {
+    leftDown();
+    setAllOff();
+  } else if (rightSet && rightStatus == 1) {
+    rightDown();
+    setAllOff();
   }
+
 
   unsigned long initialTime = millis();
   if (leftSet)

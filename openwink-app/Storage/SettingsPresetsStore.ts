@@ -1,7 +1,7 @@
 import Storage from "./Storage";
 import { ColorTheme } from "../helper/Constants";
 import { QuickLink } from "../Components";
-import { CommandOutput, ButtonBehaviors, Presses } from "../helper/Types";
+import { CommandOutput, ButtonBehaviors, Presses, CustomButtonAction } from "../helper/Types";
 import {
   AutoConnectStore,
   CustomCommandStore,
@@ -14,6 +14,9 @@ import {
   QuickLinksStore,
   HeadlightOrientationStore,
   HeadlightMovementSpeedStore,
+  AUX_SWITCH_TYPE,
+  AuxButtonStore,
+  AUX_ID,
 } from "./";
 import { ORIENTATION } from "./HeadlightOrientationStore";
 import { SIDE } from "./HeadlightMovementSpeedStore";
@@ -64,8 +67,22 @@ export interface SettingsPreset {
   customCommands: CommandOutput[];
   customOEMButtonEnabled: boolean;
   customOEMBypassEnabled: boolean;
-  customOEMButtons: CustomOEMButtonPresetItem[];
+  customOEMButtons: CustomButtonAction[];
   customOEMButtonDelay: number;
+
+  auxBtnConfig: {
+    enabled: boolean;
+    one: {
+      action: ButtonBehaviors | CommandOutput;
+      type: AUX_SWITCH_TYPE;
+      loop: boolean;
+    };
+    two: {
+      action: ButtonBehaviors | CommandOutput;
+      type: AUX_SWITCH_TYPE;
+      loop: boolean;
+    }
+  }
 
   deviceUUID: string | null;
   deviceMAC: string | null;
@@ -73,6 +90,7 @@ export interface SettingsPreset {
 }
 
 export abstract class SettingsPresetsStore {
+
   static getAll(): SettingsPreset[] {
 
     const presets: SettingsPreset[] = [];
@@ -116,7 +134,7 @@ export abstract class SettingsPresetsStore {
     AutoConnectStore.set(preset.autoConnect);
     if (preset.colorTheme)
       ThemeStore.setTheme(preset.colorTheme)
-    
+
     if (preset.headlightOrientation)
       HeadlightOrientationStore.enable();
     else
@@ -131,7 +149,7 @@ export abstract class SettingsPresetsStore {
     SleepyEyeStore.set("right", preset.sleepyEye.right);
 
     QuickLinksStore.setLinks(preset.quickLinks);
-    
+
     CustomCommandStore.deleteAll();
     for (const cmd of preset.customCommands) {
       if (!cmd.command) continue;
@@ -140,7 +158,7 @@ export abstract class SettingsPresetsStore {
 
     if (preset.customOEMButtonEnabled)
       CustomOEMButtonStore.enable();
-    else 
+    else
       CustomOEMButtonStore.disable();
 
     if (preset.customOEMBypassEnabled)
@@ -149,9 +167,9 @@ export abstract class SettingsPresetsStore {
       CustomOEMButtonStore.disableBypass();
 
     for (let i = 1; i <= 9; i++) {
-      const pressPreset = preset.customOEMButtons.find(v => v.numberPresses === i);
+      const pressPreset = preset.customOEMButtons.find(v => v.presses === i);
       if (!pressPreset) CustomOEMButtonStore.remove(i as Presses);
-      else CustomOEMButtonStore.set(pressPreset.numberPresses, pressPreset.behavior);
+      else CustomOEMButtonStore.set(pressPreset.presses, pressPreset.behaviorHumanReadable ? pressPreset.behaviorHumanReadable : pressPreset.customCommand!);
     }
 
     CustomOEMButtonStore.setDelay(preset.customOEMButtonDelay);
@@ -166,13 +184,26 @@ export abstract class SettingsPresetsStore {
       if (preset.firmwareVersion)
         FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
     }
+
+
+    if (preset.auxBtnConfig.enabled)
+      AuxButtonStore.enable();
+    else
+      AuxButtonStore.disable();
+    AuxButtonStore.setAuxButtonAction(AUX_ID.AUX1, preset.auxBtnConfig.one.action);
+    AuxButtonStore.setAuxButtonAction(AUX_ID.AUX2, preset.auxBtnConfig.two.action);
+    AuxButtonStore.setAuxButtonLoop(AUX_ID.AUX1, preset.auxBtnConfig.one.loop);
+    AuxButtonStore.setAuxButtonLoop(AUX_ID.AUX2, preset.auxBtnConfig.two.loop);
+    AuxButtonStore.setAuxButtonType(AUX_ID.AUX1, preset.auxBtnConfig.one.type);
+    AuxButtonStore.setAuxButtonType(AUX_ID.AUX2, preset.auxBtnConfig.two.type);
+
     return true;
-  } 
+  }
 
   static existsByName(name: string) {
     return this.getPreset(name) !== null;
   }
-  
+
   static saveFromCurrent(name: string) {
     const exists = this.getPreset(name);
 
@@ -203,9 +234,74 @@ export abstract class SettingsPresetsStore {
       deviceUUID: deviceUUID !== "Not Paired" ? deviceUUID : null,
       deviceMAC: DeviceMACStore.getStoredMAC(),
       firmwareVersion: FirmwareStore.getFirmwareVersion(),
+
+
+      auxBtnConfig: {
+        enabled: AuxButtonStore.getStatus(),
+        one: {
+          action: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1),
+          loop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1),
+          type: AuxButtonStore.getAuxButtonType(AUX_ID.AUX1),
+        },
+        two: {
+          action: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2),
+          loop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2),
+          type: AuxButtonStore.getAuxButtonType(AUX_ID.AUX2),
+        }
+      },
     }
 
     Storage.set(`${SETTINGS_PRESETS_KEY}-${name}`, JSON.stringify(preset));
+    return preset;
+  }
+
+  static createFromData(presetData: Partial<SettingsPreset>) {
+    const exists = this.getPreset(presetData.name!)
+
+    const preset: SettingsPreset = {
+      name: presetData.name!,
+      createdAt: exists !== null ? exists.createdAt : Date.now(),
+      updatedAt: Date.now(),
+      autoConnect: presetData.autoConnect ?? AutoConnectStore.get(),
+      colorTheme: presetData.colorTheme ?? ThemeStore.getStoredTheme(),
+      headlightOrientation: presetData.headlightOrientation ?? HeadlightOrientationStore.getStatus(),
+      headlightMovementSpeed: {
+        left: presetData.headlightMovementSpeed?.left ?? HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT),
+        right: presetData.headlightMovementSpeed?.right ?? HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT),
+      },
+      customWaveMultiplier: presetData.customWaveMultiplier ?? CustomWaveStore.getMultiplier(),
+      sleepyEye: {
+        left: presetData.sleepyEye?.left ?? SleepyEyeStore.get("left"),
+        right: presetData.sleepyEye?.right ?? SleepyEyeStore.get("right"),
+      },
+      quickLinks: presetData.quickLinks ?? QuickLinksStore.getLinks(),
+      customCommands: presetData.customCommands ?? CustomCommandStore.getAll(),
+      customOEMButtonEnabled: presetData.customOEMButtonEnabled ?? CustomOEMButtonStore.isEnabled(),
+      customOEMBypassEnabled: presetData.customOEMBypassEnabled ?? CustomOEMButtonStore.isBypassEnabled(),
+      customOEMButtons: presetData.customOEMButtons ?? CustomOEMButtonStore.getAll(),
+      customOEMButtonDelay: presetData.customOEMButtonDelay ?? CustomOEMButtonStore.getDelay(),
+      deviceUUID: (presetData.deviceUUID && presetData.deviceUUID !== "Not Paired") ? presetData.deviceUUID : null,
+
+      deviceMAC: presetData.deviceMAC ?? DeviceMACStore.getStoredMAC(),
+      firmwareVersion: presetData.firmwareVersion ?? FirmwareStore.getFirmwareVersion(),
+
+
+      auxBtnConfig: {
+        enabled: presetData.auxBtnConfig?.enabled ?? AuxButtonStore.getStatus(),
+        one: {
+          action: presetData.auxBtnConfig?.one.action ?? AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1),
+          loop: presetData.auxBtnConfig?.one.loop ?? AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1),
+          type: presetData.auxBtnConfig?.one.type ?? AuxButtonStore.getAuxButtonType(AUX_ID.AUX1),
+        },
+        two: {
+          action: presetData.auxBtnConfig?.two.action ?? AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2),
+          loop: presetData.auxBtnConfig?.two.loop ?? AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2),
+          type: presetData.auxBtnConfig?.two.type ?? AuxButtonStore.getAuxButtonType(AUX_ID.AUX2),
+        }
+      },
+    }
+
+    Storage.set(`${SETTINGS_PRESETS_KEY}-${preset.name}`, JSON.stringify(preset));
     return preset;
   }
 

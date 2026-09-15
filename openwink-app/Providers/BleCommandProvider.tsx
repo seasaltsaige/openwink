@@ -10,12 +10,15 @@ import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
 import { getBLEDescriptors, DefaultCommandValue, ButtonStatus, DefaultCommandValueEnglish, buttonBehaviorMap } from '../helper/Constants';
 import {
+  AUX_ID,
+  AUX_SWITCH_TYPE,
+  AuxButtonStore,
   CustomOEMButtonStore,
   CustomWaveStore,
   SleepyEyeStore,
 } from '../Storage';
 import { sleep } from '../helper/Functions';
-import { ButtonBehaviors, CommandInput, CommandOutput, Presses } from '../helper/Types';
+import { ButtonBehaviors, CommandInput, CommandOutput, CustomButtonAction, Presses } from '../helper/Types';
 import { useBleConnection } from './BleConnectionProvider';
 import { useBleMonitor } from './BleMonitorProvider';
 import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore';
@@ -23,7 +26,7 @@ import { HeadlightOrientationStore } from '../Storage/HeadlightOrientationStore'
 export type BleCommandContextType = {
   // Command execution
   sendDefaultCommand: (command: DefaultCommandValue) => Promise<void>;
-  sendCustomCommand: (name: string | undefined, commandSequence: CommandInput[]) => Promise<void>;
+  sendCustomCommand: (name: string | undefined, commandSequence: CommandInput[], looped: boolean) => Promise<void>;
   customCommandInterrupt: () => void;
 
   // Sync and positioning
@@ -33,10 +36,12 @@ export type BleCommandContextType = {
 
   // OEM button configuration
   setOEMButtonStatus: (status: 'enable' | 'disable') => Promise<boolean | undefined>;
-  updateOEMButtonPresets: (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => Promise<void>;
+  updateOEMButtonPresets: (numPresses: Presses, updateTo: CustomButtonAction | null) => Promise<void>;
   updateButtonDelay: (delay: number) => Promise<void>;
   setOEMButtonHeadlightBypass: (bypass: boolean) => Promise<void>;
 
+  setAuxiliaryButtonStatus: (status: boolean) => Promise<void>;
+  setAuxButton: (aux: AUX_ID, action: ButtonBehaviors | CommandOutput, loop: boolean, type: AUX_SWITCH_TYPE) => Promise<void>;
   // Wave configuration
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
 
@@ -71,6 +76,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     leftStatus,
     rightStatus,
     leftRightSwapped,
+    auxiliaryButtonsEnabled,
     setLeftSleepyEye,
     setRightSleepyEye,
     setOemCustomButtonEnabled,
@@ -78,6 +84,13 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWaveDelayMulti,
     setLeftRightSwapped,
     setHeadlightBypass,
+    setAuxiliaryButtonsEnabled,
+    setAux1Action,
+    setAux2Action,
+    setAux1Loop,
+    setAux2Loop,
+    setAux1Type,
+    setAux2Type,
     // 
   } = useBleMonitor();
 
@@ -189,7 +202,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Send a custom command sequence
   const sendCustomCommand = useCallback(
-    async (name: string = 'Custom Command', commandSequence: CommandInput[]) => {
+    async (name: string = 'Custom Command', commandSequence: CommandInput[], looped: boolean) => {
       if (!device) {
         console.warn('No device connected');
         return;
@@ -207,6 +220,19 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(name);
 
       try {
+
+
+        // if sending command with "loop" enabled
+        // alert module incoming command is a loop type
+        if (looped) {
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
+            base64.encode("loop"),
+          )
+        }
+
+        await sleep(25);
+
         // Alert device that custom command is in progress
         await device.writeCharacteristicWithoutResponseForService(
           ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
@@ -372,6 +398,105 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [device, leftStatus, rightStatus, headlightsBusy]);
 
+
+  const setAuxiliaryButtonStatus = useCallback(
+    async (status: boolean) => {
+      if (!device) {
+        console.warn("No device connected");
+        return;
+      }
+
+      try {
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(status ? "enable" : "disable"),
+        );
+
+        if (status) AuxButtonStore.enable();
+        else AuxButtonStore.disable();
+
+        setAuxiliaryButtonsEnabled(status);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device]
+  );
+
+  const setAuxButton = useCallback(
+    async (aux: AUX_ID, action: ButtonBehaviors | CommandOutput, loop: boolean, type: AUX_SWITCH_TYPE) => {
+      if (!device) {
+        console.warn("No device connected");
+        return;
+      }
+
+      if (!auxiliaryButtonsEnabled) {
+        console.warn("Aux Buttons not enabled");
+        return;
+      }
+
+      try {
+
+        // send aux id
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(aux.toString()),
+        );
+
+        await sleep(20);
+
+
+        // send aux command
+        if (typeof action === "string")
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+            base64.encode(buttonBehaviorMap[action].toString())
+          );
+        else {
+          const customCommand = action.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+            base64.encode(customCommand!)
+          );
+        }
+
+        await sleep(20);
+
+        // send loop status
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(loop ? "1" : "0"),
+        )
+
+        await sleep(20);
+
+        // send button type
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
+          base64.encode(type === AUX_SWITCH_TYPE.LATCHING ? "0" : "1"),
+        );
+
+        AuxButtonStore.setAuxButtonAction(aux, action);
+        AuxButtonStore.setAuxButtonLoop(aux, loop);
+        AuxButtonStore.setAuxButtonType(aux, type);
+
+        if (aux === AUX_ID.AUX1) {
+          setAux1Action(action);
+          setAux1Loop(loop);
+          setAux1Type(type);
+        } else if (aux === AUX_ID.AUX2) {
+          setAux2Action(action);
+          setAux2Loop(loop);
+          setAux2Type(type);
+        }
+
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    [device, auxiliaryButtonsEnabled],
+  );
+
   // Enable/disable OEM button control
   const setOEMButtonStatus = useCallback(
     async (status: 'enable' | 'disable') => {
@@ -416,20 +541,19 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Update OEM button preset for specific number of presses
   const updateOEMButtonPresets = useCallback(
-    async (numPresses: Presses, to: ButtonBehaviors | CommandOutput | 0) => {
+    async (numPresses: Presses, updateTo: CustomButtonAction | null) => {
 
-      if (!device) {
-        console.warn('No device connected');
-        return;
-      }
+      if (!device)
+        return console.warn('No device connected');
 
       try {
-        // Update local storage
-        if (to === 0) {
+        if (!updateTo) {
           CustomOEMButtonStore.remove(numPresses);
-        } else
-          CustomOEMButtonStore.set(numPresses, to);
-
+          CustomOEMButtonStore.setLooping(numPresses, false);
+        } else {
+          CustomOEMButtonStore.set(numPresses, updateTo.behaviorHumanReadable ? updateTo.behaviorHumanReadable : updateTo.customCommand!);
+          CustomOEMButtonStore.setLooping(numPresses, updateTo.looping);
+        }
 
         // Send number of button presses to update
         await device.writeCharacteristicWithoutResponseForService(
@@ -440,27 +564,50 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Small delay to prevent overwrite
         await sleep(WRITE_OPERATION_DELAY);
 
-        if (to === 0 || typeof to === "string") {
+        if (updateTo === null) {
           // Send behavior for that number of presses
           await device.writeCharacteristicWithoutResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-            base64.encode(to === 0 ? '0' : buttonBehaviorMap[to].toString())
+            base64.encode('0'),
           );
-        } else {
-          // Parse to string, NOT including name, as it is unimportant for the module to know
-          const commandString = to.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
+        } else if (updateTo.behavior) {
+          await device.writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+            base64.encode(updateTo.behavior.toString())
+          )
+        } else if (updateTo.customCommand) {
+          const commandString = updateTo.customCommand.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
           await device.writeCharacteristicWithoutResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
             base64.encode(commandString!),
-          );
+          )
         }
+
+        // Small delay to prevent overwrite
+        await sleep(WRITE_OPERATION_DELAY);
+
+        // Write looping status next
+        await device.writeCharacteristicWithoutResponseForService(
+          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+          // 1 for looped, 0 for not looped
+          base64.encode(!updateTo ? "0" : updateTo.looping ? "1" : "0"),
+        );
+
+
+        Toast.show({
+          type: "success",
+          text1: "Update Success",
+          text2: "Button action presets successfully updated.",
+          visibilityTime: 3000,
+        });
+
       } catch (error) {
         console.error('Error updating OEM button presets:', error);
 
         Toast.show({
           type: 'error',
           text1: 'Update Failed',
-          text2: 'Failed to update button preset.',
+          text2: 'Failed to update button presets.',
           visibilityTime: 3000,
         });
       }
@@ -670,6 +817,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     resetModule,
     setOEMButtonHeadlightBypass,
     swapLeftRight,
+    setAuxButton,
+    setAuxiliaryButtonStatus,
     activeCommandName,
   };
 

@@ -1,0 +1,1 @@
+bin_signing --generate-key ecdsa-p256 --out private_key.pem

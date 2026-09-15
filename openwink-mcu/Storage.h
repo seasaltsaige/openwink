@@ -27,12 +27,19 @@ public:
   static void setDelay(int delay);
 
   static void setCustomButtonPressArray(int index, string value);
+  static void setCustomButtonPressLoop(int index, bool loop);
+  
   static void setSleepyValues(int side, double value);
   static void setHeadlightBypass(bool value);
   static void setHeadlightOrientation(bool orientation);
   static bool getHeadlightOrientation();
 
   static void setMotionIn(SIDE side, int timing);
+
+  static void setAuxStatus(bool enabled);
+  static void setAuxAction(int aux, string value);
+  static void setAuxLooping(int aux, bool looping);
+  static void setAuxButtonType(int aux, int type);
 
   static void setBond(string passkey);
   static void resetBond();

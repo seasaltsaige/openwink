@@ -2,11 +2,14 @@
 #include <Arduino.h>
 #include <string.h>
 
-
+#include "AuxHandler.h"
 #include "BLE.h"
 #include "BLECallbacks.h"
 #include "ButtonHandler.h"
 #include "CommandHandler.h"
+#include "MainFunctions.h"
+#include "Storage.h"
+#include "constants.h"
 
 using namespace std;
 
@@ -25,25 +28,33 @@ void setup() {
   }
   Serial.printf("%02X\n", baseMac[5]);
 
+  ButtonHandler::setupGPIO();
+  AuxHandler::setupAuxGPIO();
   ButtonHandler::init();
 
-  Storage::begin("oem-store");
-  Storage::getFromStorage();
-  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  ButtonHandler::readOnWakeup();
 
   BLE::init("OpenWink");
 
+  ButtonHandler::readOnWakeup();
+  Storage::begin("oem-store");
+  Storage::getFromStorage();
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
   setCpuFrequencyMhz(80);
-
+  ButtonHandler::readOnWakeup();
   esp_sleep_enable_timer_wakeup(sleepTime_us);
 
   printf("Version %s\n", FIRMWARE_VERSION);
-
+  ButtonHandler::readOnWakeup();
   BLE::start();
 
-  ButtonHandler::setupGPIO();
   ButtonHandler::readWakeUpReason();
   ButtonHandler::readOnWakeup();
+
+  if (AuxHandler::getAuxStatus()) {
+    AuxHandler::auxReadWakeup();
+    AuxHandler::readWakeupReason();
+  }
 
   xTaskCreate(motionInMonitorTask, "MONITOR", 4096, NULL, 1, NULL);
 }
@@ -65,10 +76,8 @@ void loop() {
     authConnInfo = BLE_HS_CONN_HANDLE_NONE;
   }
 
-  if (otaUpdateRestartQueued) {
-    delay(100);
+  if (otaUpdateRestartQueued && millis() > (updateRestartTimer + 3000))
     ESP.restart();
-  }
 
   if (queuedCommand != -1) {
     // handle sent command
@@ -78,5 +87,9 @@ void loop() {
     CommandHandler::handleQueuedCustomCommand();
 
   ButtonHandler::loopButtonHandler();
+
+  if (AuxHandler::getAuxStatus())
+    AuxHandler::loopAuxHandler();
+
   ButtonHandler::updateButtonSleep();
 }

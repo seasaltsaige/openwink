@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, QuickLinksStore, SleepyEyeStore } from "../../Storage";
+import { AutoConnectStore, OnboardingStore, QuickLinksStore } from "../../Storage";
+
 import {
   EditQuickLinksModal,
   LongButton,
@@ -23,7 +24,8 @@ import {
 } from "../../hooks/useUpdateManager";
 import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
-import { useBleCommand } from "../../Providers/BleCommandProvider";
+import { Onboarding } from "../Onboarding/Onboarding";
+import { UpdatingStatus } from "../../helper/Types";
 
 export function Home() {
 
@@ -38,7 +40,9 @@ export function Home() {
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
   const [quickLinks, setQuickLinks] = useState(QuickLinksStore.getLinks());
 
-  const { updateFirmwareVersion } = useBleMonitor();
+  const [onboardingDone, setOnboardingDone] = useState(true);
+
+  const { updateFirmwareVersion, updatingStatus } = useBleMonitor();
 
   const {
     disconnect: disconnectFromModule,
@@ -63,48 +67,19 @@ export function Home() {
     error,
     checkUpdateAvailable,
     startUpdate,
-  } = useUpdateManager({
-    onError: ({ errorType, errorMessage, errorTitle }) => {
-      Toast.show({
-        type: "error",
-        text1: errorTitle,
-        text2: errorMessage,
-        autoHide: true,
-        visibilityTime: 10000,
-      });
-    },
-    onSuccess: ({ successMessage, successTitle, successType }) => {
+  } = useUpdateManager();
+
+  const closeModuleUpdate = (showToast: boolean) => {
+    setModuleUpdateVisible(false);
+    if (showToast)
       Toast.show({
         type: "success",
-        text1: successTitle,
-        text2: successMessage,
+        text1: "Update Dismissed",
+        text2: "Firmware update dismissed. Consider updating soon.",
         autoHide: true,
-        visibilityTime: 10000,
+        visibilityTime: 5000,
       });
-
-      updateFirmwareVersion(OTA.latestVersion);
-      setModuleUpdateVisible(false);
-    },
-  });
-
-  const closeModuleUpdate = () => {
-    setModuleUpdateVisible(false);
-    Toast.show({
-      type: "success",
-      text1: "Update Dismissed",
-      text2: "Firmware update dismissed. Consider updating soon.",
-      autoHide: true,
-      visibilityTime: 5000,
-    });
   }
-
-  // const updatePanelVisible =
-  //   error === ERROR_TYPE.ERR_NONE &&
-  //   updateData !== null &&
-  //   updateStatus === UPDATE_STATUS.INSTALLING;
-
-
-
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
@@ -124,22 +99,26 @@ export function Home() {
     // Open app store...
   }
 
-  const fetchModuleUpdate = async () => {
-    if (!device) return;
-    const available = await checkUpdateAvailable();
-    if (available) {
-      Toast.show({
-        // Custom toast with install buttons
-        text2: "Firmware Update Available",
-        type: "update",
-        props: {
-          downloadAction: () => { setModuleUpdateVisible(true); },
-        },
-        swipeable: false,
-        autoHide: false,
-      });
-    }
-  }
+  const fetchModuleUpdate = useCallback(
+    async () => {
+      if (!isConnected) return console.log("No device connected");
+      if (OTA.getUpdateInProgress()) return console.log("Update already in progress");
+
+      const available = await checkUpdateAvailable();
+      if (available) {
+        Toast.show({
+          // Custom toast with install buttons
+          text2: "Firmware Update Available",
+          type: "update",
+          props: {
+            downloadAction: () => { setModuleUpdateVisible(true); },
+          },
+          swipeable: false,
+          autoHide: false,
+        });
+      }
+    }, [isConnected]
+  )
 
   const installModuleUpdate = async () => setModuleUpdateVisible(true);
 
@@ -149,12 +128,22 @@ export function Home() {
   }
 
   useEffect(() => {
+    const onboardingCompleted = OnboardingStore.getStatus();
+
+    if (!onboardingCompleted) {
+      setTimeout(() => {
+        setOnboardingDone(onboardingCompleted);
+      }, 500);
+      return () => { };
+    }
+
     const autoConn = AutoConnectStore.get();
     if (autoConn && !isConnected) scanForDevice();
     (async () => {
       await checkAppUpdate();
     })();
   }, []);
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -166,18 +155,17 @@ export function Home() {
     }, 2500);
 
     (async () => {
-      if (device !== null)
-        await fetchModuleUpdate();
+      if (isConnected) await fetchModuleUpdate();
     })();
-  }, [device]);
-
+  }, [isConnected]);
 
   return (
     <>
       <SafeAreaView style={theme.tabContainer}>
+
         <MainHeader text="Home" />
 
-        <ScrollView contentContainerStyle={theme.contentContainer} >
+        <ScrollView contentContainerStyle={theme.contentContainer}>
 
           {
             isConnected ? (
@@ -213,6 +201,8 @@ export function Home() {
               )
             )
           }
+
+
 
           {/* COMMANDS */}
           <View style={theme.homeScreenButtonsContainer}>
@@ -414,11 +404,14 @@ export function Home() {
                 />
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
-                <LongButton
-                  onPress={() => installModuleUpdate()}
-                  icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
-                  text="Unknown Update State"
-                />
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Unknown Status
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                </View>
               )
             }
           </View>
@@ -430,6 +423,7 @@ export function Home() {
       <EditQuickLinksModal
         close={() => setQuickLinksModalVisible(false)}
         visible={quickLinksModalVisible}
+        defaultLinks={QuickLinksStore.getDefaultLinks()}
         initialLinks={quickLinks}
         onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
         resetToDefault={() => resetQuickLinks()}
@@ -437,11 +431,20 @@ export function Home() {
 
       <ModuleUpdateModal
         visible={moduleUpdateVisible}
-        binSizeBytes={updateData?.size!}
-        description={updateData?.description!}
-        version={updateData?.version!}
-        startUpdate={startUpdate}
+        updateInfo={updateData}
+        // binSizeBytes={updateData?.size!}
+        // description={updateData?.description!}
+        // version={updateData?.version!}
+        // startUpdate={startUpdate}
         close={closeModuleUpdate}
+      />
+
+      <Onboarding
+        visible={!onboardingDone}
+        completeOnboarding={() => {
+          setOnboardingDone(true);
+          OnboardingStore.complete();
+        }}
       />
     </>
   );

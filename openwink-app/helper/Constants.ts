@@ -38,6 +38,7 @@ export const BLE = {
         AUTH: "f61146f2-791d-4ef7-95aa-b565097f69c2",
         HEADLIGHT_BYPASS: "ada2537e-0399-4d2a-9eab-0c7cb60d3500",
         SWAP_ORIENTATION: "3ddd922d-14ca-4785-9cd0-39a530e8b14d",
+        AUX_BUTTONS: "bf3d4b2c-0620-4b34-9474-37aa6cef28b9",
       },
     },
   },
@@ -62,8 +63,8 @@ export const SCAN_TIME_SECONDS = 30 * 1000;
 // If you are a user working on your own build of the app
 // you will need to update the local IP to your own runtimes IP.
 // use ipconfig or ifconfig to view your local IP addr.
-export const UPDATE_URL = __DEV__ 
-  ? "http://172.20.9.16:3000/.netlify/functions/api/update" 
+export const UPDATE_URL = __DEV__
+  ? "http://172.20.9.16:3000/.netlify/functions/api/update"
   : "https://update-server.netlify.app/.netlify/functions/api/update";
 
 export const jkYSbsSAIDns = "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
@@ -142,7 +143,7 @@ export const SETTINGS_DATA: Array<{
       navigationName: "Theme",
       pageSymbol: "color-fill-outline"
     },
-        {
+    {
       pageName: "System Profiles",
       navigationName: "SettingsProfiles",
       pageSymbol: "settings-outline"
@@ -212,11 +213,11 @@ export enum DefaultCommandValue {
   RIGHT_LEFT_X2,
 }
 
-export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink", 
-                                           "Left Up", "Left Down", "Left Wink", 
-                                           "Right Up", "Right Down", "Right Wink", 
-                                           "Left Wave", "Right Wave", "Left-Right", 
-                                           "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
+export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink",
+  "Left Up", "Left Down", "Left Wink",
+  "Right Up", "Right Down", "Right Wink",
+  "Left Wave", "Right Wave", "Left-Right",
+  "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
 
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
 export enum BehaviorEnum {
