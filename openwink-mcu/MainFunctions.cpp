@@ -63,7 +63,7 @@ void sleepyEye(bool leftSet, bool rightSet) {
       leftStatusReached = true;
       digitalWrite(OUT_PIN_LEFT_UP, LOW);
     }
-    if (rightSet && !rightStatusReached && timeElapsed >= (right * ButtonHandler::leftMoveTime)) {
+    if (rightSet && !rightStatusReached && timeElapsed >= (right * ButtonHandler::rightMoveTime)) {
       rightStatusReached = true;
       digitalWrite(OUT_PIN_RIGHT_UP, LOW);
     }

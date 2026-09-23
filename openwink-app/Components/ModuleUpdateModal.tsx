@@ -160,26 +160,28 @@ export function ModuleUpdateModal({
                       width: "100%",
                     }}
                   >
-
-                    <Pressable
-                      hitSlop={10}
-                      onPress={() => displayIndex > 0 ? setDisplayIndex(displayIndex - 1) : undefined}
-                      disabled={displayIndex === 0}
-                    >
-                      {
-                        ({ pressed }) => (
-                          <IonIcons
-                            name="chevron-back-outline"
-                            size={24}
-                            color={
-                              displayIndex === 0 ?
-                                colorTheme.disabledButtonColor :
-                                pressed ?
-                                  colorTheme.buttonColor :
-                                  colorTheme.textColor} />
-                        )
-                      }
-                    </Pressable>
+                    {
+                      totalUpdateCount > 1 &&
+                      <Pressable
+                        hitSlop={10}
+                        onPress={() => displayIndex > 0 ? setDisplayIndex(displayIndex - 1) : undefined}
+                        disabled={displayIndex === 0}
+                      >
+                        {
+                          ({ pressed }) => (
+                            <IonIcons
+                              name="chevron-back-outline"
+                              size={24}
+                              color={
+                                displayIndex === 0 ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor} />
+                          )
+                        }
+                      </Pressable>
+                    }
 
 
                     <View
@@ -219,26 +221,28 @@ export function ModuleUpdateModal({
 
                     </View>
 
-
-                    <Pressable
-                      hitSlop={10}
-                      onPress={() => displayIndex < totalUpdateCount - 1 ? setDisplayIndex(displayIndex + 1) : undefined}
-                      disabled={displayIndex === totalUpdateCount - 1}
-                    >
-                      {
-                        ({ pressed }) => (
-                          <IonIcons
-                            name="chevron-forward-outline"
-                            size={24}
-                            color={
-                              displayIndex === totalUpdateCount - 1 ?
-                                colorTheme.disabledButtonColor :
-                                pressed ?
-                                  colorTheme.buttonColor :
-                                  colorTheme.textColor} />
-                        )
-                      }
-                    </Pressable>
+                    {
+                      totalUpdateCount > 1 &&
+                      <Pressable
+                        hitSlop={10}
+                        onPress={() => displayIndex < totalUpdateCount - 1 ? setDisplayIndex(displayIndex + 1) : undefined}
+                        disabled={displayIndex === totalUpdateCount - 1}
+                      >
+                        {
+                          ({ pressed }) => (
+                            <IonIcons
+                              name="chevron-forward-outline"
+                              size={24}
+                              color={
+                                displayIndex === totalUpdateCount - 1 ?
+                                  colorTheme.disabledButtonColor :
+                                  pressed ?
+                                    colorTheme.buttonColor :
+                                    colorTheme.textColor} />
+                          )
+                        }
+                      </Pressable>
+                    }
 
                   </View>
 
