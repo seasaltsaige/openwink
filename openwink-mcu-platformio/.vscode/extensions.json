@@ -6,6 +6,7 @@
         "xaver.clang-format"
     ],
     "unwantedRecommendations": [
-        "ms-vscode.cpptools-extension-pack"
+        "ms-vscode.cpptools-extension-pack",
+        "pioarduino.pioarduino-ide"
     ]
 }
