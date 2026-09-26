@@ -1,17 +1,15 @@
 #ifndef BUTTON_INPUT_H
 #define BUTTON_INPUT_H
 
-#include <freertos/task.h>
 #include <driver/gpio.h>
+
 
 #define BUTTON_INPUT GPIO_NUM_9
 
-typedef struct button_input_data {
+typedef struct button_input
+{
     uint8_t button_state;
-
-} button_input_data;
-
-extern button_input_data input_data;
+} button_input_t;
 
 void inputs_init();
 void read_input_on_boot();

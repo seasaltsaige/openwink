@@ -2,8 +2,8 @@
 #define HEADLIGHT_FEEDBACK_H
 
 #include <FreeRTOSConfig.h>
-#include <freertos/FreeRTOS.h>
 #include <driver/gpio.h>
+#include <freertos/FreeRTOS.h>
 
 #define LEFT_MONITOR_PIN GPIO_NUM_3
 #define RIGHT_MONITOR_PIN GPIO_NUM_46
@@ -19,9 +19,7 @@ typedef struct feedback_stats
     int64_t right_move_time;
     uint8_t left_moving;
     uint8_t right_moving;
-} feedback_stats;
-
-// extern feedback_stats movement_stats;
+} feedback_stats_t;
 
 extern EventGroupHandle_t movement_event;
 
