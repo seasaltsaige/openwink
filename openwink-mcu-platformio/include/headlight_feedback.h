@@ -22,6 +22,8 @@ typedef struct feedback_stats
 } feedback_stats_t;
 
 extern EventGroupHandle_t movement_event;
+extern TaskHandle_t left_feedback_task;
+extern TaskHandle_t right_feedback_task;
 
 void monitor_gpio_init();
 void monitor_event_group_init();

@@ -13,8 +13,11 @@ EventGroupHandle_t output_event_group;
 RTC_DATA_ATTR headlight_position_t positions = {
     .left_pos = 0,
     .right_pos = 0,
-    .last_left_move_dir = 0,
-    .last_right_move_dir = 0,
+    // actually i dont know if this is really necessary
+    // for it to be at 0, the headlights must have moved
+    // down to get there... lol
+    .last_left_move_dir = MOVE_DOWN,
+    .last_right_move_dir = MOVE_DOWN,
 };
 
 void outputs_init()
@@ -46,39 +49,42 @@ void output_event_group_init()
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 }
 
-MOVE_TYPE start_side_move(output_args_t* motor_args, movement_target_t* move)
+move_type_t start_side_move(output_args_t* motor_args, movement_target_t* move)
 {
     if (motor_args->side_bit == LEFT_SIDE)
     {
-        if (move->target == UP && positions.left_pos != 100)
+        if (move->target == MOVE_UP && positions.left_pos != 100)
         {
             gpio_set_level(motor_args->up_pin, HIGH);
             gpio_set_level(motor_args->down_pin, LOW);
-            return UP;
+            return MOVE_UP;
         }
-        else if (move->target == DOWN && positions.left_pos != 0)
+        else if (move->target == MOVE_DOWN && positions.left_pos != 0)
         {
             gpio_set_level(motor_args->down_pin, HIGH);
             gpio_set_level(motor_args->up_pin, LOW);
-            return DOWN;
+            return MOVE_DOWN;
         }
     }
     else if (motor_args->side_bit == RIGHT_SIDE)
     {
-        if (move->target == UP && positions.right_pos != 100)
+        if (move->target == MOVE_UP && positions.right_pos != 100)
         {
             gpio_set_level(motor_args->up_pin, HIGH);
             gpio_set_level(motor_args->down_pin, LOW);
-            return UP;
+            return MOVE_UP;
         }
-        else if (move->target == DOWN && positions.right_pos != 0)
+        else if (move->target == MOVE_DOWN && positions.right_pos != 0)
         {
             gpio_set_level(motor_args->down_pin, HIGH);
             gpio_set_level(motor_args->up_pin, LOW);
-            return DOWN;
+            return MOVE_DOWN;
         }
     }
-    return NOP;
+    // if nothing above checks out, the
+    // headlight is already in position, so it
+    // should emit a nop
+    return MOVE_NOP;
 }
 
 void set_side_off(output_args_t* args)
@@ -87,6 +93,27 @@ void set_side_off(output_args_t* args)
     gpio_set_level(args->up_pin, LOW);
 }
 
+void set_positions_on_complete(output_args_t* motor_args, move_type_t move_res)
+{
+    if (motor_args->side_bit == LEFT_SIDE)
+    {
+        if (move_res == MOVE_UP)
+            positions.left_pos = 100;
+        else if (move_res == MOVE_DOWN)
+            positions.left_pos = 0;
+
+        positions.last_left_move_dir = move_res;
+    }
+    else if (motor_args->side_bit == RIGHT_SIDE)
+    {
+        if (move_res == MOVE_UP)
+            positions.right_pos = 100;
+        else if (move_res == MOVE_DOWN)
+            positions.right_pos = 0;
+
+        positions.last_right_move_dir = move_res;
+    }
+}
 
 void handle_output_task(void* args)
 {
@@ -106,41 +133,36 @@ void handle_output_task(void* args)
             // clear stopped bits
             xEventGroupClearBits(movement_event, motor->stopped_bit);
 
-            MOVE_TYPE move_t = start_side_move(motor, &move);
-            if (move_t != NOP)
-                // wait for bits on headlights that are moving
-                xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, MAX_WAIT_TIME_MS);
-            // vTaskDelay(pdMS_TO_TICKS(750));
-            else
-                // otherwise reset bits
-                xEventGroupSetBits(movement_event, motor->stopped_bit);
-
+            move_type_t move_res = start_side_move(motor, &move);
 
             // TODO: Handle sleepy eye stuffs...
-            if (move_t != NOP)
+            if (move_res != MOVE_NOP)
             {
-                if (motor->side_bit == LEFT_SIDE)
-                {
-                    if (move.target == UP)
-                        positions.left_pos = 100;
-                    else if (move.target == DOWN)
-                        positions.left_pos = 0;
-
-                    positions.last_left_move_dir = move.target;
-                }
-                else if (motor->side_bit == RIGHT_SIDE)
-                {
-                    if (move.target == UP)
-                        positions.right_pos = 100;
-                    else if (move.target == DOWN)
-                        positions.right_pos = 0;
-
-                    positions.last_right_move_dir = move.target;
-                }
+                EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, MAX_WAIT_TIME_MS);
+                // if ((completed_bits & motor->stopped_bit) == 0)
+                // {
+                //     // timeout event
+                //     // again, these could probably be more informative
+                //     // as there may be more things to notify
+                //     // the monitor tasks about
+                //     if (motor->side_bit == LEFT_SIDE)
+                //         xTaskNotifyGive(left_feedback_task);
+                //     else if (motor->side_bit == RIGHT_SIDE)
+                //         xTaskNotifyGive(right_feedback_task);
+                // }
+                set_positions_on_complete(motor, move_res);
             }
+            else
+                xEventGroupSetBits(movement_event, motor->stopped_bit);
 
+            // clear outputs
             set_side_off(motor);
-            // todo: error bits? we'll see
+
+            // TODO: error bits? we'll see
+            // notify main command task
+            if (move.final_move == 1)
+                xTaskNotifyGive(command_output_task);
+
             xEventGroupSetBits(output_event_group, motor->move_complete_bit);
 
             // notify command task that movement finished

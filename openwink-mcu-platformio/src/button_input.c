@@ -1,10 +1,14 @@
-#include "button_input.h"
-#include "command_output.h"
+
 #include <FreeRTOSConfig.h>
+#include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 
-button_input_t input_state = {
-    .button_state = 0,
+#include "button_input.h"
+#include "command_output.h"
+#include "output_handler.h"
+
+RTC_DATA_ATTR button_input_t input_state = {
+    .button_state = LOW,
 };
 
 
@@ -27,17 +31,46 @@ void read_input_on_boot()
 
 void input_read_task()
 {
+    int64_t last_press_time_us = 0;
+    // literally just using a 16 bit value so you cant overflow
+    // 255 would already be hard, but... just in case i guess
+    uint16_t press_counter = 0;
     for (;;)
     {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
         if (input_state.button_state != level)
         {
-            // Send to command_output handler
+            last_press_time_us = esp_timer_get_time();
+            press_counter++;
             // TODO: Build out multipress system
             // TODO: Add headlight-on bypass debounce system
-            command_types_t cmd = LEFT_WAVE;// level == 0 ? BOTH_DOWN : BOTH_UP;
-            xQueueSend(command_output_queue, &cmd, 0);
             input_state.button_state = level;
+        }
+        else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > 500000)
+        {
+            command_types_t cmd = { 0 };
+
+            // to be replaced by button_bindings parser
+            if (press_counter == 1)
+            {
+                if (input_state.button_state == HIGH)
+                    cmd = BOTH_UP;
+                else if (input_state.button_state == LOW)
+                    cmd = BOTH_DOWN;
+            }
+            else if (press_counter == 2)
+                cmd = BOTH_BLINK;
+            else if (press_counter == 3)
+                cmd = LEFT_WAVE;
+            else if (press_counter == 4)
+                cmd = RIGHT_WAVE;
+
+            else if (press_counter != 0)
+                cmd = LEFT_WINK;
+
+            xQueueSend(command_output_queue, &cmd, 0);
+
+            press_counter = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }

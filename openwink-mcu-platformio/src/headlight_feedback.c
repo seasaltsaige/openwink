@@ -6,6 +6,9 @@
 #include "command_output.h"
 #include "headlight_feedback.h"
 
+TaskHandle_t left_feedback_task;
+TaskHandle_t right_feedback_task;
+
 feedback_stats_t movement_stats = {
     .left_move_time = 0,
     .right_move_time = 0,
@@ -49,7 +52,7 @@ void left_monitor_task()
             last_level = 1;
             movement_stats.left_moving = 1;
         }
-        else if ((last_level == 1) && (gpio_get_level(LEFT_MONITOR_PIN) == 0))
+        else if (((last_level == 1) && (gpio_get_level(LEFT_MONITOR_PIN) == 0)))
         {
             // move time in ms
             movement_stats.left_move_time = (esp_timer_get_time() - move_start);
@@ -57,7 +60,6 @@ void left_monitor_task()
             movement_stats.left_moving = 0;
             xEventGroupSetBits(movement_event, LEFT_STOPPED_BIT);
         }
-        last_level = curr_state;
         vTaskDelay(pdMS_TO_TICKS(4));
     }
 }

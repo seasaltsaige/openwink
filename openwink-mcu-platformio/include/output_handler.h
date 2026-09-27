@@ -15,7 +15,9 @@
 #define HIGH (uint8_t)1
 #define LOW (uint8_t)0
 
-#define UNKNOWN_POSITION ((uint8_t)255)
+#define POSITION_DOWN ((uint8_t)0)
+#define POSITION_UP ((uint8_t)100)
+#define POSITION_UNKNOWN ((uint8_t)255)
 
 #define MAX_WAIT_TIME_MS pdMS_TO_TICKS(1000)
 
@@ -24,22 +26,35 @@
 #define RIGHT_SIDE BIT1
 #define LEFT_COMPLETE_BIT BIT0
 #define RIGHT_COMPLETE_BIT BIT1
+
+typedef enum MOVE_TYPE : uint8_t
+{
+    MOVE_NOP,
+    MOVE_DOWN,
+    MOVE_UP,
+    MOVE_PARTIAL,
+} move_type_t;
+
 typedef struct headlight_position
 {
     uint8_t left_pos;
     uint8_t right_pos;
-
-    // utility to keep track of last
-    // known headlight move direction
-    // potentially can be used to allow
-    // sleepy eye to be entered from down or up
-    // or really any position.
-    // Should have EITHER UP_DIR or DOWN_DIR
-    // set, never both
-    uint8_t last_left_move_dir;
-    uint8_t last_right_move_dir;
+    /**
+     * utility to keep track of last
+     * known headlight move direction
+     * potentially can be used to allow
+     * sleepy eye to be entered from down or up
+     * or really any position.
+     * Should have EITHER UP_DIR or DOWN_DIR
+     * set, never both
+     */
+    move_type_t last_left_move_dir;
+    move_type_t last_right_move_dir;
 } headlight_position_t;
 
+/**
+ * @param queue
+ */
 typedef struct output_args
 {
     QueueHandle_t queue;
@@ -50,18 +65,11 @@ typedef struct output_args
     uint8_t side_bit;
 } output_args_t;
 
-typedef enum MOVE_TYPE : uint8_t
-{
-    NOP,
-    DOWN,
-    UP,
-    SLEEPY,
-} MOVE_TYPE;
 
 typedef struct movement_target
 {
-    MOVE_TYPE target;
-    // MOVE_TYPE right_target;
+    move_type_t target;
+    uint8_t final_move;
 } movement_target_t;
 
 extern QueueHandle_t left_output_queue;
