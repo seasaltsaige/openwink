@@ -5,6 +5,7 @@
 
 #include "button_input.h"
 #include "command_output.h"
+#include "custom_command_output.h"
 #include "output_handler.h"
 
 RTC_DATA_ATTR button_input_t input_state = {
@@ -50,25 +51,42 @@ void input_read_task()
         {
             command_types_t cmd = { 0 };
 
-            // to be replaced by button_bindings parser
             if (press_counter == 1)
             {
-                if (input_state.button_state == HIGH)
-                    cmd = BOTH_UP;
-                else if (input_state.button_state == LOW)
-                    cmd = BOTH_DOWN;
+                xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetValueWithOverwrite);
             }
-            else if (press_counter == 2)
-                cmd = BOTH_BLINK;
-            else if (press_counter == 3)
-                cmd = LEFT_WAVE;
-            else if (press_counter == 4)
-                cmd = RIGHT_WAVE;
 
-            else if (press_counter != 0)
-                cmd = LEFT_WINK;
+            // // to be replaced by button_bindings parser
+            // if (press_counter == 1)
+            // {
+            //     if (input_state.button_state == HIGH)
+            //         cmd = BOTH_UP;
+            //     else if (input_state.button_state == LOW)
+            //         cmd = BOTH_DOWN;
+            // }
+            // else if (press_counter == 2)
+            // {
+            if (press_counter == 2)
+            {
+                custom_command_data_t test_cmd = {
+                    .looping = 0,
+                    .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },
+                    .sequence_length = 5,
+                };
+                // press_counter = 0;
+                xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
+            }
+            // continue;
+            // }
+            // else if (press_counter == 3)
+            //     cmd = LEFT_WAVE;
+            // else if (press_counter == 4)
+            //     cmd = RIGHT_WAVE;
 
-            xQueueSend(command_output_queue, &cmd, 0);
+            // else if (press_counter != 0)
+            //     cmd = LEFT_WINK;
+
+            // xQueueSend(command_output_queue, &cmd, 0);
 
             press_counter = 0;
         }

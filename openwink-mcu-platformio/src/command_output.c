@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 #include "command_output.h"
+#include "custom_command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
-
 QueueHandle_t command_output_queue;
 TaskHandle_t command_output_task;
 
@@ -189,6 +189,8 @@ void handle_command_task()
 
             default: break;
             }
+
+            xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetValueWithOverwrite);
         }
     }
 }

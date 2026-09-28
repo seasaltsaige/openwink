@@ -5,6 +5,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+#define NOTIFY_COMMAND_DONE_BIT (1UL << 1)
+
 
 typedef struct command_state_data
 {

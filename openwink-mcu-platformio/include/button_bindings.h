@@ -18,7 +18,7 @@ typedef struct
 
     union
     {
-    };
+    } data;
 } button_binding_t;
 
 typedef struct
