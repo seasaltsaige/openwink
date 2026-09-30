@@ -9,7 +9,6 @@
 #define LOOPING_BIT (1UL << 8);
 #define NOTIFY_BUTTON_INTERRUPT_BIT (1UL << 0)
 
-// #define MAX_CUSTOM_COMMAND_LENGTH
 // 3 byte delays
 // 0xDE 0xEE 0x02 ==> Delay(0xDE) 0x02EE == 750ms Delay
 #define DELAY_PREFIX 0xDE

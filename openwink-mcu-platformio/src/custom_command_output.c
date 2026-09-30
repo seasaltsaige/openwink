@@ -26,22 +26,17 @@ void custom_command_task()
             // loop through each value of the cmd
             // sequence_index will be equal to i until a delay is encountered (3 bytes vs 1 byte)
             uint8_t sequence_index = 0;
+            uint32_t wait_result;
+
             command_executing = 1;
             for (uint8_t i = 0; i < cmd_data.sequence_length; i++)
             {
-                uint32_t wait_result;
-                xTaskNotifyWait(NOTIFY_BUTTON_INTERRUPT_BIT, 0x0, &wait_result, 0);
-                if ((wait_result & NOTIFY_BUTTON_INTERRUPT_BIT) != 0)
-                {
-                    command_executing = 0;
-                    break;
-                }
-
                 if (cmd_data.sequence[sequence_index] == DELAY_PREFIX)
                 {
-                    // Handle delay
+                    // Handle delay (Little Endian -- 0xDEEE02 yields Delay 0x02EE or Delay 750ms)
                     uint16_t delay = (cmd_data.sequence[sequence_index + 1] << 0) | (cmd_data.sequence[sequence_index + 2] << 8);
-                    xTaskNotifyWait(NOTIFY_BUTTON_INTERRUPT_BIT, 0x0, &wait_result, pdMS_TO_TICKS(delay));
+
+                    xTaskNotifyWait(0, NOTIFY_BUTTON_INTERRUPT_BIT, &wait_result, pdMS_TO_TICKS(delay));
                     if ((wait_result & NOTIFY_BUTTON_INTERRUPT_BIT) != 0)
                     {
                         command_executing = 0;
@@ -60,18 +55,26 @@ void custom_command_task()
                     // determine how long the longest command should take on the high end (left-right x2 at 1000ms timeout?)
                     // return value
                     // maybe this is fine though since all commands will timeout eventually
-                    xTaskNotifyWait(NOTIFY_COMMAND_DONE_BIT | NOTIFY_BUTTON_INTERRUPT_BIT, 0x0, &wait_result, portMAX_DELAY);
+                    xTaskNotifyWait(0, NOTIFY_COMMAND_DONE_BIT | NOTIFY_BUTTON_INTERRUPT_BIT, &wait_result, portMAX_DELAY);
 
                     if ((wait_result & NOTIFY_BUTTON_INTERRUPT_BIT) != 0)
                     {
                         // command interrupted
                         command_executing = 0;
+
+                        // if command was interrupted on a non-delay, then we still need to wait for the
+                        // executing sub-command to finish
+                        xTaskNotifyWait(0, NOTIFY_COMMAND_DONE_BIT, &wait_result, portMAX_DELAY);
+                        // clear any other custom commands in queue (should rarely happen, but a cancel should CANCEL)
+                        xQueueReset(custom_command_queue_handle);
                         break;
                     }
                     else if ((wait_result & NOTIFY_COMMAND_DONE_BIT) != 0)
                         sequence_index += 1;
                 }
             }
+
+            command_executing = 0;
         }
     }
 }

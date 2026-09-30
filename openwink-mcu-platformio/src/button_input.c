@@ -53,7 +53,7 @@ void input_read_task()
 
             if (press_counter == 1)
             {
-                xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetValueWithOverwrite);
+                xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
             }
 
             // // to be replaced by button_bindings parser

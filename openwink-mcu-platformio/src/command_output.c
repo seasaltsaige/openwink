@@ -190,7 +190,7 @@ void handle_command_task()
             default: break;
             }
 
-            xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetValueWithOverwrite);
+            xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetBits);
         }
     }
 }
