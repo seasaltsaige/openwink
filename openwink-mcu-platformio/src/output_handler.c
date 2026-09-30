@@ -20,8 +20,7 @@ RTC_DATA_ATTR headlight_position_t positions = {
     .last_right_move_dir = MOVE_DOWN,
 };
 
-void outputs_init()
-{
+void outputs_init() {
     const gpio_config_t output_config = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_OUTPUT,
@@ -37,45 +36,33 @@ void outputs_init()
     gpio_set_level(OUT_PIN_RIGHT_UP, LOW);
 }
 
-void output_queue_init()
-{
+void output_queue_init() {
     left_output_queue = xQueueCreate(OUTPUT_QUEUE_LENGTH, sizeof(movement_target_t));
     right_output_queue = xQueueCreate(OUTPUT_QUEUE_LENGTH, sizeof(movement_target_t));
 }
 
-void output_event_group_init()
-{
+void output_event_group_init() {
     output_event_group = xEventGroupCreate();
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 }
 
-move_type_t start_side_move(output_args_t* motor_args, movement_target_t* move)
-{
-    if (motor_args->side_bit == LEFT_SIDE)
-    {
-        if (move->target == MOVE_UP && positions.left_pos != 100)
-        {
+move_type_t start_side_move(output_args_t* motor_args, movement_target_t* move) {
+    if (motor_args->side_bit == LEFT_SIDE) {
+        if (move->target == MOVE_UP && positions.left_pos != 100) {
             gpio_set_level(motor_args->up_pin, HIGH);
             gpio_set_level(motor_args->down_pin, LOW);
             return MOVE_UP;
-        }
-        else if (move->target == MOVE_DOWN && positions.left_pos != 0)
-        {
+        } else if (move->target == MOVE_DOWN && positions.left_pos != 0) {
             gpio_set_level(motor_args->down_pin, HIGH);
             gpio_set_level(motor_args->up_pin, LOW);
             return MOVE_DOWN;
         }
-    }
-    else if (motor_args->side_bit == RIGHT_SIDE)
-    {
-        if (move->target == MOVE_UP && positions.right_pos != 100)
-        {
+    } else if (motor_args->side_bit == RIGHT_SIDE) {
+        if (move->target == MOVE_UP && positions.right_pos != 100) {
             gpio_set_level(motor_args->up_pin, HIGH);
             gpio_set_level(motor_args->down_pin, LOW);
             return MOVE_UP;
-        }
-        else if (move->target == MOVE_DOWN && positions.right_pos != 0)
-        {
+        } else if (move->target == MOVE_DOWN && positions.right_pos != 0) {
             gpio_set_level(motor_args->down_pin, HIGH);
             gpio_set_level(motor_args->up_pin, LOW);
             return MOVE_DOWN;
@@ -87,25 +74,20 @@ move_type_t start_side_move(output_args_t* motor_args, movement_target_t* move)
     return MOVE_NOP;
 }
 
-void set_side_off(output_args_t* args)
-{
+void set_side_off(output_args_t* args) {
     gpio_set_level(args->down_pin, LOW);
     gpio_set_level(args->up_pin, LOW);
 }
 
-void set_positions_on_complete(output_args_t* motor_args, move_type_t move_res)
-{
-    if (motor_args->side_bit == LEFT_SIDE)
-    {
+void set_positions_on_complete(output_args_t* motor_args, move_type_t move_res) {
+    if (motor_args->side_bit == LEFT_SIDE) {
         if (move_res == MOVE_UP)
             positions.left_pos = 100;
         else if (move_res == MOVE_DOWN)
             positions.left_pos = 0;
 
         positions.last_left_move_dir = move_res;
-    }
-    else if (motor_args->side_bit == RIGHT_SIDE)
-    {
+    } else if (motor_args->side_bit == RIGHT_SIDE) {
         if (move_res == MOVE_UP)
             positions.right_pos = 100;
         else if (move_res == MOVE_DOWN)
@@ -115,14 +97,11 @@ void set_positions_on_complete(output_args_t* motor_args, move_type_t move_res)
     }
 }
 
-void handle_output_task(void* args)
-{
+void handle_output_task(void* args) {
     output_args_t* motor = (output_args_t*)args;
-    for (;;)
-    {
+    for (;;) {
         movement_target_t move;
-        if (xQueueReceive(motor->queue, &move, portMAX_DELAY))
-        {
+        if (xQueueReceive(motor->queue, &move, portMAX_DELAY)) {
             // TODO: Handle sleepy eye
             // NOTE: If only a single sides status is SLEEPY_EYE
             // it is guarenteed (not LITERALLY, but by the APP)
@@ -136,8 +115,7 @@ void handle_output_task(void* args)
             move_type_t move_res = start_side_move(motor, &move);
 
             // TODO: Handle sleepy eye stuffs...
-            if (move_res != MOVE_NOP)
-            {
+            if (move_res != MOVE_NOP) {
                 EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, MAX_WAIT_TIME_MS);
                 // if ((completed_bits & motor->stopped_bit) == 0)
                 // {
@@ -151,8 +129,7 @@ void handle_output_task(void* args)
                 //         xTaskNotifyGive(right_feedback_task);
                 // }
                 set_positions_on_complete(motor, move_res);
-            }
-            else
+            } else
                 xEventGroupSetBits(movement_event, motor->stopped_bit);
 
             // clear outputs
@@ -172,7 +149,6 @@ void handle_output_task(void* args)
         }
     }
 }
-headlight_position_t get_position()
-{
+headlight_position_t get_position() {
     return positions;
 }

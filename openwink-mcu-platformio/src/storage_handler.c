@@ -9,22 +9,18 @@
 nvs_handle_t storage_handle;
 const char* nvs_namespace = "openwink";
 
-void init_nvs_storage()
-{
+void init_nvs_storage() {
     esp_err_t nvs_res = nvs_flash_init();
-    if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
+    if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
         nvs_flash_init();
     }
 }
 
-static void open(nvs_open_mode_t mode)
-{
+static void open(nvs_open_mode_t mode) {
     nvs_open(nvs_namespace, mode, &storage_handle);
 }
 
-static void close()
-{
+static void close() {
     nvs_close(storage_handle);
 }

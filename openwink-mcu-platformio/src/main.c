@@ -10,8 +10,7 @@
 
 #include <esp_log.h>
 
-void app_main()
-{
+void app_main() {
     // gpio init
     outputs_init();
     inputs_init();
@@ -60,8 +59,7 @@ void app_main()
     // perhaps it can handle auth in the future,
     // though I think something should individually own that.
 
-    for (;;)
-    {
+    for (;;) {
         vTaskDelay(pdTICKS_TO_MS(100));
     }
 }

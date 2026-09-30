@@ -13,8 +13,7 @@ RTC_DATA_ATTR button_input_t input_state = {
 };
 
 
-void inputs_init()
-{
+void inputs_init() {
     const gpio_config_t input_config = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_INPUT,
@@ -25,34 +24,27 @@ void inputs_init()
     gpio_config(&input_config);
 }
 
-void read_input_on_boot()
-{
+void read_input_on_boot() {
     input_state.button_state = (uint8_t)gpio_get_level(BUTTON_INPUT);
 }
 
-void input_read_task()
-{
+void input_read_task() {
     int64_t last_press_time_us = 0;
     // literally just using a 16 bit value so you cant overflow
     // 255 would already be hard, but... just in case i guess
     uint16_t press_counter = 0;
-    for (;;)
-    {
+    for (;;) {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
-        if (input_state.button_state != level)
-        {
+        if (input_state.button_state != level) {
             last_press_time_us = esp_timer_get_time();
             press_counter++;
             // TODO: Build out multipress system
             // TODO: Add headlight-on bypass debounce system
             input_state.button_state = level;
-        }
-        else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > 500000)
-        {
+        } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > 500000) {
             command_types_t cmd = { 0 };
 
-            if (press_counter == 1)
-            {
+            if (press_counter == 1) {
                 xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
             }
 
@@ -66,8 +58,7 @@ void input_read_task()
             // }
             // else if (press_counter == 2)
             // {
-            if (press_counter == 2)
-            {
+            if (press_counter == 2) {
                 custom_command_data_t test_cmd = {
                     .looping = 0,
                     .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },

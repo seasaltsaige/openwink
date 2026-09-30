@@ -9,14 +9,12 @@
 QueueHandle_t command_output_queue;
 TaskHandle_t command_output_task;
 
-void init_command_queue()
-{
+void init_command_queue() {
     command_output_queue = xQueueCreate(20, sizeof(command_types_t));
 }
 
 
-static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final)
-{
+static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final) {
     movement_target_t move = {
         .target = type,
         .final_move = is_final,
@@ -28,8 +26,7 @@ static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final)
 }
 
 // note: portMAX_DELAY might be a bad idea in general, but for now its ok while porting over
-void handle_command_task()
-{
+void handle_command_task() {
 
     movement_target_t up_action = {
         .target = MOVE_UP,
@@ -46,10 +43,8 @@ void handle_command_task()
 
     command_types_t received;
 
-    for (;;)
-    {
-        if (xQueueReceive(command_output_queue, &received, portMAX_DELAY))
-        {
+    for (;;) {
+        if (xQueueReceive(command_output_queue, &received, portMAX_DELAY)) {
             headlight_position_t curr_pos;
             command_types_t peek;
             BaseType_t peeked;
@@ -57,8 +52,7 @@ void handle_command_task()
             // execute the command, then re-enter sleepy eye
             // ^^^^^
             // executing sleepy eye while in sleepy eye will reset it instead
-            switch (received)
-            {
+            switch (received) {
             // Both together
             case BOTH_UP:
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);

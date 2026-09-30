@@ -11,11 +11,14 @@
   "editor.formatOnPaste": true,
   // Add 'path/to/clang-format.exe' to PATH env variable
   "C_Cpp.clang_format_path": "",
-  "C_Cpp.clang_format_fallbackStyle": "Google",
+  // C_Cpp.clang
+  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, BreakBeforeBraces: Attach }",
   "[cpp]": {
     "editor.defaultFormatter": "xaver.clang-format"
   },
   "C_Cpp.clang_format_style": "file",
+
+  
   "editor.wordWrap": "off",
   
 }
