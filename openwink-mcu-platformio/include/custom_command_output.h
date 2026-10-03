@@ -20,8 +20,7 @@
 // and 1 byte indicating sequence length
 #define CUSTOM_CMD_HEADER_LENGTH 2
 
-typedef struct
-{
+typedef struct {
     uint8_t looping;
     uint8_t sequence_length;
     uint8_t sequence[MAX_SEQUENCE_LENGTH];
@@ -31,9 +30,12 @@ typedef struct
 extern TaskHandle_t custom_command_task_handle;
 extern QueueHandle_t custom_command_queue_handle;
 
-void init_custom_command_queue();
 
+BaseType_t request_command_submission(custom_command_data_t* cmd);
+void request_command_cancellation();
+void init_custom_command_queue();
 uint8_t get_custom_command_executing();
+
 
 void custom_command_task();
 

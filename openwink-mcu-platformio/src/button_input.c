@@ -45,7 +45,8 @@ void input_read_task() {
             command_types_t cmd = { 0 };
 
             if (press_counter == 1) {
-                xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
+                // xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
+                request_command_cancellation();
             }
 
             // // to be replaced by button_bindings parser
@@ -64,8 +65,10 @@ void input_read_task() {
                     .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },
                     .sequence_length = 5,
                 };
+
+                request_command_submission(&test_cmd);
                 // press_counter = 0;
-                xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
+                // xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
             }
             // continue;
             // }
