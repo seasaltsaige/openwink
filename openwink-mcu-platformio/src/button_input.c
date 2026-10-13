@@ -12,6 +12,71 @@ RTC_DATA_ATTR button_input_t input_state = {
     .button_state = LOW,
 };
 
+button_config_t button_config = {
+    .custom_actions_enabled = 1,
+    .button_delay_ms = 500,
+
+    .bindings = {
+        [0] = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = BOTH_BLINK,
+        },
+        [1] = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = LEFT_WINK,
+        },
+        [2] = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = RIGHT_WINK,
+        },
+        [3] = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = LEFT_RIGHT,
+        },
+        [4] = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = SLEEPY_EYE,
+        },
+        [5] = {
+            .type = BINDING_CUSTOM_SEQUENCE,
+            .looping = 0,
+            .data.custom = {
+                .sequence = {
+                    LEFT_WINK,
+                    0xDE, 0xF4, 0x01,
+                    RIGHT_WINK,
+                },
+                .sequence_length = 3,
+            },
+        },
+        [6] = {
+            .type = BINDING_CUSTOM_SEQUENCE,
+            .looping = 0,
+            .data.custom = {
+                .sequence = {
+                    BOTH_UP,
+                    0xDE, 0xF4, 0x01,
+                    BOTH_DOWN,
+                },
+                .sequence_length = 3,
+            },
+        },
+        [7] = {
+            .type = BINDING_CUSTOM_SEQUENCE,
+            .looping = 1,
+            .data.custom = {
+                .sequence = {
+                    LEFT_WAVE,
+                    0xDE, 0xF4, 0x01,
+                    RIGHT_WAVE,
+                    0xDE, 0xF4, 0x01,
+                },
+                .sequence_length = 4,
+            },
+        },
+    },
+};
+
 
 void inputs_init() {
     const gpio_config_t input_config = {
@@ -41,34 +106,37 @@ void input_read_task() {
             // TODO: Build out multipress system
             // TODO: Add headlight-on bypass debounce system
             input_state.button_state = level;
-        } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > 500000) {
+        } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > ((uint64_t)button_config.button_delay_ms * 1000)) {
             command_types_t cmd = { 0 };
 
-            if (press_counter == 1) {
-                // xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
-                request_command_cancellation();
-            }
+            // if (press_counter == 1) {
+            //     // xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
+            //     request_command_cancellation();
+            // }
 
             // // to be replaced by button_bindings parser
-            // if (press_counter == 1)
-            // {
-            //     if (input_state.button_state == HIGH)
-            //         cmd = BOTH_UP;
-            //     else if (input_state.button_state == LOW)
-            //         cmd = BOTH_DOWN;
-            // }
-            // else if (press_counter == 2)
-            // {
-            if (press_counter == 2) {
-                custom_command_data_t test_cmd = {
-                    .looping = 0,
-                    .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },
-                    .sequence_length = 5,
-                };
+            if (press_counter == 1) {
+                if (input_state.button_state == HIGH)
+                    cmd = BOTH_UP;
+                else if (input_state.button_state == LOW)
+                    cmd = BOTH_DOWN;
+            }
 
-                request_command_submission(&test_cmd);
-                // press_counter = 0;
-                // xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
+            button_binding_t binding = button_config.bindings[press_counter - 2];
+
+
+            if (press_counter == 2) {
+
+
+                // custom_command_data_t test_cmd = {
+                //     .looping = 0,
+                //     .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },
+                //     .sequence_length = 5,
+                // };
+
+                // request_command_submission(&test_cmd);
+                // // press_counter = 0;
+                // // xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
             }
             // continue;
             // }
