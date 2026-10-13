@@ -1,13 +1,21 @@
 #ifndef CUSTOM_COMMAND_OUTPUT_H
 #define CUSTOM_COMMAND_OUTPUT_H
 
+#include "command_output.h"
+
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
-#define LOOPING_BIT (1UL << 8);
+#define LOOPING_BIT (1UL << 8)
 #define NOTIFY_BUTTON_INTERRUPT_BIT (1UL << 0)
+
+// Sleepy prefix - 3 byte sleepy commands
+// 0xBB 0x4D 0xFF ==> Sleepy, Left = 77%, Right = Unchanged
+// 0xBB 0x64 0x64 ==> Sleepy, Both = 100%
+#define SLEEPY_PREFIX 0xBB
+#define SLEEPY_COMMAND_POS_UNCHANGED 0xFF
 
 // 3 byte delays
 // 0xDE 0xEE 0x02 ==> Delay(0xDE) 0x02EE == 750ms Delay
@@ -15,15 +23,22 @@
 
 // Max ATT MTU for IOS = 185 bytes, yielding a payload size of 182 bytes
 // Include looping bit? so realistically 181 / 3?
-#define MAX_SEQUENCE_LENGTH (181 / 3)// absolute max of 60 delay slots
+// yeah i think 1 byte at the start will be 0 or 1 for looping, set in struct
+// 1 byte for length too? too confusing to parse it, just use 1 more byte (still 60 max len)
+// then remaining 180 bytes are payload data
+#define ATT_MTU (185)
+#define LOOPING_BYTE_COUNT 1
+#define PAYLOAD_SIZE_BYTE_COUNT 1
+#define PAYLOAD_MAX ((ATT_MTU - LOOPING_BYTE_COUNT - PAYLOAD_SIZE_BYTE_COUNT) - 3)
+#define MAX_SEQUENCE_LENGTH (PAYLOAD_MAX / 3)// absolute max of 60 delay slots
 // includes 1 byte of flags (looping)
 // and 1 byte indicating sequence length
 #define CUSTOM_CMD_HEADER_LENGTH 2
 
 typedef struct {
-    uint8_t looping;
-    uint8_t sequence_length;
-    uint8_t sequence[MAX_SEQUENCE_LENGTH];
+    uint8_t looping;                // 0 if not looped, 1 if it is (loops forever until interrupted)
+    uint8_t sequence_length;        // max of 60, defines size of actual command sequence, not byte length
+    command_t sequence[PAYLOAD_MAX];// sequence payload of command_out
 } custom_command_data_t;
 
 
