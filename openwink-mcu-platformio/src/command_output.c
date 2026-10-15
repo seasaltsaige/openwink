@@ -54,7 +54,7 @@ void handle_command_task() {
             // executing sleepy eye while in sleepy eye will reset it instead
             switch (received) {
             // Both together
-            case BOTH_UP:
+            case COMMAND_BOTH_UP:
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 
                 queue_side_move(LEFT_SIDE, MOVE_UP, false);
@@ -68,7 +68,7 @@ void handle_command_task() {
                 xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 
                 break;
-            case BOTH_DOWN:
+            case COMMAND_BOTH_DOWN:
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 
                 queue_side_move(LEFT_SIDE, MOVE_DOWN, false);
@@ -76,7 +76,7 @@ void handle_command_task() {
                 xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
                 break;
 
-            case BOTH_BLINK:
+            case COMMAND_BOTH_BLINK:
                 curr_pos = get_position();
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 
@@ -90,19 +90,19 @@ void handle_command_task() {
                 break;
 
             // Left Only
-            case LEFT_UP:
+            case COMMAND_LEFT_UP:
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT);
                 queue_side_move(LEFT_SIDE, MOVE_UP, false);
                 xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
                 break;
 
-            case LEFT_DOWN:
+            case COMMAND_LEFT_DOWN:
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT);
                 queue_side_move(LEFT_SIDE, MOVE_DOWN, false);
                 xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
                 break;
 
-            case LEFT_WINK:
+            case COMMAND_LEFT_WINK:
                 curr_pos = get_position();
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT);
                 queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
@@ -111,26 +111,26 @@ void handle_command_task() {
                 break;
 
             // Right Only
-            case RIGHT_UP:
+            case COMMAND_RIGHT_UP:
                 xEventGroupClearBits(output_event_group, RIGHT_COMPLETE_BIT);
                 queue_side_move(RIGHT_SIDE, MOVE_UP, false);
                 xEventGroupWaitBits(output_event_group, RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
                 break;
 
-            case RIGHT_DOWN:
+            case COMMAND_RIGHT_DOWN:
                 xEventGroupClearBits(output_event_group, RIGHT_COMPLETE_BIT);
                 queue_side_move(RIGHT_SIDE, MOVE_DOWN, false);
                 xEventGroupWaitBits(output_event_group, RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
                 break;
 
-            case RIGHT_WINK:
+            case COMMAND_RIGHT_WINK:
                 curr_pos = get_position();
                 xEventGroupClearBits(output_event_group, RIGHT_COMPLETE_BIT);
                 queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
                 queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 break;
-            case LEFT_WAVE:
+            case COMMAND_LEFT_WAVE:
                 // TODO: sync positions before starting
                 // both headlights should start in whatever state
                 // the starting headlight is in
@@ -157,11 +157,11 @@ void handle_command_task() {
                 peeked = xQueuePeek(command_output_queue, &peek, 0);
 
                 // switch to xTaskNotifyWait ? could get more info
-                if (peeked == pdFALSE || peek != LEFT_WAVE)
+                if (peeked == pdFALSE || peek != COMMAND_LEFT_WAVE)
                     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
                 break;
-            case RIGHT_WAVE:
+            case COMMAND_RIGHT_WAVE:
                 curr_pos = get_position();
                 queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
                 queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, false);
@@ -172,14 +172,15 @@ void handle_command_task() {
 
                 peeked = xQueuePeek(command_output_queue, &peek, 0);
 
-                if (peeked == pdFALSE || peek != LEFT_WAVE)
+                if (peeked == pdFALSE || peek != COMMAND_RIGHT_WAVE)
                     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
                 break;
-            case LEFT_RIGHT: break;
-            case LEFT_RIGHT_X2: break;
-            case RIGHT_LEFT: break;
-            case RIGHT_LEFT_X2: break;
-            case SLEEPY_EYE: break;
+            case COMMAND_LEFT_RIGHT: break;
+            case COMMAND_LEFT_RIGHT_X2: break;
+            case COMMAND_RIGHT_LEFT: break;
+            case COMMAND_RIGHT_LEFT_X2: break;
+            case COMMAND_SLEEPY_EYE: break;
 
             default: break;
             }

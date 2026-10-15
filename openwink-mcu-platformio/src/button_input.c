@@ -17,34 +17,34 @@ button_config_t button_config = {
     .button_delay_ms = 500,
 
     .bindings = {
-        [0] = {
+        [7] = {
             .type = BINDING_BUILTIN,
-            .data.builtin = BOTH_BLINK,
+            .data.builtin = COMMAND_BOTH_BLINK,
         },
         [1] = {
             .type = BINDING_BUILTIN,
-            .data.builtin = LEFT_WINK,
+            .data.builtin = COMMAND_LEFT_WINK,
         },
         [2] = {
             .type = BINDING_BUILTIN,
-            .data.builtin = RIGHT_WINK,
+            .data.builtin = COMMAND_RIGHT_WINK,
         },
         [3] = {
             .type = BINDING_BUILTIN,
-            .data.builtin = LEFT_RIGHT,
+            .data.builtin = COMMAND_LEFT_RIGHT,
         },
         [4] = {
             .type = BINDING_BUILTIN,
-            .data.builtin = SLEEPY_EYE,
+            .data.builtin = COMMAND_SLEEPY_EYE,
         },
         [5] = {
             .type = BINDING_CUSTOM_SEQUENCE,
             .looping = 0,
             .data.custom = {
                 .sequence = {
-                    LEFT_WINK,
+                    COMMAND_LEFT_WINK,
                     0xDE, 0xF4, 0x01,
-                    RIGHT_WINK,
+                    COMMAND_RIGHT_WINK,
                 },
                 .sequence_length = 3,
             },
@@ -54,21 +54,21 @@ button_config_t button_config = {
             .looping = 0,
             .data.custom = {
                 .sequence = {
-                    BOTH_UP,
+                    COMMAND_BOTH_UP,
                     0xDE, 0xF4, 0x01,
-                    BOTH_DOWN,
+                    COMMAND_BOTH_DOWN,
                 },
                 .sequence_length = 3,
             },
         },
-        [7] = {
+        [0] = {
             .type = BINDING_CUSTOM_SEQUENCE,
             .looping = 1,
             .data.custom = {
                 .sequence = {
-                    LEFT_WAVE,
+                    COMMAND_LEFT_WAVE,
                     0xDE, 0xF4, 0x01,
-                    RIGHT_WAVE,
+                    COMMAND_RIGHT_WAVE,
                     0xDE, 0xF4, 0x01,
                 },
                 .sequence_length = 4,
@@ -100,57 +100,55 @@ void input_read_task() {
     uint16_t press_counter = 0;
     for (;;) {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
-        if (input_state.button_state != level) {
-            last_press_time_us = esp_timer_get_time();
-            press_counter++;
-            // TODO: Build out multipress system
-            // TODO: Add headlight-on bypass debounce system
-            input_state.button_state = level;
-        } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > ((uint64_t)button_config.button_delay_ms * 1000)) {
-            command_types_t cmd = { 0 };
 
-            // if (press_counter == 1) {
-            //     // xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
-            //     request_command_cancellation();
-            // }
+        if (button_config.custom_actions_enabled == false) {
+            if (level == input_state.button_state)
+                return;
 
-            // // to be replaced by button_bindings parser
-            if (press_counter == 1) {
-                if (input_state.button_state == HIGH)
-                    cmd = BOTH_UP;
-                else if (input_state.button_state == LOW)
-                    cmd = BOTH_DOWN;
+            command_t cmd = COMMAND_NONE;
+
+            if (level == HIGH)
+                cmd = COMMAND_BOTH_UP;
+            else
+                cmd = COMMAND_BOTH_DOWN;
+
+            xQueueSend(command_output_queue, &cmd, 0);
+
+        } else {
+
+            if (input_state.button_state != level) {
+                last_press_time_us = esp_timer_get_time();
+                press_counter++;
+
+                request_command_cancellation();
+
+                // TODO: Add headlight-on bypass debounce system
+                input_state.button_state = level;
+            } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > ((uint64_t)button_config.button_delay_ms * 1000)) {
+                command_t cmd = COMMAND_NONE;
+
+                if (press_counter == 1) {
+                    if (input_state.button_state == HIGH)
+                        cmd = COMMAND_BOTH_UP;
+                    else if (input_state.button_state == LOW)
+                        cmd = COMMAND_BOTH_DOWN;
+
+                    xQueueSend(command_output_queue, &cmd, 0);
+
+                    press_counter = 0;
+                    continue;
+                }
+
+                button_binding_t binding = button_config.bindings[press_counter - 2];
+
+                if (binding.type == BINDING_BUILTIN)
+                    xQueueSend(command_output_queue, &binding.data.builtin, 0);
+                else if (binding.type == BINDING_CUSTOM_SEQUENCE)
+                    xQueueSend(custom_command_queue_handle, &binding.data.custom, 0);
+
+
+                press_counter = 0;
             }
-
-            button_binding_t binding = button_config.bindings[press_counter - 2];
-
-
-            if (press_counter == 2) {
-
-
-                // custom_command_data_t test_cmd = {
-                //     .looping = 0,
-                //     .sequence = { LEFT_WINK, RIGHT_WINK, 0xDE, 0xEE, 0x02, LEFT_WAVE, RIGHT_WAVE },
-                //     .sequence_length = 5,
-                // };
-
-                // request_command_submission(&test_cmd);
-                // // press_counter = 0;
-                // // xQueueSend(custom_command_queue_handle, &test_cmd, portMAX_DELAY);
-            }
-            // continue;
-            // }
-            // else if (press_counter == 3)
-            //     cmd = LEFT_WAVE;
-            // else if (press_counter == 4)
-            //     cmd = RIGHT_WAVE;
-
-            // else if (press_counter != 0)
-            //     cmd = LEFT_WINK;
-
-            // xQueueSend(command_output_queue, &cmd, 0);
-
-            press_counter = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }

@@ -1,6 +1,8 @@
 #include <FreeRTOSConfig.h>
+#include <esp_log_level.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+
 
 #include "command_output.h"
 #include "custom_command_output.h"
@@ -114,7 +116,7 @@ void custom_command_task() {
             uint8_t sequence_index = 0;
             uint8_t sequence_cancelled = 0;
 
-            for (uint8_t i = 0; i < cmd_data.sequence_length; i++) {
+            for (int8_t i = 0; i < cmd_data.sequence_length; i++) {
 
                 if (cmd_data.sequence[sequence_index] == DELAY_PREFIX) {
                     // Handle delay (Little Endian -- 0xDEEE02 yields Delay 0x02EE or Delay 750ms)
@@ -132,7 +134,17 @@ void custom_command_task() {
                 }
 
                 if (sequence_cancelled) {
+                    // ESP_LOGD("CUST", "Command cancelled\n");
+                    printf("Cancelled\n");
                     break;
+                }
+
+                // loop forever if looping is enabled
+                if ((i == (cmd_data.sequence_length - 1)) && cmd_data.looping) {
+                    i = -1;
+                    sequence_index = 0;
+                    printf("Looping\n");
+                    continue;
                 }
             }
 

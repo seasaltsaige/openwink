@@ -16,6 +16,11 @@
 // 0xBB 0x64 0x64 ==> Sleepy, Both = 100%
 #define SLEEPY_PREFIX 0xBB
 #define SLEEPY_COMMAND_POS_UNCHANGED 0xFF
+// simple mins and max for sleepy eye heights
+// heights will be absolute, and taken with reference to current pos
+// its really not the custom command parsers job to worry about though
+#define SLEEPY_MAX 0x64
+#define SLEEPY_MIN 0x00
 
 // 3 byte delays
 // 0xDE 0xEE 0x02 ==> Delay(0xDE) 0x02EE == 750ms Delay
