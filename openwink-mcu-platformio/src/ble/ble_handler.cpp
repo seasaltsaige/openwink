@@ -1,4 +1,5 @@
 #include <NimBLEDevice.h>
+#include <vector>
 
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
@@ -18,11 +19,14 @@ static CustomCommandCallbacks custom_cmd_callbacks;
 SemaphoreHandle_t status_lock;
 openwink_status_t openwink_status = DISCONNECTED;
 
-
 void set_device_status(openwink_status_t status) {
     xSemaphoreTake(status_lock, portMAX_DELAY);
     openwink_status = status;
     xSemaphoreGive(status_lock);
+}
+
+openwink_status_t get_device_status() {
+    return openwink_status;
 }
 
 
@@ -90,4 +94,21 @@ extern "C" void begin_advertising() {
             printf("Failed to start advertising\n");
     else
         printf("Failed to register advertisement\n");
+}
+
+
+extern "C" void ble_disconnect() {
+    if (openwink_status == DISCONNECTED)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+
+    if (pServer && pServer->getConnectedCount() > 0) {
+        std::vector<uint16_t> peerIds = pServer->getPeerDevices();
+
+        if (!peerIds.empty())
+            pServer->disconnect(peerIds[0]);
+    }
+
+    set_device_status(DISCONNECTED);
 }

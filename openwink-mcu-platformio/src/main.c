@@ -2,6 +2,7 @@
 #include <freertos/FreeRTOS.h>
 
 #include "ble/ble_handler.h"
+#include "ble/pairing_auth.h"
 #include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
@@ -28,6 +29,8 @@ void app_main() {
 
     ble_init(DEVICE_NAME);
     begin_advertising();
+
+    init_pairing();
 
 
     output_args_t left_args = {
@@ -58,6 +61,7 @@ void app_main() {
     xTaskCreate(handle_command_task, "DEF_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &command_output_task);
     // least important task to execute
     xTaskCreate(custom_command_task, "CUS_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 2, &custom_command_task_handle);
+    xTaskCreate(auth_task, "AUTH_TASK", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, &auth_task_handle);
 
     // main task doesnt need to do anything really.
     // perhaps it can handle auth in the future,

@@ -1,6 +1,9 @@
 #ifndef BLE_HANDLER_H
 #define BLE_HANDLER_H
 
+#include <FreeRTOSConfig.h>
+#include <freertos/FreeRTOS.h>
+
 #include <freertos/semphr.h>
 
 
@@ -80,9 +83,14 @@ extern SemaphoreHandle_t status_lock;
 // nvs init must be called prior to this
 uint8_t ble_init(const char* name);
 void begin_advertising();
+void ble_disconnect();
+
 void set_device_status(openwink_status_t status);
+openwink_status_t get_device_status();
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif

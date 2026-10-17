@@ -3,12 +3,20 @@
 
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
+#include "ble/pairing_auth.h"
+
 #include "command_output.h"
 #include "custom_command_output.h"
+
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
     pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
     pServer->setDataLen(connInfo.getConnHandle(), MAX_LL_DATA);
+
+    set_device_status(CONNECTED);
+    // TODO: Based on nvs state, wait for token/claim seq
+    set_pairing_state(AUTH_WAIT_TOKEN);
+    // set_pairing_state()
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -31,7 +39,7 @@ void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uin
     }
 }
 
-
+// TODO: ADD GUARDS TO ALL CALLBACKS REQUIRING AUTH STATE
 void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
