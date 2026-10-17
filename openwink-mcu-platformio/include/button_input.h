@@ -14,8 +14,17 @@ typedef struct button_input {
 
 extern button_config_t button_config;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 void inputs_init();
 void read_input_on_boot();
-void input_read_task();
+void input_read_task(void* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

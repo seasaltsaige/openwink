@@ -26,7 +26,7 @@ static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final) {
 }
 
 // note: portMAX_DELAY might be a bad idea in general, but for now its ok while porting over
-void handle_command_task() {
+void handle_command_task(void* args) {
 
     movement_target_t up_action = {
         .target = MOVE_UP,
@@ -185,7 +185,8 @@ void handle_command_task() {
             default: break;
             }
 
-            xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetBits);
+            if (get_custom_command_executing())
+                xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetBits);
         }
     }
 }

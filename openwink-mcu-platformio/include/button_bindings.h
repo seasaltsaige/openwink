@@ -20,8 +20,6 @@ typedef enum {
 
 typedef struct {
     button_bindings_type_t type;
-    uint8_t looping;
-
     union {
         custom_command_data_t custom;
         command_t builtin;
@@ -35,9 +33,16 @@ typedef struct {
     button_binding_t bindings[NUM_BINDINGS];
 } button_config_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void set_binding_at_pos(button_binding_t binding, uint8_t pos);
 void delete_binding_at_pos(uint8_t pos);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

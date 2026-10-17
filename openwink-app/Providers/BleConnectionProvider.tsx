@@ -231,30 +231,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           },
         );
-        // Wow that was stupid
-        if (getDevicePasskey() !== "Not Paired")
-          await connection.writeCharacteristicWithResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUTH"),
-            base64.encode(getDevicePasskey()),
-          );
-        else
-          await connection.writeCharacteristicWithResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUTH"),
-            base64.encode("CLAIM"),
-          );
 
-        try {
-          await writeInitialSettings(connection);
-        } catch (error) {
-          console.warn(
-            "[BLE] Non-critical write failed during initial settings:",
-            error,
-          );
-        }
-        await readInitialValues(connection);
-
-        // Once all is initialized and nothing failed, device has successfully connected.
-        setConnected(true);
 
         // Setup disconnect handler
         connection.onDisconnected(async (err, disconnectedDevice) => {
@@ -276,6 +253,37 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             await scanForModuleRef.current();
           }
         });
+
+
+        const storedMac = DeviceMACStore.getStoredMAC();
+        if (!storedMac || storedMac !== connection.id) {
+          DeviceUUIDStore.forgetUUID();
+        }
+
+        // Wow that was stupid
+        if (getDevicePasskey() !== "Not Paired") {
+          await connection.writeCharacteristicWithResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
+            base64.encode(getDevicePasskey()),
+          );
+        } else {
+          await connection.writeCharacteristicWithResponseForService(
+            ...getBLEDescriptors("SETTINGS", "AUTH"),
+            base64.encode("CLAIM"),
+          );
+        }
+
+
+
+        try {
+          await writeInitialSettings(connection);
+        } catch (error) {
+          console.warn(
+            "[BLE] Non-critical write failed during initial settings:",
+            error,
+          );
+        }
+        await readInitialValues(connection);
       } catch (error) {
         console.error("Error setting up connection:", error);
         throw error;
@@ -300,18 +308,19 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         const connection = await manager.connectToDevice(deviceId);
         await connection.discoverAllServicesAndCharacteristics();
 
-        // Setup monitoring and handlers
-        await setupConnection(connection);
-
         // Negotiate MTU to maximum size if android device.
         const negotiatedMTUConnection = await connection.requestMTU(517);
         setDevice(negotiatedMTUConnection);
 
-        setIsConnecting(false);
+        // Setup monitoring and handlers
+        await setupConnection(connection);
+
 
         // Store MAC and update state after connection establishes
         DeviceMACStore.setMAC(connection.id);
         setMac(connection.id);
+        setIsConnecting(false);
+        setConnected(true);
 
         Toast.show({
           type: "success",
@@ -320,6 +329,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           visibilityTime: 3000,
         });
       } catch (error) {
+        stopMonitoring();
+        setConnected(false);
         setDevice(null);
         setIsConnecting(false);
 
@@ -336,7 +347,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
     },
-    [device, isConnecting, manager, setupConnection],
+    [device, isConnecting, manager, setupConnection, stopMonitoring],
   );
 
   // Check if device matches connection criteria

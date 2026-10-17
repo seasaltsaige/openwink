@@ -55,7 +55,16 @@ typedef enum command_types : uint8_t {
 extern QueueHandle_t command_output_queue;
 extern TaskHandle_t command_output_task;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 void init_command_queue();
-void handle_command_task();
+void handle_command_task(void* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

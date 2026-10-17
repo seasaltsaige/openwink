@@ -1,0 +1,25 @@
+#ifndef BLE_CALLBACKS_HPP
+#define BLE_CALLBACKS_HPP
+
+#include <NimBLEDevice.h>
+
+class ServerCallbacks : public NimBLEServerCallbacks {
+    void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override;
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override;
+    void onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) override;
+    void onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) override;
+};
+
+class AdvertisingCallbacks : public NimBLEExtAdvertisingCallbacks {
+    void onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t instId) override;
+};
+
+class HeadlightCommandCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
+};
+
+class CustomCommandCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
+};
+
+#endif

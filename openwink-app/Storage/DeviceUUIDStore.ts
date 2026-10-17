@@ -1,4 +1,3 @@
-import { getDeviceUUID } from "../helper/Functions";
 import Storage from "./Storage";
 
 export abstract class DeviceUUIDStore {
@@ -11,6 +10,6 @@ export abstract class DeviceUUIDStore {
   }
 
   static forgetUUID() {
-    Storage.delete("device-uuid");  
+    Storage.delete("device-uuid");
   }
 }

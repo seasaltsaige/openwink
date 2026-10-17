@@ -27,16 +27,14 @@
 #define LEFT_COMPLETE_BIT BIT0
 #define RIGHT_COMPLETE_BIT BIT1
 
-typedef enum MOVE_TYPE : uint8_t
-{
+typedef enum MOVE_TYPE : uint8_t {
     MOVE_NOP,
     MOVE_DOWN,
     MOVE_UP,
     MOVE_PARTIAL,
 } move_type_t;
 
-typedef struct headlight_position
-{
+typedef struct headlight_position {
     uint8_t left_pos;
     uint8_t right_pos;
     /**
@@ -55,8 +53,7 @@ typedef struct headlight_position
 /**
  * @param queue
  */
-typedef struct output_args
-{
+typedef struct output_args {
     QueueHandle_t queue;
     gpio_num_t up_pin;
     gpio_num_t down_pin;
@@ -66,8 +63,7 @@ typedef struct output_args
 } output_args_t;
 
 
-typedef struct movement_target
-{
+typedef struct movement_target {
     move_type_t target;
     uint8_t final_move;
 } movement_target_t;
@@ -75,6 +71,11 @@ typedef struct movement_target
 extern QueueHandle_t left_output_queue;
 extern QueueHandle_t right_output_queue;
 extern EventGroupHandle_t output_event_group;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void outputs_init();
 void output_queue_init();
@@ -86,5 +87,8 @@ uint8_t is_right_sleepy();
 headlight_position_t get_position();
 void handle_output_task(void* args);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

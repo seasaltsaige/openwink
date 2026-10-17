@@ -132,7 +132,7 @@ export function ExportModal({
       profileName: profile,
     };
 
-    SettingsPresetsStore.getPreset(profile);
+    const preset = SettingsPresetsStore.getPreset(profile);
 
     if (selectedSettings.appTheme) {
       const appTheme = ThemeStore.getStoredTheme();
@@ -183,8 +183,8 @@ export function ExportModal({
 
     if (selectedSettings.pairing) {
       const pairingInfo = {
-        mac: DeviceMACStore.getStoredMAC(),
-        pairingKey: getDevicePasskey(),
+        mac: preset?.deviceMAC ?? null,
+        pairingKey: preset?.deviceUUID ?? null,
         firmwareVersion: "",
       }
       data.pairing = pairingInfo;

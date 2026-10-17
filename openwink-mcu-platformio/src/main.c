@@ -1,6 +1,7 @@
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 
+#include "ble/ble_handler.h"
 #include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
@@ -23,9 +24,11 @@ void app_main() {
     init_custom_command_queue();
 
     init_nvs_storage();
-
-
     read_input_on_boot();
+
+    ble_init(DEVICE_NAME);
+    begin_advertising();
+
 
     output_args_t left_args = {
         .down_pin = OUT_PIN_LEFT_DOWN,
@@ -45,6 +48,7 @@ void app_main() {
         .move_complete_bit = RIGHT_COMPLETE_BIT,
     };
 
+
     // initialize tasks
     xTaskCreate(input_read_task, "INPUT_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, NULL);
     xTaskCreate(left_monitor_task, "L_MON_TASK", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, &left_feedback_task);
@@ -58,8 +62,6 @@ void app_main() {
     // main task doesnt need to do anything really.
     // perhaps it can handle auth in the future,
     // though I think something should individually own that.
-
-    for (;;) {
-        vTaskDelay(pdTICKS_TO_MS(100));
-    }
+    for (;;)
+        vTaskDelay(pdMS_TO_TICKS(100));
 }

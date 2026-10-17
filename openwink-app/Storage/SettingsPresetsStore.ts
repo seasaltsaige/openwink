@@ -174,15 +174,24 @@ export abstract class SettingsPresetsStore {
 
     CustomOEMButtonStore.setDelay(preset.customOEMButtonDelay);
 
-    if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID !== null) {
-      DeviceUUIDStore.set(preset.deviceUUID);
-      console.log("Updated Device UUID to " + DeviceUUIDStore.get());
+    if (type === ApplyType.AS_NEW_DEVICE) {
+      if (preset.deviceUUID !== null) {
+        DeviceUUIDStore.set(preset.deviceUUID);
+      } else {
+        DeviceUUIDStore.forgetUUID();
+      }
 
-      if (preset.deviceMAC)
+      if (preset.deviceMAC) {
         DeviceMACStore.setMAC(preset.deviceMAC);
+      } else {
+        DeviceMACStore.forgetMAC();
+      }
 
-      if (preset.firmwareVersion)
+      if (preset.firmwareVersion) {
         FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
+      } else {
+        FirmwareStore.forgetFirmwareVersion();
+      }
     }
 
 
@@ -280,11 +289,10 @@ export abstract class SettingsPresetsStore {
       customOEMBypassEnabled: presetData.customOEMBypassEnabled ?? CustomOEMButtonStore.isBypassEnabled(),
       customOEMButtons: presetData.customOEMButtons ?? CustomOEMButtonStore.getAll(),
       customOEMButtonDelay: presetData.customOEMButtonDelay ?? CustomOEMButtonStore.getDelay(),
+
       deviceUUID: (presetData.deviceUUID && presetData.deviceUUID !== "Not Paired") ? presetData.deviceUUID : null,
-
-      deviceMAC: presetData.deviceMAC ?? DeviceMACStore.getStoredMAC(),
-      firmwareVersion: presetData.firmwareVersion ?? FirmwareStore.getFirmwareVersion(),
-
+      deviceMAC: presetData.deviceMAC ?? null,
+      firmwareVersion: presetData.firmwareVersion ?? null,
 
       auxBtnConfig: {
         enabled: presetData.auxBtnConfig?.enabled ?? AuxButtonStore.getStatus(),

@@ -39,31 +39,30 @@ button_config_t button_config = {
         },
         [5] = {
             .type = BINDING_CUSTOM_SEQUENCE,
-            .looping = 0,
             .data.custom = {
                 .sequence = {
                     COMMAND_LEFT_WINK,
                     0xDE, 0xF4, 0x01,
                     COMMAND_RIGHT_WINK,
                 },
+                .looping = 0,
                 .sequence_length = 3,
             },
         },
         [6] = {
             .type = BINDING_CUSTOM_SEQUENCE,
-            .looping = 0,
             .data.custom = {
                 .sequence = {
                     COMMAND_BOTH_UP,
                     0xDE, 0xF4, 0x01,
                     COMMAND_BOTH_DOWN,
                 },
+                .looping = 0,
                 .sequence_length = 3,
             },
         },
         [0] = {
             .type = BINDING_CUSTOM_SEQUENCE,
-            .looping = 1,
             .data.custom = {
                 .sequence = {
                     COMMAND_LEFT_WAVE,
@@ -71,6 +70,7 @@ button_config_t button_config = {
                     COMMAND_RIGHT_WAVE,
                     0xDE, 0xF4, 0x01,
                 },
+                .looping = 1,
                 .sequence_length = 4,
             },
         },
@@ -93,7 +93,7 @@ void read_input_on_boot() {
     input_state.button_state = (uint8_t)gpio_get_level(BUTTON_INPUT);
 }
 
-void input_read_task() {
+void input_read_task(void* args) {
     int64_t last_press_time_us = 0;
     // literally just using a 16 bit value so you cant overflow
     // 255 would already be hard, but... just in case i guess
@@ -101,7 +101,7 @@ void input_read_task() {
     for (;;) {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
 
-        if (button_config.custom_actions_enabled == false) {
+        if (!button_config.custom_actions_enabled) {
             if (level == input_state.button_state)
                 return;
 
@@ -144,7 +144,8 @@ void input_read_task() {
                 if (binding.type == BINDING_BUILTIN)
                     xQueueSend(command_output_queue, &binding.data.builtin, 0);
                 else if (binding.type == BINDING_CUSTOM_SEQUENCE)
-                    xQueueSend(custom_command_queue_handle, &binding.data.custom, 0);
+                    request_command_submission(&binding.data.custom);
+                // xQueueSend(custom_command_queue_handle, &binding.data.custom, 0);
 
 
                 press_counter = 0;

@@ -50,6 +50,10 @@ typedef struct {
 extern TaskHandle_t custom_command_task_handle;
 extern QueueHandle_t custom_command_queue_handle;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 BaseType_t request_command_submission(custom_command_data_t* cmd);
 void request_command_cancellation();
@@ -57,6 +61,10 @@ void init_custom_command_queue();
 uint8_t get_custom_command_executing();
 
 
-void custom_command_task();
+void custom_command_task(void* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

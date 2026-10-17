@@ -41,6 +41,8 @@ BaseType_t request_command_submission(custom_command_data_t* cmd) {
 
     return ret;
 }
+
+
 void request_command_cancellation() {
     xSemaphoreTake(custom_mutex_handle, portMAX_DELAY);
 
@@ -60,7 +62,7 @@ void request_command_cancellation() {
  */
 static uint8_t wait_for_command_completion(uint16_t delay) {
     uint8_t is_delay = delay != 0;
-    uint32_t bits = NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT;
+    uint32_t bits = is_delay ? NOTIFY_BUTTON_INTERRUPT_BIT : (NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT);
 
     uint8_t cancelled = 0;
     TickType_t remaining = pdMS_TO_TICKS(delay);
@@ -104,13 +106,18 @@ void init_custom_command_queue() {
 }
 
 uint8_t get_custom_command_executing() {
-    return cmd_state == COMMAND_RUNNING;
+    return cmd_state != COMMAND_IDLE;
 }
 
-void custom_command_task() {
+void custom_command_task(void* args) {
     custom_command_data_t cmd_data;
     for (;;) {
         if (xQueueReceive(custom_command_queue_handle, &cmd_data, portMAX_DELAY)) {
+
+            // clear stale notifs
+            uint32_t _;
+            xTaskNotifyWait(0, NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT, &_, 0);
+
             // loop through each value of the cmd
             // sequence_index will be equal to i until a delay is encountered (3 bytes vs 1 byte)
             uint8_t sequence_index = 0;
@@ -133,17 +140,13 @@ void custom_command_task() {
                     sequence_index += 1;
                 }
 
-                if (sequence_cancelled) {
-                    // ESP_LOGD("CUST", "Command cancelled\n");
-                    printf("Cancelled\n");
+                if (sequence_cancelled)
                     break;
-                }
 
                 // loop forever if looping is enabled
                 if ((i == (cmd_data.sequence_length - 1)) && cmd_data.looping) {
                     i = -1;
                     sequence_index = 0;
-                    printf("Looping\n");
                     continue;
                 }
             }
@@ -156,7 +159,6 @@ void custom_command_task() {
             uint8_t was_cancelled = sequence_cancelled || cmd_state == COMMAND_STOPPING;
 
             // cleanup leftover notify from before mutex is aquired
-            uint32_t _;
             xTaskNotifyWait(0, NOTIFY_BUTTON_INTERRUPT_BIT, &_, 0);
 
             if (was_cancelled)

@@ -74,6 +74,7 @@ void loop() {
       (millis() > (authTimer + AUTH_TIME_MS))) {
     NimBLEDevice::getServer()->disconnect(authConnInfo);
     authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+    auth_status = AuthState::UNCLAIMED;
   }
 
   if (otaUpdateRestartQueued && millis() > (updateRestartTimer + 3000))

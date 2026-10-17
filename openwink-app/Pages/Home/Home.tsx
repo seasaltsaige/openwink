@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, OnboardingStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, OnboardingStore, QuickLinksStore, SleepyEyeStore } from "../../Storage";
 
 import {
   EditQuickLinksModal,
@@ -26,6 +26,7 @@ import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
 import { Onboarding } from "../Onboarding/Onboarding";
 import { UpdatingStatus } from "../../helper/Types";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Home() {
 

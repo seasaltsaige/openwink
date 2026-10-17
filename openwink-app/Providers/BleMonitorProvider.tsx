@@ -489,6 +489,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
           const passkeyUpdate = base64.decode(char.value);
           if (passkeyUpdate.length === 0) return;
           DeviceUUIDStore.set(passkeyUpdate);
+          DeviceMACStore.setMAC(device.id);
         } catch (error) {
           console.error("Error decoding PASSKEY_UUID value:", error);
         }
@@ -704,16 +705,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
           base64.encode(CustomOEMButtonStore.getLooping(i as Presses) ? "1" : "0"),
         )
       }
-
-      await sleep(20);
-
-      // Write looping status next
-      const isLooped = CustomOEMButtonStore.getLooping(i as Presses);
-      await device.writeCharacteristicWithoutResponseForService(
-        ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-        // 1 for looped, 0 for not looped
-        base64.encode(isLooped ? "1" : "0"),
-      )
     }
 
     // Write stored delay value

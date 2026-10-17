@@ -13,8 +13,7 @@
 
 #define MOVE_TIME_LIMIT_MS 1000
 
-typedef struct feedback_stats
-{
+typedef struct feedback_stats {
     int64_t left_move_time;
     int64_t right_move_time;
     uint8_t left_moving;
@@ -25,10 +24,19 @@ extern EventGroupHandle_t movement_event;
 extern TaskHandle_t left_feedback_task;
 extern TaskHandle_t right_feedback_task;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 void monitor_gpio_init();
 void monitor_event_group_init();
 
-void left_monitor_task();
-void right_monitor_task();
+void left_monitor_task(void* args);
+void right_monitor_task(void* args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

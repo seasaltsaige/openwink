@@ -35,7 +35,7 @@ void monitor_gpio_init() {
     gpio_config(&feedback_config);
 }
 
-void left_monitor_task() {
+void left_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
     for (;;) {
@@ -57,7 +57,7 @@ void left_monitor_task() {
     }
 }
 
-void right_monitor_task() {
+void right_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
     for (;;) {
