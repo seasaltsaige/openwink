@@ -18,6 +18,8 @@ static HeadlightCommandCallbacks default_cmd_callbacks;
 static CustomCommandCallbacks custom_cmd_callbacks;
 
 
+static CustomButtonCallbacks custom_btn_callbacks;
+
 static AuthCallbacks auth_callbacks;
 
 SemaphoreHandle_t status_lock;
@@ -60,8 +62,10 @@ extern "C" uint8_t ble_init(const char* name) {
     wink_service->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::WRITE_NR);
     wink_service->getCharacteristic(CUSTOM_COMMAND_UUID)->setCallbacks(&custom_cmd_callbacks);
 
+    settings_service->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
+    settings_service->getCharacteristic(CUSTOM_BUTTON_UPDATE_UUID)->setCallbacks(&custom_btn_callbacks);
 
-    settings_service->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::NOTIFY);
+    settings_service->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(PASSKEY_UUID)->setCallbacks(&auth_callbacks);
 
     return BLE_INIT_SUCCESS;

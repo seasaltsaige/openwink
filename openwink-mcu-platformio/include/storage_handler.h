@@ -4,6 +4,8 @@
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 
+#include "button_bindings.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,12 +26,10 @@ void get_nvs_button_delay(uint16_t* delay);
 void set_nvs_binding(const button_binding_t* binding, uint8_t pos);
 void get_nvs_binding(button_binding_t* binding, uint8_t pos);
 void delete_nvs_binding(uint8_t pos);
+void load_nvs_button_config(button_config_t* config);
 
-
-// nvs init seeding
-void set_nvs_seed();
 int8_t get_nvs_seeded();
-void delete_nvs_seed();
+void seed_nvs_defaults();
 
 #ifdef __cplusplus
 }

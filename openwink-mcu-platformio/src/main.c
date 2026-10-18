@@ -1,6 +1,7 @@
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 
+#include "aux_input.h"
 #include "ble/ble_handler.h"
 #include "ble/pairing_auth.h"
 #include "button_input.h"
@@ -24,7 +25,11 @@ void app_main() {
     init_command_queue();
     init_custom_command_queue();
 
+    // handles storage seeding for button bindings
     init_nvs_storage();
+
+    // initialize button bindings
+    init_button_bindings();
 
     // read initial input states
     // TODO: Add aux

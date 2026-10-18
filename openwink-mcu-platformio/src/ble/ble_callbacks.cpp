@@ -1,12 +1,15 @@
-#include <NimBLEDevice.h>
+#include <FreeRTOSConfig.h>
+#include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
+
+#include <NimBLEDevice.h>
 #include <algorithm>
 
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
 #include "ble/pairing_auth.h"
-
+#include "button_bindings.h"
 #include "command_output.h"
 #include "custom_command_output.h"
 
@@ -78,6 +81,40 @@ void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimB
     uint8_t validate_res = validate_custom_command(&command, d.size());
     if (validate_res == 0)
         request_command_submission(&command);
+}
+
+void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    NimBLEAttValue d = pCharacteristic->getValue();
+    const uint8_t* data = d.data();
+
+    // must be at least 2 bytes long to delete a binding
+    if (d.size() < 2)
+        return;
+
+    // first byte represents binding pos
+    // there can only be 8 bindings
+    if (data[0] > 7)
+        return;
+
+    button_binding_t binding{};
+
+    // if we have a deletion packet, we dont really need to check much else
+    // just send it
+    if (data[1] == DELETE_BINDING_FLAG) {
+        delete_binding_at_pos(data[0]);
+        return;
+    }
+
+    size_t copy_size = std::min<size_t>(sizeof(button_binding_t), (d.size() - BINDING_POS_LEN));
+    // copy from offset of pos
+    memcpy(&binding, (data + BINDING_POS_LEN), copy_size);
+
+    uint8_t validate_result = validate_button_binding(&binding, (d.size() - BINDING_POS_LEN));
+    if (validate_result == 0)
+        set_binding_at_pos(&binding, data[0]);
 }
 
 

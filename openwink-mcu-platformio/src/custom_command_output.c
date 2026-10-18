@@ -169,7 +169,7 @@ void custom_command_task(void* args) {
 
             // loop through each value of the cmd
             // sequence_index will be equal to i until a delay is encountered (3 bytes vs 1 byte)
-            uint8_t sequence_index = 0;
+            size_t sequence_index = 0;
             uint8_t sequence_cancelled = 0;
 
             for (int8_t i = 0; i < cmd_data.sequence_length; i++) {

@@ -13,6 +13,7 @@ auth_state_t auth_state = AUTH_UNPAIRED;
 static uint8_t active_key[AUTH_KEY_LEN];
 
 static uint8_t key_received_flag = 0;
+static uint8_t received_key_valid = 0;
 static uint8_t client_subscribed = 0;
 static uint8_t received_key[AUTH_KEY_LEN];
 
@@ -61,16 +62,22 @@ void generate_token(uint8_t* data, size_t size) {
 }
 
 void begin_auth_on_connection() {
+    xSemaphoreTake(auth_lock, portMAX_DELAY);
     key_received_flag = 0;
+    received_key_valid = 0;
     client_subscribed = 0;
+    memset(active_key, 0, AUTH_KEY_LEN);
+    memset(received_key, 0, AUTH_KEY_LEN);
 
-    uint8_t paired = device_key_exists();
+    uint8_t paired = device_nvs_key_exists();
     if (paired) {
         // already paired, expecting client to send token
-        get_device_key(active_key, AUTH_KEY_LEN);
+        get_nvs_device_key(active_key, AUTH_KEY_LEN);
+        xSemaphoreGive(auth_lock);
         set_auth_state(AUTH_WAIT_TOK);
     } else {
         generate_token(active_key, AUTH_KEY_LEN);
+        xSemaphoreGive(auth_lock);
         // Send token to client
         set_auth_state(AUTH_SEND_TOK);
     }
@@ -78,30 +85,42 @@ void begin_auth_on_connection() {
 
 void reset_auth_on_disconnect() {
     set_auth_state(AUTH_UNPAIRED);
+
+    xSemaphoreTake(auth_lock, portMAX_DELAY);
     // clear keys
     memset(active_key, 0, AUTH_KEY_LEN);
     memset(received_key, 0, AUTH_KEY_LEN);
 
     // reset state management
     key_received_flag = 0;
+    received_key_valid = 0;
     client_subscribed = 0;
+    xSemaphoreGive(auth_lock);
 }
 
 void client_subscribed_auth() {
+    xSemaphoreTake(auth_lock, portMAX_DELAY);
     client_subscribed = 1;
+    xSemaphoreGive(auth_lock);
 }
 
 
 void handle_passkey_write(const uint8_t* data, uint16_t size) {
+    xSemaphoreTake(auth_lock, portMAX_DELAY);
     // clear data first
     memset(received_key, 0, AUTH_KEY_LEN);
 
     // copy data to received key section for comparison only if length matches
-    if (size == AUTH_KEY_LEN)
+    if (data != NULL && size == AUTH_KEY_LEN) {
         memcpy(received_key, data, AUTH_KEY_LEN);
+        received_key_valid = 1;
+    } else {
+        received_key_valid = 0;
+    }
 
     // alert task key has been written
     key_received_flag = 1;
+    xSemaphoreGive(auth_lock);
 }
 
 void auth_task(void* args) {
@@ -122,9 +141,14 @@ void auth_task(void* args) {
         // if there is a device connected and we have not been authorized yet
         if (get_device_status() == CONNECTED && auth_state != AUTH_ESTABLISHED) {
 
-            // we are in send state, and client has now subscribed to notifications
-            if (auth_state == AUTH_SEND_TOK && client_subscribed) {
+            xSemaphoreTake(auth_lock, portMAX_DELAY);
+            uint8_t subscribed = client_subscribed;
+            if (auth_state == AUTH_SEND_TOK && subscribed)
                 client_subscribed = 0;
+            xSemaphoreGive(auth_lock);
+
+            // we are in send state, and client has now subscribed to notifications
+            if (auth_state == AUTH_SEND_TOK && subscribed) {
                 // notify client of token
                 ble_notify_passkey(active_key, AUTH_KEY_LEN);
                 // begin wait for token echo
@@ -133,13 +157,22 @@ void auth_task(void* args) {
                 time = esp_timer_get_time();
             }
 
-            // we have received a key in some capacity
-            if (key_received_flag) {
+            xSemaphoreTake(auth_lock, portMAX_DELAY);
+            uint8_t has_key = key_received_flag;
+            uint8_t key_matches = 0;
+            if (has_key) {
                 key_received_flag = 0;
-                if (memcmp(active_key, received_key, AUTH_KEY_LEN) == 0) {
-                    // commit to nvs
+                key_matches = (received_key_valid && active_key[0] != 0 && memcmp(active_key, received_key, AUTH_KEY_LEN) == 0);
+                received_key_valid = 0;
+            }
+            xSemaphoreGive(auth_lock);
+
+            // we have received a key in some capacity
+            if (has_key) {
+                if (key_matches) {
+                    // commit to nvs ONLY if an echo
                     if (auth_state == AUTH_WAIT_ECHO)
-                        set_device_key(active_key, AUTH_KEY_LEN);
+                        set_nvs_device_key(active_key, AUTH_KEY_LEN);
 
                     set_auth_state(AUTH_ESTABLISHED);
                     continue;
@@ -150,7 +183,10 @@ void auth_task(void* args) {
                 }
             }
 
-            if ((esp_timer_get_time() - time) >= (AUTH_TIMEOUT_MS * 1000)) {
+            auth_state_t curr_state = get_auth_state();
+
+            if ((curr_state != AUTH_WAIT_ECHO && (esp_timer_get_time() - time) >= (AUTH_INIT_TIMEOUT_MS * 1000)) ||
+            (curr_state == AUTH_WAIT_ECHO && (esp_timer_get_time() - time) >= (AUTH_ECHO_TIMEOUT_MS * 1000))) {
                 ble_disconnect();
                 set_auth_state(AUTH_UNPAIRED);
             }

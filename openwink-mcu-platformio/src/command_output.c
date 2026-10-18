@@ -13,6 +13,9 @@ void init_command_queue() {
     command_output_queue = xQueueCreate(20, sizeof(command_types_t));
 }
 
+// TODO: Add helper function similar to custom command to request submisison?
+// maybe to abstract away the queue... not sure
+
 
 static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final) {
     movement_target_t move = {

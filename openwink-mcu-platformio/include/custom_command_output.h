@@ -1,12 +1,13 @@
 #ifndef CUSTOM_COMMAND_OUTPUT_H
 #define CUSTOM_COMMAND_OUTPUT_H
 
-#include "command_output.h"
-
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
+
+#include "ble/ble_handler.h"
+#include "command_output.h"
 
 #define LOOPING_BIT (1UL << 8)
 #define NOTIFY_BUTTON_INTERRUPT_BIT (1UL << 0)
@@ -31,10 +32,9 @@
 // yeah i think 1 byte at the start will be 0 or 1 for looping, set in struct
 // 1 byte for length too? too confusing to parse it, just use 1 more byte (still 60 max len)
 // then remaining 180 bytes are payload data
-#define ATT_MTU (185)
 #define LOOPING_BYTE_COUNT 1
 #define PAYLOAD_SIZE_BYTE_COUNT 1
-#define PAYLOAD_MAX ((ATT_MTU - LOOPING_BYTE_COUNT - PAYLOAD_SIZE_BYTE_COUNT) - 3)
+#define PAYLOAD_MAX ((MAX_ATT_MTU - LOOPING_BYTE_COUNT - PAYLOAD_SIZE_BYTE_COUNT) - ATT_HEADER_LEN)
 #define MAX_SEQUENCE_LENGTH (PAYLOAD_MAX / 3)// absolute max of 60 delay slots
 // includes 1 byte of flags (looping)
 // and 1 byte indicating sequence length

@@ -53,7 +53,9 @@
 
 // iOS limits, just stick with that i think...
 #define MAX_ATT_MTU 185
-#define MAX_LL_DATA 189
+#define ATT_HEADER_LEN 3
+#define LL_HEADER_LEN 4
+#define MAX_LL_DATA (MAX_ATT_MTU + LL_HEADER_LEN)
 
 
 #define DEVICE_NAME "OpenWink"

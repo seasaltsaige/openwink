@@ -1,5 +1,7 @@
 #include "aux_input.h"
 
+TaskHandle_t aux_one_task_handle;
+TaskHandle_t aux_two_task_handle;
 
 aux_buttons_t aux_buttons = {
     .status = DISABLED,

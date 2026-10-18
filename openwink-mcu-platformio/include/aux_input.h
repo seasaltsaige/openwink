@@ -12,8 +12,8 @@
 #define AUX_ONE_INPUT GPIO_NUM_14
 #define AUX_TWO_INPUT GPIO_NUM_21
 
-TaskHandle_t aux_one_task_handle;
-TaskHandle_t aux_two_task_handle;
+extern TaskHandle_t aux_one_task_handle;
+extern TaskHandle_t aux_two_task_handle;
 
 typedef enum AUX_SIDE : uint8_t {
     ONE,

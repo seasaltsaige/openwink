@@ -44,6 +44,8 @@ void input_read_task(void* args) {
                 else
                     cmd = COMMAND_BOTH_DOWN;
 
+                input_state.button_state = level;
+
                 xQueueSend(command_output_queue, &cmd, 0);
             }
         } else {
@@ -81,13 +83,13 @@ void input_read_task(void* args) {
                         press_counter = 9;
                 }
 
-                button_binding_t binding = get_binding_at_pos(press_counter - 2);
+                button_binding_t binding;
+                get_binding_at_pos(&binding, press_counter - 2);
 
                 if (binding.type == BINDING_BUILTIN)
                     xQueueSend(command_output_queue, &binding.data.builtin, 0);
                 else if (binding.type == BINDING_CUSTOM_SEQUENCE)
                     request_command_submission(&binding.data.custom);
-                // xQueueSend(custom_command_queue_handle, &binding.data.custom, 0);
 
 
                 press_counter = 0;
