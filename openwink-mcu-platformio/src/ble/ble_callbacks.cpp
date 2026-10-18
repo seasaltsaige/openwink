@@ -1,6 +1,8 @@
 #include <NimBLEDevice.h>
 #include <freertos/queue.h>
 
+#include <algorithm>
+
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
 #include "ble/pairing_auth.h"
@@ -14,8 +16,9 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
     pServer->setDataLen(connInfo.getConnHandle(), MAX_LL_DATA);
 
     set_device_status(CONNECTED);
-    // TODO: Based on nvs state, wait for token/claim seq
-    begin_auth_on_connection();
+
+    set_auth_state(AUTH_ESTABLISHED);
+    // begin_auth_on_connection();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -64,9 +67,17 @@ void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimB
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
-    custom_command_data_t* command = (custom_command_data_t*)data;
-    // handle fail case in the future?
-    request_command_submission(command);
+    if (d.size() < 1)
+        return;
+
+    // copy data up to max size
+    custom_command_data_t command{};
+    size_t copy_size = std::min<size_t>(CUSTOM_CMD_HEADER_LENGTH + PAYLOAD_MAX, d.size());
+    memcpy(&command, data, copy_size);
+
+    uint8_t validate_res = validate_custom_command(&command, d.size());
+    if (validate_res == 0)
+        request_command_submission(&command);
 }
 
 

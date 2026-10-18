@@ -54,8 +54,8 @@ extern QueueHandle_t custom_command_queue_handle;
 extern "C" {
 #endif
 
-
-uint8_t validate_custom_command(custom_command_data_t* cmd);
+// returns 0 for success and 1 for any invalid commands
+uint8_t validate_custom_command(custom_command_data_t* cmd, size_t received_size);
 BaseType_t request_command_submission(custom_command_data_t* cmd);
 void request_command_cancellation();
 void init_custom_command_queue();
