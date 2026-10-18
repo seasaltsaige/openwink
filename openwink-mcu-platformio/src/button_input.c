@@ -36,18 +36,16 @@ void input_read_task(void* args) {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
 
         if (!get_custom_button_status()) {
-            if (level == input_state.button_state)
-                continue;
+            if (level != input_state.button_state) {
+                command_t cmd = COMMAND_NONE;
 
-            command_t cmd = COMMAND_NONE;
+                if (level == HIGH)
+                    cmd = COMMAND_BOTH_UP;
+                else
+                    cmd = COMMAND_BOTH_DOWN;
 
-            if (level == HIGH)
-                cmd = COMMAND_BOTH_UP;
-            else
-                cmd = COMMAND_BOTH_DOWN;
-
-            xQueueSend(command_output_queue, &cmd, 0);
-
+                xQueueSend(command_output_queue, &cmd, 0);
+            }
         } else {
 
             if (input_state.button_state != level) {
@@ -71,6 +69,16 @@ void input_read_task(void* args) {
 
                     press_counter = 0;
                     continue;
+                }
+
+                if (press_counter > 9) {
+                    // swap orientation
+                    if (press_counter == 12) {
+
+                        // module reset
+                    } else if (press_counter == 20) {
+                    } else
+                        press_counter = 9;
                 }
 
                 button_binding_t binding = get_binding_at_pos(press_counter - 2);
