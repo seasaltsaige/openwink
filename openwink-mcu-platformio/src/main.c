@@ -25,13 +25,14 @@ void app_main() {
     init_custom_command_queue();
 
     init_nvs_storage();
+
+    // read initial input states
+    // TODO: Add aux
     read_input_on_boot();
 
+    // BLE related init
+    init_auth();
     ble_init(DEVICE_NAME);
-    begin_advertising();
-
-    init_pairing();
-
 
     output_args_t left_args = {
         .down_pin = OUT_PIN_LEFT_DOWN,
@@ -61,7 +62,10 @@ void app_main() {
     xTaskCreate(handle_command_task, "DEF_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &command_output_task);
     // least important task to execute
     xTaskCreate(custom_command_task, "CUS_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 2, &custom_command_task_handle);
-    xTaskCreate(auth_task, "AUTH_TASK", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, &auth_task_handle);
+    xTaskCreate(auth_task, "AUTH_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &auth_task_handle);
+
+    // finally start advertising self
+    begin_advertising();
 
     // main task doesnt need to do anything really.
     // perhaps it can handle auth in the future,

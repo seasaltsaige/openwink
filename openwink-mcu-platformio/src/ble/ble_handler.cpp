@@ -13,8 +13,12 @@ static NimBLEService* settings_service = nullptr;
 static NimBLEExtAdvertising* advertising = nullptr;
 
 static ServerCallbacks server_callbacks;
+
 static HeadlightCommandCallbacks default_cmd_callbacks;
 static CustomCommandCallbacks custom_cmd_callbacks;
+
+
+static AuthCallbacks auth_callbacks;
 
 SemaphoreHandle_t status_lock;
 openwink_status_t openwink_status = DISCONNECTED;
@@ -33,11 +37,6 @@ openwink_status_t get_device_status() {
 extern "C" uint8_t ble_init(const char* name) {
     if (status_lock == NULL)
         status_lock = xSemaphoreCreateMutex();
-
-    // xSemaphoreTake(statu)
-    // keep track
-    // if (openwink_status != DISCONNECTED)
-    // return BLE_INIT_ALREADY_INITIALIZED;
 
     std::string n = std::string(name);
     bool success = NimBLEDevice::init(name);
@@ -62,13 +61,23 @@ extern "C" uint8_t ble_init(const char* name) {
     wink_service->getCharacteristic(CUSTOM_COMMAND_UUID)->setCallbacks(&custom_cmd_callbacks);
 
 
+    settings_service->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::NOTIFY);
+    settings_service->getCharacteristic(PASSKEY_UUID)->setCallbacks(&auth_callbacks);
+
     return BLE_INIT_SUCCESS;
 }
 
 
 extern "C" void begin_advertising() {
-    openwink_server->start();
 
+    // if advertising has been started previously before reboot/deep sleep
+    // just start it again.
+    if (advertising != nullptr) {
+        advertising->start(0);
+        return;
+    }
+
+    openwink_server->start();
 
     NimBLEExtAdvertisement adv;
 
@@ -111,4 +120,24 @@ extern "C" void ble_disconnect() {
     }
 
     set_device_status(DISCONNECTED);
+}
+
+extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
+    if (openwink_status == DISCONNECTED)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* settings = pServer->getServiceByUUID(MODULE_SETTINGS_SERVICE_UUID);
+    if (settings == NULL)
+        return;
+
+    NimBLECharacteristic* passkey = settings->getCharacteristic(PASSKEY_UUID);
+    if (passkey == NULL)
+        return;
+
+    passkey->setValue(key, size);
+    passkey->notify();
 }

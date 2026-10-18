@@ -15,12 +15,14 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 
     set_device_status(CONNECTED);
     // TODO: Based on nvs state, wait for token/claim seq
-    set_pairing_state(AUTH_WAIT_TOKEN);
-    // set_pairing_state()
+    begin_auth_on_connection();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
     // Handle disconnect
+    set_device_status(DISCONNECTED);
+    reset_auth_on_disconnect();
+    begin_advertising();
 }
 
 void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {
@@ -41,6 +43,9 @@ void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uin
 
 // TODO: ADD GUARDS TO ALL CALLBACKS REQUIRING AUTH STATE
 void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
@@ -53,10 +58,29 @@ void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, N
 }
 
 void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
     custom_command_data_t* command = (custom_command_data_t*)data;
     // handle fail case in the future?
     request_command_submission(command);
+}
+
+
+void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    // writes should only do something if specifically waiting for it
+    if (get_auth_state() != AUTH_WAIT_TOK && get_auth_state() != AUTH_WAIT_ECHO)
+        return;
+
+    NimBLEAttValue val = pCharacteristic->getValue();
+    handle_passkey_write(val.data(), val.size());
+}
+
+// Only notify key once subscription is established
+void AuthCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
+    if ((subValue & 0x0001) != 0)
+        client_subscribed_auth();
 }

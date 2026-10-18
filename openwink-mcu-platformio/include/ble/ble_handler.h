@@ -88,6 +88,8 @@ void ble_disconnect();
 void set_device_status(openwink_status_t status);
 openwink_status_t get_device_status();
 
+void ble_notify_passkey(uint8_t* key, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

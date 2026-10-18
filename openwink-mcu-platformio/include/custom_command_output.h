@@ -55,6 +55,7 @@ extern "C" {
 #endif
 
 
+uint8_t validate_custom_command(custom_command_data_t* cmd);
 BaseType_t request_command_submission(custom_command_data_t* cmd);
 void request_command_cancellation();
 void init_custom_command_queue();
