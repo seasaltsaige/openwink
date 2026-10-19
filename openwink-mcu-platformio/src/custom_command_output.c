@@ -113,50 +113,50 @@ uint8_t get_custom_command_executing() {
 
 uint8_t validate_custom_command(custom_command_data_t* cmd, size_t received_size) {
     if (cmd == NULL)
-        return 1;
+        return 0;
 
     // max and min size checks
     if (received_size <= CUSTOM_CMD_HEADER_LENGTH || received_size > (CUSTOM_CMD_HEADER_LENGTH + PAYLOAD_MAX))
-        return 1;
+        return 0;
 
 
     if (cmd->looping != 0 && cmd->looping != 1)
-        return 1;
+        return 0;
 
     size_t payload_bytes = received_size - CUSTOM_CMD_HEADER_LENGTH;
     if (cmd->sequence_length == 0 || cmd->sequence_length > payload_bytes)
-        return 1;
+        return 0;
 
     size_t sequence_index = 0;
     for (uint8_t i = 0; i < cmd->sequence_length; i++) {
         if (sequence_index >= payload_bytes)
-            return 1;
+            return 0;
 
         uint8_t current = cmd->sequence[sequence_index];
 
         if (current == DELAY_PREFIX) {
             // delays require 3 bytes total
             if ((sequence_index + 2) >= payload_bytes)
-                return 1;
+                return 0;
 
             uint16_t delay = (cmd->sequence[sequence_index + 1] << 0) | (cmd->sequence[sequence_index + 2] << 8);
 
             if (delay == 0)
-                return 1;
+                return 0;
 
             sequence_index += 3;
         } else if (current >= COMMAND_BOTH_UP && current <= COMMAND_SLEEPY_EYE) {
             sequence_index += 1;
         } else {
             // Unknown command byte
-            return 1;
+            return 0;
         }
     }
 
     if (sequence_index != payload_bytes)
-        return 1;
+        return 0;
 
-    return 0;
+    return 1;
 }
 
 void custom_command_task(void* args) {

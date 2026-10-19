@@ -12,6 +12,7 @@
 #include "button_bindings.h"
 #include "command_output.h"
 #include "custom_command_output.h"
+#include "output_handler.h"
 
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
@@ -78,7 +79,7 @@ void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimB
     memcpy(&command, data, copy_size);
 
     uint8_t validate_res = validate_custom_command(&command, d.size());
-    if (validate_res == 0)
+    if (validate_res)
         request_command_submission(&command);
 }
 
@@ -112,12 +113,27 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
     memcpy(&binding, (data + BINDING_POS_LEN), copy_size);
 
     uint8_t validate_result = validate_button_binding(&binding, (d.size() - BINDING_POS_LEN));
-    if (validate_result == 0)
+    if (validate_result)
         set_binding_at_pos(&binding, data[0]);
 }
 
 
 void SleepySettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    NimBLEAttValue d = pCharacteristic->getValue();
+
+    // SHOULD be in format of [left][right]
+    const uint8_t* data = d.data();
+
+    uint8_t res = validate_sleepy_values(data, d.size());
+    if (res) {
+        set_sleepy_eye_values(data[0], data[1]);
+    }
+
+
+    // set_sleepy_eye_values();
 }
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {

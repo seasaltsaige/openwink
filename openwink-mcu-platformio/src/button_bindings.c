@@ -95,30 +95,30 @@ uint16_t get_custom_button_delay() {
 }
 
 
-// returns 0 for success and 1 for any errors/invalid bindings
+// returns 1 for success and 0 for any errors/invalid bindings
 uint8_t validate_button_binding(button_binding_t* binding, size_t size) {
 
     if (binding == NULL)
-        return 1;
+        return 0;
 
     if (size < MIN_BINDING_PAYLOAD_LEN || size > sizeof(button_binding_t))
-        return 1;
+        return 0;
 
 
     // BINDING_SETTING is not valid for an OEM button binding
     // only applys for AUX buttons (eg: using a toggle switch to change a setting)
     if (binding->type > BINDING_CUSTOM_SEQUENCE)
-        return 1;
+        return 0;
 
     // default to fail
-    uint8_t cmd_val_res = 1;
+    uint8_t cmd_val_res = 0;
     // if we have a custom command binding, just use the custom command validator
     if (binding->type == BINDING_CUSTOM_SEQUENCE)
         // custom command data will have a size of whatever the rest of the packet is after the type
         cmd_val_res = validate_custom_command(&(binding->data.custom), (size - BINDING_TYP_LEN));
     else if (binding->type == BINDING_BUILTIN) {
         if ((size == (BINDING_TYP_LEN + sizeof(command_t))) && (binding->data.builtin >= COMMAND_BOTH_UP) && (binding->data.builtin <= COMMAND_SLEEPY_EYE))
-            cmd_val_res = 0;
+            cmd_val_res = 1;
     }
 
 

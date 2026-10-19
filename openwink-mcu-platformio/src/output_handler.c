@@ -15,9 +15,6 @@ EventGroupHandle_t output_event_group;
 RTC_DATA_ATTR headlight_position_t positions = {
     .left_pos = 0,
     .right_pos = 0,
-    // actually i dont know if this is really necessary
-    // for it to be at 0, the headlights must have moved
-    // down to get there... lol
     .last_left_move_dir = MOVE_DOWN,
     .last_right_move_dir = MOVE_DOWN,
 };
@@ -33,8 +30,22 @@ uint8_t is_right_sleepy() {
     return (positions.right_pos != POSITION_DOWN && positions.right_pos != POSITION_UP);
 }
 
+
+uint8_t validate_sleepy_values(const uint8_t* data, size_t size) {
+    if (data == NULL)
+        return 0;
+    if (size != SLEEPY_PACKET_LEN)
+        return 0;
+
+    if (data[0] < MIN_SLEEPY_VALUE || data[0] > MAX_SLEEPY_VALUE || data[1] < MIN_SLEEPY_VALUE || data[1] > MAX_SLEEPY_VALUE)
+        return 0;
+
+    return 1;
+}
+
+
 void set_sleepy_eye_values(uint8_t left, uint8_t right) {
-    if (left == 0 || left >= 100 || right == 0 || right >= 100)
+    if (left < MIN_SLEEPY_VALUE || left > MAX_SLEEPY_VALUE || right < MIN_SLEEPY_VALUE || right > MAX_SLEEPY_VALUE)
         return;
 
     left_sleepy_target = left;

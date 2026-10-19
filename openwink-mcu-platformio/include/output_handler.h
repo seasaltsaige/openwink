@@ -28,7 +28,13 @@
 #define RIGHT_COMPLETE_BIT BIT1
 
 
-// #define SLEEPY_PACKET_LEN
+// Max packet length for setting sleepy eyes
+// [left][right]
+// [uint8_t][uint8_t]
+// can only be values of 1 to 99 (0 and 100 dont make sense to include in the range)
+#define SLEEPY_PACKET_LEN (uint8_t)2
+#define MIN_SLEEPY_VALUE (uint8_t)1
+#define MAX_SLEEPY_VALUE (uint8_t)99
 
 
 typedef enum MOVE_TYPE : uint8_t {
@@ -89,6 +95,7 @@ void output_event_group_init();
 uint8_t is_left_sleepy();
 uint8_t is_right_sleepy();
 
+uint8_t validate_sleepy_values(const uint8_t* data, size_t size);
 void set_sleepy_eye_values(uint8_t left, uint8_t right);
 void get_sleepy_eye_values(uint8_t* left, uint8_t* right);
 
