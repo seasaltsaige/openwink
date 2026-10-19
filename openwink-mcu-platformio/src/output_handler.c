@@ -20,6 +20,14 @@ RTC_DATA_ATTR headlight_position_t positions = {
     .last_right_move_dir = MOVE_DOWN,
 };
 
+uint8_t is_left_sleepy() {
+    return (positions.left_pos != POSITION_DOWN && positions.left_pos != POSITION_UP);
+}
+
+uint8_t is_right_sleepy() {
+    return (positions.right_pos != POSITION_DOWN && positions.right_pos != POSITION_UP);
+}
+
 void outputs_init() {
     const gpio_config_t output_config = {
         .intr_type = GPIO_INTR_DISABLE,

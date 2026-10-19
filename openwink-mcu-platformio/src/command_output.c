@@ -129,8 +129,8 @@ void handle_command_task(void* args) {
             case COMMAND_RIGHT_WINK:
                 curr_pos = get_position();
                 xEventGroupClearBits(output_event_group, RIGHT_COMPLETE_BIT);
-                queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 break;
             case COMMAND_LEFT_WAVE:
@@ -179,10 +179,50 @@ void handle_command_task(void* args) {
                     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
                 break;
-            case COMMAND_LEFT_RIGHT: break;
-            case COMMAND_LEFT_RIGHT_X2: break;
-            case COMMAND_RIGHT_LEFT: break;
-            case COMMAND_RIGHT_LEFT_X2: break;
+            case COMMAND_LEFT_RIGHT:
+                curr_pos = get_position();
+                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                break;
+            case COMMAND_LEFT_RIGHT_X2:
+                curr_pos = get_position();
+                for (uint8_t i = 0; i < 2; i++) {
+                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                }
+                break;
+            case COMMAND_RIGHT_LEFT:
+                curr_pos = get_position();
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                break;
+            case COMMAND_RIGHT_LEFT_X2:
+                curr_pos = get_position();
+                for (uint8_t i = 0; i < 2; i++) {
+                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                }
+                break;
             case COMMAND_SLEEPY_EYE: break;
 
             default: break;
