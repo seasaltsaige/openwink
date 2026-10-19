@@ -80,10 +80,12 @@ void left_monitor_task(void* args) {
             if (!sleepy) {
                 // move time in ms
                 uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
-                movement_stats.left_move_time = elapsed_ms;
-                if (abs((int)elapsed_ms - (int)last_nvs_left_time) >= MOVE_TIME_DEADBAND_MS) {
-                    last_nvs_left_time = elapsed_ms;
-                    set_nvs_left_move_time(elapsed_ms);
+                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
+                    movement_stats.left_move_time = elapsed_ms;
+                    if (abs((int)elapsed_ms - (int)last_nvs_left_time) >= MOVE_TIME_DEADBAND_MS) {
+                        last_nvs_left_time = elapsed_ms;
+                        set_nvs_left_move_time(elapsed_ms);
+                    }
                 }
             }
         }
@@ -114,10 +116,12 @@ void right_monitor_task(void* args) {
             if (!sleepy) {
                 // move time in ms
                 uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
-                movement_stats.right_move_time = elapsed_ms;
-                if (abs((int)elapsed_ms - (int)last_nvs_right_time) >= MOVE_TIME_DEADBAND_MS) {
-                    last_nvs_right_time = elapsed_ms;
-                    set_nvs_right_move_time(elapsed_ms);
+                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
+                    movement_stats.right_move_time = elapsed_ms;
+                    if (abs((int)elapsed_ms - (int)last_nvs_right_time) >= MOVE_TIME_DEADBAND_MS) {
+                        last_nvs_right_time = elapsed_ms;
+                        set_nvs_right_move_time(elapsed_ms);
+                    }
                 }
             }
         }

@@ -169,13 +169,14 @@ void custom_command_task(void* args) {
             xTaskNotifyWait(0, NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT, &_, 0);
 
             uint8_t was_sleepy = is_left_sleepy() || is_right_sleepy();
-            command_t origin_sync_cmd = COMMAND_BOTH_DOWN;
+            uint8_t left_origin = POSITION_DOWN;
+            uint8_t right_origin = POSITION_DOWN;
             uint8_t sequence_cancelled = 0;
 
             if (was_sleepy) {
                 headlight_position_t init_pos = get_position();
-                move_type_t origin_dir = is_left_sleepy() ? init_pos.last_left_move_dir : init_pos.last_right_move_dir;
-                origin_sync_cmd = (origin_dir == MOVE_UP) ? COMMAND_BOTH_DOWN : COMMAND_BOTH_UP;
+                left_origin = is_left_sleepy() ? (init_pos.last_left_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : init_pos.left_pos;
+                right_origin = is_right_sleepy() ? (init_pos.last_right_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : init_pos.right_pos;
 
                 command_t exit_cmd = COMMAND_SLEEPY_EYE;
                 xQueueSend(command_output_queue, &exit_cmd, portMAX_DELAY);
@@ -217,11 +218,22 @@ void custom_command_task(void* args) {
             if (was_sleepy && !sequence_cancelled && cmd_state != COMMAND_STOPPING && !cmd_data.looping) {
                 if (!is_left_sleepy() && !is_right_sleepy()) {
                     headlight_position_t end_pos = get_position();
-                    uint8_t expected_pos = (origin_sync_cmd == COMMAND_BOTH_UP) ? POSITION_UP : POSITION_DOWN;
 
-                    if (end_pos.left_pos != expected_pos || end_pos.right_pos != expected_pos) {
-                        xQueueSend(command_output_queue, &origin_sync_cmd, portMAX_DELAY);
+                    if (left_origin == right_origin && (end_pos.left_pos != left_origin || end_pos.right_pos != right_origin)) {
+                        command_t sync_cmd = (left_origin == POSITION_UP) ? COMMAND_BOTH_UP : COMMAND_BOTH_DOWN;
+                        xQueueSend(command_output_queue, &sync_cmd, portMAX_DELAY);
                         sequence_cancelled = wait_for_command_completion(0);
+                    } else {
+                        if (end_pos.left_pos != left_origin) {
+                            command_t left_cmd = (left_origin == POSITION_UP) ? COMMAND_LEFT_UP : COMMAND_LEFT_DOWN;
+                            xQueueSend(command_output_queue, &left_cmd, portMAX_DELAY);
+                            sequence_cancelled = wait_for_command_completion(0);
+                        }
+                        if (!sequence_cancelled && cmd_state != COMMAND_STOPPING && end_pos.right_pos != right_origin) {
+                            command_t right_cmd = (right_origin == POSITION_UP) ? COMMAND_RIGHT_UP : COMMAND_RIGHT_DOWN;
+                            xQueueSend(command_output_queue, &right_cmd, portMAX_DELAY);
+                            sequence_cancelled = wait_for_command_completion(0);
+                        }
                     }
 
                     if (!sequence_cancelled && cmd_state != COMMAND_STOPPING) {

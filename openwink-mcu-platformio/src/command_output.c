@@ -92,14 +92,23 @@ static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_
     uint8_t right_sleepy = is_right_sleepy();
     *was_sleepy = (left_sleepy || right_sleepy);
 
-    if (*was_sleepy)
-        exit_sleepy_to_origin();
+    uint8_t left_origin = left_sleepy ? (saved_pos->last_left_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : saved_pos->left_pos;
+    uint8_t right_origin = right_sleepy ? (saved_pos->last_right_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : saved_pos->right_pos;
+    uint8_t target_pos = (primary_side == LEFT_SIDE) ? left_origin : right_origin;
+    move_type_t sync_dir = (target_pos == POSITION_UP) ? MOVE_UP : MOVE_DOWN;
+
+    if (*was_sleepy) {
+        move_type_t left_finish = left_sleepy ? (saved_pos->last_left_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+        move_type_t right_finish = right_sleepy ? (saved_pos->last_right_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+
+        xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
+        queue_side_move(LEFT_SIDE, left_finish, false);
+        queue_side_move(RIGHT_SIDE, right_finish, false);
+        xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
 
     headlight_position_t curr = get_position();
-    if (curr.left_pos != curr.right_pos) {
-        uint8_t primary_pos = (primary_side == LEFT_SIDE) ? curr.left_pos : curr.right_pos;
-        move_type_t sync_dir = (primary_pos == POSITION_UP) ? MOVE_UP : MOVE_DOWN;
-
+    if (curr.left_pos != target_pos || curr.right_pos != target_pos) {
         xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
         queue_side_move(LEFT_SIDE, sync_dir, false);
         queue_side_move(RIGHT_SIDE, sync_dir, false);
@@ -111,13 +120,30 @@ static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos,
     if (!was_sleepy)
         return;
 
+    uint8_t left_was_sleepy = (saved_pos->left_pos != POSITION_DOWN && saved_pos->left_pos != POSITION_UP);
+    uint8_t right_was_sleepy = (saved_pos->right_pos != POSITION_DOWN && saved_pos->right_pos != POSITION_UP);
+
+    uint8_t left_origin = left_was_sleepy ? (saved_pos->last_left_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : saved_pos->left_pos;
+    uint8_t right_origin = right_was_sleepy ? (saved_pos->last_right_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : saved_pos->right_pos;
+
+    headlight_position_t curr = get_position();
+    if (curr.left_pos != left_origin || curr.right_pos != right_origin) {
+        move_type_t left_dir = (curr.left_pos != left_origin) ? (left_origin == POSITION_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+        move_type_t right_dir = (curr.right_pos != right_origin) ? (right_origin == POSITION_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+
+        xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
+        queue_side_move(LEFT_SIDE, left_dir, false);
+        queue_side_move(RIGHT_SIDE, right_dir, false);
+        xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
+
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
-    if (saved_pos->left_pos != POSITION_DOWN && saved_pos->left_pos != POSITION_UP)
+    if (left_was_sleepy)
         queue_side_partial_move(LEFT_SIDE, saved_pos->left_pos, false);
     else
         queue_side_move(LEFT_SIDE, MOVE_NOP, false);
 
-    if (saved_pos->right_pos != POSITION_DOWN && saved_pos->right_pos != POSITION_UP)
+    if (right_was_sleepy)
         queue_side_partial_move(RIGHT_SIDE, saved_pos->right_pos, false);
     else
         queue_side_move(RIGHT_SIDE, MOVE_NOP, false);

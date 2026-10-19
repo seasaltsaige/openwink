@@ -33,9 +33,6 @@ static const char* binding_keys[NUM_BINDINGS] = {
     "bind_7",
 };
 
-
-// ---- Internal Static NVS Helpers ---- //
-
 static esp_err_t open(nvs_open_mode_t mode) {
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
     esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
