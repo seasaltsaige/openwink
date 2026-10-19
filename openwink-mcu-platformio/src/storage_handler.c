@@ -1,6 +1,7 @@
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/FreeRTOSConfig.h>
+#include <freertos/semphr.h>
 #include <nvs_flash.h>
 #include <string.h>
 
@@ -8,6 +9,7 @@
 #include "storage_handler.h"
 
 static nvs_handle_t storage_handle;
+static SemaphoreHandle_t nvs_lock;
 
 // "openwink namespace"
 static const char* nvs_namespace = "ow_ns";
@@ -16,6 +18,10 @@ static const char* nvs_seeded = "seed";
 static const char* auth_key = "auth";
 static const char* btn_status_key = "btn_en";
 static const char* btn_delay_key = "btn_delay";
+static const char* left_sleepy_key = "sleep_l";
+static const char* right_sleepy_key = "sleep_r";
+static const char* left_time_key = "time_l";
+static const char* right_time_key = "time_r";
 static const char* binding_keys[NUM_BINDINGS] = {
     "bind_0",
     "bind_1",
@@ -31,11 +37,16 @@ static const char* binding_keys[NUM_BINDINGS] = {
 // ---- Internal Static NVS Helpers ---- //
 
 static esp_err_t open(nvs_open_mode_t mode) {
-    return nvs_open(nvs_namespace, mode, &storage_handle);
+    xSemaphoreTake(nvs_lock, portMAX_DELAY);
+    esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
+    if (err != ESP_OK)
+        xSemaphoreGive(nvs_lock);
+    return err;
 }
 
 static void close() {
     nvs_close(storage_handle);
+    xSemaphoreGive(nvs_lock);
 }
 
 static void write_u8(const char* key, uint8_t val) {
@@ -97,6 +108,8 @@ static void erase_key(const char* key) {
 
 // initialize nvs storage and seed storage if necessary
 void init_nvs_storage() {
+    nvs_lock = xSemaphoreCreateMutex();
+
     esp_err_t nvs_res = nvs_flash_init();
     if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
@@ -136,6 +149,31 @@ void set_nvs_button_delay(uint16_t delay) {
 }
 void get_nvs_button_delay(uint16_t* delay) {
     read_u16(btn_delay_key, delay);
+}
+
+void set_nvs_left_sleepy_eye(uint8_t val) {
+    write_u8(left_sleepy_key, val);
+}
+void get_nvs_left_sleepy_eye(uint8_t* val) {
+    read_u8(left_sleepy_key, val);
+}
+void set_nvs_right_sleepy_eye(uint8_t val) {
+    write_u8(right_sleepy_key, val);
+}
+void get_nvs_right_sleepy_eye(uint8_t* val) {
+    read_u8(right_sleepy_key, val);
+}
+void set_nvs_left_move_time(uint16_t time_ms) {
+    write_u16(left_time_key, time_ms);
+}
+void get_nvs_left_move_time(uint16_t* time_ms) {
+    read_u16(left_time_key, time_ms);
+}
+void set_nvs_right_move_time(uint16_t time_ms) {
+    write_u16(right_time_key, time_ms);
+}
+void get_nvs_right_move_time(uint16_t* time_ms) {
+    read_u16(right_time_key, time_ms);
 }
 
 void set_nvs_binding(const button_binding_t* binding, uint8_t pos) {
@@ -205,6 +243,10 @@ void seed_nvs_defaults() {
 
     nvs_set_u8(storage_handle, btn_status_key, 1);
     nvs_set_u16(storage_handle, btn_delay_key, 500);
+    nvs_set_u8(storage_handle, left_sleepy_key, 50);
+    nvs_set_u8(storage_handle, right_sleepy_key, 50);
+    nvs_set_u16(storage_handle, left_time_key, 625);
+    nvs_set_u16(storage_handle, right_time_key, 625);
 
     const command_t default_cmds[4] = {
         COMMAND_LEFT_WINK,

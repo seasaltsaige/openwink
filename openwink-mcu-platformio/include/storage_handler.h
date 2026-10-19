@@ -28,6 +28,16 @@ void get_nvs_binding(button_binding_t* binding, uint8_t pos);
 void delete_nvs_binding(uint8_t pos);
 void load_nvs_button_config(button_config_t* config);
 
+// sleepy eye and headlight timing helpers
+void set_nvs_left_sleepy_eye(uint8_t val);
+void get_nvs_left_sleepy_eye(uint8_t* val);
+void set_nvs_right_sleepy_eye(uint8_t val);
+void get_nvs_right_sleepy_eye(uint8_t* val);
+void set_nvs_left_move_time(uint16_t time_ms);
+void get_nvs_left_move_time(uint16_t* time_ms);
+void set_nvs_right_move_time(uint16_t time_ms);
+void get_nvs_right_move_time(uint16_t* time_ms);
+
 int8_t get_nvs_seeded();
 void seed_nvs_defaults();
 

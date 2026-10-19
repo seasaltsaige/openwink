@@ -14,6 +14,9 @@
 #include <esp_log.h>
 
 void app_main() {
+    // handles storage seeding
+    init_nvs_storage();
+
     // gpio init
     outputs_init();
     inputs_init();
@@ -24,9 +27,6 @@ void app_main() {
     output_event_group_init();
     init_command_queue();
     init_custom_command_queue();
-
-    // handles storage seeding for button bindings
-    init_nvs_storage();
 
     // initialize button bindings
     init_button_bindings();
@@ -60,8 +60,8 @@ void app_main() {
 
     // initialize tasks
     xTaskCreate(input_read_task, "INPUT_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, NULL);
-    xTaskCreate(left_monitor_task, "L_MON_TASK", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, &left_feedback_task);
-    xTaskCreate(right_monitor_task, "R_MON_TASK", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, &right_feedback_task);
+    xTaskCreate(left_monitor_task, "L_MON_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &left_feedback_task);
+    xTaskCreate(right_monitor_task, "R_MON_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &right_feedback_task);
     xTaskCreate(handle_output_task, "L_OUT_TASK", configMINIMAL_STACK_SIZE, (void*)&left_args, tskIDLE_PRIORITY + 4, NULL);
     xTaskCreate(handle_output_task, "R_OUT_TASK", configMINIMAL_STACK_SIZE, (void*)&right_args, tskIDLE_PRIORITY + 4, NULL);
     xTaskCreate(handle_command_task, "DEF_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &command_output_task);

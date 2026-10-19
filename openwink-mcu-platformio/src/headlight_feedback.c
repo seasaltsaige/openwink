@@ -1,20 +1,27 @@
 #include <FreeRTOSConfig.h>
 #include <driver/gpio.h>
+#include <esp_sleep.h>
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
+#include <stdlib.h>
 
 #include "command_output.h"
 #include "headlight_feedback.h"
+#include "output_handler.h"
+#include "storage_handler.h"
 
 TaskHandle_t left_feedback_task;
 TaskHandle_t right_feedback_task;
 
-feedback_stats_t movement_stats = {
-    .left_move_time = 0,
-    .right_move_time = 0,
+RTC_DATA_ATTR feedback_stats_t movement_stats = {
+    .left_move_time = DEFAULT_MOVE_TIME_MS,
+    .right_move_time = DEFAULT_MOVE_TIME_MS,
     .left_moving = 0,
     .right_moving = 0,
 };
+
+RTC_DATA_ATTR static uint16_t last_nvs_left_time = DEFAULT_MOVE_TIME_MS;
+RTC_DATA_ATTR static uint16_t last_nvs_right_time = DEFAULT_MOVE_TIME_MS;
 
 EventGroupHandle_t movement_event;
 
@@ -33,11 +40,27 @@ void monitor_gpio_init() {
         .pin_bit_mask = (1ULL << LEFT_MONITOR_PIN | 1ULL << RIGHT_MONITOR_PIN),
     };
     gpio_config(&feedback_config);
+
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED) {
+        get_nvs_left_move_time(&movement_stats.left_move_time);
+        get_nvs_right_move_time(&movement_stats.right_move_time);
+        last_nvs_left_time = movement_stats.left_move_time;
+        last_nvs_right_time = movement_stats.right_move_time;
+    }
+}
+
+uint16_t get_left_move_time_ms() {
+    return movement_stats.left_move_time;
+}
+
+uint16_t get_right_move_time_ms() {
+    return movement_stats.right_move_time;
 }
 
 void left_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
+    uint8_t move_started_sleepy = 0;
     for (;;) {
         uint8_t curr_state = gpio_get_level(LEFT_MONITOR_PIN);
         // movement start
@@ -46,12 +69,23 @@ void left_monitor_task(void* args) {
             move_start = esp_timer_get_time();
             last_level = 1;
             movement_stats.left_moving = 1;
-        } else if (((last_level == 1) && (gpio_get_level(LEFT_MONITOR_PIN) == 0))) {
-            // move time in ms
-            movement_stats.left_move_time = (esp_timer_get_time() - move_start);
+            move_started_sleepy = is_left_sleepy();
+        } else if ((last_level == 1) && (curr_state == 0)) {
+            uint8_t sleepy = move_started_sleepy || is_left_sleepy();
             last_level = 0;
             movement_stats.left_moving = 0;
+            move_started_sleepy = 0;
             xEventGroupSetBits(movement_event, LEFT_STOPPED_BIT);
+
+            if (!sleepy) {
+                // move time in ms
+                uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
+                movement_stats.left_move_time = elapsed_ms;
+                if (abs((int)elapsed_ms - (int)last_nvs_left_time) >= MOVE_TIME_DEADBAND_MS) {
+                    last_nvs_left_time = elapsed_ms;
+                    set_nvs_left_move_time(elapsed_ms);
+                }
+            }
         }
         vTaskDelay(pdMS_TO_TICKS(4));
     }
@@ -60,6 +94,7 @@ void left_monitor_task(void* args) {
 void right_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
+    uint8_t move_started_sleepy = 0;
     for (;;) {
         uint8_t curr_state = gpio_get_level(RIGHT_MONITOR_PIN);
         // movement start
@@ -68,14 +103,24 @@ void right_monitor_task(void* args) {
             move_start = esp_timer_get_time();
             last_level = 1;
             movement_stats.right_moving = 1;
-        } else if ((last_level == 1) && (gpio_get_level(RIGHT_MONITOR_PIN) == 0)) {
-            // move time in ms
-            movement_stats.right_move_time = (esp_timer_get_time() - move_start);
+            move_started_sleepy = is_right_sleepy();
+        } else if ((last_level == 1) && (curr_state == 0)) {
+            uint8_t sleepy = move_started_sleepy || is_right_sleepy();
             last_level = 0;
             movement_stats.right_moving = 0;
+            move_started_sleepy = 0;
             xEventGroupSetBits(movement_event, RIGHT_STOPPED_BIT);
+
+            if (!sleepy) {
+                // move time in ms
+                uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
+                movement_stats.right_move_time = elapsed_ms;
+                if (abs((int)elapsed_ms - (int)last_nvs_right_time) >= MOVE_TIME_DEADBAND_MS) {
+                    last_nvs_right_time = elapsed_ms;
+                    set_nvs_right_move_time(elapsed_ms);
+                }
+            }
         }
-        last_level = curr_state;
         vTaskDelay(pdMS_TO_TICKS(4));
     }
 }

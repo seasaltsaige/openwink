@@ -6,6 +6,7 @@
 
 #include "command_output.h"
 #include "custom_command_output.h"
+#include "output_handler.h"
 
 typedef enum {
     COMMAND_IDLE,
@@ -167,12 +168,25 @@ void custom_command_task(void* args) {
             uint32_t _;
             xTaskNotifyWait(0, NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT, &_, 0);
 
+            uint8_t was_sleepy = is_left_sleepy() || is_right_sleepy();
+            command_t origin_sync_cmd = COMMAND_BOTH_DOWN;
+            uint8_t sequence_cancelled = 0;
+
+            if (was_sleepy) {
+                headlight_position_t init_pos = get_position();
+                move_type_t origin_dir = is_left_sleepy() ? init_pos.last_left_move_dir : init_pos.last_right_move_dir;
+                origin_sync_cmd = (origin_dir == MOVE_UP) ? COMMAND_BOTH_DOWN : COMMAND_BOTH_UP;
+
+                command_t exit_cmd = COMMAND_SLEEPY_EYE;
+                xQueueSend(command_output_queue, &exit_cmd, portMAX_DELAY);
+                sequence_cancelled = wait_for_command_completion(0);
+            }
+
             // loop through each value of the cmd
             // sequence_index will be equal to i until a delay is encountered (3 bytes vs 1 byte)
             size_t sequence_index = 0;
-            uint8_t sequence_cancelled = 0;
 
-            for (int8_t i = 0; i < cmd_data.sequence_length; i++) {
+            for (int8_t i = 0; !sequence_cancelled && i < cmd_data.sequence_length; i++) {
 
                 if (cmd_data.sequence[sequence_index] == DELAY_PREFIX) {
                     // Handle delay (Little Endian -- 0xDEEE02 yields Delay 0x02EE or Delay 750ms)
@@ -200,6 +214,23 @@ void custom_command_task(void* args) {
                 }
             }
 
+            if (was_sleepy && !sequence_cancelled && cmd_state != COMMAND_STOPPING && !cmd_data.looping) {
+                if (!is_left_sleepy() && !is_right_sleepy()) {
+                    headlight_position_t end_pos = get_position();
+                    uint8_t expected_pos = (origin_sync_cmd == COMMAND_BOTH_UP) ? POSITION_UP : POSITION_DOWN;
+
+                    if (end_pos.left_pos != expected_pos || end_pos.right_pos != expected_pos) {
+                        xQueueSend(command_output_queue, &origin_sync_cmd, portMAX_DELAY);
+                        sequence_cancelled = wait_for_command_completion(0);
+                    }
+
+                    if (!sequence_cancelled && cmd_state != COMMAND_STOPPING) {
+                        command_t enter_cmd = COMMAND_SLEEPY_EYE;
+                        xQueueSend(command_output_queue, &enter_cmd, portMAX_DELAY);
+                        sequence_cancelled = wait_for_command_completion(0);
+                    }
+                }
+            }
 
             // clean up after either cancellation or command completion (reset state)
             xSemaphoreTake(custom_mutex_handle, portMAX_DELAY);

@@ -10,7 +10,7 @@
 #define OUT_PIN_RIGHT_DOWN GPIO_NUM_12
 #define OUT_PIN_RIGHT_UP GPIO_NUM_13
 
-#define OUTPUT_QUEUE_LENGTH 2
+#define OUTPUT_QUEUE_LENGTH 4
 
 #define HIGH (uint8_t)1
 #define LOW (uint8_t)0
@@ -26,6 +26,10 @@
 #define RIGHT_SIDE BIT1
 #define LEFT_COMPLETE_BIT BIT0
 #define RIGHT_COMPLETE_BIT BIT1
+
+
+// #define SLEEPY_PACKET_LEN
+
 
 typedef enum MOVE_TYPE : uint8_t {
     MOVE_NOP,
@@ -65,6 +69,7 @@ typedef struct output_args {
 
 typedef struct movement_target {
     move_type_t target;
+    uint8_t target_pos;
     uint8_t final_move;
 } movement_target_t;
 
@@ -83,6 +88,9 @@ void output_event_group_init();
 
 uint8_t is_left_sleepy();
 uint8_t is_right_sleepy();
+
+void set_sleepy_eye_values(uint8_t left, uint8_t right);
+void get_sleepy_eye_values(uint8_t* left, uint8_t* right);
 
 headlight_position_t get_position();
 void handle_output_task(void* args);

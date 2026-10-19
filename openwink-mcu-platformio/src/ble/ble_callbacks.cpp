@@ -47,7 +47,6 @@ void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uin
     }
 }
 
-// TODO: ADD GUARDS TO ALL CALLBACKS REQUIRING AUTH STATE
 void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     if (get_auth_state() != AUTH_ESTABLISHED)
         return;
@@ -117,6 +116,9 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
         set_binding_at_pos(&binding, data[0]);
 }
 
+
+void SleepySettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+}
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     // writes should only do something if specifically waiting for it
