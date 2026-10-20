@@ -3,10 +3,13 @@
 #include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 
+#include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
 #include "storage_handler.h"
+
+static const char* TAG = "OUT";
 
 QueueHandle_t left_output_queue;
 QueueHandle_t right_output_queue;
@@ -52,6 +55,8 @@ void set_sleepy_eye_values(uint8_t left, uint8_t right) {
     right_sleepy_target = right;
     set_nvs_left_sleepy_eye(left);
     set_nvs_right_sleepy_eye(right);
+
+    BLE_LOGD(TAG, "Sleepy targets saved: L=%u%% R=%u%%", left, right);
 }
 
 void get_sleepy_eye_values(uint8_t* left, uint8_t* right) {
@@ -163,6 +168,8 @@ void handle_output_task(void* args) {
                     uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
                     uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
 
+                    BLE_LOGD(TAG, "%s PARTIAL %s: %u%% -> %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, move.target_pos, (unsigned long)delay_ms);
+
                     xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
 
                     if (motor->side_bit == LEFT_SIDE) {
@@ -182,6 +189,8 @@ void handle_output_task(void* args) {
                     uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
                     uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
 
+                    BLE_LOGD(TAG, "%s SLEEPY_EXIT %s: from %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, (unsigned long)delay_ms);
+
                     xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
 
                     set_side_off(motor);
@@ -192,7 +201,11 @@ void handle_output_task(void* args) {
 
                     set_positions_on_complete(motor, move_res);
                 } else {
+                    BLE_LOGD(TAG, "%s FULL %s from %u%%", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos);
+
                     EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, MAX_WAIT_TIME_MS);
+                    if ((completed_bits & motor->stopped_bit) == 0)
+                        BLE_LOGE(TAG, "%s %s timed out (%ums)!", side_to_str(motor->side_bit), move_type_to_str(move_res), MOVE_TIME_LIMIT_MS);
                     // if ((completed_bits & motor->stopped_bit) == 0)
                     // {
                     //     // timeout event
@@ -207,7 +220,11 @@ void handle_output_task(void* args) {
                     set_side_off(motor);
                     set_positions_on_complete(motor, move_res);
                 }
+
+                uint8_t new_pos = (motor->side_bit == LEFT_SIDE) ? positions.left_pos : positions.right_pos;
+                BLE_LOGV(TAG, "%s stopped -> pos=%u%%", side_to_str(motor->side_bit), new_pos);
             } else {
+                BLE_LOGV(TAG, "%s %s -> NOP (at %u%%)", side_to_str(motor->side_bit), move_type_to_str(move.target), curr_pos);
                 xEventGroupSetBits(movement_event, motor->stopped_bit);
                 set_side_off(motor);
             }
