@@ -19,8 +19,11 @@ static CustomCommandCallbacks custom_cmd_callbacks;
 
 
 static CustomButtonCallbacks custom_btn_callbacks;
+static SleepySettingsCallbacks sleepy_settings_callbacks;
+static AuxSettingsCallbacks aux_settings_callbacks;
 
 static AuthCallbacks auth_callbacks;
+static DebugCallbacks debug_callbacks;
 
 SemaphoreHandle_t status_lock;
 openwink_status_t openwink_status = DISCONNECTED;
@@ -65,8 +68,17 @@ extern "C" uint8_t ble_init(const char* name) {
     settings_service->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
     settings_service->getCharacteristic(CUSTOM_BUTTON_UPDATE_UUID)->setCallbacks(&custom_btn_callbacks);
 
+    settings_service->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE);
+    settings_service->getCharacteristic(SLEEPY_SETTINGS_UUID)->setCallbacks(&sleepy_settings_callbacks);
+
+    settings_service->createCharacteristic(AUX_BUTTONS_UUID, NIMBLE_PROPERTY::WRITE);
+    settings_service->getCharacteristic(AUX_BUTTONS_UUID)->setCallbacks(&aux_settings_callbacks);
+
     settings_service->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(PASSKEY_UUID)->setCallbacks(&auth_callbacks);
+
+    settings_service->createCharacteristic(DEBUG_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    settings_service->getCharacteristic(DEBUG_UUID)->setCallbacks(&debug_callbacks);
 
     return BLE_INIT_SUCCESS;
 }
@@ -144,4 +156,23 @@ extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
 
     passkey->setValue(key, size);
     passkey->notify();
+}
+
+extern "C" void ble_notify_debug(const uint8_t* data, size_t size) {
+    if (openwink_status == DISCONNECTED)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* settings = pServer->getServiceByUUID(MODULE_SETTINGS_SERVICE_UUID);
+    if (settings == NULL)
+        return;
+
+    NimBLECharacteristic* debug_char = settings->getCharacteristic(DEBUG_UUID);
+    if (debug_char == NULL)
+        return;
+
+    debug_char->notify(data, size);
 }
