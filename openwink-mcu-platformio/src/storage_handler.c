@@ -261,7 +261,7 @@ void get_nvs_aux_binding(aux_button_t* aux, aux_side_t side) {
     if (aux == NULL || side > TWO)
         return;
     memset(aux, 0, sizeof(aux_button_t));
-    aux->button_type = MOMENTARY;
+    aux->button_type = AUX_MOMENTARY;
     aux->action.type = BINDING_NONE;
     read_blob(aux_binding_keys[side], aux, sizeof(aux_button_t));
 }
@@ -277,13 +277,13 @@ void load_nvs_aux_config(aux_buttons_t* config) {
     nvs_get_u8(storage_handle, aux_status_key, &config->status);
 
     memset(&config->one.aux, 0, sizeof(aux_button_t));
-    config->one.aux.button_type = MOMENTARY;
+    config->one.aux.button_type = AUX_MOMENTARY;
     config->one.aux.action.type = BINDING_NONE;
     size_t size = sizeof(aux_button_t);
     nvs_get_blob(storage_handle, aux_binding_keys[ONE], &config->one.aux, &size);
 
     memset(&config->two.aux, 0, sizeof(aux_button_t));
-    config->two.aux.button_type = MOMENTARY;
+    config->two.aux.button_type = AUX_MOMENTARY;
     config->two.aux.action.type = BINDING_NONE;
     size = sizeof(aux_button_t);
     nvs_get_blob(storage_handle, aux_binding_keys[TWO], &config->two.aux, &size);
@@ -308,7 +308,7 @@ void seed_nvs_defaults() {
     nvs_set_u8(storage_handle, right_sleepy_key, 50);
     nvs_set_u16(storage_handle, left_time_key, 625);
     nvs_set_u16(storage_handle, right_time_key, 625);
-    nvs_set_u8(storage_handle, aux_status_key, DISABLED);
+    nvs_set_u8(storage_handle, aux_status_key, AUX_DISABLED);
 
     const command_t default_cmds[4] = {
         COMMAND_LEFT_WINK,
@@ -326,7 +326,7 @@ void seed_nvs_defaults() {
     }
 
     aux_button_t aux_one_default = {
-        .button_type = MOMENTARY,
+        .button_type = AUX_MOMENTARY,
         .action = {
             .type = BINDING_BUILTIN,
             .data.builtin = COMMAND_LEFT_WINK,
@@ -335,7 +335,7 @@ void seed_nvs_defaults() {
     nvs_set_blob(storage_handle, aux_binding_keys[ONE], &aux_one_default, sizeof(aux_button_t));
 
     aux_button_t aux_two_default = {
-        .button_type = MOMENTARY,
+        .button_type = AUX_MOMENTARY,
         .action = {
             .type = BINDING_BUILTIN,
             .data.builtin = COMMAND_RIGHT_WINK,

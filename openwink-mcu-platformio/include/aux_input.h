@@ -37,13 +37,13 @@ typedef enum AUX_SIDE : uint8_t {
 } aux_side_t;
 
 typedef enum AUX_STATUS : uint8_t {
-    DISABLED,
-    ENABLED,
+    AUX_DISABLED,
+    AUX_ENABLED,
 } aux_status_t;
 
 typedef enum AUX_TYPE : uint8_t {
-    LATCHING,
-    MOMENTARY,
+    AUX_LATCHING,
+    AUX_MOMENTARY,
 } aux_type_t;
 
 typedef struct {

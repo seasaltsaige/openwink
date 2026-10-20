@@ -79,13 +79,7 @@ static void exit_sleepy_to_origin() {
     move_type_t left_reverse = left_sleepy ? (left_finish == MOVE_UP ? MOVE_DOWN : MOVE_UP) : MOVE_NOP;
     move_type_t right_reverse = right_sleepy ? (right_finish == MOVE_UP ? MOVE_DOWN : MOVE_UP) : MOVE_NOP;
 
-    BLE_LOGI(
-        TAG,
-        "Exiting sleepy eye (L=%s->%s, R=%s->%s)",
-        move_type_to_str(left_finish),
-        move_type_to_str(left_reverse),
-        move_type_to_str(right_finish),
-        move_type_to_str(right_reverse));
+    BLE_LOGI(TAG, "Exiting sleepy eye (L=%s->%s, R=%s->%s)", move_type_to_str(left_finish), move_type_to_str(left_reverse), move_type_to_str(right_finish), move_type_to_str(right_reverse));
 
     // finish current movement (up/down)
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);

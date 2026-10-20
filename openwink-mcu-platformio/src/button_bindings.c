@@ -57,8 +57,10 @@ void get_binding_at_pos(button_binding_t* binding, uint8_t pos) {
 }
 
 void delete_binding_at_pos(uint8_t pos) {
-    if (pos >= NUM_BINDINGS)
+    if (pos >= NUM_BINDINGS) {
+        BLE_LOGE(TAG, "Invalid aux position of %d", pos);
         return;
+    }
 
     xSemaphoreTake(bindings_lock, portMAX_DELAY);
 

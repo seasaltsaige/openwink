@@ -18,11 +18,11 @@ TaskHandle_t aux_two_task_handle;
 static SemaphoreHandle_t aux_lock;
 
 RTC_DATA_ATTR aux_buttons_t aux_buttons = {
-    .status = DISABLED,
+    .status = AUX_DISABLED,
     .one = {
         .state = HIGH,
         .aux = {
-            .button_type = MOMENTARY,
+            .button_type = AUX_MOMENTARY,
             .action = {
                 .type = BINDING_BUILTIN,
                 .data.builtin = COMMAND_LEFT_WINK,
@@ -32,7 +32,7 @@ RTC_DATA_ATTR aux_buttons_t aux_buttons = {
     .two = {
         .state = HIGH,
         .aux = {
-            .button_type = MOMENTARY,
+            .button_type = AUX_MOMENTARY,
             .action = {
                 .type = BINDING_BUILTIN,
                 .data.builtin = COMMAND_RIGHT_WINK,
@@ -42,7 +42,7 @@ RTC_DATA_ATTR aux_buttons_t aux_buttons = {
 };
 
 static void configure_aux_gpio(uint8_t enabled) {
-    if (enabled == ENABLED) {
+    if (enabled == AUX_ENABLED) {
         gpio_config_t conf = {
             .intr_type = GPIO_INTR_DISABLE,
             .mode = GPIO_MODE_INPUT,
@@ -66,27 +66,27 @@ void init_aux() {
 
     configure_aux_gpio(aux_buttons.status);
 
-    if (cold_boot && aux_buttons.status == ENABLED) {
+    if (cold_boot && aux_buttons.status == AUX_ENABLED) {
         aux_buttons.one.state = (uint8_t)gpio_get_level(AUX_ONE_INPUT);
         aux_buttons.two.state = (uint8_t)gpio_get_level(AUX_TWO_INPUT);
     }
 }
 
 void set_aux_status(uint8_t status) {
-    if (status > ENABLED)
+    if (status > AUX_ENABLED)
         return;
 
     xSemaphoreTake(aux_lock, portMAX_DELAY);
     aux_buttons.status = status;
     configure_aux_gpio(status);
-    if (status == ENABLED) {
+    if (status == AUX_ENABLED) {
         aux_buttons.one.state = (uint8_t)gpio_get_level(AUX_ONE_INPUT);
         aux_buttons.two.state = (uint8_t)gpio_get_level(AUX_TWO_INPUT);
     }
     set_nvs_aux_status(status);
     xSemaphoreGive(aux_lock);
 
-    if (status == ENABLED) {
+    if (status == AUX_ENABLED) {
         if (aux_one_task_handle != NULL)
             xTaskNotifyGive(aux_one_task_handle);
         if (aux_two_task_handle != NULL)
@@ -110,7 +110,7 @@ uint8_t validate_aux(aux_button_t* aux, size_t size) {
         return 0;
     }
 
-    if (aux->button_type > MOMENTARY) {
+    if (aux->button_type > AUX_MOMENTARY) {
         BLE_LOGD(TAG, "Invalid aux button type: %u", aux->button_type);
         return 0;
     }
@@ -166,7 +166,7 @@ void get_aux(aux_side_t side, aux_button_t* aux) {
 
     if (side > TWO) {
         memset(aux, 0, sizeof(aux_button_t));
-        aux->button_type = MOMENTARY;
+        aux->button_type = AUX_MOMENTARY;
         aux->action.type = BINDING_NONE;
         return;
     }
@@ -183,7 +183,7 @@ void delete_aux(aux_side_t side) {
     xSemaphoreTake(aux_lock, portMAX_DELAY);
     aux_button_t* target = (side == ONE) ? &aux_buttons.one.aux : &aux_buttons.two.aux;
     memset(target, 0, sizeof(aux_button_t));
-    target->button_type = MOMENTARY;
+    target->button_type = AUX_MOMENTARY;
     target->action.type = BINDING_NONE;
 
     delete_nvs_aux_binding(side);
@@ -229,7 +229,7 @@ static void process_aux_side(aux_side_t side, gpio_num_t pin, aux_button_state_t
         }
     } else {
         // HIGH = released ==> unlatched OFF
-        if (aux_cfg.button_type == LATCHING) {
+        if (aux_cfg.button_type == AUX_LATCHING) {
             if (aux_cfg.action.type == BINDING_SETTING) {
                 BLE_LOGI(TAG, "%s OFF (LATCHING) -> SETTING toggle", aux_side_to_str(side));
                 // TODO: Call setting toggle function
@@ -243,7 +243,7 @@ static void process_aux_side(aux_side_t side, gpio_num_t pin, aux_button_state_t
 
 void aux_one_input_task(void* args) {
     for (;;) {
-        if (aux_buttons.status == DISABLED) {
+        if (aux_buttons.status == AUX_DISABLED) {
             ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             continue;
         }
@@ -255,7 +255,7 @@ void aux_one_input_task(void* args) {
 
 void aux_two_input_task(void* args) {
     for (;;) {
-        if (aux_buttons.status == DISABLED) {
+        if (aux_buttons.status == AUX_DISABLED) {
             ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
             continue;
         }
