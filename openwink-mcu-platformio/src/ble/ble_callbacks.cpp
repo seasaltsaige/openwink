@@ -12,6 +12,7 @@
 #include "ble/debugger/ble_debugger.h"
 #include "ble/pairing_auth.h"
 #include "button_bindings.h"
+#include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "output_handler.h"
@@ -267,10 +268,18 @@ void GeneralSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, Ni
     if (get_auth_state() != AUTH_ESTABLISHED)
         return;
 
+    NimBLEAttValue d = pCharacteristic->getValue();
+
+    const uint8_t* data = d.data();
+
     // --- STATUS PACKETS ---
 
     // WAVE PACKET
-    // TODO: Add implemented functions
+    if (d.size() == 2 && data[0] == WAVE_DELAY_FLAG) {
+        BLE_LOGI(TAG, "Received wave delay of %d", data[1]);
+        set_wave_delay(data[1]);
+        return;
+    }
 
     // SLEEPY PACKET
     // TODO
@@ -288,7 +297,14 @@ void GeneralSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, Ni
     // TODO
 
     // HEADLIGHT BYPASS PACKET
-    // TODO: Add implemented functions
+    if (d.size() == 2 && data[0] == HEADLIGHT_BYPASS_FLAG) {
+        if (data[1] > BYPASS_ENABLED) {
+            BLE_LOGE(TAG, "Received invalid bypass status of %d", data[1]);
+            return;
+        }
+        BLE_LOGI(TAG, "Received headlight bypass %s", data[1] == BYPASS_ENABLED ? "ENABLED" : "DISABLED");
+        set_input_headlight_bypass(data[1]);
+    }
 
     // --- ---
 }
