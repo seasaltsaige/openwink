@@ -20,7 +20,16 @@
 // with this flag
 
 // packet length can be anywhere from 2 bytes to 184 bytes
-#define DELETE_BINDING_FLAG 0xDD
+#define BINDING_DELETE_FLAG 0xDD
+#define BINDING_STATUS_FLAG 0xBE
+
+#define BINDING_DELAY_FLAG 0xAA
+// just for now, might expand...
+// it really doesnt make a lot of sense *for humans*
+// to have something out of this range thoughs
+#define BINDING_DELAY_MIN 100
+#define BINDING_DELAY_MAX 1000
+
 
 #define BINDING_POS_LEN 1
 #define BINDING_TYP_LEN 1
@@ -41,6 +50,11 @@
 #define MIN_BINDING_PAYLOAD_LEN (BINDING_POS_LEN + 1)
 // max = [pos][max len binding]
 #define MAX_BINDING_PAYLOAD_LEN (BINDING_POS_LEN + sizeof(button_binding_t))
+
+typedef enum BINDING_STATUS : uint8_t {
+    BINDING_DISABLED,
+    BINDING_ENABLED,
+} button_binding_status_t;
 
 typedef enum BINDING_TYPE : uint8_t {
     BINDING_NONE,
