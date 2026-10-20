@@ -5,8 +5,11 @@
 #include <nvs_flash.h>
 #include <string.h>
 
+#include "ble/debugger/ble_debugger.h"
 #include "button_bindings.h"
 #include "storage_handler.h"
+
+static const char* TAG = "NVS";
 
 static nvs_handle_t storage_handle;
 static SemaphoreHandle_t nvs_lock;
@@ -32,12 +35,19 @@ static const char* binding_keys[NUM_BINDINGS] = {
     "bind_6",
     "bind_7",
 };
+static const char* aux_status_key = "aux_en";
+static const char* aux_binding_keys[2] = {
+    "aux_0",
+    "aux_1",
+};
 
 static esp_err_t open(nvs_open_mode_t mode) {
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
     esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
-    if (err != ESP_OK)
+    if (err != ESP_OK) {
         xSemaphoreGive(nvs_lock);
+        BLE_LOGE(TAG, "NVS open failed (0x%X)", (unsigned int)err);
+    }
     return err;
 }
 
@@ -52,6 +62,7 @@ static void write_u8(const char* key, uint8_t val) {
     nvs_set_u8(storage_handle, key, val);
     nvs_commit(storage_handle);
     close();
+    BLE_LOGV(TAG, "Write u8 '%s'=%u", key, val);
 }
 
 static esp_err_t read_u8(const char* key, uint8_t* out) {
@@ -68,6 +79,7 @@ static void write_u16(const char* key, uint16_t val) {
     nvs_set_u16(storage_handle, key, val);
     nvs_commit(storage_handle);
     close();
+    BLE_LOGV(TAG, "Write u16 '%s'=%u", key, val);
 }
 
 static esp_err_t read_u16(const char* key, uint16_t* out) {
@@ -84,6 +96,7 @@ static void write_blob(const char* key, const void* data, size_t size) {
     nvs_set_blob(storage_handle, key, data, size);
     nvs_commit(storage_handle);
     close();
+    BLE_LOGV(TAG, "Write blob '%s' (%uB)", key, (unsigned int)size);
 }
 
 static esp_err_t read_blob(const char* key, void* out, size_t size) {
@@ -100,6 +113,7 @@ static void erase_key(const char* key) {
     nvs_erase_key(storage_handle, key);
     nvs_commit(storage_handle);
     close();
+    BLE_LOGV(TAG, "Erase '%s'", key);
 }
 
 
@@ -227,6 +241,56 @@ void load_nvs_button_config(button_config_t* config) {
     close();
 }
 
+
+void set_nvs_aux_status(uint8_t status) {
+    write_u8(aux_status_key, status);
+}
+void get_nvs_aux_status(uint8_t* status) {
+    read_u8(aux_status_key, status);
+}
+void set_nvs_aux_binding(const aux_button_t* aux, aux_side_t side) {
+    if (aux == NULL || side > TWO)
+        return;
+    if (aux->action.type == BINDING_NONE) {
+        delete_nvs_aux_binding(side);
+        return;
+    }
+    write_blob(aux_binding_keys[side], aux, sizeof(aux_button_t));
+}
+void get_nvs_aux_binding(aux_button_t* aux, aux_side_t side) {
+    if (aux == NULL || side > TWO)
+        return;
+    memset(aux, 0, sizeof(aux_button_t));
+    aux->button_type = MOMENTARY;
+    aux->action.type = BINDING_NONE;
+    read_blob(aux_binding_keys[side], aux, sizeof(aux_button_t));
+}
+void delete_nvs_aux_binding(aux_side_t side) {
+    if (side > TWO)
+        return;
+    erase_key(aux_binding_keys[side]);
+}
+void load_nvs_aux_config(aux_buttons_t* config) {
+    if (config == NULL || open(NVS_READONLY) != ESP_OK)
+        return;
+
+    nvs_get_u8(storage_handle, aux_status_key, &config->status);
+
+    memset(&config->one.aux, 0, sizeof(aux_button_t));
+    config->one.aux.button_type = MOMENTARY;
+    config->one.aux.action.type = BINDING_NONE;
+    size_t size = sizeof(aux_button_t);
+    nvs_get_blob(storage_handle, aux_binding_keys[ONE], &config->one.aux, &size);
+
+    memset(&config->two.aux, 0, sizeof(aux_button_t));
+    config->two.aux.button_type = MOMENTARY;
+    config->two.aux.action.type = BINDING_NONE;
+    size = sizeof(aux_button_t);
+    nvs_get_blob(storage_handle, aux_binding_keys[TWO], &config->two.aux, &size);
+
+    close();
+}
+
 int8_t get_nvs_seeded() {
     uint8_t seeded = 0;
     esp_err_t err = read_u8(nvs_seeded, &seeded);
@@ -244,6 +308,7 @@ void seed_nvs_defaults() {
     nvs_set_u8(storage_handle, right_sleepy_key, 50);
     nvs_set_u16(storage_handle, left_time_key, 625);
     nvs_set_u16(storage_handle, right_time_key, 625);
+    nvs_set_u8(storage_handle, aux_status_key, DISABLED);
 
     const command_t default_cmds[4] = {
         COMMAND_LEFT_WINK,
@@ -259,6 +324,24 @@ void seed_nvs_defaults() {
         };
         nvs_set_blob(storage_handle, binding_keys[i], &b, sizeof(button_binding_t));
     }
+
+    aux_button_t aux_one_default = {
+        .button_type = MOMENTARY,
+        .action = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = COMMAND_LEFT_WINK,
+        },
+    };
+    nvs_set_blob(storage_handle, aux_binding_keys[ONE], &aux_one_default, sizeof(aux_button_t));
+
+    aux_button_t aux_two_default = {
+        .button_type = MOMENTARY,
+        .action = {
+            .type = BINDING_BUILTIN,
+            .data.builtin = COMMAND_RIGHT_WINK,
+        },
+    };
+    nvs_set_blob(storage_handle, aux_binding_keys[TWO], &aux_two_default, sizeof(aux_button_t));
 
     nvs_set_u8(storage_handle, nvs_seeded, 1);
     nvs_commit(storage_handle);

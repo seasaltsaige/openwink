@@ -4,6 +4,7 @@
 #include <FreeRTOSConfig.h>
 #include <freertos/FreeRTOS.h>
 
+#include "aux_input.h"
 #include "button_bindings.h"
 
 #ifdef __cplusplus
@@ -27,6 +28,14 @@ void set_nvs_binding(const button_binding_t* binding, uint8_t pos);
 void get_nvs_binding(button_binding_t* binding, uint8_t pos);
 void delete_nvs_binding(uint8_t pos);
 void load_nvs_button_config(button_config_t* config);
+
+// aux button helpers
+void set_nvs_aux_status(uint8_t status);
+void get_nvs_aux_status(uint8_t* status);
+void set_nvs_aux_binding(const aux_button_t* aux, aux_side_t side);
+void get_nvs_aux_binding(aux_button_t* aux, aux_side_t side);
+void delete_nvs_aux_binding(aux_side_t side);
+void load_nvs_aux_config(aux_buttons_t* config);
 
 // sleepy eye and headlight timing helpers
 void set_nvs_left_sleepy_eye(uint8_t val);
