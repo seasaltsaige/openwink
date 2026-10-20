@@ -2,10 +2,14 @@
 #include <freertos/FreeRTOS.h>
 #include <stdbool.h>
 
+#include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
+
+static const char* TAG = "CMD";
+
 QueueHandle_t command_output_queue;
 TaskHandle_t command_output_task;
 
@@ -47,6 +51,8 @@ static void queue_side_wink(uint8_t side, uint8_t is_final) {
     move_type_t last_dir = (side == LEFT_SIDE) ? pos.last_left_move_dir : pos.last_right_move_dir;
     uint8_t sleepy = (side == LEFT_SIDE) ? is_left_sleepy() : is_right_sleepy();
 
+    BLE_LOGD(TAG, "%s wink (sleepy=%u, pos=%u%%, last=%s)", side_to_str(side), sleepy, curr_pos, move_type_to_str(last_dir));
+
     if (!sleepy) {
         queue_side_move(side, curr_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
         queue_side_move(side, curr_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, is_final);
@@ -73,6 +79,14 @@ static void exit_sleepy_to_origin() {
     move_type_t left_reverse = left_sleepy ? (left_finish == MOVE_UP ? MOVE_DOWN : MOVE_UP) : MOVE_NOP;
     move_type_t right_reverse = right_sleepy ? (right_finish == MOVE_UP ? MOVE_DOWN : MOVE_UP) : MOVE_NOP;
 
+    BLE_LOGI(
+        TAG,
+        "Exiting sleepy eye (L=%s->%s, R=%s->%s)",
+        move_type_to_str(left_finish),
+        move_type_to_str(left_reverse),
+        move_type_to_str(right_finish),
+        move_type_to_str(right_reverse));
+
     // finish current movement (up/down)
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
     queue_side_move(LEFT_SIDE, left_finish, false);
@@ -97,6 +111,8 @@ static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_
     uint8_t target_pos = (primary_side == LEFT_SIDE) ? left_origin : right_origin;
     move_type_t sync_dir = (target_pos == POSITION_UP) ? MOVE_UP : MOVE_DOWN;
 
+    BLE_LOGD(TAG, "Pre-sync (%s primary) -> target %u%% (sleepy=%u)", side_to_str(primary_side), target_pos, *was_sleepy);
+
     if (*was_sleepy) {
         move_type_t left_finish = left_sleepy ? (saved_pos->last_left_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
         move_type_t right_finish = right_sleepy ? (saved_pos->last_right_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
@@ -119,6 +135,8 @@ static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_
 static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos, uint8_t was_sleepy) {
     if (!was_sleepy)
         return;
+
+    BLE_LOGD(TAG, "Restore sleepy -> L=%u%% R=%u%%", saved_pos->left_pos, saved_pos->right_pos);
 
     uint8_t left_was_sleepy = (saved_pos->left_pos != POSITION_DOWN && saved_pos->left_pos != POSITION_UP);
     uint8_t right_was_sleepy = (saved_pos->right_pos != POSITION_DOWN && saved_pos->right_pos != POSITION_UP);
@@ -158,11 +176,13 @@ void handle_command_task(void* args) {
 
     for (;;) {
         if (xQueueReceive(command_output_queue, &received, portMAX_DELAY)) {
-            headlight_position_t curr_pos;
+            headlight_position_t curr_pos = get_position();
             headlight_position_t saved_pos;
             uint8_t was_sleepy = 0;
             command_types_t peek;
             BaseType_t peeked;
+
+            BLE_LOGI(TAG, "Exec %s (L=%u%% R=%u%%)", command_to_str(received), curr_pos.left_pos, curr_pos.right_pos);
 
             switch (received) {
             // Both together
@@ -379,6 +399,8 @@ void handle_command_task(void* args) {
                     uint8_t right_val = 50;
                     get_sleepy_eye_values(&left_val, &right_val);
 
+                    BLE_LOGI(TAG, "Entering sleepy eye -> L=%u%% R=%u%%", left_val, right_val);
+
                     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
                     queue_side_partial_move(LEFT_SIDE, left_val, false);
                     queue_side_partial_move(RIGHT_SIDE, right_val, false);
@@ -388,6 +410,9 @@ void handle_command_task(void* args) {
 
             default: break;
             }
+
+            curr_pos = get_position();
+            BLE_LOGD(TAG, "Done %s (L=%u%% R=%u%%)", command_to_str(received), curr_pos.left_pos, curr_pos.right_pos);
 
             if (get_custom_command_executing())
                 xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetBits);

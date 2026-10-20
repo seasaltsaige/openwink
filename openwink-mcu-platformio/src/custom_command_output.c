@@ -4,9 +4,12 @@
 #include <freertos/semphr.h>
 
 
+#include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "output_handler.h"
+
+static const char* TAG = "SEQ";
 
 typedef enum {
     COMMAND_IDLE,
@@ -52,6 +55,7 @@ void request_command_cancellation() {
         cmd_state = COMMAND_STOPPING;
         // send cancellation
         xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
+        BLE_LOGW(TAG, "Sequence cancellation requested");
     }
 
     xSemaphoreGive(custom_mutex_handle);
@@ -116,45 +120,60 @@ uint8_t validate_custom_command(custom_command_data_t* cmd, size_t received_size
         return 0;
 
     // max and min size checks
-    if (received_size <= CUSTOM_CMD_HEADER_LENGTH || received_size > (CUSTOM_CMD_HEADER_LENGTH + PAYLOAD_MAX))
+    if (received_size <= CUSTOM_CMD_HEADER_LENGTH || received_size > (CUSTOM_CMD_HEADER_LENGTH + PAYLOAD_MAX)) {
+        BLE_LOGD(TAG, "Invalid custom cmd size: %u", (unsigned int)received_size);
         return 0;
+    }
 
 
-    if (cmd->looping != 0 && cmd->looping != 1)
+    if (cmd->looping != 0 && cmd->looping != 1) {
+        BLE_LOGD(TAG, "Invalid looping flag: %u", cmd->looping);
         return 0;
+    }
 
     size_t payload_bytes = received_size - CUSTOM_CMD_HEADER_LENGTH;
-    if (cmd->sequence_length == 0 || cmd->sequence_length > payload_bytes)
+    if (cmd->sequence_length == 0 || cmd->sequence_length > payload_bytes) {
+        BLE_LOGD(TAG, "Invalid seq length: %u (payload=%u)", cmd->sequence_length, (unsigned int)payload_bytes);
         return 0;
+    }
 
     size_t sequence_index = 0;
     for (uint8_t i = 0; i < cmd->sequence_length; i++) {
-        if (sequence_index >= payload_bytes)
+        if (sequence_index >= payload_bytes) {
+            BLE_LOGD(TAG, "Seq ended early at step %u", i);
             return 0;
+        }
 
         uint8_t current = cmd->sequence[sequence_index];
 
         if (current == DELAY_PREFIX) {
             // delays require 3 bytes total
-            if ((sequence_index + 2) >= payload_bytes)
+            if ((sequence_index + 2) >= payload_bytes) {
+                BLE_LOGD(TAG, "Truncated delay at step %u", i);
                 return 0;
+            }
 
             uint16_t delay = (cmd->sequence[sequence_index + 1] << 0) | (cmd->sequence[sequence_index + 2] << 8);
 
-            if (delay == 0)
+            if (delay == 0) {
+                BLE_LOGD(TAG, "Zero delay at step %u", i);
                 return 0;
+            }
 
             sequence_index += 3;
         } else if (current >= COMMAND_BOTH_UP && current <= COMMAND_SLEEPY_EYE) {
             sequence_index += 1;
         } else {
             // Unknown command byte
+            BLE_LOGD(TAG, "Unknown cmd byte 0x%02X at step %u", current, i);
             return 0;
         }
     }
 
-    if (sequence_index != payload_bytes)
+    if (sequence_index != payload_bytes) {
+        BLE_LOGD(TAG, "Payload length mismatch: parsed %u vs %u", (unsigned int)sequence_index, (unsigned int)payload_bytes);
         return 0;
+    }
 
     return 1;
 }
@@ -172,6 +191,8 @@ void custom_command_task(void* args) {
             uint8_t left_origin = POSITION_DOWN;
             uint8_t right_origin = POSITION_DOWN;
             uint8_t sequence_cancelled = 0;
+
+            BLE_LOGI(TAG, "Sequence start (steps=%u, loop=%u, sleepy=%u)", cmd_data.sequence_length, cmd_data.looping, was_sleepy);
 
             if (was_sleepy) {
                 headlight_position_t init_pos = get_position();
@@ -193,11 +214,13 @@ void custom_command_task(void* args) {
                     // Handle delay (Little Endian -- 0xDEEE02 yields Delay 0x02EE or Delay 750ms)
                     uint16_t delay = (cmd_data.sequence[sequence_index + 1] << 0) | (cmd_data.sequence[sequence_index + 2] << 8);
 
+                    BLE_LOGD(TAG, "Step %d/%u: DELAY %ums", i + 1, cmd_data.sequence_length, delay);
                     sequence_cancelled = wait_for_command_completion(delay);
                     sequence_index += 3;
                 } else {
                     // Send regular cmd
                     command_t cmd = cmd_data.sequence[sequence_index];
+                    BLE_LOGD(TAG, "Step %d/%u: %s", i + 1, cmd_data.sequence_length, command_to_str((command_types_t)cmd));
                     xQueueSend(command_output_queue, &cmd, portMAX_DELAY);
 
                     sequence_cancelled = wait_for_command_completion(0);
@@ -209,6 +232,7 @@ void custom_command_task(void* args) {
 
                 // loop forever if looping is enabled
                 if ((i == (cmd_data.sequence_length - 1)) && cmd_data.looping) {
+                    BLE_LOGV(TAG, "Sequence loop restart");
                     i = -1;
                     sequence_index = 0;
                     continue;
@@ -217,6 +241,7 @@ void custom_command_task(void* args) {
 
             if (was_sleepy && !sequence_cancelled && cmd_state != COMMAND_STOPPING && !cmd_data.looping) {
                 if (!is_left_sleepy() && !is_right_sleepy()) {
+                    BLE_LOGD(TAG, "Sequence restoring sleepy (orig L=%u%% R=%u%%)", left_origin, right_origin);
                     headlight_position_t end_pos = get_position();
 
                     if (left_origin == right_origin && (end_pos.left_pos != left_origin || end_pos.right_pos != right_origin)) {
@@ -258,6 +283,8 @@ void custom_command_task(void* args) {
 
             cmd_state = COMMAND_IDLE;
             xSemaphoreGive(custom_mutex_handle);
+
+            BLE_LOGI(TAG, "Sequence ended (%s)", was_cancelled ? "CANCELLED" : "COMPLETE");
         }
     }
 }
