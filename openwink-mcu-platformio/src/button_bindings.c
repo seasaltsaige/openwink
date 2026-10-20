@@ -5,9 +5,12 @@
 #include <esp_sleep.h>
 #include <string.h>
 
+#include "ble/debugger/ble_debugger.h"
 #include "button_bindings.h"
 #include "custom_command_output.h"
 #include "storage_handler.h"
+
+static const char* TAG = "BND";
 
 
 // check wakeup reason on boot, if not from a sleep wakeup, read from nvs to set
@@ -34,6 +37,8 @@ void set_binding_at_pos(button_binding_t* binding, uint8_t pos) {
     button_config.bindings[pos] = *binding;
     set_nvs_binding(binding, pos);
     xSemaphoreGive(bindings_lock);
+
+    BLE_LOGD(TAG, "Binding pos %u saved (%s)", pos, binding_type_to_str(binding->type));
 }
 
 void get_binding_at_pos(button_binding_t* binding, uint8_t pos) {
@@ -65,6 +70,8 @@ void delete_binding_at_pos(uint8_t pos) {
 
     delete_nvs_binding(pos);
     xSemaphoreGive(bindings_lock);
+
+    BLE_LOGD(TAG, "Binding pos %u deleted", pos);
 }
 
 
@@ -76,6 +83,8 @@ void set_custom_button_status(uint8_t status) {
     button_config.custom_actions_enabled = status;
     set_nvs_button_status(status);
     xSemaphoreGive(bindings_lock);
+
+    BLE_LOGI(TAG, "Custom button status: %u", status);
 }
 uint8_t get_custom_button_status() {
     return button_config.custom_actions_enabled;
@@ -89,6 +98,8 @@ void set_custom_button_delay(uint16_t delay) {
     button_config.button_delay_ms = delay;
     set_nvs_button_delay(delay);
     xSemaphoreGive(bindings_lock);
+
+    BLE_LOGI(TAG, "Custom button delay: %ums", delay);
 }
 uint16_t get_custom_button_delay() {
     return button_config.button_delay_ms;
@@ -101,14 +112,18 @@ uint8_t validate_button_binding(button_binding_t* binding, size_t size) {
     if (binding == NULL)
         return 0;
 
-    if (size < MIN_BINDING_PAYLOAD_LEN || size > sizeof(button_binding_t))
+    if (size < MIN_BINDING_PAYLOAD_LEN || size > sizeof(button_binding_t)) {
+        BLE_LOGD(TAG, "Invalid binding size: %u", (unsigned int)size);
         return 0;
+    }
 
 
     // BINDING_SETTING is not valid for an OEM button binding
     // only applys for AUX buttons (eg: using a toggle switch to change a setting)
-    if (binding->type > BINDING_CUSTOM_SEQUENCE)
+    if (binding->type > BINDING_CUSTOM_SEQUENCE) {
+        BLE_LOGD(TAG, "Invalid binding type: %u", binding->type);
         return 0;
+    }
 
     // default to fail
     uint8_t cmd_val_res = 0;
@@ -119,6 +134,8 @@ uint8_t validate_button_binding(button_binding_t* binding, size_t size) {
     else if (binding->type == BINDING_BUILTIN) {
         if ((size == (BINDING_TYP_LEN + sizeof(command_t))) && (binding->data.builtin >= COMMAND_BOTH_UP) && (binding->data.builtin <= COMMAND_SLEEPY_EYE))
             cmd_val_res = 1;
+        else
+            BLE_LOGD(TAG, "Invalid builtin cmd: 0x%02X (size=%u)", binding->data.builtin, (unsigned int)size);
     }
 
 
