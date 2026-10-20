@@ -117,6 +117,14 @@ const char* aux_status_to_str(aux_status_t status) {
     }
 }
 
+const char* aux_type_to_str(aux_type_t type) {
+    switch (type) {
+    case LATCHING: return "LATCHING";
+    case MOMENTARY: return "MOMENTARY";
+    default: return "UNKNOWN";
+    }
+}
+
 void init_ble_debugger() {
     current_debug_level = BLE_DEBUG_NONE;
     client_subscribed = 0;
