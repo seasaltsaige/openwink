@@ -115,6 +115,10 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
+    // TODO: Check status flags + set oem status
+    // TODO: Check delay flags + set oem delay
+
+
     // must be at least 2 bytes long to delete a binding
     if (d.size() < 2) {
         BLE_LOGE(TAG, "Invalid binding packet (size=%u)", (unsigned int)d.size());
@@ -215,6 +219,10 @@ void SleepySettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, Nim
         BLE_LOGE(TAG, "Invalid sleepy settings (size=%u)", (unsigned int)d.size());
     }
 }
+
+void WaveSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+}
+
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     // writes should only do something if specifically waiting for it
