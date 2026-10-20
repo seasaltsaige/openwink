@@ -5,10 +5,13 @@
 #include <freertos/FreeRTOS.h>
 #include <stdlib.h>
 
+#include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
 #include "storage_handler.h"
+
+static const char* TAG = "FBK";
 
 TaskHandle_t left_feedback_task;
 TaskHandle_t right_feedback_task;
@@ -70,6 +73,7 @@ void left_monitor_task(void* args) {
             last_level = 1;
             movement_stats.left_moving = 1;
             move_started_sleepy = is_left_sleepy();
+            BLE_LOGV(TAG, "LEFT feedback active (sleepy=%u)", move_started_sleepy);
         } else if ((last_level == 1) && (curr_state == 0)) {
             uint8_t sleepy = move_started_sleepy || is_left_sleepy();
             last_level = 0;
@@ -82,11 +86,17 @@ void left_monitor_task(void* args) {
                 uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
                 if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
                     movement_stats.left_move_time = elapsed_ms;
+                    BLE_LOGD(TAG, "LEFT feedback stop: %ums", elapsed_ms);
                     if (abs((int)elapsed_ms - (int)last_nvs_left_time) >= MOVE_TIME_DEADBAND_MS) {
                         last_nvs_left_time = elapsed_ms;
                         set_nvs_left_move_time(elapsed_ms);
+                        BLE_LOGI(TAG, "LEFT move time calibrated: %ums (saved)", elapsed_ms);
                     }
+                } else {
+                    BLE_LOGW(TAG, "LEFT move time %ums out of bounds (%u..%ums)", elapsed_ms, MOVE_TIME_MIN_MS, MOVE_TIME_LIMIT_MS);
                 }
+            } else {
+                BLE_LOGD(TAG, "LEFT feedback stop (sleepy, cal skipped)");
             }
         }
         vTaskDelay(pdMS_TO_TICKS(4));
@@ -106,6 +116,7 @@ void right_monitor_task(void* args) {
             last_level = 1;
             movement_stats.right_moving = 1;
             move_started_sleepy = is_right_sleepy();
+            BLE_LOGV(TAG, "RIGHT feedback active (sleepy=%u)", move_started_sleepy);
         } else if ((last_level == 1) && (curr_state == 0)) {
             uint8_t sleepy = move_started_sleepy || is_right_sleepy();
             last_level = 0;
@@ -118,11 +129,17 @@ void right_monitor_task(void* args) {
                 uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
                 if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
                     movement_stats.right_move_time = elapsed_ms;
+                    BLE_LOGD(TAG, "RIGHT feedback stop: %ums", elapsed_ms);
                     if (abs((int)elapsed_ms - (int)last_nvs_right_time) >= MOVE_TIME_DEADBAND_MS) {
                         last_nvs_right_time = elapsed_ms;
                         set_nvs_right_move_time(elapsed_ms);
+                        BLE_LOGI(TAG, "RIGHT move time calibrated: %ums (saved)", elapsed_ms);
                     }
+                } else {
+                    BLE_LOGW(TAG, "RIGHT move time %ums out of bounds (%u..%ums)", elapsed_ms, MOVE_TIME_MIN_MS, MOVE_TIME_LIMIT_MS);
                 }
+            } else {
+                BLE_LOGD(TAG, "RIGHT feedback stop (sleepy, cal skipped)");
             }
         }
         vTaskDelay(pdMS_TO_TICKS(4));
