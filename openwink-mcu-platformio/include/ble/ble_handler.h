@@ -46,6 +46,7 @@
 #define HEADLIGHT_BYPASS_UUID NimBLEUUID(0xada2537e, 0x0399, 0x4d2a, 0x9eab0c7cb60d3500)
 #define SWAP_ORIENTATION_UUID NimBLEUUID(0x3ddd922d, 0x14ca, 0x4785, 0x9cd039a530e8b14d)
 #define AUX_BUTTONS_UUID NimBLEUUID(0xbf3d4b2c, 0x0620, 0x4b34, 0x947437aa6cef28b9)
+#define DEBUG_UUID NimBLEUUID(0x5015946c, 0x7bfb, 0x4b78, 0xb7482eeb96712164)
 
 
 // END SETTINGS CHARACTERISTICS //
@@ -91,6 +92,7 @@ void set_device_status(openwink_status_t status);
 openwink_status_t get_device_status();
 
 void ble_notify_passkey(uint8_t* key, size_t size);
+void ble_notify_debug(const uint8_t* data, size_t size);
 
 #ifdef __cplusplus
 }
