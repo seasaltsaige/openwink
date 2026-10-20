@@ -49,6 +49,7 @@ const char* side_to_str(uint8_t side);
 const char* binding_type_to_str(button_bindings_type_t type);
 const char* aux_side_to_str(aux_side_t side);
 const char* aux_status_to_str(aux_status_t status);
+const char* aux_type_to_str(aux_type_t type);
 
 void ble_log(ble_debug_level_t level, const char* tag, const char* fmt, ...) __attribute__((format(printf, 3, 4)));
 void ble_debug_task(void* args);
