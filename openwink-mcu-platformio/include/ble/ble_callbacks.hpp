@@ -34,10 +34,9 @@ class AuxSettingsCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 };
 
-class WaveSettingsCallbacks : public NimBLECharacteristicCallbacks {
+class GeneralSettingsCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 };
-
 
 class AuthCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;

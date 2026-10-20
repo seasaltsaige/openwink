@@ -47,6 +47,14 @@ void get_nvs_left_move_time(uint16_t* time_ms);
 void set_nvs_right_move_time(uint16_t time_ms);
 void get_nvs_right_move_time(uint16_t* time_ms);
 
+// input headlight ON bypass
+void set_nvs_input_bypass_status(uint8_t status);
+void get_nvs_input_bypass_status(uint8_t* status);
+
+// wave delay settings
+void set_nvs_wave_delay(uint8_t delay);
+void get_nvs_wave_delay(uint8_t* delay);
+
 int8_t get_nvs_seeded();
 void seed_nvs_defaults();
 

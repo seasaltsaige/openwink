@@ -7,20 +7,29 @@
 #include "custom_command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
+#include "storage_handler.h"
 
 static const char* TAG = "CMD";
 
 QueueHandle_t command_output_queue;
 TaskHandle_t command_output_task;
 
+RTC_DATA_ATTR command_state_data_t cmd_data = {
+    .busy = 0,
+    .wave_delay = 50,
+};
+
 void init_command_queue() {
     command_output_queue = xQueueCreate(20, sizeof(command_types_t));
+    // shhh dont look at this (this is definitely initializing the queue)
+    get_nvs_wave_delay(&cmd_data.wave_delay);
 }
 
 // TODO: Add helper function similar to custom command to request submisison?
 // maybe to abstract away the queue... not sure
 
 
+// helpers for queuing commands internally
 static void queue_side_move(uint8_t side, move_type_t type, uint8_t is_final) {
     movement_target_t move = {
         .target = type,
@@ -161,6 +170,16 @@ static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos,
         queue_side_move(RIGHT_SIDE, MOVE_NOP, false);
 
     xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+}
+
+void set_wave_delay(uint8_t delay) {
+    if (delay > 100) {
+        BLE_LOGE(TAG, "Wave delay over MAX allowed of %d. Received: %d", WAVE_DELAY_MAX, delay);
+        return;
+    }
+    cmd_data.wave_delay = delay;
+    BLE_LOGI(TAG, "Wave delay set to %d", delay);
+    set_nvs_wave_delay(delay);
 }
 
 // note: portMAX_DELAY might be a bad idea in general, but for now its ok while porting over

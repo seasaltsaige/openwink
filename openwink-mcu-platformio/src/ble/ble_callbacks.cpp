@@ -251,9 +251,47 @@ void SleepySettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, Nim
     }
 }
 
-void WaveSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-}
+void GeneralSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
 
+    // TODO: List of feature sfor settings:
+    /** Wave settings
+     * (merge sleepy settings)
+     * Long term sleep (put to sleep)
+     * Unpair/reset
+     * swap orientation
+     * headlight bypass (this is part of bindings... do i just merge everything?)
+     **/
+    // should Cutom button actions (bindings)
+    // and aux buttons be merged as well?
+
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    // --- STATUS PACKETS ---
+
+    // WAVE PACKET
+    // TODO: Add implemented functions
+
+    // SLEEPY PACKET
+    // TODO
+
+    // DEVICE SLEEP PACKETss
+    // TODO
+
+    // UNPAIR PACKET
+    // TODO
+
+    // RESET PACKET
+    // TODO
+
+    // SWAP ORIENTATION PACKET
+    // TODO
+
+    // HEADLIGHT BYPASS PACKET
+    // TODO: Add implemented functions
+
+    // --- ---
+}
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     // writes should only do something if specifically waiting for it

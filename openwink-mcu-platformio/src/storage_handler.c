@@ -41,6 +41,9 @@ static const char* aux_binding_keys[2] = {
     "aux_1",
 };
 
+static const char* input_bypass_key = "inp_bp";
+static const char* wave_delay_key = "wave_d";
+
 static esp_err_t open(nvs_open_mode_t mode) {
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
     esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
@@ -289,6 +292,23 @@ void load_nvs_aux_config(aux_buttons_t* config) {
     nvs_get_blob(storage_handle, aux_binding_keys[TWO], &config->two.aux, &size);
 
     close();
+}
+
+void set_nvs_input_bypass_status(uint8_t status) {
+    write_u8(input_bypass_key, status);
+}
+
+void get_nvs_input_bypass_status(uint8_t* status) {
+    read_u8(input_bypass_key, status);
+}
+
+
+void set_nvs_wave_delay(uint8_t delay) {
+    write_u8(wave_delay_key, delay);
+}
+
+void get_nvs_wave_delay(uint8_t* delay) {
+    read_u8(wave_delay_key, delay);
 }
 
 int8_t get_nvs_seeded() {

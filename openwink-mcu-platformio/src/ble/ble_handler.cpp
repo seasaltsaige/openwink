@@ -22,6 +22,8 @@ static CustomButtonCallbacks custom_btn_callbacks;
 static SleepySettingsCallbacks sleepy_settings_callbacks;
 static AuxSettingsCallbacks aux_settings_callbacks;
 
+static GeneralSettingsCallbacks settings_callbacks;
+
 static AuthCallbacks auth_callbacks;
 static DebugCallbacks debug_callbacks;
 
@@ -79,6 +81,9 @@ extern "C" uint8_t ble_init(const char* name) {
 
     settings_service->createCharacteristic(DEBUG_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(DEBUG_UUID)->setCallbacks(&debug_callbacks);
+
+    settings_service->createCharacteristic("beans", NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    settings_service->getCharacteristic("beans")->setCallbacks(&settings_callbacks);
 
     return BLE_INIT_SUCCESS;
 }

@@ -8,11 +8,13 @@
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "output_handler.h"
+#include "storage_handler.h"
 
 static const char* TAG = "BTN";
 
 RTC_DATA_ATTR button_input_t input_state = {
     .button_state = LOW,
+    .headlight_bypass = 0,
 };
 
 void inputs_init() {
@@ -24,6 +26,21 @@ void inputs_init() {
         .pin_bit_mask = (1UL << BUTTON_INPUT),
     };
     gpio_config(&input_config);
+
+    get_nvs_input_bypass_status(&input_state.headlight_bypass);
+}
+
+void set_input_headlight_bypass(uint8_t status) {
+    // log if setting to same state
+    if (input_state.headlight_bypass == status) {
+        BLE_LOGW(TAG, "Headlight bypass already set to %s", input_state.headlight_bypass ? "TRUE" : "FALSE");
+        return;
+    } else {
+        // Assuming verified input from BLE callback
+        input_state.headlight_bypass = status;
+        BLE_LOGI(TAG, "Headlight bypass set to %s", input_state.headlight_bypass ? "TRUE" : "FALSE");
+        set_nvs_input_bypass_status(status);
+    }
 }
 
 void read_input_on_boot() {
