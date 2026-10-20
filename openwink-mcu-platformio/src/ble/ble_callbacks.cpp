@@ -93,6 +93,7 @@ void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimB
     if (d.size() == 1 && data[0] == CANCEL_COMMAND_PAYLOAD) {
         BLE_LOGD(TAG, "Custom cmd cancellation requested");
         request_command_cancellation();
+        return;
     }
 
     BLE_LOGV(TAG, "Custom cmd write (%u bytes)", (unsigned int)d.size());
@@ -126,10 +127,43 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
 
     // must be at least 2 bytes long to delete a binding
     if (d.size() < 2) {
-        BLE_LOGE(TAG, "Invalid binding packet (size=%u)", (unsigned int)d.size());
+        BLE_LOGW(TAG, "Invalid binding packet (size=%u)", (unsigned int)d.size());
         return;
     }
 
+    // check for status flag byte + status to set to
+    if (d.size() == 1 && data[0] == BINDING_STATUS_FLAG) {
+        if (data[0] > BINDING_ENABLED) {
+            BLE_LOGW(TAG, "Custom status out of expected range (DISABLED or ENABLED)");
+            return;
+        } else {
+            BLE_LOGI(TAG, "Set custom status to %s", data[0] == BINDING_ENABLED ? "enabled" : "disabled");
+            // TODO: Add function for binding status
+            return;
+        }
+    }
+    // if we have a deletion packet, we dont really need to check much else
+    // just send it
+    if (d.size() == 2 && data[1] == BINDING_DELETE_FLAG) {
+        BLE_LOGI(TAG, "Delete binding at pos %u", data[0]);
+        delete_binding_at_pos(data[0]);
+        return;
+    }
+
+    // check for delay flag
+    // delay will be a two byte type
+    // little endian delay (following previous method in custom_command_output.h)
+    if (d.size() == 3 && data[0] == BINDING_DELAY_FLAG) {
+        uint16_t delay = (data[1] << 0) | (data[2] << 8);
+        if (delay < BINDING_DELAY_MIN || delay > BINDING_DELAY_MAX) {
+            BLE_LOGW(TAG, "Binding delay out of range");
+            return;
+        } else {
+            // BLE_LOGI(TAG, "Set")
+            // TODO: Add delay set function
+            return;
+        }
+    }
     // first byte represents binding pos
     // there can only be 8 bindings
     if (data[0] > 7) {
@@ -138,14 +172,6 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
     }
 
     button_binding_t binding{};
-
-    // if we have a deletion packet, we dont really need to check much else
-    // just send it
-    if (data[1] == DELETE_BINDING_FLAG) {
-        BLE_LOGI(TAG, "Delete binding at pos %u", data[0]);
-        delete_binding_at_pos(data[0]);
-        return;
-    }
 
     size_t copy_size = std::min<size_t>(sizeof(button_binding_t), (d.size() - BINDING_POS_LEN));
     // copy from offset of pos
@@ -173,7 +199,7 @@ void AuxSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLE
     }
 
     if (d.size() == 1) {
-        if (data[0] > ENABLED) {
+        if (data[0] > AUX_ENABLED) {
             BLE_LOGE(TAG, "Invalid aux status: 0x%02X", data[0]);
             return;
         }
@@ -188,7 +214,7 @@ void AuxSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLE
 
     aux_side_t side = (aux_side_t)data[0];
 
-    if (d.size() == 2 && data[1] == DELETE_BINDING_FLAG) {
+    if (d.size() == 2 && data[1] == BINDING_DELETE_FLAG) {
         BLE_LOGI(TAG, "Delete aux binding for %s", aux_side_to_str(side));
         delete_aux(side);
         return;
