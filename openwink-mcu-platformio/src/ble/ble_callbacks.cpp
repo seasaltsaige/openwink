@@ -90,6 +90,11 @@ void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimB
         return;
     }
 
+    if (d.size() == 1 && data[0] == CANCEL_COMMAND_PAYLOAD) {
+        BLE_LOGD(TAG, "Custom cmd cancellation requested");
+        request_command_cancellation();
+    }
+
     BLE_LOGV(TAG, "Custom cmd write (%u bytes)", (unsigned int)d.size());
 
     // copy data up to max size

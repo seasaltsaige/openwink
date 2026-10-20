@@ -12,6 +12,7 @@
 #define LOOPING_BIT (1UL << 8)
 #define NOTIFY_BUTTON_INTERRUPT_BIT (1UL << 0)
 
+
 // Sleepy prefix - 3 byte sleepy commands
 // 0xBB 0x4D 0xFF ==> Sleepy, Left = 77%, Right = Unchanged
 // 0xBB 0x64 0x64 ==> Sleepy, Both = 100%
@@ -26,6 +27,11 @@
 // 3 byte delays
 // 0xDE 0xEE 0x02 ==> Delay(0xDE) 0x02EE == 750ms Delay
 #define DELAY_PREFIX 0xDE
+
+// BLE Command Cancellation request
+// payload should be exactly one byte long
+// with this exact format
+#define CANCEL_COMMAND_PAYLOAD 0xCA
 
 // Max ATT MTU for IOS = 185 bytes, yielding a payload size of 182 bytes
 // Include looping bit? so realistically 181 / 3?
