@@ -66,6 +66,17 @@ const ROUTES: RouteType[] = [
     visible: false
   },
   {
+    display: "Module Settings",
+    icon: "bug-outline",
+    title: "Module Debugger",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "Debugger",
+    },
+    visible: false
+  },
+  {
     display: "Settings",
     icon: "information-circle-outline",
     title: "System Information",

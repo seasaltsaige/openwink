@@ -66,6 +66,7 @@ BaseType_t request_command_submission(custom_command_data_t* cmd);
 void request_command_cancellation();
 void init_custom_command_queue();
 uint8_t get_custom_command_executing();
+command_types_t peek_next_custom_command();
 
 
 void custom_command_task(void* args);
@@ -74,4 +75,4 @@ void custom_command_task(void* args);
 }
 #endif
 
-#endif
+#endif

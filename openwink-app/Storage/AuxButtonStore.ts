@@ -49,7 +49,7 @@ export abstract class AuxButtonStore {
 
   static setAuxButtonType(aux: AUX_ID, type: AUX_SWITCH_TYPE): void {
     if (type === AUX_SWITCH_TYPE.MOMENTARY) Storage.set(`${AUX_TYPE_KEY}-${aux}`, true);
-    else Storage.delete(`${AUX_LOOP_KEY}-${aux}`);
+    else Storage.delete(`${AUX_TYPE_KEY}-${aux}`);
   }
 
   static getAuxButtonAction(aux: AUX_ID): ButtonBehaviors | CommandOutput {
@@ -116,4 +116,4 @@ export abstract class AuxButtonStore {
     this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.LATCHING);
     this.disable();
   }
-}
+}

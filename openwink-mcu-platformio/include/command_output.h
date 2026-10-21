@@ -28,21 +28,24 @@ typedef enum command_types : uint8_t {
     // defining every single one is not needed
     // but is nice for reading
     COMMAND_BOTH_UP = 0x01,
-    COMMAND_BOTH_DOWN = 0x02,
-    COMMAND_BOTH_BLINK = 0x03,
-    COMMAND_LEFT_UP = 0x04,
-    COMMAND_LEFT_DOWN = 0x05,
-    COMMAND_LEFT_WINK = 0x06,
-    COMMAND_RIGHT_UP = 0x07,
-    COMMAND_RIGHT_DOWN = 0x08,
-    COMMAND_RIGHT_WINK = 0x09,
-    COMMAND_LEFT_WAVE = 0x0A,
-    COMMAND_RIGHT_WAVE = 0x0B,
-    COMMAND_LEFT_RIGHT = 0x0C,
-    COMMAND_LEFT_RIGHT_X2 = 0x0D,
-    COMMAND_RIGHT_LEFT = 0x0E,
-    COMMAND_RIGHT_LEFT_X2 = 0x0F,
-    COMMAND_SLEEPY_EYE = 0x10,
+    COMMAND_BOTH_DOWN,
+    COMMAND_BOTH_BLINK,
+    COMMAND_BOTH_BLINK_X2,
+    COMMAND_LEFT_UP,
+    COMMAND_LEFT_DOWN,
+    COMMAND_LEFT_WINK,
+    COMMAND_LEFT_WINK_X2,
+    COMMAND_RIGHT_UP,
+    COMMAND_RIGHT_DOWN,
+    COMMAND_RIGHT_WINK,
+    COMMAND_RIGHT_WINK_X2,
+    COMMAND_LEFT_WAVE,
+    COMMAND_RIGHT_WAVE,
+    COMMAND_LEFT_RIGHT,
+    COMMAND_LEFT_RIGHT_X2,
+    COMMAND_RIGHT_LEFT,
+    COMMAND_RIGHT_LEFT_X2,
+    COMMAND_SLEEPY_EYE,
 
     // Settings actions
     // ported from legacy code
@@ -67,6 +70,8 @@ extern "C" {
 
 void init_command_queue();
 void set_wave_delay(uint8_t delay);
+void set_command_busy(uint8_t busy);
+uint8_t get_command_busy();
 void handle_command_task(void* args);
 
 #ifdef __cplusplus

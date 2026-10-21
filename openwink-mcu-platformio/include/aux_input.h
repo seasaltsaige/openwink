@@ -67,6 +67,7 @@ extern "C" {
 // Read status from NVS, get one/two bindings
 // enable/disable, init gpio if enabled
 void init_aux();
+void reload_aux();
 
 void set_aux_status(uint8_t status);
 uint8_t get_aux_status();
@@ -85,4 +86,4 @@ void aux_two_input_task(void* args);
 }
 #endif
 
-#endif
+#endif

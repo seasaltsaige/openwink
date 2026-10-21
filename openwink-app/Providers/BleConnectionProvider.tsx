@@ -17,13 +17,13 @@ import { PermissionsAndroid, Platform } from "react-native";
 import * as ExpoDevice from "expo-device";
 import base64 from "react-native-base64";
 import Toast from "react-native-toast-message";
-import { BLE, getBLEDescriptors, SCAN_TIME_SECONDS } from "../helper/Constants";
+import { BLE, CANCEL_COMMAND_PAYLOAD, getBLEDescriptors, SCAN_TIME_SECONDS, SettingFlag } from "../helper/Constants";
 import {
   AutoConnectStore,
   DeviceMACStore,
   FirmwareStore,
 } from "../Storage";
-import { getDevicePasskey, sleep } from "../helper/Functions";
+import { bytesToBase64, getDevicePasskey, sleep } from "../helper/Functions";
 import { useBleMonitor } from "./BleMonitorProvider";
 import DeviceInfo from "react-native-device-info";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
@@ -204,7 +204,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             device
               .writeCharacteristicWithoutResponseForService(
                 ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
-                base64.encode("0"),
+                bytesToBase64([CANCEL_COMMAND_PAYLOAD]),
               )
               .catch((error) => {
                 console.error("Error sending interrupt signal:", error);
@@ -260,30 +260,23 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           DeviceUUIDStore.forgetUUID();
         }
 
-        // Wow that was stupid
         if (getDevicePasskey() !== "Not Paired") {
           await connection.writeCharacteristicWithResponseForService(
             ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode(getDevicePasskey()),
           );
-        } else {
-          await connection.writeCharacteristicWithResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUTH"),
-            base64.encode("CLAIM"),
-          );
         }
 
-
-
-        try {
-          await writeInitialSettings(connection);
-        } catch (error) {
-          console.warn(
-            "[BLE] Non-critical write failed during initial settings:",
-            error,
-          );
-        }
-        await readInitialValues(connection);
+        // Initial settings writes and reads disabled for minimal connection/auth testing
+        // try {
+        //   await writeInitialSettings(connection);
+        // } catch (error) {
+        //   console.warn(
+        //     "[BLE] Non-critical write failed during initial settings:",
+        //     error,
+        //   );
+        // }
+        // await readInitialValues(connection);
       } catch (error) {
         console.error("Error setting up connection:", error);
         throw error;
@@ -556,9 +549,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (device !== null) {
       try {
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "UNPAIR"),
-          base64.encode("0"),
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.UNPAIR]),
         );
 
         await device.cancelConnection().catch((err) => {

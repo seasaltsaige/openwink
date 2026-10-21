@@ -147,13 +147,13 @@ export function Home() {
 
 
   useEffect(() => {
-    setTimeout(() => {
-      setSleepyEyeValues(SleepyEyeStore.get("left"), SleepyEyeStore.get("right"));
-      setOEMButtonStatus(CustomOEMButtonStore.isEnabled() ? "enable" : "disable");
-      updateButtonDelay(CustomOEMButtonStore.getDelay());
-      updateWaveDelayMulti(CustomWaveStore.getMultiplier());
-      console.log("Updating state values...");
-    }, 2500);
+    // setTimeout(() => {
+    //   setSleepyEyeValues(SleepyEyeStore.get("left"), SleepyEyeStore.get("right"));
+    //   setOEMButtonStatus(CustomOEMButtonStore.isEnabled() ? "enable" : "disable");
+    //   updateButtonDelay(CustomOEMButtonStore.getDelay());
+    //   updateWaveDelayMulti(CustomWaveStore.getMultiplier());
+    //   console.log("Updating state values...");
+    // }, 2500);
 
     (async () => {
       if (isConnected) await fetchModuleUpdate();

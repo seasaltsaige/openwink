@@ -3,6 +3,9 @@
 
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
+#include "command_output.h"
+#include "headlight_feedback.h"
+#include "output_handler.h"
 
 static NimBLEServer* openwink_server = nullptr;
 
@@ -15,6 +18,7 @@ static NimBLEExtAdvertising* advertising = nullptr;
 static ServerCallbacks server_callbacks;
 
 static HeadlightCommandCallbacks default_cmd_callbacks;
+static HeadlightStatusCallbacks status_callbacks;
 static CustomCommandCallbacks custom_cmd_callbacks;
 
 
@@ -62,6 +66,9 @@ extern "C" uint8_t ble_init(const char* name) {
     wink_service->createCharacteristic(HEADLIGHT_CHAR_UUID, NIMBLE_PROPERTY::WRITE_NR);
     wink_service->getCharacteristic(HEADLIGHT_CHAR_UUID)->setCallbacks(&default_cmd_callbacks);
 
+    wink_service->createCharacteristic(HEADLIGHT_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    wink_service->getCharacteristic(HEADLIGHT_STATUS_UUID)->setCallbacks(&status_callbacks);
+
     wink_service->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::WRITE_NR);
     wink_service->getCharacteristic(CUSTOM_COMMAND_UUID)->setCallbacks(&custom_cmd_callbacks);
 
@@ -79,6 +86,8 @@ extern "C" uint8_t ble_init(const char* name) {
 
     settings_service->createCharacteristic(DEBUG_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(DEBUG_UUID)->setCallbacks(&debug_callbacks);
+
+    ble_notify_headlight_status();
 
     return BLE_INIT_SUCCESS;
 }
@@ -175,4 +184,32 @@ extern "C" void ble_notify_debug(const uint8_t* data, size_t size) {
         return;
 
     debug_char->notify(data, size);
+}
+
+extern "C" void ble_notify_headlight_status() {
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* wink = pServer->getServiceByUUID(WINK_SERVICE_UUID);
+    if (wink == NULL)
+        return;
+
+    NimBLECharacteristic* status_char = wink->getCharacteristic(HEADLIGHT_STATUS_UUID);
+    if (status_char == NULL)
+        return;
+
+    headlight_position_t pos = get_position();
+    headlight_status_packet_t payload = {
+        .busy = get_command_busy(),
+        .left_pos = pos.left_pos,
+        .right_pos = pos.right_pos,
+        .left_move_time = get_left_move_time_ms(),
+        .right_move_time = get_right_move_time_ms(),
+    };
+
+    status_char->setValue((const uint8_t*)&payload, sizeof(payload));
+
+    if (openwink_status == CONNECTED)
+        status_char->notify((const uint8_t*)&payload, sizeof(payload));
 }

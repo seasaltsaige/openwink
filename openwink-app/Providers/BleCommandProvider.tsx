@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import base64 from 'react-native-base64';
 import Toast from 'react-native-toast-message';
-import { getBLEDescriptors, DefaultCommandValue, ButtonStatus, DefaultCommandValueEnglish, buttonBehaviorMap } from '../helper/Constants';
+import { getBLEDescriptors, DefaultCommandValue, ButtonStatus, DefaultCommandValueEnglish, buttonBehaviorMap, CANCEL_COMMAND_PAYLOAD, BINDING_DELETE_FLAG, SettingFlag, DebugLevel } from '../helper/Constants';
 import {
   AUX_ID,
   AUX_SWITCH_TYPE,
@@ -17,7 +17,7 @@ import {
   CustomWaveStore,
   SleepyEyeStore,
 } from '../Storage';
-import { sleep } from '../helper/Functions';
+import { bytesToBase64, encodeButtonBinding, encodeCustomCommandSequence, sleep } from '../helper/Functions';
 import { ButtonBehaviors, CommandInput, CommandOutput, CustomButtonAction, Presses } from '../helper/Types';
 import { useBleConnection } from './BleConnectionProvider';
 import { useBleMonitor } from './BleMonitorProvider';
@@ -49,6 +49,7 @@ export type BleCommandContextType = {
   enterDeepSleep: () => Promise<void>;
   resetModule: () => Promise<void>;
   swapLeftRight: () => Promise<void>;
+  setModuleDebugLevel: (level: DebugLevel) => Promise<void>;
 
   // State
   activeCommandName: string | null;
@@ -91,6 +92,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setAux2Loop,
     setAux1Type,
     setAux2Type,
+    setDebugLevel,
     // 
   } = useBleMonitor();
 
@@ -184,7 +186,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         await device.writeCharacteristicWithoutResponseForService(
           ...getBLEDescriptors("WINK", "DEFAULT_COMMAND"),
-          base64.encode(command.toString())
+          bytesToBase64([command])
         );
       } catch (error) {
         console.error('Error sending default command:', error);
@@ -220,34 +222,10 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(name);
 
       try {
-
-
-        // if sending command with "loop" enabled
-        // alert module incoming command is a loop type
-        if (looped) {
-          await device.writeCharacteristicWithoutResponseForService(
-            ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
-            base64.encode("loop"),
-          )
-        }
-
-        await sleep(25);
-
-        // Alert device that custom command is in progress
+        const payload = encodeCustomCommandSequence(commandSequence, looped);
         await device.writeCharacteristicWithoutResponseForService(
           ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
-          base64.encode('1')
-        );
-
-        // Wait short delay to ensure transmission
-        await sleep(25);
-
-        // Parse command into sequence to send to mcu
-        const cmdSeq = commandSequence.map((cmd) => cmd.delay ? `d${cmd.delay}` : cmd.transmitValue).join("-");
-        // Write entire command sequence to MCU at once
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
-          base64.encode(cmdSeq),
+          bytesToBase64(payload),
         );
       } catch (error) {
         console.error('Error executing custom command:', error);
@@ -264,7 +242,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Interrupt a running custom command
   const customCommandInterrupt = useCallback(() => {
-    if (!device || !activeCommandNameRef.current) {
+    if (!device || (!activeCommandNameRef.current && !headlightsBusy)) {
       return;
     }
 
@@ -272,16 +250,16 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     updateActiveCommandName(null);
 
-    // Notify device that command is no longer in progress
+    // Notify device to cancel active custom command sequence
     device
       .writeCharacteristicWithoutResponseForService(
         ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
-        base64.encode('0')
+        bytesToBase64([CANCEL_COMMAND_PAYLOAD])
       )
       .catch((error) => {
         console.error('Error sending interrupt signal:', error);
       });
-  }, [device]);
+  }, [device, headlightsBusy]);
 
   // Send sync command (align headlights to same position)
   const sendSyncCommand = useCallback(async () => {
@@ -303,8 +281,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        ...getBLEDescriptors("WINK", "SYNC_HEADLIGHTS"),
-        base64.encode('1')
+        ...getBLEDescriptors("WINK", "DEFAULT_COMMAND"),
+        bytesToBase64([DefaultCommandValue.SLEEPY_EYE])
       );
     } catch (error) {
       console.error('Error sending sync command:', error);
@@ -316,9 +294,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         visibilityTime: 3000,
       });
     }
-  }, [device, leftStatus, rightStatus, headlightsBusy]);
+  }, [device, isSleepyEyeActive, headlightsBusy]);
 
-  // Set sleepy eye values (0-100 for each side)
+  // Set sleepy eye values (1-99 for each side)
   const setSleepyEyeValues = useCallback(
     async (left: number, right: number) => {
       if (!device) {
@@ -331,19 +309,21 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
+      const clampedLeft = Math.max(1, Math.min(99, Math.round(left)));
+      const clampedRight = Math.max(1, Math.min(99, Math.round(right)));
+
       try {
         // Persist values
-        SleepyEyeStore.set('left', left);
-        SleepyEyeStore.set('right', right);
+        SleepyEyeStore.set('left', clampedLeft);
+        SleepyEyeStore.set('right', clampedRight);
 
-        setLeftSleepyEye(left);
-        setRightSleepyEye(right);
+        setLeftSleepyEye(clampedLeft);
+        setRightSleepyEye(clampedRight);
 
         // Send to device
-        const data = `${left}-${right}`;
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "SLEEPY_SETTINGS"),
-          base64.encode(data)
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.SLEEPY_EYE, clampedLeft, clampedRight])
         );
       } catch (error) {
         console.error('Error setting sleepy eye values:', error);
@@ -381,8 +361,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     try {
       await device.writeCharacteristicWithoutResponseForService(
-        ...getBLEDescriptors("WINK", "SLEEPY_EYE"),
-        base64.encode('1')
+        ...getBLEDescriptors("WINK", "DEFAULT_COMMAND"),
+        bytesToBase64([DefaultCommandValue.SLEEPY_EYE])
       );
     } catch (error) {
       console.error('Error sending sleepy eye command:', error);
@@ -393,8 +373,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         text2: 'Failed to activate sleepy eye mode.',
         visibilityTime: 3000,
       });
-    } finally {
-      updateActiveCommandName(null);
     }
   }, [device, leftStatus, rightStatus, headlightsBusy]);
 
@@ -407,9 +385,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-          base64.encode(status ? "enable" : "disable"),
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.AUX_STATUS, status ? 1 : 0]),
         );
 
         if (status) AuxButtonStore.enable();
@@ -436,44 +414,15 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       try {
+        const side = aux === AUX_ID.AUX1 ? 0 : 1;
+        const buttonType = type === AUX_SWITCH_TYPE.LATCHING ? 0 : 1;
+        const payload = action === "Default Behavior"
+          ? [side, BINDING_DELETE_FLAG]
+          : [side, buttonType, ...encodeButtonBinding(action, loop)];
 
-        // send aux id
-        await device.writeCharacteristicWithoutResponseForService(
+        await device.writeCharacteristicWithResponseForService(
           ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-          base64.encode(aux.toString()),
-        );
-
-        await sleep(20);
-
-
-        // send aux command
-        if (typeof action === "string")
-          await device.writeCharacteristicWithoutResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-            base64.encode(buttonBehaviorMap[action].toString())
-          );
-        else {
-          const customCommand = action.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
-          await device.writeCharacteristicWithoutResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-            base64.encode(customCommand!)
-          );
-        }
-
-        await sleep(20);
-
-        // send loop status
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-          base64.encode(loop ? "1" : "0"),
-        )
-
-        await sleep(20);
-
-        // send button type
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "AUX_BUTTONS"),
-          base64.encode(type === AUX_SWITCH_TYPE.LATCHING ? "0" : "1"),
+          bytesToBase64(payload),
         );
 
         AuxButtonStore.setAuxButtonAction(aux, action);
@@ -518,9 +467,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         }
 
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-          base64.encode(status)
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.CUSTOM_BUTTON_STATUS, status === 'enable' ? 1 : 0])
         );
 
         const newStatus = CustomOEMButtonStore.isEnabled();
@@ -547,52 +496,33 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return console.warn('No device connected');
 
       try {
+        const pos = numPresses - 1;
+        if (pos < 0 || pos >= 8) {
+          console.error('Invalid OEM button binding position:', pos);
+          return;
+        }
+
         if (!updateTo) {
           CustomOEMButtonStore.remove(numPresses);
           CustomOEMButtonStore.setLooping(numPresses, false);
-        } else {
-          CustomOEMButtonStore.set(numPresses, updateTo.behaviorHumanReadable ? updateTo.behaviorHumanReadable : updateTo.customCommand!);
-          CustomOEMButtonStore.setLooping(numPresses, updateTo.looping);
-        }
 
-        // Send number of button presses to update
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-          base64.encode(numPresses.toString())
-        );
-
-        // Small delay to prevent overwrite
-        await sleep(WRITE_OPERATION_DELAY);
-
-        if (updateTo === null) {
-          // Send behavior for that number of presses
-          await device.writeCharacteristicWithoutResponseForService(
+          await device.writeCharacteristicWithResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-            base64.encode('0'),
+            bytesToBase64([pos, BINDING_DELETE_FLAG]),
           );
-        } else if (updateTo.behavior) {
-          await device.writeCharacteristicWithoutResponseForService(
+        } else {
+          const bindingTarget = updateTo.behaviorHumanReadable
+            ? updateTo.behaviorHumanReadable
+            : updateTo.customCommand!;
+          CustomOEMButtonStore.set(numPresses, bindingTarget);
+          CustomOEMButtonStore.setLooping(numPresses, updateTo.looping);
+
+          const payload = [pos, ...encodeButtonBinding(bindingTarget, updateTo.looping)];
+          await device.writeCharacteristicWithResponseForService(
             ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-            base64.encode(updateTo.behavior.toString())
-          )
-        } else if (updateTo.customCommand) {
-          const commandString = updateTo.customCommand.command?.map(value => value.delay ? `d${value.delay}` : value.transmitValue).join("-");
-          await device.writeCharacteristicWithoutResponseForService(
-            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-            base64.encode(commandString!),
-          )
+            bytesToBase64(payload),
+          );
         }
-
-        // Small delay to prevent overwrite
-        await sleep(WRITE_OPERATION_DELAY);
-
-        // Write looping status next
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-          // 1 for looped, 0 for not looped
-          base64.encode(!updateTo ? "0" : updateTo.looping ? "1" : "0"),
-        );
-
 
         Toast.show({
           type: "success",
@@ -622,9 +552,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
       try {
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "HEADLIGHT_BYPASS"),
-          base64.encode(bypass ? "1" : "0"),
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.HEADLIGHT_BYPASS, bypass ? 1 : 0]),
         );
 
         if (bypass)
@@ -653,23 +583,17 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
+      const clampedDelay = Math.max(100, Math.min(1000, Math.round(delay)));
+
       try {
-        CustomOEMButtonStore.setDelay(delay);
+        CustomOEMButtonStore.setDelay(clampedDelay);
 
-        // First write a '3' to set characteristic into update mode for delay
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-          base64.encode("delay"),
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.CUSTOM_BUTTON_DELAY, clampedDelay & 0xff, (clampedDelay >> 8) & 0xff])
         );
 
-        await sleep(WRITE_OPERATION_DELAY);
-
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-          base64.encode(delay.toString())
-        );
-
-        setButtonDelay(delay);
+        setButtonDelay(clampedDelay);
       } catch (error) {
         console.error('Error updating button delay:', error);
 
@@ -697,12 +621,14 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
+      const waveDelay = Math.max(0, Math.min(100, Math.round(delayMulti * 100)));
+
       try {
         CustomWaveStore.setMultiplier(delayMulti);
 
-        await device.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "HEADLIGHT_MOVE_DELAY"),
-          base64.encode(delayMulti.toString())
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.WAVE_DELAY, waveDelay])
         );
 
         setWaveDelayMulti(delayMulti);
@@ -728,9 +654,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
-      await device.writeCharacteristicWithoutResponseForService(
-        ...getBLEDescriptors("SETTINGS", "SLEEP"),
-        base64.encode('0')
+      await device.writeCharacteristicWithResponseForService(
+        ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+        bytesToBase64([SettingFlag.LONG_TERM_SLEEP])
       );
 
       // Module will disconnect after entering sleep
@@ -764,9 +690,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
-      await device.writeCharacteristicWithoutResponseForService(
-        ...getBLEDescriptors("SETTINGS", "RESET"),
-        base64.encode('0')
+      await device.writeCharacteristicWithResponseForService(
+        ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+        bytesToBase64([SettingFlag.RESET])
       );
 
       Toast.show({
@@ -791,9 +717,9 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     async () => {
       try {
         console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
-        await device?.writeCharacteristicWithoutResponseForService(
-          ...getBLEDescriptors("SETTINGS", "SWAP_ORIENTATION"),
-          base64.encode(leftRightSwapped ? "0" : "1"),
+        await device?.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+          bytesToBase64([SettingFlag.ORIENTATION, leftRightSwapped ? 0 : 1]),
         );
         setLeftRightSwapped((v) => !v);
         HeadlightOrientationStore.toggle();
@@ -801,6 +727,37 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         console.log(err);
       }
     }, [device, leftRightSwapped]);
+
+  const setModuleDebugLevel = useCallback(
+    async (level: DebugLevel) => {
+      if (!device) {
+        console.warn('No device connected');
+        return;
+      }
+
+      if (level < DebugLevel.NONE || level > DebugLevel.VERBOSE) {
+        console.error('Invalid debug level:', level);
+        return;
+      }
+
+      try {
+        await device.writeCharacteristicWithResponseForService(
+          ...getBLEDescriptors("SETTINGS", "DEBUG"),
+          bytesToBase64([level]),
+        );
+        setDebugLevel(level);
+      } catch (error) {
+        console.error('Error setting module debug level:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Debug Failed',
+          text2: 'Failed to update module debug level.',
+          visibilityTime: 3000,
+        });
+      }
+    },
+    [device, setDebugLevel],
+  );
 
   const value: BleCommandContextType = {
     sendDefaultCommand,
@@ -817,6 +774,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     resetModule,
     setOEMButtonHeadlightBypass,
     swapLeftRight,
+    setModuleDebugLevel,
     setAuxButton,
     setAuxiliaryButtonStatus,
     activeCommandName,

@@ -175,8 +175,8 @@ export function SleepyEyeSettings() {
           >
             <VerticalSlider
               value={leftRightSwapped ? headlightPosition["left"] : headlightPosition["right"]}
-              max={100}
-              min={0}
+              max={99}
+              min={1}
               step={coarseAdjust ? 15 : 1}
               ballIndicatorColor="orange"
               height={155}
@@ -343,8 +343,8 @@ export function SleepyEyeSettings() {
                     dispatchHeadlightPosition({
                       side: leftRightSwapped ? "left" : "right",
                       percentage: (
-                        (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1) > 100)
-                        ? 100
+                        (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1) > 99)
+                        ? 99
                         : (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1),
                     })
                   }
@@ -384,8 +384,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "left" : "right",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1) < 0)
-                      ? 0
+                      (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1) < 1)
+                      ? 1
                       : (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -536,8 +536,8 @@ export function SleepyEyeSettings() {
           >
             <VerticalSlider
               value={leftRightSwapped ? headlightPosition["right"] : headlightPosition["left"]}
-              max={100}
-              min={0}
+              max={99}
+              min={1}
               step={coarseAdjust ? 15 : 1}
               ballIndicatorColor="orange"
               height={155}
@@ -579,8 +579,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "right" : "left",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1) > 100)
-                      ? 100
+                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1) > 99)
+                      ? 99
                       : (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -620,8 +620,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "right" : "left",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1) < 0)
-                      ? 0
+                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1) < 1)
+                      ? 1
                       : (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -860,4 +860,4 @@ export function SleepyEyeSettings() {
     </SafeAreaView>
   )
 
-}
+}

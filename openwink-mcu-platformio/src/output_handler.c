@@ -3,6 +3,7 @@
 #include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 
+#include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
@@ -223,6 +224,7 @@ void handle_output_task(void* args) {
 
                 uint8_t new_pos = (motor->side_bit == LEFT_SIDE) ? positions.left_pos : positions.right_pos;
                 BLE_LOGV(TAG, "%s stopped -> pos=%u%%", side_to_str(motor->side_bit), new_pos);
+                ble_notify_headlight_status();
             } else {
                 BLE_LOGV(TAG, "%s %s -> NOP (at %u%%)", side_to_str(motor->side_bit), move_type_to_str(move.target), curr_pos);
                 xEventGroupSetBits(movement_event, motor->stopped_bit);

@@ -83,6 +83,7 @@ extern "C" {
 #endif
 
 void init_button_bindings();
+void reload_button_bindings();
 
 void set_binding_at_pos(button_binding_t* binding, uint8_t pos);
 void get_binding_at_pos(button_binding_t* binding, uint8_t pos);
@@ -101,4 +102,4 @@ uint8_t validate_button_binding(button_binding_t* binding, size_t size);
 #endif
 
 
-#endif
+#endif

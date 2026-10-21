@@ -35,6 +35,7 @@ extern "C" {
 
 void monitor_gpio_init();
 void monitor_event_group_init();
+void reload_move_times();
 
 uint16_t get_left_move_time_ms();
 uint16_t get_right_move_time_ms();
@@ -46,4 +47,4 @@ void right_monitor_task(void* args);
 }
 #endif
 
-#endif
+#endif

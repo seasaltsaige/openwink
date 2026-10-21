@@ -53,6 +53,11 @@ const moduleSettingsData: Array<{
       pageName: "Customize Auxiliary Buttons",
       navigationName: "AuxButtons",
       pageSymbol: "flash-outline",
+    },
+    {
+      pageName: "Module Debugger",
+      navigationName: "Debugger",
+      pageSymbol: "bug-outline",
     }
   ]
 
@@ -368,4 +373,4 @@ export function ModuleSettings() {
 
     </>
   )
-}
+}

@@ -77,6 +77,11 @@ void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, N
     xQueueSend(command_output_queue, &cmd, 0);
 }
 
+void HeadlightStatusCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
+    if ((subValue & 0x0001) != 0)
+        ble_notify_headlight_status();
+}
+
 void CustomCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     if (get_auth_state() != AUTH_ESTABLISHED)
         return;

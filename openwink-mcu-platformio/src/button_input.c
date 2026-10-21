@@ -1,5 +1,7 @@
 
 #include <FreeRTOSConfig.h>
+#include <driver/rtc_io.h>
+#include <esp_sleep.h>
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 
@@ -7,6 +9,7 @@
 #include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
+#include "module_settings.h"
 #include "output_handler.h"
 #include "storage_handler.h"
 
@@ -18,6 +21,9 @@ RTC_DATA_ATTR button_input_t input_state = {
 };
 
 void inputs_init() {
+    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED)
+        rtc_gpio_deinit(BUTTON_INPUT);
+
     const gpio_config_t input_config = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_INPUT,
@@ -27,7 +33,8 @@ void inputs_init() {
     };
     gpio_config(&input_config);
 
-    get_nvs_input_bypass_status(&input_state.headlight_bypass);
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED)
+        get_nvs_input_bypass_status(&input_state.headlight_bypass);
 }
 
 void set_input_headlight_bypass(uint8_t status) {
@@ -44,7 +51,8 @@ void set_input_headlight_bypass(uint8_t status) {
 }
 
 void read_input_on_boot() {
-    input_state.button_state = (uint8_t)gpio_get_level(BUTTON_INPUT);
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED)
+        input_state.button_state = (uint8_t)gpio_get_level(BUTTON_INPUT);
 }
 
 void input_read_task(void* args) {
@@ -54,78 +62,79 @@ void input_read_task(void* args) {
     uint16_t press_counter = 0;
     for (;;) {
         uint8_t level = gpio_get_level(BUTTON_INPUT);
+        uint8_t custom_enabled = get_custom_button_status();
 
-        if (!get_custom_button_status()) {
-            if (level != input_state.button_state) {
-                command_t cmd = COMMAND_NONE;
+        if (input_state.button_state != level) {
+            last_press_time_us = esp_timer_get_time();
+            press_counter++;
+            input_state.button_state = level;
 
-                if (level == HIGH)
-                    cmd = COMMAND_BOTH_UP;
-                else
-                    cmd = COMMAND_BOTH_DOWN;
+            BLE_LOGV(TAG, "Button edge %s (count=%u)", level == HIGH ? "HIGH" : "LOW", press_counter);
+            request_command_cancellation();
 
-                input_state.button_state = level;
+            // TODO: Add headlight-on bypass debounce system
 
+            if (!custom_enabled) {
+                command_t cmd = (level == HIGH) ? COMMAND_BOTH_UP : COMMAND_BOTH_DOWN;
                 BLE_LOGI(TAG, "OEM button -> %s", command_to_str((command_types_t)cmd));
                 xQueueSend(command_output_queue, &cmd, 0);
             }
-        } else {
+        } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > ((int64_t)get_custom_button_delay() * 1000)) {
+            if (press_counter == 12) {
+                // swap orientation
+                BLE_LOGI(TAG, "Button 12x special sequence triggered");
+                xQueueReset(command_output_queue);
+                xQueueReset(custom_command_queue_handle);
+                press_counter = 0;
+                continue;
+            } else if (press_counter == 20) {
+                // module reset
+                BLE_LOGI(TAG, "Button 20x special sequence triggered");
+                reset_module();
+                press_counter = 0;
+                continue;
+            }
 
-            if (input_state.button_state != level) {
-                last_press_time_us = esp_timer_get_time();
-                press_counter++;
+            if (!custom_enabled) {
+                press_counter = 0;
+                continue;
+            }
 
-                BLE_LOGV(TAG, "Button edge %s (count=%u)", level == HIGH ? "HIGH" : "LOW", press_counter);
-                request_command_cancellation();
+            command_t cmd = COMMAND_NONE;
 
-                // TODO: Add headlight-on bypass debounce system
-                input_state.button_state = level;
-            } else if (press_counter > 0 && (esp_timer_get_time() - last_press_time_us) > ((int64_t)get_custom_button_delay() * 1000)) {
-                command_t cmd = COMMAND_NONE;
+            if (press_counter == 1) {
+                if (input_state.button_state == HIGH)
+                    cmd = COMMAND_BOTH_UP;
+                else if (input_state.button_state == LOW)
+                    cmd = COMMAND_BOTH_DOWN;
 
-                if (press_counter == 1) {
-                    if (input_state.button_state == HIGH)
-                        cmd = COMMAND_BOTH_UP;
-                    else if (input_state.button_state == LOW)
-                        cmd = COMMAND_BOTH_DOWN;
-
-                    BLE_LOGI(TAG, "Button 1x -> %s", command_to_str((command_types_t)cmd));
-                    xQueueSend(command_output_queue, &cmd, 0);
-
-                    press_counter = 0;
-                    continue;
-                }
-
-                if (press_counter > 9) {
-                    // swap orientation
-                    if (press_counter == 12) {
-                        BLE_LOGI(TAG, "Button 12x special sequence triggered");
-                        // module reset
-                    } else if (press_counter == 20) {
-                        BLE_LOGI(TAG, "Button 20x special sequence triggered");
-                    } else {
-                        BLE_LOGW(TAG, "Button %ux clamped to 9x", press_counter);
-                        press_counter = 9;
-                    }
-                }
-
-                uint8_t bind_pos = (uint8_t)(press_counter - 2);
-                button_binding_t binding;
-                get_binding_at_pos(&binding, bind_pos);
-
-                if (binding.type == BINDING_BUILTIN) {
-                    BLE_LOGI(TAG, "Button %ux (pos %u) -> %s", press_counter, bind_pos, command_to_str((command_types_t)binding.data.builtin));
-                    xQueueSend(command_output_queue, &binding.data.builtin, 0);
-                } else if (binding.type == BINDING_CUSTOM_SEQUENCE) {
-                    BLE_LOGI(TAG, "Button %ux (pos %u) -> CUSTOM_SEQUENCE (len=%u, loop=%u)", press_counter, bind_pos, binding.data.custom.sequence_length, binding.data.custom.looping);
-                    request_command_submission(&binding.data.custom);
-                } else {
-                    BLE_LOGD(TAG, "Button %ux (pos %u) -> NONE (unbound)", press_counter, bind_pos);
-                }
-
+                BLE_LOGI(TAG, "Button 1x -> %s", command_to_str((command_types_t)cmd));
+                xQueueSend(command_output_queue, &cmd, 0);
 
                 press_counter = 0;
+                continue;
             }
+
+            if (press_counter > 9) {
+                BLE_LOGW(TAG, "Button %ux clamped to 9x", press_counter);
+                press_counter = 9;
+            }
+
+            uint8_t bind_pos = (uint8_t)(press_counter - 2);
+            button_binding_t binding;
+            get_binding_at_pos(&binding, bind_pos);
+
+            if (binding.type == BINDING_BUILTIN) {
+                BLE_LOGI(TAG, "Button %ux (pos %u) -> %s", press_counter, bind_pos, command_to_str((command_types_t)binding.data.builtin));
+                xQueueSend(command_output_queue, &binding.data.builtin, 0);
+            } else if (binding.type == BINDING_CUSTOM_SEQUENCE) {
+                BLE_LOGI(TAG, "Button %ux (pos %u) -> CUSTOM_SEQUENCE (len=%u, loop=%u)", press_counter, bind_pos, binding.data.custom.sequence_length, binding.data.custom.looping);
+                request_command_submission(&binding.data.custom);
+            } else {
+                BLE_LOGD(TAG, "Button %ux (pos %u) -> NONE (unbound)", press_counter, bind_pos);
+            }
+
+            press_counter = 0;
         }
         vTaskDelay(pdMS_TO_TICKS(10));
     }

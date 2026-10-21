@@ -18,7 +18,7 @@ import {
   UnsavedChangesModal
 } from "../../../Components";
 import { CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
-import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
+import { DefaultCommandValue, DefaultCommandValueEnglish, MAX_CUSTOM_CMD_SEQUENCE_LENGTH } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
 import { useThrottle } from "../../../helper/Functions";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
@@ -218,8 +218,11 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       if ("name" in changeData)
         return { ...oldCommand, name: changeData.name };
 
-      if ("addCommand" in changeData)
+      if ("addCommand" in changeData) {
+        if (oldCommand.command!.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH)
+          return oldCommand;
         return { ...oldCommand, command: [...oldCommand.command!, changeData.addCommand] };
+      }
 
       if ("removeCommand" in changeData && changeData.removeCommand >= 0)
         return { ...oldCommand, command: oldCommand.command!.toSpliced(changeData.removeCommand, 1) };
@@ -357,6 +360,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           ref={listRef}
           ListFooterComponent={
             <Pressable
+              disabled={command.command!.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH}
               onPress={() => { setAddComponentInitialValue(null); setAddComponentVisible(true); }}
               style={({ pressed }) => ({
                 display: "flex",
@@ -369,7 +373,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                 paddingLeft: 20,
                 height: 48,
                 borderStyle: "dashed",
-                borderColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                borderColor: command.command!.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                 borderWidth: 1.75,
                 borderRadius: 10,
               })}
@@ -381,14 +385,14 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                   <>
                     <Text
                       style={{
-                        color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                        color: command.command!.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                         fontSize: 18,
                         fontFamily: "IBMPlexSans_500Medium"
                       }}
                     >
                       Add Component
                     </Text>
-                    <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
+                    <IonIcons name="add" color={command.command!.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
                   </>
               }
             </Pressable>
@@ -542,4 +546,4 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
     </SafeAreaView>
   )
-}
+}

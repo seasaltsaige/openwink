@@ -329,6 +329,8 @@ void seed_nvs_defaults() {
     nvs_set_u16(storage_handle, left_time_key, 625);
     nvs_set_u16(storage_handle, right_time_key, 625);
     nvs_set_u8(storage_handle, aux_status_key, AUX_DISABLED);
+    nvs_set_u8(storage_handle, input_bypass_key, 0);
+    nvs_set_u8(storage_handle, wave_delay_key, 50);
 
     const command_t default_cmds[4] = {
         COMMAND_LEFT_WINK,
@@ -366,4 +368,4 @@ void seed_nvs_defaults() {
     nvs_set_u8(storage_handle, nvs_seeded, 1);
     nvs_commit(storage_handle);
     close();
-}
+}

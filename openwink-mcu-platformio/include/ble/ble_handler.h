@@ -23,12 +23,14 @@
 #define MODULE_SETTINGS_SERVICE_UUID NimBLEUUID(0xcb5f7a1f, 0x59f2, 0x418e, 0xb9d1d6fc5c85a749)
 
 #define HEADLIGHT_CHAR_UUID NimBLEUUID(0x034a383c, 0xd3e4, 0x4501, 0xb7a51c950db4f3c7)
-#define BUSY_CHAR_UUID NimBLEUUID(0x8d2b7b9f, 0xc6a3, 0x4f56, 0x9f4f2dc7d7873c18)
-#define LEFT_STATUS_UUID NimBLEUUID(0xc4907f4a, 0xfb0c, 0x440c, 0xbbf14836b0636478)
-#define RIGHT_STATUS_UUID NimBLEUUID(0x784dd553, 0xd837, 0x4027, 0x9143280cb035163a)
-#define SLEEPY_EYE_UUID NimBLEUUID(0xa8237fed, 0xe0a4, 0x4ecd, 0x98819b5dbb3f5902)
-#define SYNC_UUID NimBLEUUID(0xeceed349, 0x998f, 0x46a2, 0x98354f2db7552381)
+#define HEADLIGHT_STATUS_UUID NimBLEUUID(0x8d2b7b9f, 0xc6a3, 0x4f56, 0x9f4f2dc7d7873c18)
 #define CUSTOM_COMMAND_UUID NimBLEUUID(0x1313c33f, 0xe793, 0x422c, 0x8c04c82be9fe8a02)
+
+// #define BUSY_CHAR_UUID NimBLEUUID(0x8d2b7b9f, 0xc6a3, 0x4f56, 0x9f4f2dc7d7873c18)
+// #define LEFT_STATUS_UUID NimBLEUUID(0xc4907f4a, 0xfb0c, 0x440c, 0xbbf14836b0636478)
+// #define RIGHT_STATUS_UUID NimBLEUUID(0x784dd553, 0xd837, 0x4027, 0x9143280cb035163a)
+// #define SLEEPY_EYE_UUID NimBLEUUID(0xa8237fed, 0xe0a4, 0x4ecd, 0x98819b5dbb3f5902)
+// #define SYNC_UUID NimBLEUUID(0xeceed349, 0x998f, 0x46a2, 0x98354f2db7552381)
 
 #define OTA_UUID NimBLEUUID(0x58f93211, 0x63c5, 0x4b0b, 0xb4e6544c559417d7)
 #define FIRMWARE_UUID NimBLEUUID(0x37187af3, 0xdefd, 0x46df, 0xa8de881c0b20d8b3)
@@ -36,7 +38,7 @@
 #define SOFTWARE_STATUS_CHAR_UUID NimBLEUUID(0x2d393ed3, 0xed78, 0x4d57, 0x900ad3e46296f92d)
 
 #define CUSTOM_BUTTON_UPDATE_UUID NimBLEUUID(0x795a9433, 0xcf23, 0x4550, 0x80b570a0c9413cac)
-#define HEADLIGHT_MOTION_IN_UUID NimBLEUUID(0x5cdfa4ac, 0x31f5, 0x439b, 0xaf8dec09a808ce9d)
+// #define HEADLIGHT_MOTION_IN_UUID NimBLEUUID(0x5cdfa4ac, 0x31f5, 0x439b, 0xaf8dec09a808ce9d)
 #define PASSKEY_UUID NimBLEUUID(0xf61146f2, 0x791d, 0x4ef7, 0x95aab565097f69c2)
 #define AUX_BUTTONS_UUID NimBLEUUID(0xbf3d4b2c, 0x0620, 0x4b34, 0x947437aa6cef28b9)
 #define DEBUG_UUID NimBLEUUID(0x5015946c, 0x7bfb, 0x4b78, 0xb7482eeb96712164)
@@ -68,6 +70,18 @@
 
 #define BLE_INIT_SUCCESS (uint8_t)((1UL << 7) & 0xFF)
 
+// Packed 7-byte headlight status notification payload:
+// [busy (1B), left_pos (1B), right_pos (1B), left_move_time (2B LE), right_move_time (2B LE)]
+typedef struct __attribute__((packed)) {
+    uint8_t busy;
+    uint8_t left_pos;
+    uint8_t right_pos;
+    uint16_t left_move_time;
+    uint16_t right_move_time;
+} headlight_status_packet_t;
+
+#define HEADLIGHT_STATUS_PACKET_LEN sizeof(headlight_status_packet_t)
+
 
 typedef enum OPENWINK_STATUS : uint8_t {
     DISCONNECTED,
@@ -95,6 +109,7 @@ openwink_status_t get_device_status();
 
 void ble_notify_passkey(uint8_t* key, size_t size);
 void ble_notify_debug(const uint8_t* data, size_t size);
+void ble_notify_headlight_status();
 
 #ifdef __cplusplus
 }

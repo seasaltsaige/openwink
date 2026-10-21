@@ -18,6 +18,10 @@ class HeadlightCommandCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 };
 
+class HeadlightStatusCallbacks : public NimBLECharacteristicCallbacks {
+    void onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) override;
+};
+
 class CustomCommandCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 };

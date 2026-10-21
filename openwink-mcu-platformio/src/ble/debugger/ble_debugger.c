@@ -54,12 +54,15 @@ const char* command_to_str(command_types_t cmd) {
     case COMMAND_BOTH_UP: return "BOTH_UP";
     case COMMAND_BOTH_DOWN: return "BOTH_DOWN";
     case COMMAND_BOTH_BLINK: return "BOTH_BLINK";
+    case COMMAND_BOTH_BLINK_X2: return "BOTH_BLINK_X2";
     case COMMAND_LEFT_UP: return "LEFT_UP";
     case COMMAND_LEFT_DOWN: return "LEFT_DOWN";
     case COMMAND_LEFT_WINK: return "LEFT_WINK";
+    case COMMAND_LEFT_WINK_X2: return "LEFT_WINK_X2";
     case COMMAND_RIGHT_UP: return "RIGHT_UP";
     case COMMAND_RIGHT_DOWN: return "RIGHT_DOWN";
     case COMMAND_RIGHT_WINK: return "RIGHT_WINK";
+    case COMMAND_RIGHT_WINK_X2: return "RIGHT_WINK_X2";
     case COMMAND_LEFT_WAVE: return "LEFT_WAVE";
     case COMMAND_RIGHT_WAVE: return "RIGHT_WAVE";
     case COMMAND_LEFT_RIGHT: return "LEFT_RIGHT";

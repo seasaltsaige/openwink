@@ -111,15 +111,13 @@ export function CustomWinkButton() {
   const saveValues = useCallback(async () => {
     await updateButtonDelay(min);
 
-    for (let i = 0; i < 9; i++) {
-      if (i >= actions.length) {
-        await updateOEMButtonPresets((i + 1) as Presses, null);
-      } else {
-        const btnAction = actions[i];
-        await updateOEMButtonPresets(btnAction.presses, btnAction);
-      }
+    for (let i = 0; i < actions.length && i < 8; i++) {
+      const btnAction = actions[i];
+      await updateOEMButtonPresets(btnAction.presses, btnAction);
+    }
 
-      await sleep(20);
+    for (let i = 7; i >= actions.length; i--) {
+      await updateOEMButtonPresets((i + 1) as Presses, null);
     }
 
     fetchActionsFromStorage();

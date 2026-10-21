@@ -1,11 +1,18 @@
 #include <FreeRTOSConfig.h>
+#include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
+#include <freertos/task.h>
 
 #include "aux_input.h"
+#include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
+#include "ble/pairing_auth.h"
 #include "button_bindings.h"
 #include "button_input.h"
 #include "command_output.h"
+#include "custom_command_output.h"
+#include "headlight_feedback.h"
 #include "module_settings.h"
 #include "output_handler.h"
 #include "storage_handler.h"
@@ -107,9 +114,7 @@ uint8_t handle_general_setting(const uint8_t* data, size_t size) {
         reset_module();
         return 1;
 
-    default:
-        BLE_LOGE(TAG, "Unknown general setting flag: 0x%02X", flag);
-        return 0;
+    default: BLE_LOGE(TAG, "Unknown general setting flag: 0x%02X", flag); return 0;
     }
 }
 
@@ -118,7 +123,7 @@ void set_module_orientation(uint8_t orientation) {
         return;
 
     module_orientation = orientation;
-    BLE_LOGI(TAG, "Module orientation set to %s", orientation == ORIENTATION_SWAPPED ? "SWAPPED" : "DEFAULT");
+    BLE_LOGI(TAG, "Module orientation set to %s", orientation == ORIENTATION_SWAPPED ? "OUTSIDE" : "CABIN");
     // TODO: Apply orientation to output_handler / headlight_feedback and persist to NVS
 }
 
@@ -128,15 +133,54 @@ uint8_t get_module_orientation() {
 
 void enter_long_term_sleep() {
     BLE_LOGI(TAG, "Entering long-term sleep");
-    // TODO: Implement deep sleep entry
+
+    reset_auth_on_disconnect();
+    ble_disconnect();
+
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+    uint8_t button_inp = (uint8_t)gpio_get_level(BUTTON_INPUT);
+    esp_sleep_enable_ext0_wakeup(BUTTON_INPUT, button_inp == HIGH ? LOW : HIGH);
+
+    if (get_aux_status() == AUX_ENABLED)
+        esp_sleep_enable_ext1_wakeup((1ULL << AUX_ONE_INPUT) | (1ULL << AUX_TWO_INPUT), ESP_EXT1_WAKEUP_ANY_LOW);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+    esp_deep_sleep_start();
 }
 
 void unpair_module() {
     BLE_LOGI(TAG, "Unpairing module");
-    // TODO: Delete device key from NVS and reset auth state
+
+    delete_nvs_device_key();
+    reset_auth_on_disconnect();
+    ble_disconnect();
 }
 
 void reset_module() {
     BLE_LOGI(TAG, "Resetting module to factory defaults");
-    // TODO: Reseed NVS defaults, reload runtime state across modules, and unpair
+
+    seed_nvs_defaults();
+
+    reload_button_bindings();
+    reload_aux();
+    reload_move_times();
+    set_sleepy_eye_values(50, 50);
+    set_wave_delay(50);
+    set_input_headlight_bypass(BYPASS_DISABLED);
+    module_orientation = ORIENTATION_DEFAULT;
+
+    request_command_cancellation();
+    xQueueReset(command_output_queue);
+    xQueueReset(custom_command_queue_handle);
+
+    const command_types_t confirm_seq[3] = {
+        COMMAND_LEFT_WINK,
+        COMMAND_RIGHT_WINK,
+        COMMAND_BOTH_BLINK,
+    };
+    for (uint8_t i = 0; i < 3; i++)
+        xQueueSend(command_output_queue, &confirm_seq[i], 0);
+
+    reset_auth_on_disconnect();
+    ble_disconnect();
 }

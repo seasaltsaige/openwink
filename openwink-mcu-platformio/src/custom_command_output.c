@@ -23,6 +23,7 @@ SemaphoreHandle_t custom_mutex_handle;
 
 
 custom_command_state_t cmd_state = COMMAND_IDLE;
+static volatile command_types_t next_custom_cmd = COMMAND_NONE;
 
 BaseType_t request_command_submission(custom_command_data_t* cmd) {
     BaseType_t ret = pdFAIL;
@@ -114,6 +115,12 @@ uint8_t get_custom_command_executing() {
     return cmd_state != COMMAND_IDLE;
 }
 
+command_types_t peek_next_custom_command() {
+    if (cmd_state != COMMAND_RUNNING)
+        return COMMAND_NONE;
+    return next_custom_cmd;
+}
+
 
 uint8_t validate_custom_command(custom_command_data_t* cmd, size_t received_size) {
     if (cmd == NULL)
@@ -132,7 +139,7 @@ uint8_t validate_custom_command(custom_command_data_t* cmd, size_t received_size
     }
 
     size_t payload_bytes = received_size - CUSTOM_CMD_HEADER_LENGTH;
-    if (cmd->sequence_length == 0 || cmd->sequence_length > payload_bytes) {
+    if (cmd->sequence_length == 0 || cmd->sequence_length > payload_bytes || cmd->sequence_length > MAX_SEQUENCE_LENGTH) {
         BLE_LOGD(TAG, "Invalid seq length: %u (payload=%u)", cmd->sequence_length, (unsigned int)payload_bytes);
         return 0;
     }
@@ -182,6 +189,7 @@ void custom_command_task(void* args) {
     custom_command_data_t cmd_data;
     for (;;) {
         if (xQueueReceive(custom_command_queue_handle, &cmd_data, portMAX_DELAY)) {
+            set_command_busy(1);
 
             // clear stale notifs
             uint32_t _;
@@ -211,6 +219,7 @@ void custom_command_task(void* args) {
             for (int8_t i = 0; !sequence_cancelled && i < cmd_data.sequence_length; i++) {
 
                 if (cmd_data.sequence[sequence_index] == DELAY_PREFIX) {
+                    next_custom_cmd = COMMAND_NONE;
                     // Handle delay (Little Endian -- 0xDEEE02 yields Delay 0x02EE or Delay 750ms)
                     uint16_t delay = (cmd_data.sequence[sequence_index + 1] << 0) | (cmd_data.sequence[sequence_index + 2] << 8);
 
@@ -220,10 +229,19 @@ void custom_command_task(void* args) {
                 } else {
                     // Send regular cmd
                     command_t cmd = cmd_data.sequence[sequence_index];
+                    uint8_t next_raw = COMMAND_NONE;
+                    if ((i + 1) < cmd_data.sequence_length)
+                        next_raw = cmd_data.sequence[sequence_index + 1];
+                    else if (cmd_data.looping)
+                        next_raw = cmd_data.sequence[0];
+
+                    next_custom_cmd = (next_raw >= COMMAND_BOTH_UP && next_raw <= COMMAND_SLEEPY_EYE) ? (command_types_t)next_raw : COMMAND_NONE;
+
                     BLE_LOGD(TAG, "Step %d/%u: %s", i + 1, cmd_data.sequence_length, command_to_str((command_types_t)cmd));
                     xQueueSend(command_output_queue, &cmd, portMAX_DELAY);
 
                     sequence_cancelled = wait_for_command_completion(0);
+                    next_custom_cmd = COMMAND_NONE;
                     sequence_index += 1;
                 }
 
@@ -284,7 +302,10 @@ void custom_command_task(void* args) {
             cmd_state = COMMAND_IDLE;
             xSemaphoreGive(custom_mutex_handle);
 
+            if (uxQueueMessagesWaiting(command_output_queue) == 0)
+                set_command_busy(0);
+
             BLE_LOGI(TAG, "Sequence ended (%s)", was_cancelled ? "CANCELLED" : "COMPLETE");
         }
     }
-}
+}

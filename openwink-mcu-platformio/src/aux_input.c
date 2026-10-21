@@ -1,4 +1,5 @@
 #include <FreeRTOSConfig.h>
+#include <driver/rtc_io.h>
 #include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -42,6 +43,11 @@ RTC_DATA_ATTR aux_buttons_t aux_buttons = {
 };
 
 static void configure_aux_gpio(uint8_t enabled) {
+    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_UNDEFINED) {
+        rtc_gpio_deinit(AUX_ONE_INPUT);
+        rtc_gpio_deinit(AUX_TWO_INPUT);
+    }
+
     if (enabled == AUX_ENABLED) {
         gpio_config_t conf = {
             .intr_type = GPIO_INTR_DISABLE,
@@ -70,6 +76,17 @@ void init_aux() {
         aux_buttons.one.state = (uint8_t)gpio_get_level(AUX_ONE_INPUT);
         aux_buttons.two.state = (uint8_t)gpio_get_level(AUX_TWO_INPUT);
     }
+}
+
+void reload_aux() {
+    xSemaphoreTake(aux_lock, portMAX_DELAY);
+    load_nvs_aux_config(&aux_buttons);
+    configure_aux_gpio(aux_buttons.status);
+    if (aux_buttons.status == AUX_ENABLED) {
+        aux_buttons.one.state = (uint8_t)gpio_get_level(AUX_ONE_INPUT);
+        aux_buttons.two.state = (uint8_t)gpio_get_level(AUX_TWO_INPUT);
+    }
+    xSemaphoreGive(aux_lock);
 }
 
 void set_aux_status(uint8_t status) {

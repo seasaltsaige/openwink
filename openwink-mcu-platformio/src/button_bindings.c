@@ -24,6 +24,12 @@ void init_button_bindings() {
         load_nvs_button_config(&button_config);
 }
 
+void reload_button_bindings() {
+    xSemaphoreTake(bindings_lock, portMAX_DELAY);
+    load_nvs_button_config(&button_config);
+    xSemaphoreGive(bindings_lock);
+}
+
 void set_binding_at_pos(button_binding_t* binding, uint8_t pos) {
     if (binding == NULL || pos >= NUM_BINDINGS)
         return;
@@ -142,4 +148,4 @@ uint8_t validate_button_binding(button_binding_t* binding, size_t size) {
 
 
     return cmd_val_res;
-}
+}

@@ -2,6 +2,7 @@
 #include <freertos/FreeRTOS.h>
 #include <stdbool.h>
 
+#include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "custom_command_output.h"
@@ -182,13 +183,50 @@ void set_wave_delay(uint8_t delay) {
     set_nvs_wave_delay(delay);
 }
 
+void set_command_busy(uint8_t busy) {
+    uint8_t normalized = busy ? 1 : 0;
+    if (cmd_data.busy != normalized) {
+        cmd_data.busy = normalized;
+        ble_notify_headlight_status();
+    }
+}
+
+uint8_t get_command_busy() {
+    return cmd_data.busy;
+}
+
+static BaseType_t peek_next_command(command_types_t* out_cmd) {
+    if (xQueuePeek(command_output_queue, out_cmd, 0) == pdTRUE)
+        return pdTRUE;
+
+    if (get_custom_command_executing()) {
+        command_types_t next_custom = peek_next_custom_command();
+        if (next_custom != COMMAND_NONE) {
+            *out_cmd = next_custom;
+            return pdTRUE;
+        }
+    }
+
+    return pdFALSE;
+}
+
 // note: portMAX_DELAY might be a bad idea in general, but for now its ok while porting over
 void handle_command_task(void* args) {
 
     command_types_t received;
+    command_types_t active_wave_chain = COMMAND_NONE;
+    headlight_position_t chain_saved_pos = { 0 };
+    uint8_t chain_was_sleepy = 0;
 
     for (;;) {
         if (xQueueReceive(command_output_queue, &received, portMAX_DELAY)) {
+            set_command_busy(1);
+
+            if (active_wave_chain != COMMAND_NONE && received != active_wave_chain) {
+                active_wave_chain = COMMAND_NONE;
+                chain_was_sleepy = 0;
+            }
+
             headlight_position_t curr_pos = get_position();
             headlight_position_t saved_pos;
             uint8_t was_sleepy = 0;
@@ -239,7 +277,18 @@ void handle_command_task(void* args) {
                 ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 break;
+            case COMMAND_BOTH_BLINK_X2:
+                for (uint8_t i = 0; i < 2; i++) {
+                    xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
 
+                    queue_side_wink(LEFT_SIDE, true);
+                    queue_side_wink(RIGHT_SIDE, true);
+
+                    // wait for both sides to finish their final movement
+                    ulTaskNotifyTake(pdFALSE, portMAX_DELAY);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                }
+                break;
             // Left Only
             case COMMAND_LEFT_UP:
                 curr_pos = get_position();
@@ -269,6 +318,13 @@ void handle_command_task(void* args) {
                 xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT);
                 queue_side_wink(LEFT_SIDE, true);
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                break;
+            case COMMAND_LEFT_WINK_X2:
+                for (uint8_t i = 0; i < 2; i++) {
+                    xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT);
+                    queue_side_wink(LEFT_SIDE, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                }
                 break;
 
             // Right Only
@@ -301,46 +357,64 @@ void handle_command_task(void* args) {
                 queue_side_wink(RIGHT_SIDE, true);
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 break;
+            case COMMAND_RIGHT_WINK_X2:
+                for (uint8_t i = 0; i < 2; i++) {
+                    xEventGroupClearBits(output_event_group, RIGHT_COMPLETE_BIT);
+                    queue_side_wink(RIGHT_SIDE, true);
+                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+                }
+                break;
             case COMMAND_LEFT_WAVE:
-                sync_sides_before_sequence(LEFT_SIDE, &saved_pos, &was_sleepy);
+                if (active_wave_chain != COMMAND_LEFT_WAVE)
+                    sync_sides_before_sequence(LEFT_SIDE, &chain_saved_pos, &chain_was_sleepy);
                 curr_pos = get_position();
 
                 queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, false);
+                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
                 // Temp testing time to test wave
-                vTaskDelay(pdMS_TO_TICKS((uint32_t)((float)1000 * (float)0.33)));
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                vTaskDelay(pdMS_TO_TICKS((uint32_t)((float)get_left_move_time_ms() * ((float)cmd_data.wave_delay / 100.0f))));
+                queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(RIGHT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, false);
 
-                // Basically... this is kinda weird
-                // but if the next command thats queued is another LEFT WAVE
-                // it WOULD be nice to have it continue smooth movement instead
-                // of waiting for both sides to stop.
-                peeked = xQueuePeek(command_output_queue, &peek, 0);
+                // Wait for the leading side (LEFT) to finish its full wink
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-                // switch to xTaskNotifyWait ? could get more info
-                if (was_sleepy || peeked == pdFALSE || peek != COMMAND_LEFT_WAVE) {
+                peeked = peek_next_command(&peek);
+                if (peeked == pdTRUE && peek == COMMAND_LEFT_WAVE) {
+                    active_wave_chain = COMMAND_LEFT_WAVE;
+                } else {
+                    queue_side_move(RIGHT_SIDE, MOVE_NOP, true);
                     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-                    restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                    restore_sleepy_after_sequence(&chain_saved_pos, chain_was_sleepy);
+                    active_wave_chain = COMMAND_NONE;
+                    chain_was_sleepy = 0;
                 }
 
                 break;
             case COMMAND_RIGHT_WAVE:
-                sync_sides_before_sequence(RIGHT_SIDE, &saved_pos, &was_sleepy);
+                if (active_wave_chain != COMMAND_RIGHT_WAVE)
+                    sync_sides_before_sequence(RIGHT_SIDE, &chain_saved_pos, &chain_was_sleepy);
                 curr_pos = get_position();
 
                 queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, false);
+                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
                 // Temp testing time to test wave
-                vTaskDelay(pdMS_TO_TICKS((uint32_t)((float)1000 * (float)0.33)));
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
+                vTaskDelay(pdMS_TO_TICKS((uint32_t)((float)get_right_move_time_ms() * ((float)cmd_data.wave_delay / 100.0f))));
+                queue_side_move(LEFT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
+                queue_side_move(LEFT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, false);
 
-                peeked = xQueuePeek(command_output_queue, &peek, 0);
+                // Wait for the leading side (RIGHT) to finish its full wink
+                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-                if (was_sleepy || peeked == pdFALSE || peek != COMMAND_RIGHT_WAVE) {
+                peeked = peek_next_command(&peek);
+                if (peeked == pdTRUE && peek == COMMAND_RIGHT_WAVE) {
+                    active_wave_chain = COMMAND_RIGHT_WAVE;
+                } else {
+                    queue_side_move(LEFT_SIDE, MOVE_NOP, true);
                     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-                    restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                    restore_sleepy_after_sequence(&chain_saved_pos, chain_was_sleepy);
+                    active_wave_chain = COMMAND_NONE;
+                    chain_was_sleepy = 0;
                 }
 
                 break;
@@ -429,6 +503,8 @@ void handle_command_task(void* args) {
 
             if (get_custom_command_executing())
                 xTaskNotify(custom_command_task_handle, NOTIFY_COMMAND_DONE_BIT, eSetBits);
+            else if (uxQueueMessagesWaiting(command_output_queue) == 0)
+                set_command_busy(0);
         }
     }
 }

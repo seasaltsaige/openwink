@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
-import { buttonBehaviorMap, buttonBehaviorMapReversed, DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
+import { buttonBehaviorMap, buttonBehaviorMapReversed, DefaultCommandValue, DefaultCommandValueEnglish, MAX_CUSTOM_CMD_DELAY_MS } from "../helper/Constants";
 import { useColorTheme } from "../hooks/useColorTheme";
 import { ModalBlurBackground } from "./ModalBlurBackground";
 import { InfoPageHeader } from "./InfoPageHeader";
@@ -51,7 +51,7 @@ export function ComponentModal({
     }
 
     setSelectedCommand(!initialValue.action ? null : DefaultCommandValueEnglish[initialValue.action - 1]);
-    setDelay(!initialValue.delay ? 0 : initialValue.delay);
+    setDelay(!initialValue.delay ? 0 : Math.min(MAX_CUSTOM_CMD_DELAY_MS, initialValue.delay));
 
     if (initialValue.delay)
       setSelectedCategory("Delay");
@@ -253,7 +253,8 @@ export function ComponentModal({
                         textContentType="none"
                         onChangeText={(text) => {
                           if (isNaN(parseInt(text)) && text !== "") return;
-                          setDelay(parseInt(text === "" ? "0" : text));
+                          const parsed = parseInt(text === "" ? "0" : text);
+                          setDelay(parsed > MAX_CUSTOM_CMD_DELAY_MS ? MAX_CUSTOM_CMD_DELAY_MS : parsed);
                           setSelectedCommand(null);
                         }}
                         placeholder="Enter Delay"
@@ -262,7 +263,7 @@ export function ComponentModal({
 
                       <Pressable
                         hitSlop={10}
-                        onPress={() => { delay <= 99989 ? setDelay((old) => old + 10) : setDelay(99999); setSelectedCommand(null); }}
+                        onPress={() => { delay <= (MAX_CUSTOM_CMD_DELAY_MS - 10) ? setDelay((old) => old + 10) : setDelay(MAX_CUSTOM_CMD_DELAY_MS); setSelectedCommand(null); }}
                       >
                         {({ pressed }) => (
                           <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={25} />
@@ -339,4 +340,4 @@ export function ComponentModal({
 
     </Modal >
   )
-}
+}

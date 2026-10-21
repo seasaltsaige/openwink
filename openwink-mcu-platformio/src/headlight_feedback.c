@@ -5,6 +5,7 @@
 #include <freertos/FreeRTOS.h>
 #include <stdlib.h>
 
+#include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
@@ -44,12 +45,15 @@ void monitor_gpio_init() {
     };
     gpio_config(&feedback_config);
 
-    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED) {
-        get_nvs_left_move_time(&movement_stats.left_move_time);
-        get_nvs_right_move_time(&movement_stats.right_move_time);
-        last_nvs_left_time = movement_stats.left_move_time;
-        last_nvs_right_time = movement_stats.right_move_time;
-    }
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED)
+        reload_move_times();
+}
+
+void reload_move_times() {
+    get_nvs_left_move_time(&movement_stats.left_move_time);
+    get_nvs_right_move_time(&movement_stats.right_move_time);
+    last_nvs_left_time = movement_stats.left_move_time;
+    last_nvs_right_time = movement_stats.right_move_time;
 }
 
 uint16_t get_left_move_time_ms() {
@@ -79,25 +83,34 @@ void left_monitor_task(void* args) {
             last_level = 0;
             movement_stats.left_moving = 0;
             move_started_sleepy = 0;
+
+            uint8_t time_updated = 0;
+            uint16_t elapsed_ms = 0;
+            if (!sleepy) {
+                // move time in ms
+                elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
+                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
+                    movement_stats.left_move_time = elapsed_ms;
+                    time_updated = 1;
+                }
+            }
+
             xEventGroupSetBits(movement_event, LEFT_STOPPED_BIT);
 
             if (!sleepy) {
-                // move time in ms
-                uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
-                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
-                    movement_stats.left_move_time = elapsed_ms;
+                if (time_updated) {
                     BLE_LOGD(TAG, "LEFT feedback stop: %ums", elapsed_ms);
                     if (abs((int)elapsed_ms - (int)last_nvs_left_time) >= MOVE_TIME_DEADBAND_MS) {
                         last_nvs_left_time = elapsed_ms;
                         set_nvs_left_move_time(elapsed_ms);
                         BLE_LOGI(TAG, "LEFT move time calibrated: %ums (saved)", elapsed_ms);
                     }
-                } else {
+                    if (!get_command_busy())
+                        ble_notify_headlight_status();
+                } else
                     BLE_LOGW(TAG, "LEFT move time %ums out of bounds (%u..%ums)", elapsed_ms, MOVE_TIME_MIN_MS, MOVE_TIME_LIMIT_MS);
-                }
-            } else {
+            } else
                 BLE_LOGD(TAG, "LEFT feedback stop (sleepy, cal skipped)");
-            }
         }
         vTaskDelay(pdMS_TO_TICKS(4));
     }
@@ -122,26 +135,35 @@ void right_monitor_task(void* args) {
             last_level = 0;
             movement_stats.right_moving = 0;
             move_started_sleepy = 0;
+
+            uint8_t time_updated = 0;
+            uint16_t elapsed_ms = 0;
+            if (!sleepy) {
+                // move time in ms
+                elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
+                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
+                    movement_stats.right_move_time = elapsed_ms;
+                    time_updated = 1;
+                }
+            }
+
             xEventGroupSetBits(movement_event, RIGHT_STOPPED_BIT);
 
             if (!sleepy) {
-                // move time in ms
-                uint16_t elapsed_ms = (uint16_t)((esp_timer_get_time() - move_start) / 1000);
-                if (elapsed_ms >= MOVE_TIME_MIN_MS && elapsed_ms <= MOVE_TIME_LIMIT_MS) {
-                    movement_stats.right_move_time = elapsed_ms;
+                if (time_updated) {
                     BLE_LOGD(TAG, "RIGHT feedback stop: %ums", elapsed_ms);
                     if (abs((int)elapsed_ms - (int)last_nvs_right_time) >= MOVE_TIME_DEADBAND_MS) {
                         last_nvs_right_time = elapsed_ms;
                         set_nvs_right_move_time(elapsed_ms);
                         BLE_LOGI(TAG, "RIGHT move time calibrated: %ums (saved)", elapsed_ms);
                     }
-                } else {
+                    if (!get_command_busy())
+                        ble_notify_headlight_status();
+                } else
                     BLE_LOGW(TAG, "RIGHT move time %ums out of bounds (%u..%ums)", elapsed_ms, MOVE_TIME_MIN_MS, MOVE_TIME_LIMIT_MS);
-                }
-            } else {
+            } else
                 BLE_LOGD(TAG, "RIGHT feedback stop (sleepy, cal skipped)");
-            }
         }
         vTaskDelay(pdMS_TO_TICKS(4));
     }
-}
+}
