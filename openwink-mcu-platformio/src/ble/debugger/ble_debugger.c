@@ -67,8 +67,8 @@ const char* command_to_str(command_types_t cmd) {
     case COMMAND_RIGHT_LEFT: return "RIGHT_LEFT";
     case COMMAND_RIGHT_LEFT_X2: return "RIGHT_LEFT_X2";
     case COMMAND_SLEEPY_EYE: return "SLEEPY_EYE";
-    case SWAP_ORIENTATION: return "SWAP_ORIENTATION";
-    case RESET_MCU: return "RESET_MCU";
+    // case SWAP_ORIENTATION: return "SWAP_ORIENTATION";
+    // case RESET_MCU: return "RESET_MCU";
     default: return "UNKNOWN";
     }
 }
@@ -111,16 +111,16 @@ const char* aux_side_to_str(aux_side_t side) {
 
 const char* aux_status_to_str(aux_status_t status) {
     switch (status) {
-    case DISABLED: return "DISABLED";
-    case ENABLED: return "ENABLED";
+    case AUX_DISABLED: return "DISABLED";
+    case AUX_ENABLED: return "ENABLED";
     default: return "UNKNOWN";
     }
 }
 
 const char* aux_type_to_str(aux_type_t type) {
     switch (type) {
-    case LATCHING: return "LATCHING";
-    case MOMENTARY: return "MOMENTARY";
+    case AUX_LATCHING: return "LATCHING";
+    case AUX_MOMENTARY: return "MOMENTARY";
     default: return "UNKNOWN";
     }
 }
