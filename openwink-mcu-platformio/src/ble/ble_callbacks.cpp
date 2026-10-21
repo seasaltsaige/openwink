@@ -12,10 +12,9 @@
 #include "ble/debugger/ble_debugger.h"
 #include "ble/pairing_auth.h"
 #include "button_bindings.h"
-#include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
-#include "output_handler.h"
+#include "module_settings.h"
 
 static const char* TAG = "BLE";
 
@@ -28,8 +27,7 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 
     set_device_status(CONNECTED);
 
-    set_auth_state(AUTH_ESTABLISHED);
-    // begin_auth_on_connection();
+    begin_auth_on_connection();
 }
 
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
@@ -122,53 +120,22 @@ void CustomButtonCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBL
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
-    // TODO: Check status flags + set oem status
-    // TODO: Check delay flags + set oem delay
-
-
-    // must be at least 2 bytes long to delete a binding
+    // must be at least 2 bytes long ([pos][delete] or [pos][binding])
     if (d.size() < 2) {
         BLE_LOGW(TAG, "Invalid binding packet (size=%u)", (unsigned int)d.size());
         return;
     }
 
-    // check for status flag byte + status to set to
-    if (d.size() == 1 && data[0] == BINDING_STATUS_FLAG) {
-        if (data[0] > BINDING_ENABLED) {
-            BLE_LOGW(TAG, "Custom status out of expected range (DISABLED or ENABLED)");
-            return;
-        } else {
-            BLE_LOGI(TAG, "Set custom status to %s", data[0] == BINDING_ENABLED ? "enabled" : "disabled");
-            // TODO: Add function for binding status
-            return;
-        }
-    }
-    // if we have a deletion packet, we dont really need to check much else
-    // just send it
-    if (d.size() == 2 && data[1] == BINDING_DELETE_FLAG) {
-        BLE_LOGI(TAG, "Delete binding at pos %u", data[0]);
-        delete_binding_at_pos(data[0]);
+    // first byte represents binding pos (0..7)
+    if (data[0] >= NUM_BINDINGS) {
+        BLE_LOGE(TAG, "Invalid binding pos: %u", data[0]);
         return;
     }
 
-    // check for delay flag
-    // delay will be a two byte type
-    // little endian delay (following previous method in custom_command_output.h)
-    if (d.size() == 3 && data[0] == BINDING_DELAY_FLAG) {
-        uint16_t delay = (data[1] << 0) | (data[2] << 8);
-        if (delay < BINDING_DELAY_MIN || delay > BINDING_DELAY_MAX) {
-            BLE_LOGW(TAG, "Binding delay out of range");
-            return;
-        } else {
-            // BLE_LOGI(TAG, "Set")
-            // TODO: Add delay set function
-            return;
-        }
-    }
-    // first byte represents binding pos
-    // there can only be 8 bindings
-    if (data[0] > 7) {
-        BLE_LOGE(TAG, "Invalid binding pos: %u", data[0]);
+    // deletion packet: [pos][BINDING_DELETE_FLAG]
+    if (d.size() == 2 && data[1] == BINDING_DELETE_FLAG) {
+        BLE_LOGI(TAG, "Delete binding at pos %u", data[0]);
+        delete_binding_at_pos(data[0]);
         return;
     }
 
@@ -194,17 +161,9 @@ void AuxSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLE
     NimBLEAttValue d = pCharacteristic->getValue();
     const uint8_t* data = d.data();
 
-    if (d.size() < 1) {
-        BLE_LOGE(TAG, "Empty aux packet");
-        return;
-    }
-
-    if (d.size() == 1) {
-        if (data[0] > AUX_ENABLED) {
-            BLE_LOGE(TAG, "Invalid aux status: 0x%02X", data[0]);
-            return;
-        }
-        set_aux_status(data[0]);
+    // must be at least 2 bytes long ([side][delete] or [side][aux_button_t])
+    if (d.size() < 2) {
+        BLE_LOGE(TAG, "Invalid aux packet (size=%u)", (unsigned int)d.size());
         return;
     }
 
@@ -234,79 +193,12 @@ void AuxSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLE
     }
 }
 
-void SleepySettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-    if (get_auth_state() != AUTH_ESTABLISHED)
-        return;
-
-    NimBLEAttValue d = pCharacteristic->getValue();
-
-    // SHOULD be in format of [left][right]
-    const uint8_t* data = d.data();
-
-    uint8_t res = validate_sleepy_values(data, d.size());
-    if (res) {
-        BLE_LOGI(TAG, "Sleepy settings updated: L=%u%% R=%u%%", data[0], data[1]);
-        set_sleepy_eye_values(data[0], data[1]);
-    } else {
-        BLE_LOGE(TAG, "Invalid sleepy settings (size=%u)", (unsigned int)d.size());
-    }
-}
-
 void GeneralSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-
-    // TODO: List of feature sfor settings:
-    /** Wave settings
-     * (merge sleepy settings)
-     * Long term sleep (put to sleep)
-     * Unpair/reset
-     * swap orientation
-     * headlight bypass (this is part of bindings... do i just merge everything?)
-     **/
-    // should Cutom button actions (bindings)
-    // and aux buttons be merged as well?
-
     if (get_auth_state() != AUTH_ESTABLISHED)
         return;
 
     NimBLEAttValue d = pCharacteristic->getValue();
-
-    const uint8_t* data = d.data();
-
-    // --- STATUS PACKETS ---
-
-    // WAVE PACKET
-    if (d.size() == 2 && data[0] == WAVE_DELAY_FLAG) {
-        BLE_LOGI(TAG, "Received wave delay of %d", data[1]);
-        set_wave_delay(data[1]);
-        return;
-    }
-
-    // SLEEPY PACKET
-    // TODO
-
-    // DEVICE SLEEP PACKETss
-    // TODO
-
-    // UNPAIR PACKET
-    // TODO
-
-    // RESET PACKET
-    // TODO
-
-    // SWAP ORIENTATION PACKET
-    // TODO
-
-    // HEADLIGHT BYPASS PACKET
-    if (d.size() == 2 && data[0] == HEADLIGHT_BYPASS_FLAG) {
-        if (data[1] > BYPASS_ENABLED) {
-            BLE_LOGE(TAG, "Received invalid bypass status of %d", data[1]);
-            return;
-        }
-        BLE_LOGI(TAG, "Received headlight bypass %s", data[1] == BYPASS_ENABLED ? "ENABLED" : "DISABLED");
-        set_input_headlight_bypass(data[1]);
-    }
-
-    // --- ---
+    handle_general_setting(d.data(), d.size());
 }
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
