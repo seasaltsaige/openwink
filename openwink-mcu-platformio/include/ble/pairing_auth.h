@@ -6,8 +6,8 @@
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 
-#define AUTH_INIT_TIMEOUT_MS 2500
-#define AUTH_ECHO_TIMEOUT_MS 750
+#define AUTH_INIT_TIMEOUT_MS 5000
+#define AUTH_ECHO_TIMEOUT_MS 2000
 
 #define AUTH_KEY_LEN (uint8_t)20
 
