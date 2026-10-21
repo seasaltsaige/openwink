@@ -61,18 +61,18 @@ void app_main() {
 
 
     // initialize tasks
-    xTaskCreate(input_read_task, "INPUT_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, NULL);
-    xTaskCreate(aux_one_input_task, "AUX_1_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &aux_one_task_handle);
-    xTaskCreate(aux_two_input_task, "AUX_2_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &aux_two_task_handle);
-    xTaskCreate(left_monitor_task, "L_MON_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &left_feedback_task);
-    xTaskCreate(right_monitor_task, "R_MON_TASK", 2048, NULL, tskIDLE_PRIORITY + 5, &right_feedback_task);
-    xTaskCreate(handle_output_task, "L_OUT_TASK", 2048, (void*)&left_args, tskIDLE_PRIORITY + 4, NULL);
-    xTaskCreate(handle_output_task, "R_OUT_TASK", 2048, (void*)&right_args, tskIDLE_PRIORITY + 4, NULL);
-    xTaskCreate(handle_command_task, "DEF_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &command_output_task);
+    xTaskCreate(input_read_task, "INPUT_TASK", 4096, NULL, tskIDLE_PRIORITY + 5, NULL);
+    xTaskCreate(aux_one_input_task, "AUX_1_TASK", 4096, NULL, tskIDLE_PRIORITY + 5, &aux_one_task_handle);
+    xTaskCreate(aux_two_input_task, "AUX_2_TASK", 4096, NULL, tskIDLE_PRIORITY + 5, &aux_two_task_handle);
+    xTaskCreate(left_monitor_task, "L_MON_TASK", 4096, NULL, tskIDLE_PRIORITY + 5, &left_feedback_task);
+    xTaskCreate(right_monitor_task, "R_MON_TASK", 4096, NULL, tskIDLE_PRIORITY + 5, &right_feedback_task);
+    xTaskCreate(handle_output_task, "L_OUT_TASK", 4096, (void*)&left_args, tskIDLE_PRIORITY + 4, NULL);
+    xTaskCreate(handle_output_task, "R_OUT_TASK", 4096, (void*)&right_args, tskIDLE_PRIORITY + 4, NULL);
+    xTaskCreate(handle_command_task, "DEF_CMD_TASK", 4096, NULL, tskIDLE_PRIORITY + 3, &command_output_task);
     // least important task to execute
-    xTaskCreate(custom_command_task, "CUS_CMD_TASK", 2048, NULL, tskIDLE_PRIORITY + 2, &custom_command_task_handle);
-    xTaskCreate(auth_task, "AUTH_TASK", 2048, NULL, tskIDLE_PRIORITY + 3, &auth_task_handle);
-    xTaskCreate(ble_debug_task, "BLE_DBG_TASK", 2560, NULL, tskIDLE_PRIORITY + 1, &ble_debug_task_handle);
+    xTaskCreate(custom_command_task, "CUS_CMD_TASK", 4096, NULL, tskIDLE_PRIORITY + 2, &custom_command_task_handle);
+    xTaskCreate(auth_task, "AUTH_TASK", 4096, NULL, tskIDLE_PRIORITY + 3, &auth_task_handle);
+    xTaskCreate(ble_debug_task, "BLE_DBG_TASK", 4096, NULL, tskIDLE_PRIORITY + 1, &ble_debug_task_handle);
 
     // finally start advertising self
     begin_advertising();
