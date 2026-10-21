@@ -19,9 +19,7 @@ static CustomCommandCallbacks custom_cmd_callbacks;
 
 
 static CustomButtonCallbacks custom_btn_callbacks;
-static SleepySettingsCallbacks sleepy_settings_callbacks;
 static AuxSettingsCallbacks aux_settings_callbacks;
-
 static GeneralSettingsCallbacks settings_callbacks;
 
 static AuthCallbacks auth_callbacks;
@@ -70,20 +68,17 @@ extern "C" uint8_t ble_init(const char* name) {
     settings_service->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
     settings_service->getCharacteristic(CUSTOM_BUTTON_UPDATE_UUID)->setCallbacks(&custom_btn_callbacks);
 
-    settings_service->createCharacteristic(SLEEPY_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE);
-    settings_service->getCharacteristic(SLEEPY_SETTINGS_UUID)->setCallbacks(&sleepy_settings_callbacks);
-
     settings_service->createCharacteristic(AUX_BUTTONS_UUID, NIMBLE_PROPERTY::WRITE);
     settings_service->getCharacteristic(AUX_BUTTONS_UUID)->setCallbacks(&aux_settings_callbacks);
+
+    settings_service->createCharacteristic(GENERAL_SETTINGS_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    settings_service->getCharacteristic(GENERAL_SETTINGS_UUID)->setCallbacks(&settings_callbacks);
 
     settings_service->createCharacteristic(PASSKEY_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(PASSKEY_UUID)->setCallbacks(&auth_callbacks);
 
     settings_service->createCharacteristic(DEBUG_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(DEBUG_UUID)->setCallbacks(&debug_callbacks);
-
-    settings_service->createCharacteristic("beans", NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
-    settings_service->getCharacteristic("beans")->setCallbacks(&settings_callbacks);
 
     return BLE_INIT_SUCCESS;
 }
