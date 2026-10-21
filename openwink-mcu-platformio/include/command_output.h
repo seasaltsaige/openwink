@@ -7,7 +7,6 @@
 
 #define NOTIFY_COMMAND_DONE_BIT (1UL << 1)
 
-#define WAVE_DELAY_FLAG 0xEE
 #define WAVE_DELAY_MAX (uint8_t)100
 
 typedef struct command_state_data {

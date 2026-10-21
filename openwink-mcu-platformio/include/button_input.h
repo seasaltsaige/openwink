@@ -6,7 +6,6 @@
 #include "button_bindings.h"
 
 #define BUTTON_INPUT GPIO_NUM_9
-#define HEADLIGHT_BYPASS_FLAG 0x88
 
 typedef enum BYPASS : uint8_t {
     BYPASS_DISABLED,

@@ -16,11 +16,8 @@
 #define AUX_TYPE_LEN 1
 
 // AUX packet structures:
-// status update:
-// [status (0 = DISABLED, 1 = ENABLED)]
-//
 // delete aux binding:
-// [side][DELETE_BINDING_FLAG]
+// [side][BINDING_DELETE_FLAG]
 //
 // set aux binding:
 // [side][aux_button_t payload (button_type + button_binding_t)]

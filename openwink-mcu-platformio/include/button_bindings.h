@@ -21,12 +21,10 @@
 
 // packet length can be anywhere from 2 bytes to 184 bytes
 #define BINDING_DELETE_FLAG 0xDD
-#define BINDING_STATUS_FLAG 0xBE
 
-#define BINDING_DELAY_FLAG 0xAA
 // just for now, might expand...
 // it really doesnt make a lot of sense *for humans*
-// to have something out of this range thoughs
+// to have something out of this range though
 #define BINDING_DELAY_MIN 100
 #define BINDING_DELAY_MAX 1000
 
@@ -36,7 +34,7 @@
 // packet structure:
 
 // delete binding:
-// [pos][DELETE_BINDING_FLAG]
+// [pos][BINDING_DELETE_FLAG]
 
 // set binding:
 // [pos][button_binding_t payload]
