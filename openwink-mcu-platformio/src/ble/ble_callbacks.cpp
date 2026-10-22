@@ -15,6 +15,7 @@
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "module_settings.h"
+#include "sleep_handler.h"
 
 static const char* TAG = "BLE";
 
@@ -25,6 +26,8 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
     ble_gattc_exchange_mtu(connInfo.getConnHandle(), NULL, NULL);
     pServer->setDataLen(connInfo.getConnHandle(), MAX_LL_DATA);
 
+    pServer->updateConnParams(connInfo.getConnHandle(), 48, 48, 0, 200);
+
     set_device_status(CONNECTED);
 
     begin_auth_on_connection();
@@ -33,6 +36,7 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
     // Handle disconnect
     set_device_status(DISCONNECTED);
+    reset_sleep_on_disconnect();
     reset_auth_on_disconnect();
     reset_debugger_on_disconnect();
     begin_advertising();

@@ -47,7 +47,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "react-native-ble-plx",
     "expo-font",
-    "expo-build-properties",
     [
       "expo-build-properties",
       {
@@ -102,4 +101,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: process.env.EXPO_PROJECT_ID
     }
   }
-});
+});

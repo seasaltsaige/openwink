@@ -71,6 +71,7 @@ void reload_aux();
 
 void set_aux_status(uint8_t status);
 uint8_t get_aux_status();
+uint8_t aux_input_has_pending_edge();
 
 // returns 1 on success and 0 on invalid
 uint8_t validate_aux(aux_button_t* aux, size_t size);

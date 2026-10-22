@@ -10,8 +10,8 @@ export abstract class HeadlightOrientationStore {
 
   // By default will return Cabin orientation
   static getStatus(): ORIENTATION {
-    if (Storage.getBoolean(ORIENTATION_KEY)) return ORIENTATION.CABIN;
-    else return ORIENTATION.OUTSIDE;
+    if (Storage.getBoolean(ORIENTATION_KEY)) return ORIENTATION.OUTSIDE;
+    else return ORIENTATION.CABIN;
   }
 
   static toggle() {
@@ -27,4 +27,4 @@ export abstract class HeadlightOrientationStore {
     Storage.set(ORIENTATION_KEY, true);
   }
 
-}
+}

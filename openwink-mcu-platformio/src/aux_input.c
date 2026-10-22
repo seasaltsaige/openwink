@@ -9,6 +9,7 @@
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "custom_command_output.h"
+#include "sleep_handler.h"
 #include "storage_handler.h"
 
 static const char* TAG = "AUX";
@@ -17,6 +18,8 @@ TaskHandle_t aux_one_task_handle;
 TaskHandle_t aux_two_task_handle;
 
 static SemaphoreHandle_t aux_lock;
+static volatile uint8_t aux_one_wake_pending = 0;
+static volatile uint8_t aux_two_wake_pending = 0;
 
 RTC_DATA_ATTR aux_buttons_t aux_buttons = {
     .status = AUX_DISABLED,
@@ -65,10 +68,19 @@ static void configure_aux_gpio(uint8_t enabled) {
 
 void init_aux() {
     aux_lock = xSemaphoreCreateMutex();
+    aux_one_wake_pending = 0;
+    aux_two_wake_pending = 0;
 
     uint8_t cold_boot = (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED);
-    if (cold_boot)
+    if (cold_boot) {
         load_nvs_aux_config(&aux_buttons);
+    } else if (aux_buttons.status == AUX_ENABLED && esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1) {
+        uint64_t wake_mask = esp_sleep_get_ext1_wakeup_status();
+        if (wake_mask & (1ULL << AUX_ONE_INPUT))
+            aux_one_wake_pending = 1;
+        if (wake_mask & (1ULL << AUX_TWO_INPUT))
+            aux_two_wake_pending = 1;
+    }
 
     configure_aux_gpio(aux_buttons.status);
 
@@ -115,6 +127,22 @@ void set_aux_status(uint8_t status) {
 
 uint8_t get_aux_status() {
     return aux_buttons.status;
+}
+
+uint8_t aux_input_has_pending_edge() {
+    if (aux_buttons.status != AUX_ENABLED)
+        return 0;
+
+    if (aux_one_wake_pending || aux_two_wake_pending)
+        return 1;
+
+    if ((uint8_t)gpio_get_level(AUX_ONE_INPUT) != aux_buttons.one.state)
+        return 1;
+
+    if ((uint8_t)gpio_get_level(AUX_TWO_INPUT) != aux_buttons.two.state)
+        return 1;
+
+    return 0;
 }
 
 uint8_t validate_aux(aux_button_t* aux, size_t size) {
@@ -211,21 +239,32 @@ void delete_aux(aux_side_t side) {
 
 
 static void process_aux_side(aux_side_t side, gpio_num_t pin, aux_button_state_t* btn_state) {
+    volatile uint8_t* wake_pending = (side == ONE) ? &aux_one_wake_pending : &aux_two_wake_pending;
     uint8_t level = (uint8_t)gpio_get_level(pin);
-    if (level == btn_state->state)
-        return;
+    uint8_t effective_level = level;
 
-    btn_state->state = level;
+    if (level != btn_state->state) {
+        *wake_pending = 0;
+        btn_state->state = level;
+        notify_sleep_button_activity();
+    } else if (*wake_pending) {
+        *wake_pending = 0;
+        notify_sleep_button_activity();
+        // Wakeup pulse already returned to pre-sleep state during boot
+        effective_level = (btn_state->state == HIGH) ? LOW : HIGH;
+    } else {
+        return;
+    }
 
     aux_button_t aux_cfg;
     xSemaphoreTake(aux_lock, portMAX_DELAY);
     aux_cfg = btn_state->aux;
     xSemaphoreGive(aux_lock);
 
-    BLE_LOGV(TAG, "%s edge %s (%s)", aux_side_to_str(side), level == LOW ? "LOW" : "HIGH", aux_type_to_str(aux_cfg.button_type));
+    BLE_LOGV(TAG, "%s edge %s (%s)", aux_side_to_str(side), effective_level == LOW ? "LOW" : "HIGH", aux_type_to_str(aux_cfg.button_type));
 
     // LOW = pressed ==> latched ON
-    if (level == LOW) {
+    if (effective_level == LOW) {
         if (get_custom_command_executing()) {
             BLE_LOGI(TAG, "%s ON -> cancelling active sequence", aux_side_to_str(side));
             request_command_cancellation();

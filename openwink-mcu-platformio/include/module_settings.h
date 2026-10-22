@@ -28,6 +28,8 @@ typedef enum ORIENTATION : uint8_t {
 extern "C" {
 #endif
 
+void init_module_settings();
+
 // Validates and dispatches a general settings packet: [setting_flag_t][payload...]
 // Returns 1 on valid/handled packet, 0 on invalid packet
 uint8_t handle_general_setting(const uint8_t* data, size_t size);

@@ -6,8 +6,10 @@
 #include "command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
+#include "sleep_handler.h"
 
 static NimBLEServer* openwink_server = nullptr;
+static volatile bool ble_initialized = false;
 
 static NimBLEService* wink_service = nullptr;
 static NimBLEService* ota_service = nullptr;
@@ -55,6 +57,8 @@ extern "C" uint8_t ble_init(const char* name) {
 
     NimBLEDevice::setMTU(MAX_ATT_MTU);
 
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+
     openwink_server = NimBLEDevice::createServer();
     openwink_server->setCallbacks(&server_callbacks);
 
@@ -87,6 +91,7 @@ extern "C" uint8_t ble_init(const char* name) {
     settings_service->createCharacteristic(DEBUG_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
     settings_service->getCharacteristic(DEBUG_UUID)->setCallbacks(&debug_callbacks);
 
+    ble_initialized = true;
     ble_notify_headlight_status();
 
     return BLE_INIT_SUCCESS;
@@ -97,8 +102,8 @@ extern "C" void begin_advertising() {
 
     // if advertising has been started previously before reboot/deep sleep
     // just start it again.
-    if (advertising != nullptr) {
-        advertising->start(0);
+    if (advertising != nullptr && advertising->start(0)) {
+        reset_sleep_timer_on_advertising();
         return;
     }
 
@@ -121,13 +126,16 @@ extern "C" void begin_advertising() {
 
     advertising = NimBLEDevice::getAdvertising();
 
-    if (advertising->setInstanceData(0, adv))
-        if (advertising->start(0))
+    if (advertising->setInstanceData(0, adv)) {
+        if (advertising->start(0)) {
+            reset_sleep_timer_on_advertising();
             printf("Advertising started\n");
-        else
+        } else {
             printf("Failed to start advertising\n");
-    else
+        }
+    } else {
         printf("Failed to register advertisement\n");
+    }
 }
 
 
@@ -148,7 +156,7 @@ extern "C" void ble_disconnect() {
 }
 
 extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
-    if (openwink_status == DISCONNECTED)
+    if (!ble_initialized || openwink_status == DISCONNECTED)
         return;
 
     NimBLEServer* pServer = NimBLEDevice::getServer();
@@ -168,7 +176,7 @@ extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
 }
 
 extern "C" void ble_notify_debug(const uint8_t* data, size_t size) {
-    if (openwink_status == DISCONNECTED)
+    if (!ble_initialized || openwink_status == DISCONNECTED)
         return;
 
     NimBLEServer* pServer = NimBLEDevice::getServer();
@@ -186,7 +194,30 @@ extern "C" void ble_notify_debug(const uint8_t* data, size_t size) {
     debug_char->notify(data, size);
 }
 
+extern "C" void ble_notify_general_settings(const uint8_t* data, size_t size) {
+    if (!ble_initialized || openwink_status == DISCONNECTED || data == NULL || size == 0)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* settings = pServer->getServiceByUUID(MODULE_SETTINGS_SERVICE_UUID);
+    if (settings == NULL)
+        return;
+
+    NimBLECharacteristic* settings_char = settings->getCharacteristic(GENERAL_SETTINGS_UUID);
+    if (settings_char == NULL)
+        return;
+
+    settings_char->setValue(data, size);
+    settings_char->notify(data, size);
+}
+
 extern "C" void ble_notify_headlight_status() {
+    if (!ble_initialized)
+        return;
+
     NimBLEServer* pServer = NimBLEDevice::getServer();
     if (pServer == NULL)
         return;

@@ -716,13 +716,18 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const swapLeftRight = useCallback(
     async () => {
       try {
-        console.log(`Setting swap value to ${leftRightSwapped ? "0" : "1"}`);
+        const nextSwapped = !leftRightSwapped;
+        console.log(`Setting swap value to ${nextSwapped ? "1" : "0"}`);
         await device?.writeCharacteristicWithResponseForService(
           ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
-          bytesToBase64([SettingFlag.ORIENTATION, leftRightSwapped ? 0 : 1]),
+          bytesToBase64([SettingFlag.ORIENTATION, nextSwapped ? 1 : 0]),
         );
-        setLeftRightSwapped((v) => !v);
-        HeadlightOrientationStore.toggle();
+        if (nextSwapped) {
+          HeadlightOrientationStore.enable();
+        } else {
+          HeadlightOrientationStore.disable();
+        }
+        setLeftRightSwapped(nextSwapped);
       } catch (err) {
         console.log(err);
       }

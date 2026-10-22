@@ -1,4 +1,5 @@
 #include <esp_err.h>
+#include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/FreeRTOSConfig.h>
 #include <freertos/semphr.h>
@@ -13,6 +14,7 @@ static const char* TAG = "NVS";
 
 static nvs_handle_t storage_handle;
 static SemaphoreHandle_t nvs_lock;
+RTC_DATA_ATTR static uint8_t rtc_nvs_seeded = 0;
 
 // "openwink namespace"
 static const char* nvs_namespace = "ow_ns";
@@ -43,8 +45,11 @@ static const char* aux_binding_keys[2] = {
 
 static const char* input_bypass_key = "inp_bp";
 static const char* wave_delay_key = "wave_d";
+static const char* orientation_key = "orient";
 
 static esp_err_t open(nvs_open_mode_t mode) {
+    if (nvs_lock == NULL)
+        nvs_lock = xSemaphoreCreateMutex();
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
     esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
     if (err != ESP_OK) {
@@ -122,16 +127,23 @@ static void erase_key(const char* key) {
 
 // initialize nvs storage and seed storage if necessary
 void init_nvs_storage() {
-    nvs_lock = xSemaphoreCreateMutex();
+    if (nvs_lock == NULL)
+        nvs_lock = xSemaphoreCreateMutex();
 
+    xSemaphoreTake(nvs_lock, portMAX_DELAY);
     esp_err_t nvs_res = nvs_flash_init();
     if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
         nvs_flash_init();
+        rtc_nvs_seeded = 0;
     }
+    xSemaphoreGive(nvs_lock);
 
-    if (get_nvs_seeded() <= 0)
-        seed_nvs_defaults();
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED || !rtc_nvs_seeded) {
+        if (get_nvs_seeded() <= 0)
+            seed_nvs_defaults();
+        rtc_nvs_seeded = 1;
+    }
 }
 
 uint8_t device_nvs_key_exists() {
@@ -311,6 +323,14 @@ void get_nvs_wave_delay(uint8_t* delay) {
     read_u8(wave_delay_key, delay);
 }
 
+void set_nvs_orientation(uint8_t orientation) {
+    write_u8(orientation_key, orientation);
+}
+
+void get_nvs_orientation(uint8_t* orientation) {
+    read_u8(orientation_key, orientation);
+}
+
 int8_t get_nvs_seeded() {
     uint8_t seeded = 0;
     esp_err_t err = read_u8(nvs_seeded, &seeded);
@@ -331,6 +351,7 @@ void seed_nvs_defaults() {
     nvs_set_u8(storage_handle, aux_status_key, AUX_DISABLED);
     nvs_set_u8(storage_handle, input_bypass_key, 0);
     nvs_set_u8(storage_handle, wave_delay_key, 50);
+    nvs_set_u8(storage_handle, orientation_key, 0);
 
     const command_t default_cmds[4] = {
         COMMAND_LEFT_WINK,

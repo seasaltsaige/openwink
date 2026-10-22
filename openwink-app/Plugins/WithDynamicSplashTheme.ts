@@ -189,6 +189,12 @@ const withManifestRewrites: ConfigPlugin = (config) =>
       } as any);
     }
 
+    const viewFilters = (main?.["intent-filter"] ?? []).filter((f) =>
+      (f.action ?? []).some(
+        (a: any) => a.$["android:name"] === "android.intent.action.VIEW",
+      ),
+    );
+
     for (const alias of app["activity-alias"] ?? []) {
       const match = alias.$["android:name"].match(/MainActivity(\w+)$/);
       if (!match) continue;
@@ -199,18 +205,298 @@ const withManifestRewrites: ConfigPlugin = (config) =>
       alias.$["android:targetActivity"] = `.${implClass(v)}`;
       (alias.$ as any)["android:enabled"] = "false";
 
-      // The library copies deep-link VIEW filters onto every alias; we only
-      // want MAIN/LAUNCHER on the aliases.
-      if (alias["intent-filter"]) {
-        alias["intent-filter"] = alias["intent-filter"].filter(
-          (f) => !(f.action ?? []).some(
-            (a: any) => a.$["android:name"] === "android.intent.action.VIEW",
-          ),
-        );
+      // Keep deep-link VIEW filters on every alias so QR codes / deep links
+      // continue to work after MainActivity is disabled by setAppIcon().
+      alias["intent-filter"] = alias["intent-filter"] ?? [];
+      const hasViewFilter = alias["intent-filter"].some((f) =>
+        (f.action ?? []).some(
+          (a: any) => a.$["android:name"] === "android.intent.action.VIEW",
+        ),
+      );
+      if (!hasViewFilter && viewFilters.length > 0) {
+        alias["intent-filter"].push(...JSON.parse(JSON.stringify(viewFilters)));
       }
     }
     return cfg;
   });
+
+const patchedLifecycleListenerKt = `package expo.modules.dynamicappicon
+
+import android.app.Activity
+import android.content.ComponentName
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import expo.modules.core.interfaces.ReactActivityLifecycleListener
+
+object SharedObject {
+    var packageName: String = ""
+    var classesToKill = ArrayList<String>()
+    var icon: String = ""
+    var pm: PackageManager? = null
+    var shouldChangeIcon: Boolean = false
+    var isInBackground: Boolean = true
+}
+
+class ExpoDynamicAppIconReactActivityLifecycleListener : ReactActivityLifecycleListener {
+
+    private var currentActivity: Activity? = null
+    private var isBackground = false
+    private var didHealComponents = false
+    private val handler = Handler(Looper.getMainLooper())
+    private val backgroundCheckRunnable = Runnable {
+        if (isBackground) {
+            onBackground()
+        }
+    }
+
+    override fun onPause(activity: Activity) {
+        currentActivity = activity
+        isBackground = true
+        handler.postDelayed(backgroundCheckRunnable, if (SharedObject.isInBackground) 5000 else 0)
+    }
+
+    override fun onResume(activity: Activity) {
+        currentActivity = activity
+        isBackground = false
+        handler.removeCallbacks(backgroundCheckRunnable)
+        if (!didHealComponents) {
+            didHealComponents = true
+            healNonLauncherComponents(activity)
+        }
+    }
+
+    override fun onDestroy(activity: Activity) {
+        handler.removeCallbacks(backgroundCheckRunnable)
+        if (SharedObject.shouldChangeIcon) {
+            applyIconChange(activity)
+        }
+        if (currentActivity === activity) {
+            currentActivity = null
+        }
+    }
+
+    private fun onBackground() {
+        currentActivity?.let { activity ->
+            if (SharedObject.shouldChangeIcon) {
+                applyIconChange(activity)
+            }
+        }
+    }
+
+    // Only toggle MainActivity and its MainActivity<color> launcher aliases.
+    // Never disable MainActivity<Color>Impl target activities or DevMenuActivity.
+    private fun isLauncherComponent(name: String, pkg: String): Boolean {
+        return name.startsWith("$pkg.MainActivity") && !name.endsWith("Impl")
+    }
+
+    private fun healNonLauncherComponents(activity: Activity) {
+        try {
+            val pkg = activity.packageName
+            val pm = activity.packageManager
+            val packageInfo = pm.getPackageInfo(
+                pkg,
+                PackageManager.GET_ACTIVITIES or PackageManager.GET_DISABLED_COMPONENTS
+            )
+            packageInfo.activities?.forEach { activityInfo ->
+                if (!isLauncherComponent(activityInfo.name, pkg)) {
+                    val componentName = ComponentName(pkg, activityInfo.name)
+                    if (pm.getComponentEnabledSetting(componentName) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+                        pm.setComponentEnabledSetting(
+                            componentName,
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+                            PackageManager.DONT_KILL_APP
+                        )
+                        Log.i("IconChange", "Restored non-launcher component: \${activityInfo.name}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("IconChange", "Error healing non-launcher components", e)
+        }
+    }
+
+    private fun applyIconChange(activity: Activity) {
+        SharedObject.icon.takeIf { it.isNotEmpty() }?.let { icon ->
+            val pm = SharedObject.pm ?: return
+            val pkg = SharedObject.packageName
+            val newComponent = ComponentName(pkg, icon)
+
+            if (!doesComponentExist(newComponent)) {
+                SharedObject.shouldChangeIcon = false
+                return
+            }
+
+            try {
+                val packageInfo = pm.getPackageInfo(
+                    pkg,
+                    PackageManager.GET_ACTIVITIES or PackageManager.GET_DISABLED_COMPONENTS
+                )
+
+                packageInfo.activities?.forEach { activityInfo ->
+                    if (!isLauncherComponent(activityInfo.name, pkg)) {
+                        return@forEach
+                    }
+
+                    val componentName = ComponentName(pkg, activityInfo.name)
+                    val state = pm.getComponentEnabledSetting(componentName)
+
+                    if (activityInfo.name != icon && state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+                        pm.setComponentEnabledSetting(
+                            componentName,
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                            PackageManager.DONT_KILL_APP
+                        )
+                        Log.i("IconChange", "Disabled launcher component: \${activityInfo.name}")
+                    }
+                }
+
+                pm.setComponentEnabledSetting(
+                    newComponent,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+                Log.i("IconChange", "Enabled new icon: \$icon")
+            } catch (e: Exception) {
+                Log.e("IconChange", "Error during icon change", e)
+            } finally {
+                SharedObject.shouldChangeIcon = false
+            }
+
+            ensureAtLeastOneComponentEnabled(activity)
+        }
+    }
+
+    private fun ensureAtLeastOneComponentEnabled(context: Context) {
+        val pm = SharedObject.pm ?: return
+        val pkg = SharedObject.packageName
+        val packageInfo = pm.getPackageInfo(
+            pkg,
+            PackageManager.GET_ACTIVITIES or PackageManager.GET_DISABLED_COMPONENTS
+        )
+
+        val hasEnabledLauncher = packageInfo.activities?.any { activityInfo ->
+            isLauncherComponent(activityInfo.name, pkg) &&
+                pm.getComponentEnabledSetting(ComponentName(pkg, activityInfo.name)) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        } ?: false
+
+        if (!hasEnabledLauncher) {
+            val mainActivityName = "\$pkg.MainActivity"
+            val mainComponent = ComponentName(pkg, mainActivityName)
+            try {
+                pm.setComponentEnabledSetting(
+                    mainComponent,
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+                Log.i("IconChange", "No active launcher found. Re-enabling \$mainActivityName")
+            } catch (e: Exception) {
+                Log.e("IconChange", "Error enabling fallback MainActivity", e)
+            }
+        }
+    }
+
+    private fun doesComponentExist(componentName: ComponentName): Boolean {
+        return try {
+            val packageInfo = SharedObject.pm?.getPackageInfo(
+                SharedObject.packageName,
+                PackageManager.GET_ACTIVITIES or PackageManager.GET_DISABLED_COMPONENTS
+            )
+            packageInfo?.activities?.any { it.name == componentName.className } == true
+        } catch (e: Exception) {
+            false
+        }
+    }
+}
+`;
+
+const patchedModuleKt = `package expo.modules.dynamicappicon
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.pm.PackageManager
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
+
+class ExpoDynamicAppIconModule : Module() {
+
+  override fun definition() = ModuleDefinition {
+    Name("ExpoDynamicAppIcon")
+
+    Function("setAppIcon") { name: String?, isInBackground: Boolean? ->
+      try {
+        val pkg = context.packageName
+        SharedObject.packageName = pkg
+        SharedObject.pm = pm
+
+        val targetIcon = if (name == null) "$pkg.MainActivity" else "$pkg.MainActivity$name"
+        val targetComponent = ComponentName(pkg, targetIcon)
+        val targetState = pm.getComponentEnabledSetting(targetComponent)
+
+        // If the requested component is already enabled (or MainActivity is still default-enabled for the default green icon), skip redundant toggling
+        val mainComponent = ComponentName(pkg, "$pkg.MainActivity")
+        val mainState = pm.getComponentEnabledSetting(mainComponent)
+        val isDefaultGreenActive = (name == "${defaultKey}" && (mainState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT || mainState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED))
+
+        if (targetState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || isDefaultGreenActive) {
+          SharedObject.icon = targetIcon
+          SharedObject.shouldChangeIcon = false
+          return@Function name ?: "DEFAULT"
+        }
+
+        SharedObject.shouldChangeIcon = true
+        SharedObject.isInBackground = isInBackground ?: true
+        SharedObject.icon = targetIcon
+
+        return@Function name ?: "DEFAULT"
+      } catch (e: Exception) {
+        return@Function false
+      }
+    }
+
+    Function("getAppIcon") {
+      val componentClass: String = currentActivity.componentName.className
+      val currentIcon: String = if (!SharedObject.icon.isEmpty()) SharedObject.icon else componentClass
+      val currentIconName: String = currentIcon.split("MainActivity").getOrElse(1) { "" }
+
+      return@Function if (currentIconName.isEmpty() || currentIconName.endsWith("Impl")) "DEFAULT" else currentIconName
+    }
+  }
+
+  private val context: Context
+    get() = requireNotNull(appContext.reactContext) { "React Application Context is null" }
+
+  private val currentActivity
+    get() = requireNotNull(appContext.activityProvider?.currentActivity)
+
+  private val pm
+    get() = requireNotNull(currentActivity.packageManager)
+}
+`;
+
+const withPatchedDynamicAppIcon: ConfigPlugin = (config) =>
+  withDangerousMod(config, [
+    "android",
+    (cfg) => {
+      const moduleDir = path.join(
+        cfg.modRequest.projectRoot,
+        "node_modules/@howincodes/expo-dynamic-app-icon/android/src/main/java/expo/modules/dynamicappicon",
+      );
+      if (fs.existsSync(moduleDir)) {
+        fs.writeFileSync(
+          path.join(moduleDir, "ExpoDynamicAppIconReactActivityLifecycleListener.kt"),
+          patchedLifecycleListenerKt,
+        );
+        fs.writeFileSync(
+          path.join(moduleDir, "ExpoDynamicAppIconModule.kt"),
+          patchedModuleKt,
+        );
+      }
+      return cfg;
+    },
+  ]);
 
 const withDynamicSplashTheme: ConfigPlugin = (config) => {
   config = withOpenMainActivity(config);
@@ -219,6 +505,7 @@ const withDynamicSplashTheme: ConfigPlugin = (config) => {
   config = withSplashStyles(config);
   config = withAdaptiveIcons(config);
   config = withManifestRewrites(config);
+  config = withPatchedDynamicAppIcon(config);
   return config;
 };
 

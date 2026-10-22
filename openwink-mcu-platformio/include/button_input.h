@@ -6,6 +6,7 @@
 #include "button_bindings.h"
 
 #define BUTTON_INPUT GPIO_NUM_9
+#define DEBOUNCE_TIME_MS 35
 
 typedef enum BYPASS : uint8_t {
     BYPASS_DISABLED,
@@ -25,10 +26,12 @@ extern "C" {
 void inputs_init();
 void read_input_on_boot();
 void set_input_headlight_bypass(uint8_t status);
+uint8_t get_button_state();
+uint8_t is_button_input_busy();
 void input_read_task(void* args);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif

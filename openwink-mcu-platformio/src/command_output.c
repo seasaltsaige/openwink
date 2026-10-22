@@ -1,4 +1,5 @@
 #include <FreeRTOSConfig.h>
+#include <esp_sleep.h>
 #include <freertos/FreeRTOS.h>
 #include <stdbool.h>
 
@@ -22,8 +23,10 @@ RTC_DATA_ATTR command_state_data_t cmd_data = {
 
 void init_command_queue() {
     command_output_queue = xQueueCreate(20, sizeof(command_types_t));
+    cmd_data.busy = 0;
     // shhh dont look at this (this is definitely initializing the queue)
-    get_nvs_wave_delay(&cmd_data.wave_delay);
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED)
+        get_nvs_wave_delay(&cmd_data.wave_delay);
 }
 
 // TODO: Add helper function similar to custom command to request submisison?

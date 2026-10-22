@@ -55,6 +55,10 @@ void get_nvs_input_bypass_status(uint8_t* status);
 void set_nvs_wave_delay(uint8_t delay);
 void get_nvs_wave_delay(uint8_t* delay);
 
+// module orientation settings
+void set_nvs_orientation(uint8_t orientation);
+void get_nvs_orientation(uint8_t* orientation);
+
 int8_t get_nvs_seeded();
 void seed_nvs_defaults();
 
@@ -62,4 +66,4 @@ void seed_nvs_defaults();
 }
 #endif
 
-#endif
+#endif

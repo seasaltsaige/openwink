@@ -100,10 +100,12 @@ void set_sleepy_eye_values(uint8_t left, uint8_t right);
 void get_sleepy_eye_values(uint8_t* left, uint8_t* right);
 
 headlight_position_t get_position();
+void set_all_positions_on_boot(uint8_t button_state);
+void swap_position_sides();
 void handle_output_task(void* args);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif

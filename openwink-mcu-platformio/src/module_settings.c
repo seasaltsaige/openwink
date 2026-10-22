@@ -15,11 +15,17 @@
 #include "headlight_feedback.h"
 #include "module_settings.h"
 #include "output_handler.h"
+#include "sleep_handler.h"
 #include "storage_handler.h"
 
 static const char* TAG = "SET";
 
 RTC_DATA_ATTR static uint8_t module_orientation = ORIENTATION_DEFAULT;
+
+void init_module_settings() {
+    if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_UNDEFINED)
+        get_nvs_orientation(&module_orientation);
+}
 
 uint8_t handle_general_setting(const uint8_t* data, size_t size) {
     if (data == NULL || size == 0)
@@ -122,38 +128,56 @@ void set_module_orientation(uint8_t orientation) {
     if (orientation > ORIENTATION_SWAPPED)
         return;
 
+    uint8_t changed = (module_orientation != orientation);
     module_orientation = orientation;
+    set_nvs_orientation(orientation);
+
+    if (changed) {
+        swap_position_sides();
+        swap_move_time_sides();
+        ble_notify_headlight_status();
+        const uint8_t notify_payload[2] = { SETTING_FLAG_ORIENTATION, orientation };
+        ble_notify_general_settings(notify_payload, sizeof(notify_payload));
+    }
+
     BLE_LOGI(TAG, "Module orientation set to %s", orientation == ORIENTATION_SWAPPED ? "OUTSIDE" : "CABIN");
-    // TODO: Apply orientation to output_handler / headlight_feedback and persist to NVS
 }
 
 uint8_t get_module_orientation() {
     return module_orientation;
 }
 
-void enter_long_term_sleep() {
-    BLE_LOGI(TAG, "Entering long-term sleep");
+static void long_term_sleep_task(void* args) {
+    // Allow BLE GATT Write Response to be transmitted before disconnecting and sleeping
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     reset_auth_on_disconnect();
     ble_disconnect();
 
-    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-    uint8_t button_inp = (uint8_t)gpio_get_level(BUTTON_INPUT);
-    esp_sleep_enable_ext0_wakeup(BUTTON_INPUT, button_inp == HIGH ? LOW : HIGH);
-
-    if (get_aux_status() == AUX_ENABLED)
-        esp_sleep_enable_ext1_wakeup((1ULL << AUX_ONE_INPUT) | (1ULL << AUX_TWO_INPUT), ESP_EXT1_WAKEUP_ANY_LOW);
+    configure_wakeup_sources(0);
 
     vTaskDelay(pdMS_TO_TICKS(100));
     esp_deep_sleep_start();
+}
+
+static void deferred_disconnect_task(void* args) {
+    uint32_t delay_ms = (uint32_t)(uintptr_t)args;
+    vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    reset_auth_on_disconnect();
+    ble_disconnect();
+    vTaskDelete(NULL);
+}
+
+void enter_long_term_sleep() {
+    BLE_LOGI(TAG, "Entering long-term sleep");
+    xTaskCreate(long_term_sleep_task, "SLEEP_TASK", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
 
 void unpair_module() {
     BLE_LOGI(TAG, "Unpairing module");
 
     delete_nvs_device_key();
-    reset_auth_on_disconnect();
-    ble_disconnect();
+    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 2048, (void*)(uintptr_t)200, tskIDLE_PRIORITY + 2, NULL);
 }
 
 void reset_module() {
@@ -167,7 +191,7 @@ void reset_module() {
     set_sleepy_eye_values(50, 50);
     set_wave_delay(50);
     set_input_headlight_bypass(BYPASS_DISABLED);
-    module_orientation = ORIENTATION_DEFAULT;
+    set_module_orientation(ORIENTATION_DEFAULT);
 
     request_command_cancellation();
     xQueueReset(command_output_queue);
@@ -181,6 +205,6 @@ void reset_module() {
     for (uint8_t i = 0; i < 3; i++)
         xQueueSend(command_output_queue, &confirm_seq[i], 0);
 
-    reset_auth_on_disconnect();
-    ble_disconnect();
+    reset_sleep_on_disconnect();
+    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 2048, (void*)(uintptr_t)300, tskIDLE_PRIORITY + 2, NULL);
 }

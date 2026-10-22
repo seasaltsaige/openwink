@@ -7,6 +7,7 @@
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
+#include "module_settings.h"
 #include "output_handler.h"
 #include "storage_handler.h"
 
@@ -99,6 +100,15 @@ void output_event_group_init() {
 }
 
 move_type_t start_side_move(output_args_t* motor_args, movement_target_t* move) {
+    uint8_t swapped = (get_module_orientation() == ORIENTATION_SWAPPED);
+    if ((motor_args->side_bit == LEFT_SIDE && !swapped) || (motor_args->side_bit == RIGHT_SIDE && swapped)) {
+        motor_args->up_pin = OUT_PIN_LEFT_UP;
+        motor_args->down_pin = OUT_PIN_LEFT_DOWN;
+    } else {
+        motor_args->up_pin = OUT_PIN_RIGHT_UP;
+        motor_args->down_pin = OUT_PIN_RIGHT_DOWN;
+    }
+
     uint8_t curr_pos = (motor_args->side_bit == LEFT_SIDE) ? positions.left_pos : positions.right_pos;
 
     if (move->target == MOVE_UP && curr_pos != POSITION_UP) {
@@ -248,3 +258,27 @@ void handle_output_task(void* args) {
 headlight_position_t get_position() {
     return positions;
 }
+
+void set_all_positions_on_boot(uint8_t button_state) {
+    if (button_state == HIGH) {
+        positions.left_pos = POSITION_UP;
+        positions.right_pos = POSITION_UP;
+        positions.last_left_move_dir = MOVE_UP;
+        positions.last_right_move_dir = MOVE_UP;
+    } else {
+        positions.left_pos = POSITION_DOWN;
+        positions.right_pos = POSITION_DOWN;
+        positions.last_left_move_dir = MOVE_DOWN;
+        positions.last_right_move_dir = MOVE_DOWN;
+    }
+}
+
+void swap_position_sides() {
+    uint8_t tmp_pos = positions.left_pos;
+    positions.left_pos = positions.right_pos;
+    positions.right_pos = tmp_pos;
+
+    move_type_t tmp_dir = positions.last_left_move_dir;
+    positions.last_left_move_dir = positions.last_right_move_dir;
+    positions.last_right_move_dir = tmp_dir;
+}

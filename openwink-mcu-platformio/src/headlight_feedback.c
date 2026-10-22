@@ -9,6 +9,7 @@
 #include "ble/debugger/ble_debugger.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
+#include "module_settings.h"
 #include "output_handler.h"
 #include "storage_handler.h"
 
@@ -56,6 +57,17 @@ void reload_move_times() {
     last_nvs_right_time = movement_stats.right_move_time;
 }
 
+void swap_move_time_sides() {
+    uint16_t tmp_time = movement_stats.left_move_time;
+    movement_stats.left_move_time = movement_stats.right_move_time;
+    movement_stats.right_move_time = tmp_time;
+
+    last_nvs_left_time = movement_stats.left_move_time;
+    last_nvs_right_time = movement_stats.right_move_time;
+    set_nvs_left_move_time(movement_stats.left_move_time);
+    set_nvs_right_move_time(movement_stats.right_move_time);
+}
+
 uint16_t get_left_move_time_ms() {
     return movement_stats.left_move_time;
 }
@@ -68,8 +80,11 @@ void left_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
     uint8_t move_started_sleepy = 0;
+    gpio_num_t active_pin = LEFT_MONITOR_PIN;
     for (;;) {
-        uint8_t curr_state = gpio_get_level(LEFT_MONITOR_PIN);
+        if (last_level == 0)
+            active_pin = (get_module_orientation() == ORIENTATION_SWAPPED) ? RIGHT_MONITOR_PIN : LEFT_MONITOR_PIN;
+        uint8_t curr_state = gpio_get_level(active_pin);
         // movement start
         if ((last_level == 0) && (curr_state == 1)) {
             // Dont need to clear event bits since they are cleared by the movement commanding
@@ -120,8 +135,11 @@ void right_monitor_task(void* args) {
     int64_t move_start = 0;
     uint8_t last_level = 0;
     uint8_t move_started_sleepy = 0;
+    gpio_num_t active_pin = RIGHT_MONITOR_PIN;
     for (;;) {
-        uint8_t curr_state = gpio_get_level(RIGHT_MONITOR_PIN);
+        if (last_level == 0)
+            active_pin = (get_module_orientation() == ORIENTATION_SWAPPED) ? LEFT_MONITOR_PIN : RIGHT_MONITOR_PIN;
+        uint8_t curr_state = gpio_get_level(active_pin);
         // movement start
         if ((last_level == 0) && (curr_state == 1)) {
             // Dont need to clear event bits since they are cleared by the movement commanding

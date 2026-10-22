@@ -84,12 +84,55 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   // const [isConnected, setIsConnected] = useState(true);
 
   const isConnectedRef = useRef(isConnected);
+  const deviceRef = useRef<Device | null>(null);
   const scanForModuleRef = useRef<() => Promise<void>>(async () => { });
+
+  const updateDevice = useCallback((nextDevice: Device | null) => {
+    deviceRef.current = nextDevice;
+    setDevice(nextDevice);
+  }, []);
 
   const setConnected = (connected: boolean) => {
     setIsConnected(connected);
     isConnectedRef.current = connected;
   }
+
+  const clearStaleOsConnections = useCallback(async (targetMac?: string | null) => {
+    try {
+      const staleIds = new Set<string>();
+
+      if (targetMac) {
+        const isTargetConnected = await manager.isDeviceConnected(targetMac).catch(() => false);
+        if (isTargetConnected) {
+          staleIds.add(targetMac);
+        }
+      }
+
+      const connectedDevices = await manager
+        .connectedDevices([
+          BLE.SERVICES.WINK.UUID,
+          BLE.SERVICES.SETTINGS.UUID,
+          BLE.SERVICES.OTA.UUID,
+        ])
+        .catch(() => []);
+
+      for (const dev of connectedDevices) {
+        if (dev?.id) {
+          staleIds.add(dev.id);
+        }
+      }
+
+      if (staleIds.size > 0) {
+        for (const id of staleIds) {
+          console.log("Cancelling stale OS BLE connection:", id);
+          await manager.cancelDeviceConnection(id).catch(() => { });
+        }
+        await sleep(300);
+      }
+    } catch (err) {
+      console.warn("Error clearing stale OS BLE connections:", err);
+    }
+  }, [manager]);
 
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
@@ -99,7 +142,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     autoConnectRef.current = autoConnectEnabled;
   }, [autoConnectEnabled]);
 
-  // Load persisted settings on mount
+  // Load persisted settings on mount and clean up any orphaned OS BLE link from JS reload
   useEffect(() => {
     const storedMac = DeviceMACStore.getStoredMAC();
     if (storedMac) {
@@ -110,7 +153,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     if (storedAutoConnect !== null) {
       setAutoConnectEnabled(storedAutoConnect);
     }
-  }, []);
+
+    clearStaleOsConnections(storedMac);
+  }, [clearStaleOsConnections]);
 
   const refreshConnection = useCallback(async () => {
     const storedMac = DeviceMACStore.getStoredMAC();
@@ -192,16 +237,54 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [requestAndroid31Permissions]);
 
   // Setup connection monitors and disconnect handler
+  // Re-bind characteristic monitors if startMonitoring updates during Fast Refresh while connected
+  useEffect(() => {
+    const activeDevice = deviceRef.current;
+    if (!isConnected || !activeDevice) return;
+
+    startMonitoring(
+      activeDevice,
+      () => {
+        if (!deviceRef.current) return;
+        deviceRef.current
+          .writeCharacteristicWithoutResponseForService(
+            ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
+            bytesToBase64([CANCEL_COMMAND_PAYLOAD]),
+          )
+          .catch((error) => {
+            console.error("Error sending interrupt signal:", error);
+          });
+      },
+      async () => {
+        DeviceUUIDStore.forgetUUID();
+        DeviceMACStore.forgetMAC();
+        FirmwareStore.forgetFirmwareVersion();
+        setMac("");
+        try {
+          await activeDevice.cancelConnection();
+          Toast.show({
+            type: "info",
+            text1: "Unpaired",
+            text2: "Unpaired from Module successfully",
+            visibilityTime: 4000,
+          });
+        } catch (err) {
+          console.log(err, "Error disconnecting on reset");
+        }
+      },
+    );
+  }, [isConnected, startMonitoring]);
+
   const setupConnection = useCallback(
     async (connection: Device) => {
       try {
         await startMonitoring(
           connection,
           () => {
-            if (!device) return;
+            if (!deviceRef.current) return;
 
             // Notify device that command is no longer in progress
-            device
+            deviceRef.current
               .writeCharacteristicWithoutResponseForService(
                 ...getBLEDescriptors("WINK", "CUSTOM_COMMAND"),
                 bytesToBase64([CANCEL_COMMAND_PAYLOAD]),
@@ -243,7 +326,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Cleanup
           stopMonitoring();
-          setDevice(null);
+          updateDevice(null);
           setConnected(false);
 
           // Auto-reconnect if enabled
@@ -265,24 +348,30 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             ...getBLEDescriptors("SETTINGS", "AUTH"),
             base64.encode(getDevicePasskey()),
           );
+
+          try {
+            await writeInitialSettings(connection);
+          } catch (error) {
+            console.warn(
+              "[BLE] Non-critical write failed during initial settings:",
+              error,
+            );
+          }
         }
 
-        // Initial settings writes and reads disabled for minimal connection/auth testing
-        // try {
-        //   await writeInitialSettings(connection);
-        // } catch (error) {
-        //   console.warn(
-        //     "[BLE] Non-critical write failed during initial settings:",
-        //     error,
-        //   );
-        // }
-        // await readInitialValues(connection);
+        await readInitialValues(connection);
       } catch (error) {
         console.error("Error setting up connection:", error);
         throw error;
       }
     },
-    [startMonitoring, stopMonitoring, device],
+    [
+      startMonitoring,
+      stopMonitoring,
+      updateDevice,
+      writeInitialSettings,
+      readInitialValues,
+    ],
   );
 
   // Connect to a specific device with retry logic
@@ -303,7 +392,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Negotiate MTU to maximum size if android device.
         const negotiatedMTUConnection = await connection.requestMTU(517);
-        setDevice(negotiatedMTUConnection);
+        updateDevice(negotiatedMTUConnection);
 
         // Setup monitoring and handlers
         await setupConnection(connection);
@@ -324,7 +413,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error) {
         stopMonitoring();
         setConnected(false);
-        setDevice(null);
+        updateDevice(null);
         setIsConnecting(false);
 
         Toast.show({
@@ -340,7 +429,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
     },
-    [device, isConnecting, manager, setupConnection, stopMonitoring],
+    [isConnecting, manager, setupConnection, stopMonitoring, updateDevice],
   );
 
   // Check if device matches connection criteria
@@ -377,6 +466,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setIsScanning(true);
     const targetMac = DeviceMACStore.getStoredMAC();
+    await clearStaleOsConnections(targetMac);
     let deviceFound = false;
 
     // Clear any existing timeout
@@ -479,6 +569,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     manager,
     connectToDevice,
     isValidDevice,
+    clearStaleOsConnections,
   ]);
 
   // Disconnect from device
@@ -498,7 +589,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           stopMonitoring();
           await device.cancelConnection();
-          setDevice(null);
+          updateDevice(null);
           setIsConnecting(false);
           setIsScanning(false);
           setConnected(false);
@@ -515,10 +606,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (error) {
         console.error("Error disconnecting:", error);
       } finally {
-        setDevice(null);
+        updateDevice(null);
       }
     },
-    [device, stopMonitoring],
+    [device, stopMonitoring, updateDevice],
   );
 
   // Set auto-connect preference
@@ -591,15 +682,15 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         .stopDeviceScan()
         .catch((err) => console.error("Error stopping scan on unmount:", err));
 
-      if (device) {
-        device
+      if (deviceRef.current) {
+        deviceRef.current
           .cancelConnection()
           .catch((err) =>
             console.error("Error disconnecting on unmount:", err),
           );
       }
     };
-  }, [device, manager]);
+  }, [manager]);
 
   useEffect(() => {
     scanForModuleRef.current = scanForModule;
