@@ -21,14 +21,14 @@ static const char* TAG = "BLE";
 
 
 void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) {
+    set_device_status(CONNECTED);
+
     pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
 
     ble_gattc_exchange_mtu(connInfo.getConnHandle(), NULL, NULL);
     pServer->setDataLen(connInfo.getConnHandle(), MAX_LL_DATA);
 
     pServer->updateConnParams(connInfo.getConnHandle(), 48, 48, 0, 200);
-
-    set_device_status(CONNECTED);
 
     begin_auth_on_connection();
 }
@@ -53,7 +53,10 @@ void ServerCallbacks::onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) {
 
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
     switch (reason) {
-    case 0: printf("Client connecting\n"); break;
+    case 0:
+        set_device_status(CONNECTED);
+        printf("Client connecting\n");
+        break;
     default: printf("Default case"); break;
     }
 }

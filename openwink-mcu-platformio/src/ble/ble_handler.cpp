@@ -18,6 +18,7 @@ static NimBLEService* settings_service = nullptr;
 static NimBLEExtAdvertising* advertising = nullptr;
 
 static ServerCallbacks server_callbacks;
+static AdvertisingCallbacks advertising_callbacks;
 
 static HeadlightCommandCallbacks default_cmd_callbacks;
 static HeadlightStatusCallbacks status_callbacks;
@@ -41,6 +42,10 @@ void set_device_status(openwink_status_t status) {
 }
 
 openwink_status_t get_device_status() {
+    if (openwink_status == CONNECTED)
+        return CONNECTED;
+    if (openwink_server != nullptr && openwink_server->getConnectedCount() > 0)
+        return CONNECTED;
     return openwink_status;
 }
 
@@ -125,6 +130,7 @@ extern "C" void begin_advertising() {
     adv.addServiceUUID(MODULE_SETTINGS_SERVICE_UUID);
 
     advertising = NimBLEDevice::getAdvertising();
+    advertising->setCallbacks(&advertising_callbacks);
 
     if (advertising->setInstanceData(0, adv)) {
         if (advertising->start(0)) {
