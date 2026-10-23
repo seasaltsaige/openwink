@@ -1,5 +1,5 @@
 import { DeviceMACStore, FirmwareStore } from "../../Storage";
-import { jkYSbsSAIDns, UPDATE_URL } from "../Constants";
+import { jkYSbsSAIDns, OTA_ACK_WINDOW_SIZE, UPDATE_URL } from "../Constants";
 import { sleep } from "../Functions";
 
 type FirmwareType = `${number}.${number}.${number}`;
@@ -93,9 +93,9 @@ export abstract class OTA {
 
   public static async updateFirmware(
     updateVersion: string,
-    mtu: number,
-    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>) => Promise<boolean>,
-    sendOTASize: (otaSize: number) => Promise<void>,
+    chunkSize: number,
+    startOTAService: (otaSize: number) => Promise<boolean>,
+    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>, withResponse?: boolean) => Promise<boolean>,
     sendOTAComplete: () => Promise<void>,
   ) {
     try {
@@ -114,35 +114,31 @@ export abstract class OTA {
       const uint8buffer = await this.blobToUint8Array(firmwareBlob);
       const blobChunks: Uint8Array[] = [];
 
-      for (let i = 0; i < uint8buffer.length; i += mtu) {
-        blobChunks.push(uint8buffer.slice(i, i + mtu));
+      for (let i = 0; i < uint8buffer.length; i += chunkSize) {
+        blobChunks.push(uint8buffer.slice(i, i + chunkSize));
       }
       const start = Date.now();
       console.log("[DEBUG] OTA START");
       this.updateInProgress = true;
 
-      await sendOTASize(firmwareBlob.size);
-      await sleep(25);
+      const started = await startOTAService(uint8buffer.length);
+      if (!started) {
+        this.updateInProgress = false;
+        return false;
+      }
 
-      // Check if update still valid before sending chunks
-      for (const chunk of blobChunks) {
-        // Before each chunk
+      // Stream chunks with windowed ACK every OTA_ACK_WINDOW_SIZE chunks (and on the final chunk)
+      for (let i = 0; i < blobChunks.length; i++) {
         if (!this.updateInProgress) {
           return false;
         }
-        await sendOTAChunk(chunk);
+        const ackChunk = ((i + 1) % OTA_ACK_WINDOW_SIZE === 0) || (i === blobChunks.length - 1);
+        const ok = await sendOTAChunk(blobChunks[i], ackChunk);
+        if (!ok) {
+          this.updateInProgress = false;
+          return false;
+        }
       }
-
-      // wtf lol
-      // pretty sure that w/ the signed key
-      // and using writeCharacteristicWithoutResponse
-      // the OTA update handler on the ESP checks the bin
-      // against the public key before the bin file is done
-      // transferring.
-      // using WithResponse is WAYYYY too slow, soo....
-      // just wait a bit i guess... 
-      // seems to work ??????
-      await sleep(750);
 
       // Check after chunks finish
       if (!this.updateInProgress) {
@@ -150,12 +146,8 @@ export abstract class OTA {
       }
       await sendOTAComplete();
 
-
-
       const end = Date.now();
       console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
-
-      // this.activeVersion = this.latestVersion;
 
       return true;
     } catch (err) {
@@ -224,4 +216,4 @@ export abstract class OTA {
     return false;
   }
 
-}
+}

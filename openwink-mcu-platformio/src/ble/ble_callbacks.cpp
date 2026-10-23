@@ -10,6 +10,7 @@
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
+#include "ble/ota_handler.h"
 #include "ble/pairing_auth.h"
 #include "button_bindings.h"
 #include "command_output.h"
@@ -36,6 +37,7 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
     // Handle disconnect
     set_device_status(DISCONNECTED);
+    ota_reset_on_disconnect();
     reset_sleep_on_disconnect();
     reset_auth_on_disconnect();
     reset_debugger_on_disconnect();
@@ -244,4 +246,41 @@ void DebugCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLECo
         set_debug_subscribed(1);
     else
         set_debug_subscribed(0);
+}
+
+void OTAControlCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    NimBLEAttValue d = pCharacteristic->getValue();
+    const uint8_t* data = d.data();
+    size_t len = d.size();
+
+    if (len < 1)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer != nullptr) {
+        if (data[0] == OTA_CTRL_START) {
+            if (!pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_2M_MASK, BLE_GAP_LE_PHY_CODED_ANY))
+                pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_1M_MASK, BLE_GAP_LE_PHY_CODED_ANY);
+        } else if (data[0] == OTA_CTRL_HALT) {
+            pServer->updatePhy(connInfo.getConnHandle(), BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_MASK, BLE_GAP_LE_PHY_CODED_S8);
+        }
+    }
+
+    ota_handle_control(data, len);
+}
+
+void OTAControlCallbacks::onSubscribe(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo, uint16_t subValue) {
+    if ((subValue & 0x0001) != 0)
+        ble_notify_ota_status(get_ota_status());
+}
+
+void OTADataCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
+    if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    NimBLEAttValue d = pCharacteristic->getValue();
+    ota_handle_chunk(d.data(), d.size());
 }

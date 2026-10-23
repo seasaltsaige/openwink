@@ -76,6 +76,15 @@ export enum SettingFlag {
   RESET = 0xFF,
 }
 
+export enum OTAControlCommand {
+  START = 0x01,
+  DONE = 0x02,
+  HALT = 0x03,
+}
+
+export const ATT_HEADER_SIZE = 3;
+export const OTA_ACK_WINDOW_SIZE = 20;
+
 export enum DebugLevel {
   NONE = 0,
   ERROR = 1,
@@ -443,4 +452,4 @@ export const useSvgWidth = () => {
     setSvgWidth(SVG_WIDTH * (Dimensions.get("window").width / SCALE_BY));
   }, []);
   return svgWidth;
-}
+}

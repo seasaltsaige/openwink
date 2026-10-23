@@ -87,6 +87,8 @@ void ble_notify_passkey(uint8_t* key, size_t size);
 void ble_notify_debug(const uint8_t* data, size_t size);
 void ble_notify_general_settings(const uint8_t* data, size_t size);
 void ble_notify_headlight_status();
+void ble_notify_ota_progress(uint8_t percent);
+void ble_notify_ota_status(uint8_t status);
 
 #ifdef __cplusplus
 }

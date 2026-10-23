@@ -3,6 +3,7 @@
 
 #include "ble/ble_callbacks.hpp"
 #include "ble/ble_handler.h"
+#include "ble/ota_handler.h"
 #include "command_output.h"
 #include "headlight_feedback.h"
 #include "output_handler.h"
@@ -31,6 +32,9 @@ static GeneralSettingsCallbacks settings_callbacks;
 
 static AuthCallbacks auth_callbacks;
 static DebugCallbacks debug_callbacks;
+
+static OTAControlCallbacks ota_control_callbacks;
+static OTADataCallbacks ota_data_callbacks;
 
 SemaphoreHandle_t status_lock;
 openwink_status_t openwink_status = DISCONNECTED;
@@ -80,6 +84,23 @@ extern "C" uint8_t ble_init(const char* name) {
 
     wink_service->createCharacteristic(CUSTOM_COMMAND_UUID, NIMBLE_PROPERTY::WRITE_NR);
     wink_service->getCharacteristic(CUSTOM_COMMAND_UUID)->setCallbacks(&custom_cmd_callbacks);
+
+    ota_service->createCharacteristic(FIRMWARE_UUID, NIMBLE_PROPERTY::READ);
+    uint8_t fw_ver[FIRMWARE_VERSION_BYTES_LEN];
+    get_firmware_version_bytes(fw_ver);
+    ota_service->getCharacteristic(FIRMWARE_UUID)->setValue(fw_ver, sizeof(fw_ver));
+
+    ota_service->createCharacteristic(OTA_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+    ota_service->getCharacteristic(OTA_UUID)->setCallbacks(&ota_data_callbacks);
+
+    ota_service->createCharacteristic(SOFTWARE_UPDATING_CHAR_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
+    uint8_t init_progress = get_ota_progress();
+    ota_service->getCharacteristic(SOFTWARE_UPDATING_CHAR_UUID)->setValue(&init_progress, sizeof(init_progress));
+
+    ota_service->createCharacteristic(SOFTWARE_STATUS_CHAR_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY);
+    uint8_t init_ota_status = get_ota_status();
+    ota_service->getCharacteristic(SOFTWARE_STATUS_CHAR_UUID)->setValue(&init_ota_status, sizeof(init_ota_status));
+    ota_service->getCharacteristic(SOFTWARE_STATUS_CHAR_UUID)->setCallbacks(&ota_control_callbacks);
 
     settings_service->createCharacteristic(CUSTOM_BUTTON_UPDATE_UUID, NIMBLE_PROPERTY::WRITE);
     settings_service->getCharacteristic(CUSTOM_BUTTON_UPDATE_UUID)->setCallbacks(&custom_btn_callbacks);
@@ -249,4 +270,46 @@ extern "C" void ble_notify_headlight_status() {
 
     if (openwink_status == CONNECTED)
         status_char->notify((const uint8_t*)&payload, sizeof(payload));
+}
+
+extern "C" void ble_notify_ota_progress(uint8_t percent) {
+    if (!ble_initialized)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* ota = pServer->getServiceByUUID(OTA_SERVICE_UUID);
+    if (ota == NULL)
+        return;
+
+    NimBLECharacteristic* prog_char = ota->getCharacteristic(SOFTWARE_UPDATING_CHAR_UUID);
+    if (prog_char == NULL)
+        return;
+
+    prog_char->setValue(&percent, sizeof(percent));
+    if (openwink_status == CONNECTED)
+        prog_char->notify(&percent, sizeof(percent));
+}
+
+extern "C" void ble_notify_ota_status(uint8_t status) {
+    if (!ble_initialized)
+        return;
+
+    NimBLEServer* pServer = NimBLEDevice::getServer();
+    if (pServer == NULL)
+        return;
+
+    NimBLEService* ota = pServer->getServiceByUUID(OTA_SERVICE_UUID);
+    if (ota == NULL)
+        return;
+
+    NimBLECharacteristic* status_char = ota->getCharacteristic(SOFTWARE_STATUS_CHAR_UUID);
+    if (status_char == NULL)
+        return;
+
+    status_char->setValue(&status, sizeof(status));
+    if (openwink_status == CONNECTED)
+        status_char->notify(&status, sizeof(status));
 }

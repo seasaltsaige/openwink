@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { ATT_HEADER_SIZE } from "../helper/Constants";
 import { sleep } from "../helper/Functions";
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
@@ -38,10 +39,8 @@ type UpdateManagerReturnType = {
   checkUpdateAvailable: () => Promise<boolean>;
 };
 
-const OTA_HEADER_SIZE = 5;
-
 export const useUpdateManager = (): UpdateManagerReturnType => {
-  const { sendOTAChunk, sendOTAComplete, sendOTASize, startOTAService } =
+  const { sendOTAChunk, sendOTAComplete, startOTAService } =
     useOtaUpdate();
 
   const { isConnected, device } = useBleConnection();
@@ -84,20 +83,17 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
       setError(ERROR_TYPE.ERR_NONE);
 
-      await startOTAService();
-      await sleep(50);
+      const chunkSize = Math.max(20, (device?.mtu ?? 185) - ATT_HEADER_SIZE);
 
       await OTA.updateFirmware(
         version,
-        device?.mtu! - OTA_HEADER_SIZE,
+        chunkSize,
+        startOTAService,
         sendOTAChunk,
-        sendOTASize,
         sendOTAComplete,
       );
     },
-    // Not 100% on this, but since its just the devices MTU being accessed,
-    // this is all that should be needed? no?
-    [isConnected, device?.mtu],
+    [isConnected, device?.mtu, startOTAService, sendOTAChunk, sendOTAComplete],
   );
 
   const checkUpdateAvailable = useCallback(async () => {

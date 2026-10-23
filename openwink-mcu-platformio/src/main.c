@@ -4,6 +4,7 @@
 #include "aux_input.h"
 #include "ble/ble_handler.h"
 #include "ble/debugger/ble_debugger.h"
+#include "ble/ota_handler.h"
 #include "ble/pairing_auth.h"
 #include "button_input.h"
 #include "command_output.h"
@@ -47,6 +48,7 @@ void app_main() {
 
     init_auth();
     init_ble_debugger();
+    init_ota();
 
     output_args_t left_args = {
         .down_pin = OUT_PIN_LEFT_DOWN,

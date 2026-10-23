@@ -265,7 +265,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     [parseAndSetHeadlightStatus],
   );
 
-  // Monitor SOFTWARE_UPDATING characteristic (progress)
+  // Monitor SOFTWARE_UPDATING characteristic (progress: 1-byte uint8 [0..100])
   const monitorUpdateProgress = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
       ...getBLEDescriptors("OTA", "SOFTWARE_UPDATING"),
@@ -280,10 +280,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!char?.value) return;
 
         try {
-          const strVal = base64.decode(char.value);
-          const val = parseInt(strVal);
-          if (!isNaN(val)) {
-            setUpdateProgress(val);
+          const bytes = base64ToBytes(char.value);
+          if (bytes.length >= 1) {
+            setUpdateProgress(bytes[0]);
           }
         } catch (error) {
           console.error("Error decoding UPDATE_PROGRESS value:", error);
@@ -294,7 +293,7 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     return subscription.remove;
   }, []);
 
-  // Monitor SOFTWARE_STATUS characteristic
+  // Monitor SOFTWARE_STATUS characteristic (status: 1-byte uint8 UpdatingStatus)
   const monitorUpdateStatus = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
       ...getBLEDescriptors("OTA", "SOFTWARE_STATUS"),
@@ -306,7 +305,9 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!char?.value) return;
 
         try {
-          const statusValue = parseInt(base64.decode(char.value)) as UpdatingStatus;
+          const bytes = base64ToBytes(char.value);
+          if (bytes.length < 1) return;
+          const statusValue = bytes[0] as UpdatingStatus;
 
           setUpdatingStatus(statusValue);
 
@@ -689,8 +690,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
           monitorGeneralSettings(device, onReset),
           monitorPasskey(device),
           monitorDebug(device),
-          // monitorUpdateProgress(device),
-          // monitorUpdateStatus(device),
+          monitorUpdateProgress(device),
+          monitorUpdateStatus(device),
         ];
       } catch (error) {
         console.error("Error setting up monitors:", error);
@@ -737,14 +738,17 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn("[BLE] Non-critical read failed for HEADLIGHT_STATUS:", error);
       }
 
-      // Read FIRMWARE_VERSION
+      // Read FIRMWARE_VERSION (3-byte [major, minor, patch])
       try {
         const firmware = await device.readCharacteristicForService(
           ...getBLEDescriptors("OTA", "FIRMWARE_VERSION"),
         );
         if (firmware?.value) {
-          const version = base64.decode(firmware.value);
-          updateFirmwareVersion(version);
+          const bytes = base64ToBytes(firmware.value);
+          if (bytes.length >= 3) {
+            const version = `${bytes[0]}.${bytes[1]}.${bytes[2]}`;
+            updateFirmwareVersion(version);
+          }
         }
       } catch (error) {
         console.warn(
@@ -753,17 +757,17 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
 
-      // Read SOFTWARE_STATUS
-      // Useful pretty much only in the case of a canceled OTA Update
+      // Read SOFTWARE_STATUS (1-byte uint8 UpdatingStatus)
       try {
         const status = await device.readCharacteristicForService(
           ...getBLEDescriptors("OTA", "SOFTWARE_STATUS"),
         );
         if (status?.value) {
-          const val = base64.decode(status.value) as any;
-          const proper = toProperCase(val);
-          setUpdatingStatus(proper);
-          setUpdateProgress(0);
+          const bytes = base64ToBytes(status.value);
+          if (bytes.length >= 1) {
+            setUpdatingStatus(bytes[0] as UpdatingStatus);
+            setUpdateProgress(0);
+          }
         }
       } catch (error) {
         console.warn(

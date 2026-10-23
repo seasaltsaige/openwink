@@ -8,6 +8,7 @@
 
 #include "aux_input.h"
 #include "ble/ble_handler.h"
+#include "ble/ota_handler.h"
 #include "button_input.h"
 #include "command_output.h"
 #include "custom_command_output.h"
@@ -68,6 +69,9 @@ void configure_wakeup_sources(uint8_t enable_timer) {
 }
 
 static uint8_t is_system_busy_for_sleep() {
+    if (is_ota_in_progress())
+        return 1;
+
     if (is_button_input_busy())
         return 1;
 
