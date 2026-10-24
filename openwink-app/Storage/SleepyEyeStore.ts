@@ -11,7 +11,7 @@ export abstract class SleepyEyeStore {
   static get(side: "left" | "right") {
 
     const stored = Storage.getNumber(`${key}_${side}`);
-    if (!stored) return 50;
+    if (stored === undefined) return 50;
     else return stored;
   }
 

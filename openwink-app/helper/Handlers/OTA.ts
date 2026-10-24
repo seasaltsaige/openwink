@@ -1,42 +1,37 @@
-import { DeviceMACStore, FirmwareStore } from "../../Storage";
-import { jkYSbsSAIDns, OTA_ACK_WINDOW_SIZE, UPDATE_URL } from "../Constants";
-import { sleep } from "../Functions";
+import { FirmwareStore } from "../../Storage";
+import { OTA_ACK_WINDOW_SIZE, OTA_API_KEY, UPDATE_URL } from "../Constants";
 
-type FirmwareType = `${number}.${number}.${number}`;
+export type FirmwareType = `${number}.${number}.${number}`;
+
+export type AvailableUpdate = {
+  version: FirmwareType;
+  size: number;
+  app_version: FirmwareType;
+  description: string;
+};
+
 type FetchResponse = {
   message?: string;
   updateNeeded: boolean;
-
-  versions?: Array<{
-    version: FirmwareType;
-    size: number;
-    app_version: FirmwareType;
-    description: string;
-  }>
-}
+  versions?: Array<AvailableUpdate>;
+};
 
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
 
-  public static updateCount: number = 0;
-  // public static currentCount: number = 0;
-  public static updateSizesBytes: number[] = [];
-  public static updateDescriptions: string[] = [];
-  public static updateFirmwareVersions: FirmwareType[] = [];
-  public static updateAppVersions: FirmwareType[] = [];
-
+  public static updates: AvailableUpdate[] = [];
   public static restartQueued: boolean = false;
 
   private static updateInProgress: boolean = false;
 
+  public static get updateCount(): number {
+    return this.updates.length;
+  }
+
   public static reset(): void {
     this.updateInProgress = false;
-    this.updateCount = 0;
-    this.updateSizesBytes = [];
-    this.updateDescriptions = [];
-    this.updateFirmwareVersions = [];
-    this.updateAppVersions = [];
+    this.updates = [];
     this.restartQueued = false;
     this.setActiveVersion();
   }
@@ -56,7 +51,7 @@ export abstract class OTA {
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           },
           signal: controller.signal
         }
@@ -71,15 +66,19 @@ export abstract class OTA {
       // parse response into expected json format
       const json = await response.json() as FetchResponse;
 
-      if (!json.updateNeeded) return false;
+      if (!json.updateNeeded || !json.versions || json.versions.length === 0) {
+        this.updates = [];
+        return false;
+      }
 
-      this.updateAppVersions = json.versions?.map(v => v.app_version)!;
-      this.updateFirmwareVersions = json.versions?.map(v => v.version)!;
-      this.updateSizesBytes = json.versions?.map(v => v.size)!;
-      this.updateDescriptions = json.versions?.map(v => v.description)!;
-      this.updateCount = json.versions?.length!;
+      this.updates = json.versions.map(v => ({
+        version: v.version,
+        app_version: v.app_version,
+        description: v.description,
+        size: v.size,
+      }));
 
-      return json.updateNeeded;
+      return true;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -99,11 +98,12 @@ export abstract class OTA {
     sendOTAComplete: () => Promise<void>,
   ) {
     try {
+      this.setLatestVersion(updateVersion as FirmwareType);
       const firmwareResponse = await fetch(`${UPDATE_URL}/firmware/${updateVersion}`,
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           }
         }
       );
@@ -157,11 +157,8 @@ export abstract class OTA {
   }
 
   public static nextUpdate() {
-    if (this.updateFirmwareVersions.length >= 1) {
-      this.updateSizesBytes.shift();
-      this.updateDescriptions.shift();
-      this.updateFirmwareVersions.shift();
-      this.updateAppVersions.shift();
+    if (this.updates.length >= 1) {
+      this.updates.shift();
     }
   }
 
@@ -173,6 +170,7 @@ export abstract class OTA {
 
   public static updateVersion(): void {
     this.activeVersion = this.latestVersion;
+    FirmwareStore.setFirmwareVersion(this.latestVersion);
   }
 
   // If an error occurs, the OTA class should

@@ -66,9 +66,14 @@ export abstract class CustomOEMButtonStore {
   }
 
   static removeAll() {
-    const keys = Storage.getAllKeys().filter(v => v.startsWith(BUTTON_KEY));
+    const keys = Storage.getAllKeys().filter(
+      v => v.startsWith(BUTTON_KEY) || v.startsWith(LOOPING_KEY)
+    );
     for (const key of keys)
       Storage.delete(key);
+    Storage.delete(BUTTON_DELAY_KEY);
+    Storage.delete(BYPASS_KEY);
+    Storage.delete(CUSTOM_ENABLED_KEY);
   }
 
   static getAll() {

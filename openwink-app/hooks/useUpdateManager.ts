@@ -70,10 +70,12 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_INIT ||
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_SIGN ||
         updatingStatus === UpdatingStatus.ERROR_CHUNK_WRITE
-      )
+      ) {
         // set the current status to available update, as an error happened
         // while installing
         setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+      }
     }
   }, [updatingStatus, updateStatus, isConnected]);
 
@@ -85,13 +87,19 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
 
       const chunkSize = Math.max(20, (device?.mtu ?? 185) - ATT_HEADER_SIZE);
 
-      await OTA.updateFirmware(
+      const success = await OTA.updateFirmware(
         version,
         chunkSize,
         startOTAService,
         sendOTAChunk,
         sendOTAComplete,
       );
+
+      if (!success) {
+        setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+      }
     },
     [isConnected, device?.mtu, startOTAService, sendOTAChunk, sendOTAComplete],
   );
@@ -116,17 +124,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         return false;
       }
 
-      const updateInfo: UpdateData[] = [];
-      for (let i = 0; i < OTA.updateFirmwareVersions.length; i++) {
-        updateInfo.push({
-          version: OTA.updateFirmwareVersions[i],
-          app_version: OTA.updateAppVersions[i],
-          description: OTA.updateDescriptions[i],
-          size: OTA.updateSizesBytes[i],
-        })
-      }
-
-      setUpdateData(updateInfo);
+      setUpdateData([...OTA.updates]);
       setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
       return true;

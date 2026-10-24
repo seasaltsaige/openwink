@@ -195,7 +195,7 @@ const withManifestRewrites: ConfigPlugin = (config) =>
       ),
     );
 
-    for (const alias of app["activity-alias"] ?? []) {
+    for (const alias of (app as any)["activity-alias"] ?? []) {
       const match = alias.$["android:name"].match(/MainActivity(\w+)$/);
       if (!match) continue;
 
@@ -208,7 +208,7 @@ const withManifestRewrites: ConfigPlugin = (config) =>
       // Keep deep-link VIEW filters on every alias so QR codes / deep links
       // continue to work after MainActivity is disabled by setAppIcon().
       alias["intent-filter"] = alias["intent-filter"] ?? [];
-      const hasViewFilter = alias["intent-filter"].some((f) =>
+      const hasViewFilter = alias["intent-filter"].some((f: any) =>
         (f.action ?? []).some(
           (a: any) => a.$["android:name"] === "android.intent.action.VIEW",
         ),

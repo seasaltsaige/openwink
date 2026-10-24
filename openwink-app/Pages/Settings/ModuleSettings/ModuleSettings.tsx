@@ -80,6 +80,7 @@ export function ModuleSettings() {
   const {
     leftRightSwapped,
     setFirmwareVersion,
+    refreshMonitorStatus,
   } = useBleMonitor();
 
   const {
@@ -125,6 +126,7 @@ export function ModuleSettings() {
     DeviceMACStore.forgetMAC();
 
     AuxButtonStore.reset();
+    await refreshMonitorStatus();
     await reset();
 
     Toast.show({
@@ -142,22 +144,23 @@ export function ModuleSettings() {
 
   const putModuleToSleep = async () => {
     if (!isConnected) return;
-    await enterDeepSleep();
+    const ok = await enterDeepSleep();
 
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Sleep Successful",
-      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
-    });
+    if (ok) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        type: "success",
+        text1: "Sleep Successful",
+        text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+      });
+    }
 
     setConfirmationOpen(false);
   }
 
   const forgetModulePairing = async () => {
     await unpair();
-    setConfirmationOpen(false);
 
     Toast.show({
       autoHide: true,

@@ -46,8 +46,8 @@ export type BleCommandContextType = {
   updateWaveDelayMulti: (delayMulti: number) => Promise<void>;
 
   // Module management
-  enterDeepSleep: () => Promise<void>;
-  resetModule: () => Promise<void>;
+  enterDeepSleep: () => Promise<boolean>;
+  resetModule: () => Promise<boolean>;
   swapLeftRight: () => Promise<void>;
   setModuleDebugLevel: (level: DebugLevel) => Promise<void>;
 
@@ -112,32 +112,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateActiveCommandName(null);
     }
   }, [headlightsBusy]);
-
-  // Load persisted settings on mount
-  useEffect(() => {
-    // TODO: Realistically these should be loaded from the MCU, as it should be the source of truth.
-    const isOEMEnabled = CustomOEMButtonStore.isEnabled();
-    setOemCustomButtonEnabled(isOEMEnabled);
-
-    const storedDelay = CustomOEMButtonStore.getDelay();
-    if (storedDelay) {
-      setButtonDelay(storedDelay);
-    }
-
-    const storedWaveMulti = CustomWaveStore.getMultiplier();
-    if (storedWaveMulti) {
-      setWaveDelayMulti(storedWaveMulti);
-    }
-
-    const storedLeft = SleepyEyeStore.get('left');
-    const storedRight = SleepyEyeStore.get('right');
-    if (storedLeft !== null) {
-      setLeftSleepyEye(storedLeft);
-    }
-    if (storedRight !== null) {
-      setRightSleepyEye(storedRight);
-    }
-  }, []);
 
   // Check if command should be blocked (already in target position)
   const shouldBlockCommand = useCallback(
@@ -269,7 +243,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Only sync if headlights are in sleepy eye position
-    if (isSleepyEyeActive) {
+    if (!isSleepyEyeActive) {
       console.log('Headlights not in sleepy eye position, sync blocked');
       return;
     }
@@ -352,7 +326,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Only allow if both headlights are fully up or down
-    if ((leftStatus !== 0 && leftStatus !== 1) || (rightStatus !== 0 && rightStatus !== 1)) {
+    if (isSleepyEyeActive) {
       console.log('Headlights must be fully up or down for sleepy eye');
       return;
     }
@@ -374,7 +348,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         visibilityTime: 3000,
       });
     }
-  }, [device, leftStatus, rightStatus, headlightsBusy]);
+  }, [device, isSleepyEyeActive, headlightsBusy]);
 
 
   const setAuxiliaryButtonStatus = useCallback(
@@ -647,10 +621,10 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Enter deep sleep mode (module powers down)
-  const enterDeepSleep = useCallback(async () => {
+  const enterDeepSleep = useCallback(async (): Promise<boolean> => {
     if (!device) {
       console.warn('No device connected');
-      return;
+      return false;
     }
 
     try {
@@ -664,12 +638,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         console.log('Disconnect after sleep:', err);
       });
 
-      Toast.show({
-        type: 'info',
-        text1: 'Module Sleeping',
-        text2: 'Module has entered deep sleep mode.',
-        visibilityTime: 3000,
-      });
+      return true;
     } catch (error) {
       console.error('Error entering deep sleep:', error);
 
@@ -679,14 +648,15 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         text2: 'Failed to enter deep sleep mode.',
         visibilityTime: 3000,
       });
+      return false;
     }
   }, [device]);
 
   // Reset module to factory settings
-  const resetModule = useCallback(async () => {
+  const resetModule = useCallback(async (): Promise<boolean> => {
     if (!device) {
       console.warn('No device connected');
-      return;
+      return false;
     }
 
     try {
@@ -695,12 +665,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         bytesToBase64([SettingFlag.RESET])
       );
 
-      Toast.show({
-        type: 'success',
-        text1: 'Module Reset',
-        text2: 'Module has been reset to factory settings.',
-        visibilityTime: 3000,
-      });
+      return true;
     } catch (error) {
       console.error('Error resetting module:', error);
 
@@ -710,6 +675,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         text2: 'Failed to reset module.',
         visibilityTime: 3000,
       });
+      return false;
     }
   }, [device]);
 

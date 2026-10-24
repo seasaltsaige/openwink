@@ -113,26 +113,60 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
   const [rightStatus, setRightStatus] = useState(0);
   const [updateProgress, setUpdateProgress] = useState(0);
   const [updatingStatus, setUpdatingStatus] = useState(UpdatingStatus.IDLE);
-  const [firmwareVersion, setFirmwareVersion] = useState("");
+  const [firmwareVersion, setFirmwareVersion] = useState(
+    () => FirmwareStore.getFirmwareVersion() ?? "",
+  );
 
-  // Settings state
-  const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(false);
-  const [headlightBypass, setHeadlightBypass] = useState(false);
-  const [buttonDelay, setButtonDelay] = useState(500);
-  const [waveDelayMulti, setWaveDelayMulti] = useState(1.0);
-  const [leftSleepyEye, setLeftSleepyEye] = useState(50);
-  const [rightSleepyEye, setRightSleepyEye] = useState(50);
-  const [leftRightSwapped, setLeftRightSwapped] = useState(false);
-  const [leftMoveTime, setLeftMoveTime] = useState(625);
-  const [rightMoveTime, setRightMoveTime] = useState(625);
+  // Settings state (initialized directly from MMKV stores for immediate offline consistency)
+  const [oemCustomButtonEnabled, setOemCustomButtonEnabled] = useState(() =>
+    CustomOEMButtonStore.isEnabled(),
+  );
+  const [headlightBypass, setHeadlightBypass] = useState(() =>
+    CustomOEMButtonStore.isBypassEnabled(),
+  );
+  const [buttonDelay, setButtonDelay] = useState(() =>
+    CustomOEMButtonStore.getDelay(),
+  );
+  const [waveDelayMulti, setWaveDelayMulti] = useState(() =>
+    CustomWaveStore.getMultiplier(),
+  );
+  const [leftSleepyEye, setLeftSleepyEye] = useState(() =>
+    SleepyEyeStore.get("left"),
+  );
+  const [rightSleepyEye, setRightSleepyEye] = useState(() =>
+    SleepyEyeStore.get("right"),
+  );
+  const [leftRightSwapped, setLeftRightSwapped] = useState(
+    () => HeadlightOrientationStore.getStatus() === ORIENTATION.OUTSIDE,
+  );
+  const [leftMoveTime, setLeftMoveTime] = useState(() =>
+    HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT),
+  );
+  const [rightMoveTime, setRightMoveTime] = useState(() =>
+    HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT),
+  );
 
-  const [auxiliaryButtonsEnabled, setAuxiliaryButtonsEnabled] = useState(false);
-  const [aux1Action, setAux1Action] = useState("Left Wink" as CommandOutput | ButtonBehaviors);
-  const [aux2Action, setAux2Action] = useState("Right Wink" as CommandOutput | ButtonBehaviors);
-  const [aux1Loop, setAux1Loop] = useState(false);
-  const [aux2Loop, setAux2Loop] = useState(false);
-  const [aux1Type, setAux1Type] = useState(AUX_SWITCH_TYPE.LATCHING);
-  const [aux2Type, setAux2Type] = useState(AUX_SWITCH_TYPE.LATCHING);
+  const [auxiliaryButtonsEnabled, setAuxiliaryButtonsEnabled] = useState(() =>
+    AuxButtonStore.getStatus(),
+  );
+  const [aux1Action, setAux1Action] = useState<CommandOutput | ButtonBehaviors>(
+    () => AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1),
+  );
+  const [aux2Action, setAux2Action] = useState<CommandOutput | ButtonBehaviors>(
+    () => AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2),
+  );
+  const [aux1Loop, setAux1Loop] = useState(() =>
+    AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1),
+  );
+  const [aux2Loop, setAux2Loop] = useState(() =>
+    AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2),
+  );
+  const [aux1Type, setAux1Type] = useState(() =>
+    AuxButtonStore.getAuxButtonType(AUX_ID.AUX1),
+  );
+  const [aux2Type, setAux2Type] = useState(() =>
+    AuxButtonStore.getAuxButtonType(AUX_ID.AUX2),
+  );
 
   const [debugLevel, setDebugLevel] = useState<DebugLevel>(DebugLevel.NONE);
   const [debugLogs, setDebugLogs] = useState<DebugLogEntry[]>([]);
@@ -186,21 +220,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     setLeftSleepyEye(lSleepy);
     setRightSleepyEye(rSleepy);
     setLeftRightSwapped(swap === ORIENTATION.OUTSIDE);
-  }, []);
-
-  // Load persisted firmware version on mount
-  useEffect(() => {
-    const storedFirmware = FirmwareStore.getFirmwareVersion();
-    if (storedFirmware) {
-      setFirmwareVersion(storedFirmware);
-    }
-
-    const left = HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT);
-    const right = HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT);
-    setLeftMoveTime(left);
-    setRightMoveTime(right);
-
-    refreshMonitorStatus();
+    setLeftMoveTime(HeadlightMovementSpeedStore.getMotionValue(SIDE.LEFT));
+    setRightMoveTime(HeadlightMovementSpeedStore.getMotionValue(SIDE.RIGHT));
   }, []);
 
 
@@ -787,8 +808,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [stopMonitoring]);
 
   const isSleepyEyeActive =
-    (leftStatus === 0 || leftStatus === 1) &&
-    (rightStatus === 0 || rightStatus === 1);
+    (leftStatus !== 0 && leftStatus !== 1) ||
+    (rightStatus !== 0 && rightStatus !== 1);
 
   const value: BleMonitorContextType = {
     // isConnected,

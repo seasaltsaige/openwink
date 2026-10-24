@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "1.3.2",
+  version: "2.0.0",
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
@@ -101,4 +101,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: process.env.EXPO_PROJECT_ID
     }
   }
-});
+});

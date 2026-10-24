@@ -51,9 +51,9 @@ export function ModuleUpdateModal({
 
   useEffect(() => {
     setUpdateData(updateInfo);
-  }, [visible]);
+  }, [visible, updateInfo]);
 
-  const totalUpdateCount = OTA.updateCount;
+  const totalUpdateCount = updateData?.length ?? 0;
 
   const __startUpdate = useCallback(
     (index: number) => {
