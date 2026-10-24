@@ -56,11 +56,11 @@ export function CustomWinkButton() {
 
   const [action, setAction] = useState({} as CustomButtonAction);
 
-  const [min, setMin] = useState(buttonDelay);
+  const [min, setMin] = useState(Math.min(MAX, buttonDelay));
   const [max, setMax] = useState(MAX);
 
   useEffect(() => {
-    setMin(buttonDelay);
+    setMin(Math.min(MAX, buttonDelay));
   }, [buttonDelay]);
 
   const { isConnected } = useBleConnection();
@@ -88,8 +88,8 @@ export function CustomWinkButton() {
     const storedActions = CustomOEMButtonStore.getAll();
     if (storedActions !== null && storedActions.length > 0) {
       const acts = storedActions.sort((a, b) => a.presses - b.presses);
-      setActions(acts);
-      setStoredActions(acts);
+      setActions(acts.map((a) => ({ ...a })));
+      setStoredActions(acts.map((a) => ({ ...a })));
     } else {
       setActions([]);
       setStoredActions([]);
@@ -132,7 +132,7 @@ export function CustomWinkButton() {
     setActions((old) => {
       const newActions = old.toSpliced(action.presses - 1, 1);
       for (let i = 0; i < newActions.length; i++)
-        newActions[i].presses = (i + 1) as Presses;
+        newActions[i] = { ...newActions[i], presses: (i + 1) as Presses };
 
       return newActions;
     });

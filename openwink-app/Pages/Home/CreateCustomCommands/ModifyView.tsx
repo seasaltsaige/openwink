@@ -4,8 +4,9 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
+import Toast from "react-native-toast-message";
 
 
 import { useColorTheme } from "../../../hooks/useColorTheme";
@@ -87,6 +88,16 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       name: resolvedName,
       command: command.command ?? [],
     };
+
+    if ((commandName.length < 1 || commandName !== finalCommand.name) && CustomCommandStore.get(finalCommand.name) !== null) {
+      Toast.show({
+        type: "error",
+        text1: "Duplicate Command Name",
+        text2: `A command named "${finalCommand.name}" already exists.`,
+        visibilityTime: 3000,
+      });
+      return;
+    }
 
     // If this view was opened with a pre-existing command name (editing)
     if (commandName.length >= 1)
@@ -282,7 +293,6 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
   const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
 
-  const navigation = useNavigation();
   const backWithSaveChanges = () => {
     // If changes have been made in any capacity
     if (canUndo || cmdName !== command.name) {
@@ -290,7 +300,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       // Spawn confirmation modal
       return;
     } else
-      navigation.goBack();
+      discardChanges();
   }
 
 
@@ -530,7 +540,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       />
 
       <ComponentModal
-        onRequestClose={() => setAddComponentVisible(false)}
+        onRequestClose={() => { setAddComponentInitialValue(null); setAddComponentVisible(false); }}
         initialValue={addComponentInitialValue}
         visible={addComponentVisible}
         onSelect={({ action, delay }) => {
@@ -555,7 +565,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
       <UnsavedChangesModal
         cancel={() => setUnsavedChangesModalOpen(false)}
-        discardChanges={() => { setUnsavedChangesModalOpen(false); navigation.goBack(); }}
+        discardChanges={() => { setUnsavedChangesModalOpen(false); discardChanges(); }}
         saveChanges={() => { saveCommand(); setUnsavedChangesModalOpen(false); }}
         visible={unsavedChangesModalOpen}
       />

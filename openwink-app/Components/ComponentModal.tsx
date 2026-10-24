@@ -42,7 +42,9 @@ export function ComponentModal({
 
 
   // Set starting value on modal open
-  useFocusEffect(useCallback(() => {
+  useEffect(() => {
+    if (!visible) return;
+
     if (initialValue === null) {
       setSelectedCategory("Left");
       setSelectedCommand(null);
@@ -62,7 +64,7 @@ export function ComponentModal({
     else if (DefaultCommandValueEnglish[initialValue.action! - 1].startsWith("Both"))
       setSelectedCategory("Both");
 
-  }, [initialValue]));
+  }, [visible, initialValue]);
 
   const __onSelect = useCallback(() => {
     onSelect({

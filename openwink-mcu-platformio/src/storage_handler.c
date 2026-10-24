@@ -14,6 +14,7 @@ static const char* TAG = "NVS";
 
 static nvs_handle_t storage_handle;
 static SemaphoreHandle_t nvs_lock;
+static uint8_t nvs_initialized = 0;
 RTC_DATA_ATTR static uint8_t rtc_nvs_seeded = 0;
 
 // "openwink namespace"
@@ -51,6 +52,15 @@ static esp_err_t open(nvs_open_mode_t mode) {
     if (nvs_lock == NULL)
         nvs_lock = xSemaphoreCreateMutex();
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
+    if (!nvs_initialized) {
+        esp_err_t nvs_res = nvs_flash_init();
+        if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            nvs_flash_erase();
+            nvs_flash_init();
+            rtc_nvs_seeded = 0;
+        }
+        nvs_initialized = 1;
+    }
     esp_err_t err = nvs_open(nvs_namespace, mode, &storage_handle);
     if (err != ESP_OK) {
         xSemaphoreGive(nvs_lock);
@@ -131,11 +141,14 @@ void init_nvs_storage() {
         nvs_lock = xSemaphoreCreateMutex();
 
     xSemaphoreTake(nvs_lock, portMAX_DELAY);
-    esp_err_t nvs_res = nvs_flash_init();
-    if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        nvs_flash_erase();
-        nvs_flash_init();
-        rtc_nvs_seeded = 0;
+    if (!nvs_initialized) {
+        esp_err_t nvs_res = nvs_flash_init();
+        if (nvs_res == ESP_ERR_NVS_NO_FREE_PAGES || nvs_res == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            nvs_flash_erase();
+            nvs_flash_init();
+            rtc_nvs_seeded = 0;
+        }
+        nvs_initialized = 1;
     }
     xSemaphoreGive(nvs_lock);
 

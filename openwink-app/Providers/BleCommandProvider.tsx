@@ -70,7 +70,7 @@ const COMMAND_BUFFER_DELAY = 75;
 const WRITE_OPERATION_DELAY = 20;
 
 export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { device } = useBleConnection();
+  const { device, disconnect } = useBleConnection();
   const {
     headlightsBusy,
     isSleepyEyeActive,
@@ -628,8 +628,8 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         bytesToBase64([SettingFlag.LONG_TERM_SLEEP])
       );
 
-      // Module will disconnect after entering sleep
-      await device.cancelConnection().catch((err) => {
+      // Module will disconnect after entering sleep; mark as intentional disconnect
+      await disconnect(false).catch((err) => {
         console.log('Disconnect after sleep:', err);
       });
 
@@ -645,7 +645,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       });
       return false;
     }
-  }, [device]);
+  }, [device, disconnect]);
 
   // Reset module to factory settings
   const resetModule = useCallback(async (): Promise<boolean> => {

@@ -49,13 +49,16 @@ BaseType_t request_command_submission(custom_command_data_t* cmd) {
 
 
 void request_command_cancellation() {
+    if (custom_mutex_handle == NULL)
+        return;
+
     xSemaphoreTake(custom_mutex_handle, portMAX_DELAY);
 
-    // only allow cancellation if a command is actually running
-    if (cmd_state == COMMAND_RUNNING) {
+    // allow cancellation whenever a command is active
+    if (cmd_state != COMMAND_IDLE) {
         cmd_state = COMMAND_STOPPING;
-        // send cancellation
-        xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
+        if (custom_command_task_handle != NULL)
+            xTaskNotify(custom_command_task_handle, NOTIFY_BUTTON_INTERRUPT_BIT, eSetBits);
         BLE_LOGW(TAG, "Sequence cancellation requested");
     }
 
@@ -70,7 +73,7 @@ static uint8_t wait_for_command_completion(uint16_t delay) {
     uint8_t is_delay = delay != 0;
     uint32_t bits = is_delay ? NOTIFY_BUTTON_INTERRUPT_BIT : (NOTIFY_BUTTON_INTERRUPT_BIT | NOTIFY_COMMAND_DONE_BIT);
 
-    uint8_t cancelled = 0;
+    uint8_t cancelled = (cmd_state == COMMAND_STOPPING) ? 1 : 0;
     TickType_t remaining = pdMS_TO_TICKS(delay);
     TimeOut_t timeout;
 
@@ -78,16 +81,14 @@ static uint8_t wait_for_command_completion(uint16_t delay) {
         vTaskSetTimeOutState(&timeout);
 
     for (;;) {
-        uint32_t events;
+        uint32_t events = 0;
+        TickType_t wait_ticks = is_delay ? remaining : (cancelled ? pdMS_TO_TICKS(50) : portMAX_DELAY);
 
-        BaseType_t received = xTaskNotifyWait(0, bits, &events, is_delay ? remaining : portMAX_DELAY);
+        BaseType_t received = xTaskNotifyWait(0, bits, &events, wait_ticks);
 
         if (received == pdTRUE) {
             if ((events & NOTIFY_BUTTON_INTERRUPT_BIT) != 0) {
                 cancelled = 1;
-                // if we are waiting for a delay, but it
-                // got cancelled, dont need to wait for command completion (there shouldnt be one)
-                // so just return
                 if (is_delay)
                     return cancelled;
             }
@@ -97,9 +98,13 @@ static uint8_t wait_for_command_completion(uint16_t delay) {
                 return cancelled;
         }
 
+        if (!is_delay && cancelled && !get_command_busy() && uxQueueMessagesWaiting(command_output_queue) == 0) {
+            return cancelled;
+        }
+
         // delay finished normally and timed out
         if (is_delay && xTaskCheckForTimeOut(&timeout, &remaining) != pdFALSE) {
-            return 0;
+            return cancelled;
         }
     }
 }
@@ -198,11 +203,11 @@ void custom_command_task(void* args) {
             uint8_t was_sleepy = is_left_sleepy() || is_right_sleepy();
             uint8_t left_origin = POSITION_DOWN;
             uint8_t right_origin = POSITION_DOWN;
-            uint8_t sequence_cancelled = 0;
+            uint8_t sequence_cancelled = (cmd_state == COMMAND_STOPPING) ? 1 : 0;
 
             BLE_LOGI(TAG, "Sequence start (steps=%u, loop=%u, sleepy=%u)", cmd_data.sequence_length, cmd_data.looping, was_sleepy);
 
-            if (was_sleepy) {
+            if (was_sleepy && !sequence_cancelled) {
                 headlight_position_t init_pos = get_position();
                 left_origin = is_left_sleepy() ? (init_pos.last_left_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : init_pos.left_pos;
                 right_origin = is_right_sleepy() ? (init_pos.last_right_move_dir == MOVE_UP ? POSITION_DOWN : POSITION_UP) : init_pos.right_pos;
@@ -216,7 +221,7 @@ void custom_command_task(void* args) {
             // sequence_index will be equal to i until a delay is encountered (3 bytes vs 1 byte)
             size_t sequence_index = 0;
 
-            for (int8_t i = 0; !sequence_cancelled && i < cmd_data.sequence_length; i++) {
+            for (int8_t i = 0; !sequence_cancelled && cmd_state == COMMAND_RUNNING && i < cmd_data.sequence_length; i++) {
 
                 if (cmd_data.sequence[sequence_index] == DELAY_PREFIX) {
                     next_custom_cmd = COMMAND_NONE;
@@ -237,6 +242,9 @@ void custom_command_task(void* args) {
 
                     next_custom_cmd = (next_raw >= COMMAND_BOTH_UP && next_raw <= COMMAND_SLEEPY_EYE) ? (command_types_t)next_raw : COMMAND_NONE;
 
+                    // Clear any stale NOTIFY_COMMAND_DONE_BIT before queueing step
+                    xTaskNotifyWait(0, NOTIFY_COMMAND_DONE_BIT, &_, 0);
+
                     BLE_LOGD(TAG, "Step %d/%u: %s", i + 1, cmd_data.sequence_length, command_to_str((command_types_t)cmd));
                     xQueueSend(command_output_queue, &cmd, portMAX_DELAY);
 
@@ -245,7 +253,7 @@ void custom_command_task(void* args) {
                     sequence_index += 1;
                 }
 
-                if (sequence_cancelled)
+                if (sequence_cancelled || cmd_state != COMMAND_RUNNING)
                     break;
 
                 // loop forever if looping is enabled

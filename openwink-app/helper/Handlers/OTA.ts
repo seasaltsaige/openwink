@@ -151,6 +151,7 @@ export abstract class OTA {
 
       return true;
     } catch (err) {
+      this.updateInProgress = false;
       return false;
     }
 

@@ -46,11 +46,9 @@ void set_device_status(openwink_status_t status) {
 }
 
 openwink_status_t get_device_status() {
-    if (openwink_status == CONNECTED)
-        return CONNECTED;
     if (openwink_server != nullptr && openwink_server->getConnectedCount() > 0)
         return CONNECTED;
-    return openwink_status;
+    return (openwink_status == CONNECTED) ? DISCONNECTED : openwink_status;
 }
 
 

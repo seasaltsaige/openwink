@@ -38,6 +38,7 @@ void set_module_orientation(uint8_t orientation);
 uint8_t get_module_orientation();
 
 void enter_long_term_sleep();
+uint8_t is_long_term_sleep_requested();
 void unpair_module();
 void reset_module();
 

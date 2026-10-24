@@ -177,6 +177,7 @@ void input_read_task(void* args) {
             if (press_counter == 12) {
                 // swap orientation
                 BLE_LOGI(TAG, "Button 12x special sequence triggered");
+                request_command_cancellation();
                 xQueueReset(command_output_queue);
                 xQueueReset(custom_command_queue_handle);
                 uint8_t next_orientation = (get_module_orientation() == ORIENTATION_DEFAULT) ? ORIENTATION_SWAPPED : ORIENTATION_DEFAULT;

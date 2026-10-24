@@ -1,6 +1,7 @@
 #include <FreeRTOSConfig.h>
 #include <driver/rtc_io.h>
 #include <esp_sleep.h>
+#include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <string.h>
@@ -12,6 +13,8 @@
 #include "sleep_handler.h"
 #include "storage_handler.h"
 
+#define AUX_DEBOUNCE_US (30 * 1000)
+
 static const char* TAG = "AUX";
 
 TaskHandle_t aux_one_task_handle;
@@ -20,6 +23,8 @@ TaskHandle_t aux_two_task_handle;
 static SemaphoreHandle_t aux_lock;
 static volatile uint8_t aux_one_wake_pending = 0;
 static volatile uint8_t aux_two_wake_pending = 0;
+static int64_t aux_one_last_edge_us = 0;
+static int64_t aux_two_last_edge_us = 0;
 
 RTC_DATA_ATTR aux_buttons_t aux_buttons = {
     .status = AUX_DISABLED,
@@ -240,14 +245,21 @@ void delete_aux(aux_side_t side) {
 
 static void process_aux_side(aux_side_t side, gpio_num_t pin, aux_button_state_t* btn_state) {
     volatile uint8_t* wake_pending = (side == ONE) ? &aux_one_wake_pending : &aux_two_wake_pending;
+    int64_t* last_edge_us = (side == ONE) ? &aux_one_last_edge_us : &aux_two_last_edge_us;
     uint8_t level = (uint8_t)gpio_get_level(pin);
     uint8_t effective_level = level;
+    int64_t now_us = esp_timer_get_time();
 
     if (level != btn_state->state) {
+        if (!(*wake_pending) && *last_edge_us > 0 && (now_us - *last_edge_us) < AUX_DEBOUNCE_US) {
+            return;
+        }
+        *last_edge_us = now_us;
         *wake_pending = 0;
         btn_state->state = level;
         notify_sleep_button_activity();
     } else if (*wake_pending) {
+        *last_edge_us = now_us;
         *wake_pending = 0;
         notify_sleep_button_activity();
         // Wakeup pulse already returned to pre-sleep state during boot

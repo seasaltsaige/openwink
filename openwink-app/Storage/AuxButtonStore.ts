@@ -62,31 +62,37 @@ export abstract class AuxButtonStore {
         return "Right Wink";
     }
 
-    // Default action
-    if (stored.includes("_")) {
-
-      const [transmit, action] = stored.split("_");
-      return action as ButtonBehaviors;
+    // Default built-in action ("<number>_<action>")
+    if (/^\d+_/.test(stored)) {
+      const splitIdx = stored.indexOf("_");
+      const action = stored.slice(splitIdx + 1) as ButtonBehaviors;
+      if (action in buttonBehaviorMap) {
+        return action;
+      }
+    }
 
     // Custom command
-    } else {
-      const commandParts = stored.split("-");
-      const name = commandParts.splice(0, 1)[0];
-
-      const customCmd: CommandOutput = {
-        name,
-        command: [],
-      }
-
-      for (const cmdSection of commandParts) {
-        if (cmdSection.startsWith("d"))
-          customCmd.command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
-        else
-          customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
-      }
-
-      return customCmd;
+    const parts = stored.split("-");
+    let cmdStartIndex = parts.length;
+    while (cmdStartIndex > 1 && /^(d\d+(\.\d+)?|\d+)$/.test(parts[cmdStartIndex - 1])) {
+      cmdStartIndex--;
     }
+    const name = parts.slice(0, cmdStartIndex).join("-");
+    const commandParts = parts.slice(cmdStartIndex);
+
+    const customCmd: CommandOutput = {
+      name,
+      command: [],
+    }
+
+    for (const cmdSection of commandParts) {
+      if (cmdSection.startsWith("d"))
+        customCmd.command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
+      else
+        customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
+    }
+
+    return customCmd;
   }
   
   static setAuxButtonAction(aux: AUX_ID, action: ButtonBehaviors | CommandOutput): void {

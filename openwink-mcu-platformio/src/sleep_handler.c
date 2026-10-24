@@ -13,6 +13,7 @@
 #include "command_output.h"
 #include "custom_command_output.h"
 #include "headlight_feedback.h"
+#include "module_settings.h"
 #include "output_handler.h"
 #include "sleep_handler.h"
 
@@ -69,7 +70,7 @@ void configure_wakeup_sources(uint8_t enable_timer) {
 }
 
 static uint8_t is_system_busy_for_sleep() {
-    if (is_ota_in_progress())
+    if (is_ota_in_progress() || is_long_term_sleep_requested())
         return 1;
 
     if (is_button_input_busy())

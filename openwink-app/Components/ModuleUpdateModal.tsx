@@ -4,7 +4,7 @@ import { useBleMonitor } from "../Providers/BleMonitorProvider";
 import { ModalBlurBackground } from "./ModalBlurBackground";
 import { useCallback, useEffect, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { UPDATE_STATUS, UpdateData, useUpdateManager } from "../hooks/useUpdateManager";
+import { ERROR_TYPE, UPDATE_STATUS, UpdateData, useUpdateManager } from "../hooks/useUpdateManager";
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { AutoConnectStore } from "../Storage";
@@ -37,11 +37,12 @@ export function ModuleUpdateModal({
   const { colorTheme, theme } = useColorTheme();
   const { updateProgress, updatingStatus, firmwareVersion } = useBleMonitor();
   const { isConnected, isConnecting, isScanning, scanForModule, disconnect } = useBleConnection();
-  const { startUpdate, updateStatus } = useUpdateManager();
+  const { startUpdate, updateStatus, error } = useUpdateManager();
 
   const [modalState, setModalState] = useState(ModalState.DESCRIPTION);
   const [displayIndex, setDisplayIndex] = useState(0);
   const [updateData, setUpdateData] = useState(updateInfo as UpdateData[] | null);
+  const [waitingForDisconnect, setWaitingForDisconnect] = useState(false);
 
   const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
 
@@ -68,7 +69,7 @@ export function ModuleUpdateModal({
 
       setModalState(ModalState.UPDATE);
       startUpdate(updateData![index].version);
-    }, [updateData]
+    }, [updateData, startUpdate]
   );
 
 
@@ -79,10 +80,11 @@ export function ModuleUpdateModal({
       if (updateStatus === UPDATE_STATUS.UP_TO_DATE) {
 
         // Updates not finished
-        if (totalUpdateCount > 1 && displayIndex < (totalUpdateCount - 1))
+        if (totalUpdateCount > 1 && displayIndex < (totalUpdateCount - 1)) {
+          setWaitingForDisconnect(true);
           setModalState(ModalState.WAITING);
-        else {
-          // Udpates finished
+        } else {
+          // Updates finished
           setDisplayIndex(0);
           setModalState(ModalState.DESCRIPTION);
           OTA.reset();
@@ -90,15 +92,24 @@ export function ModuleUpdateModal({
         }
       }
     })();
-  }, [updateStatus, displayIndex]);
+  }, [updateStatus, displayIndex, totalUpdateCount, close]);
 
 
   useEffect(() => {
-    // if device connects while modal is in waiting state
-    if (modalState === ModalState.WAITING && isConnected)
-      __startUpdate(displayIndex + 1);
+    if (modalState === ModalState.WAITING) {
+      if (!isConnected) {
+        setWaitingForDisconnect(false);
+      } else if (!waitingForDisconnect && isConnected) {
+        __startUpdate(displayIndex + 1);
+      }
+    }
+  }, [modalState, isConnected, waitingForDisconnect, displayIndex, __startUpdate]);
 
-  }, [isConnected, displayIndex]);
+  useEffect(() => {
+    if (modalState === ModalState.UPDATE && error !== ERROR_TYPE.ERR_NONE) {
+      setModalState(ModalState.DESCRIPTION);
+    }
+  }, [modalState, error]);
 
 
   const __requestClose = () => {

@@ -41,7 +41,8 @@ void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connIn
     reset_sleep_on_disconnect();
     reset_auth_on_disconnect();
     reset_debugger_on_disconnect();
-    begin_advertising();
+    if (!is_long_term_sleep_requested() && !is_ota_in_progress())
+        begin_advertising();
 }
 
 void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {
@@ -56,7 +57,6 @@ void ServerCallbacks::onMTUChange(uint16_t MTU, NimBLEConnInfo& connInfo) {
 void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uint8_t inst_id) {
     switch (reason) {
     case 0:
-        set_device_status(CONNECTED);
         printf("Client connecting\n");
         break;
     default: printf("Default case"); break;
@@ -65,6 +65,9 @@ void AdvertisingCallbacks::onStopped(NimBLEExtAdvertising* pAdv, int reason, uin
 
 void HeadlightCommandCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
     if (get_auth_state() != AUTH_ESTABLISHED)
+        return;
+
+    if (get_custom_command_executing())
         return;
 
     NimBLEAttValue d = pCharacteristic->getValue();

@@ -489,27 +489,35 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       });
 
-      // Write custom OEM button sequence settings for each slot 0..7 (presses 1..8)
-      const sequences = CustomOEMButtonStore.getAll();
-      for (let pos = 0; pos < 8; pos++) {
-        const seq = sequences.find((s) => s.presses === pos + 1);
+      // Write custom OEM button sequence settings: write active bindings in ascending order,
+      // then delete unused higher slots in descending order (7 -> 0) so MCU shift-on-delete
+      // never shifts active bindings into lower slots.
+      const sequences = CustomOEMButtonStore.getAll().sort((a, b) => a.presses - b.presses);
+      for (let i = 0; i < sequences.length && i < 8; i++) {
+        const seq = sequences[i];
+        const pos = seq.presses - 1;
+        if (pos < 0 || pos >= 8) continue;
         await safeWriteSetting(`CUSTOM_BUTTON[${pos}]`, async () => {
-          if (seq) {
-            const bindingTarget = seq.behaviorHumanReadable
-              ? seq.behaviorHumanReadable
-              : seq.customCommand!;
-            const payload = [pos, ...encodeButtonBinding(bindingTarget, seq.looping)];
-            await device.writeCharacteristicWithResponseForService(
-              ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
-              bytesToBase64(payload),
-            );
-          } else {
+          const bindingTarget = seq.behaviorHumanReadable
+            ? seq.behaviorHumanReadable
+            : seq.customCommand!;
+          const payload = [pos, ...encodeButtonBinding(bindingTarget, seq.looping)];
+          await device.writeCharacteristicWithResponseForService(
+            ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
+            bytesToBase64(payload),
+          );
+        });
+      }
+      for (let pos = 7; pos >= 0; pos--) {
+        const hasSeq = sequences.some((s) => s.presses === pos + 1);
+        if (!hasSeq) {
+          await safeWriteSetting(`CUSTOM_BUTTON_DEL[${pos}]`, async () => {
             await device.writeCharacteristicWithResponseForService(
               ...getBLEDescriptors("SETTINGS", "CUSTOM_BUTTON"),
               bytesToBase64([pos, BINDING_DELETE_FLAG]),
             );
-          }
-        });
+          });
+        }
       }
 
       // Write stored delay value
@@ -793,6 +801,8 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     flushPendingDebugLogs();
     debugLineBufferRef.current = "";
     setDebugLevel(DebugLevel.NONE);
+    setUpdatingStatus(UpdatingStatus.IDLE);
+    setUpdateProgress(0);
     // setIsConnected(false);
   }, [flushPendingDebugLogs]);
 

@@ -34,6 +34,7 @@ static SemaphoreHandle_t ota_lock = NULL;
 static uint8_t fw_version_bytes[FIRMWARE_VERSION_BYTES_LEN] = { 1, 0, 0 };
 
 static volatile uint8_t ota_in_progress = 0;
+static volatile uint8_t ota_reboot_pending = 0;
 static volatile uint8_t ota_status = OTA_STATUS_IDLE;
 static volatile uint8_t ota_progress = 0;
 
@@ -113,7 +114,7 @@ uint8_t get_ota_progress() {
 }
 
 uint8_t is_ota_in_progress() {
-    return ota_in_progress;
+    return (ota_in_progress || ota_reboot_pending) ? 1 : 0;
 }
 
 void ota_reset_on_disconnect() {
@@ -121,7 +122,7 @@ void ota_reset_on_disconnect() {
         return;
 
     xSemaphoreTake(ota_lock, portMAX_DELAY);
-    if (ota_in_progress) {
+    if (ota_in_progress && !ota_reboot_pending) {
         BLE_LOGW(TAG, "Client disconnected during OTA, aborting");
         cleanup_ota_session(1);
         ota_status = OTA_STATUS_IDLE;
@@ -299,12 +300,13 @@ void ota_handle_control(const uint8_t* data, size_t len) {
         }
 
         BLE_LOGI(TAG, "OTA verified and flashed successfully! Rebooting in %ums", OTA_RESTART_DELAY_MS);
+        ota_reboot_pending = 1;
         cleanup_ota_session(0);
         ota_progress = 100;
         ble_notify_ota_progress(100);
         set_and_notify_status(OTA_STATUS_SUCCESS);
 
-        xTaskCreate(ota_restart_task, "OTA_RST", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+        xTaskCreate(ota_restart_task, "OTA_RST", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
         xSemaphoreGive(ota_lock);
         return;
     }

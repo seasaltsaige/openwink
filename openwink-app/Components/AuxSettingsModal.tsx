@@ -73,10 +73,12 @@ export function AuxSettingsModal({
       else if (typeof initialValues.action === "object" && initialValues.action.name === cmd.name) setSelectedAction(cmd);
     }
 
+    setSwitchType(initialValues.buttonType);
+    setLooping(initialValues.looping);
     setCommands(commandsFromStorage);
     setFilteredCommands(commandsFromStorage);
     setSelectedCategory("Actions");
-  }, [visible]);
+  }, [visible, initialValues.action, initialValues.buttonType, initialValues.looping]);
 
 
   return (

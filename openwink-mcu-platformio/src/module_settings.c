@@ -147,6 +147,12 @@ uint8_t get_module_orientation() {
     return module_orientation;
 }
 
+static volatile uint8_t long_term_sleep_requested = 0;
+
+uint8_t is_long_term_sleep_requested() {
+    return long_term_sleep_requested;
+}
+
 static void long_term_sleep_task(void* args) {
     // Allow BLE GATT Write Response to be transmitted before disconnecting and sleeping
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -154,9 +160,8 @@ static void long_term_sleep_task(void* args) {
     reset_auth_on_disconnect();
     ble_disconnect();
 
-    configure_wakeup_sources(0);
-
     vTaskDelay(pdMS_TO_TICKS(100));
+    configure_wakeup_sources(0);
     esp_deep_sleep_start();
 }
 
@@ -170,14 +175,15 @@ static void deferred_disconnect_task(void* args) {
 
 void enter_long_term_sleep() {
     BLE_LOGI(TAG, "Entering long-term sleep");
-    xTaskCreate(long_term_sleep_task, "SLEEP_TASK", 2048, NULL, tskIDLE_PRIORITY + 2, NULL);
+    long_term_sleep_requested = 1;
+    xTaskCreate(long_term_sleep_task, "SLEEP_TASK", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
 
 void unpair_module() {
     BLE_LOGI(TAG, "Unpairing module");
 
     delete_nvs_device_key();
-    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 2048, (void*)(uintptr_t)200, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 4096, (void*)(uintptr_t)200, tskIDLE_PRIORITY + 2, NULL);
 }
 
 void reset_module() {
@@ -206,5 +212,5 @@ void reset_module() {
         xQueueSend(command_output_queue, &confirm_seq[i], 0);
 
     reset_sleep_on_disconnect();
-    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 2048, (void*)(uintptr_t)300, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(deferred_disconnect_task, "DISC_TASK", 4096, (void*)(uintptr_t)300, tskIDLE_PRIORITY + 2, NULL);
 }

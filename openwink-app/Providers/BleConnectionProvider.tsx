@@ -20,8 +20,14 @@ import Toast from "react-native-toast-message";
 import { BLE, CANCEL_COMMAND_PAYLOAD, getBLEDescriptors, SCAN_TIME_SECONDS, SettingFlag } from "../helper/Constants";
 import {
   AutoConnectStore,
+  AuxButtonStore,
+  CustomOEMButtonStore,
+  CustomWaveStore,
   DeviceMACStore,
   FirmwareStore,
+  HeadlightMovementSpeedStore,
+  HeadlightOrientationStore,
+  SleepyEyeStore,
 } from "../Storage";
 import { bytesToBase64, getDevicePasskey, sleep } from "../helper/Functions";
 import { useBleMonitor } from "./BleMonitorProvider";
@@ -73,6 +79,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     stopMonitoring,
     readInitialValues,
     writeInitialSettings,
+    refreshMonitorStatus,
   } = useBleMonitor();
 
   const [device, setDevice] = useState<Device | null>(null);
@@ -136,6 +143,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
+  const intentionalDisconnectRef = useRef(false);
 
   // Keep ref in sync with state for async callbacks
   useEffect(() => {
@@ -257,16 +265,24 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
             });
         },
         async () => {
+          intentionalDisconnectRef.current = true;
           DeviceUUIDStore.forgetUUID();
           DeviceMACStore.forgetMAC();
           FirmwareStore.forgetFirmwareVersion();
+          CustomOEMButtonStore.removeAll();
+          AuxButtonStore.reset();
+          CustomWaveStore.reset();
+          SleepyEyeStore.reset("both");
+          HeadlightOrientationStore.disable();
+          HeadlightMovementSpeedStore.reset();
+          await refreshMonitorStatus();
           setMac("");
           try {
             await targetDevice.cancelConnection();
             Toast.show({
               type: "info",
-              text1: "Unpaired",
-              text2: "Unpaired from Module successfully",
+              text1: "Module Factory Reset",
+              text2: "Module was reset to factory defaults.",
               visibilityTime: 4000,
             });
           } catch (err) {
@@ -275,7 +291,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       );
     },
-    [startMonitoring],
+    [startMonitoring, refreshMonitorStatus],
   );
 
   // Re-bind characteristic monitors ONLY if startMonitoring updates during Fast Refresh while connected
@@ -305,6 +321,12 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           stopMonitoring();
           updateDevice(null);
           setConnected(false);
+
+          if (intentionalDisconnectRef.current && !OTA.restartQueued) {
+            intentionalDisconnectRef.current = false;
+            return;
+          }
+          intentionalDisconnectRef.current = false;
 
           // Auto-reconnect if enabled
           if (autoConnectRef.current || OTA.restartQueued) {
@@ -360,6 +382,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       setIsConnecting(true);
+      intentionalDisconnectRef.current = false;
 
       try {
         console.log(`Connecting to device ${deviceId}`);
@@ -448,6 +471,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     setIsScanning(true);
+    intentionalDisconnectRef.current = false;
     const targetMac = DeviceMACStore.getStoredMAC();
     await clearStaleOsConnections(targetMac);
     let deviceFound = false;
@@ -584,6 +608,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           console.log(
             "Disconnecting from device... (From Disconnect Function)",
           );
+          intentionalDisconnectRef.current = true;
           stopMonitoring();
           await device.cancelConnection();
           updateDevice(null);
@@ -613,6 +638,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const setAutoConnect = useCallback((enabled: boolean) => {
     setAutoConnectEnabled(enabled);
     if (!enabled) {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
       manager
         .stopDeviceScan()
         .then(() => setIsScanning(false))
@@ -623,10 +652,18 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     AutoConnectStore.set(enabled);
-  }, []);
+  }, [manager]);
 
   // Unpair from module (forgets device MAC)
   const unpair = useCallback(async () => {
+    intentionalDisconnectRef.current = true;
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
+    await manager.stopDeviceScan().catch(() => { });
+    setIsScanning(false);
+
     // Always remove from app, allows unpair when not connected
     DeviceMACStore.forgetMAC();
     DeviceUUIDStore.forgetUUID();
@@ -649,7 +686,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log("Error sending unpair to mcu: ", err);
       }
     }
-  }, [device]);
+  }, [device, manager]);
 
   const updateProfile = useCallback(async () => {
     if (!device) return;

@@ -34,9 +34,8 @@ export abstract class CustomCommandStore {
         Storage.getAllKeys().filter(key => key.startsWith(COMMAND_STORE_KEY));
     const allCommands: CommandOutput[] = [];
     for (const commandName of commandKeys) {
-      const commandNameParts = commandName.split('_');
       allCommands.push(
-          {name: commandNameParts.slice(2).join(' '), command: []});
+          {name: commandName.slice(COMMAND_STORE_KEY.length + 1), command: []});
 
       const commandFromStorage = Storage.getString(commandName);
       const index = allCommands.length - 1;

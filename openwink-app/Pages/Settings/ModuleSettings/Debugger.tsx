@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, ListRenderItemInfo, Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -105,7 +105,8 @@ export function Debugger() {
   const [filterText, setFilterText] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<(typeof FILTER_LEVELS)[number][]>([]);
 
-  const flatListRef = useRef<FlatList<DebugLogEntry>>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const hasInitialScrolledRef = useRef(false);
 
   const debugActive = debugLevel !== DebugLevel.NONE;
 
@@ -150,18 +151,17 @@ export function Debugger() {
     });
   }, [debugLogs, filterText, selectedFilters]);
 
-  const renderLogItem = useCallback(
-    ({ item }: ListRenderItemInfo<DebugLogEntry>) => (
-      <DebugLogRow
-        entry={item}
-        textColor={colorTheme.textColor}
-        disabledButtonColor={colorTheme.disabledButtonColor}
-      />
-    ),
-    [colorTheme.textColor, colorTheme.disabledButtonColor],
-  );
+  useEffect(() => {
+    if (filteredLogs.length === 0) {
+      hasInitialScrolledRef.current = false;
+    }
+  }, [filteredLogs.length]);
 
-  const keyExtractor = useCallback((item: DebugLogEntry) => String(item.id), []);
+  useEffect(() => {
+    if (autoScroll && filteredLogs.length > 0 && hasInitialScrolledRef.current) {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }
+  }, [autoScroll]);
 
   const exportLogs = useCallback(async () => {
     if (debugLogs.length === 0) return;
@@ -425,11 +425,8 @@ export function Debugger() {
         <View style={{ width: "95%", backgroundColor: `${colorTheme.disabledButtonColor}80`, height: 1.6, borderRadius: 5 }} />
 
         {/* Log Stream */}
-        <FlatList
-          ref={flatListRef}
-          data={filteredLogs}
-          keyExtractor={keyExtractor}
-          renderItem={renderLogItem}
+        <ScrollView
+          ref={scrollViewRef}
           style={{ width: "95%", flex: 1 }}
           contentContainerStyle={{
             flexGrow: 1,
@@ -437,41 +434,51 @@ export function Debugger() {
             paddingVertical: 4,
             justifyContent: filteredLogs.length === 0 ? "center" : "flex-start",
           }}
-          initialNumToRender={30}
-          maxToRenderPerBatch={25}
-          windowSize={5}
-          removeClippedSubviews
           onContentSizeChange={() => {
             if (autoScroll && filteredLogs.length > 0) {
-              flatListRef.current?.scrollToEnd({ animated: false });
+              const isInitial = !hasInitialScrolledRef.current;
+              hasInitialScrolledRef.current = true;
+              scrollViewRef.current?.scrollToEnd({ animated: !isInitial });
             }
           }}
-          ListEmptyComponent={
-            <Text
-              style={{
-                fontSize: 18,
-                fontFamily: "IBMPlexSans_500Medium",
-                color: colorTheme.headerTextColor,
-                textAlign: "center",
-              }}
-            >
-              {debugLogs.length === 0 ? "No Logs Recorded" : "No Matching Logs"}{"\n"}
-              <Text style={{
-                fontSize: 14,
-                fontFamily: "IBMPlexSans_400Regular",
-                color: colorTheme.disabledButtonColor,
-              }}>
-                {
-                  debugLogs.length === 0 ?
-                    (isConnected ?
-                      (debugActive ? "Waiting for module events..." : "Enable Debug Session above to begin streaming.")
-                      : "Connect to module to start a debug session.")
-                    : "Try adjusting your search or level filters."
-                }
-              </Text>
-            </Text>
+        >
+          {
+            filteredLogs.length > 0 ?
+              filteredLogs.map((entry) => (
+                <DebugLogRow
+                  key={entry.id}
+                  entry={entry}
+                  textColor={colorTheme.textColor}
+                  disabledButtonColor={colorTheme.disabledButtonColor}
+                />
+              ))
+              : (
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontFamily: "IBMPlexSans_500Medium",
+                    color: colorTheme.headerTextColor,
+                    textAlign: "center",
+                  }}
+                >
+                  {debugLogs.length === 0 ? "No Logs Recorded" : "No Matching Logs"}{"\n"}
+                  <Text style={{
+                    fontSize: 14,
+                    fontFamily: "IBMPlexSans_400Regular",
+                    color: colorTheme.disabledButtonColor,
+                  }}>
+                    {
+                      debugLogs.length === 0 ?
+                        (isConnected ?
+                          (debugActive ? "Waiting for module events..." : "Enable Debug Session above to begin streaming.")
+                          : "Connect to module to start a debug session.")
+                        : "Try adjusting your search or level filters."
+                    }
+                  </Text>
+                </Text>
+              )
           }
-        />
+        </ScrollView>
       </View>
 
       <SettingsToolbar
