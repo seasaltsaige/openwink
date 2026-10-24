@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
 import RangeSlider from "react-native-sticky-range-slider";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -58,6 +58,10 @@ export function CustomWinkButton() {
 
   const [min, setMin] = useState(buttonDelay);
   const [max, setMax] = useState(MAX);
+
+  useEffect(() => {
+    setMin(buttonDelay);
+  }, [buttonDelay]);
 
   const { isConnected } = useBleConnection();
   // const isConnected = true;
@@ -193,8 +197,8 @@ export function CustomWinkButton() {
                 onClose={() => setBypassToolTipOpen(false)}
                 content={
                   <Text style={theme.tooltipContainerText}>
-                    Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
-                    Note: Single press actions will result in no movement
+                    Bypass mode allows Custom Button Actions to be used while headlight lights are switched on.{"\n"}
+                    Note: A single press while lights are switched on will raise the headlights.
                   </Text>
                 }
                 closeOnBackgroundInteraction
@@ -348,7 +352,7 @@ export function CustomWinkButton() {
                         }]}
                           numberOfLines={1}>
                           {
-                            action.customCommand ? action.customCommand.name : action.behaviorHumanReadable
+                            action.customCommand ? (action.customCommand.name || "Deleted Command") : action.behaviorHumanReadable
                           }
                         </Text>
                       </View>

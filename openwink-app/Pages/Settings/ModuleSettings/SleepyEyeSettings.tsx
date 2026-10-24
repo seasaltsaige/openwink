@@ -64,6 +64,11 @@ export function SleepyEyeSettings() {
     }
   }, { left: leftSleepyEye, right: rightSleepyEye });
 
+  useEffect(() => {
+    dispatchHeadlightPosition({ side: "left", percentage: leftSleepyEye });
+    dispatchHeadlightPosition({ side: "right", percentage: rightSleepyEye });
+  }, [leftSleepyEye, rightSleepyEye]);
+
   const offset = useSharedValue(0);
 
   useFocusEffect(

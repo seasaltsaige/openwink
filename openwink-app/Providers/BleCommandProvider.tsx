@@ -382,11 +382,6 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return;
       }
 
-      if (!auxiliaryButtonsEnabled) {
-        console.warn("Aux Buttons not enabled");
-        return;
-      }
-
       try {
         const side = aux === AUX_ID.AUX1 ? 0 : 1;
         const buttonType = type === AUX_SWITCH_TYPE.LATCHING ? 0 : 1;
@@ -417,7 +412,7 @@ export const BleCommandProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         console.log(err);
       }
     },
-    [device, auxiliaryButtonsEnabled],
+    [device],
   );
 
   // Enable/disable OEM button control

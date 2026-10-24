@@ -3,6 +3,7 @@ import { buttonBehaviorMap } from "../helper/Constants";
 import Storage from "./Storage";
 
 const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
+const CUSTOM_SEEDED_KEY = "oem-button-seeded";
 const BUTTON_KEY = "oem-button-values";
 const BUTTON_DELAY_KEY = "oem-button-delay";
 const BYPASS_KEY = "headlight-bypass";
@@ -11,10 +12,23 @@ const LOOPING_KEY = "oem-button-loop";
 const DEFAULT_DELAY = 500;
 
 export abstract class CustomOEMButtonStore {
+  private static ensureDefaultsSeeded() {
+    if (Storage.getBoolean(CUSTOM_SEEDED_KEY)) return;
+    Storage.set(CUSTOM_SEEDED_KEY, true);
+
+    const existingKeys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
+    if (existingKeys.length === 0) {
+      this.set(1, "Left Wink");
+      this.set(2, "Right Wink");
+      this.set(3, "Both Blink");
+      this.set(4, "Sleepy Eye");
+    }
+  }
+
   static isEnabled() {
     const status = Storage.getBoolean(CUSTOM_ENABLED_KEY);
-    if (status) return true;
-    else return false;
+    if (status === undefined) return true;
+    return status;
   }
 
   static enable() {
@@ -22,7 +36,7 @@ export abstract class CustomOEMButtonStore {
   }
 
   static disable() {
-    Storage.delete(CUSTOM_ENABLED_KEY);
+    Storage.set(CUSTOM_ENABLED_KEY, false);
   }
 
 
@@ -74,9 +88,12 @@ export abstract class CustomOEMButtonStore {
     Storage.delete(BUTTON_DELAY_KEY);
     Storage.delete(BYPASS_KEY);
     Storage.delete(CUSTOM_ENABLED_KEY);
+    Storage.delete(CUSTOM_SEEDED_KEY);
+    this.ensureDefaultsSeeded();
   }
 
   static getAll() {
+    this.ensureDefaultsSeeded();
 
     const allCustomizations: CustomButtonAction[] = [];
     const keys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));

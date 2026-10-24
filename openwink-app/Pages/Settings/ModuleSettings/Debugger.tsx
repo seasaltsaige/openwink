@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, ListRenderItemInfo, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -29,6 +29,61 @@ const LEVEL_OPTIONS: Array<{
   ];
 
 const FILTER_LEVELS = ["Error", "Warn", "Info", "Debug", "Verbose"] as const;
+const EMPTY_FILTERABLES: DebugLogEntry[] = [];
+
+const getLevelColor = (
+  levelChar: DebugLogEntry["levelChar"],
+  disabledColor: string,
+  defaultColor: string,
+) => {
+  switch (levelChar) {
+    case "E": return "#ff6b6b";
+    case "W": return "#FFBF00E0";
+    case "I": return "#43A5BE";
+    case "D": return "#4caf50";
+    case "V": return disabledColor;
+    default: return defaultColor;
+  }
+};
+
+const DebugLogRow = memo(function DebugLogRow({
+  entry,
+  textColor,
+  disabledButtonColor,
+}: {
+  entry: DebugLogEntry;
+  textColor: string;
+  disabledButtonColor: string;
+}) {
+  return (
+    <Text
+      style={{
+        color: textColor,
+        fontFamily: "IBMPlexSans_400Regular",
+        fontSize: 13,
+        width: "100%",
+      }}
+    >
+      <Text
+        style={{
+          color: `${disabledButtonColor}B0`,
+          fontFamily: "IBMPlexSans_400Regular",
+        }}
+      >
+        {entry.timestamp}{"  "}
+      </Text>
+      <Text
+        style={{
+          color: getLevelColor(entry.levelChar, disabledButtonColor, textColor),
+          fontFamily: "IBMPlexSans_700Bold",
+        }}
+      >
+        [{entry.levelChar}][{entry.tag}]{"   "}
+      </Text>
+      {entry.message}
+    </Text>
+  );
+});
 
 export function Debugger() {
 
@@ -50,7 +105,7 @@ export function Debugger() {
   const [filterText, setFilterText] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<(typeof FILTER_LEVELS)[number][]>([]);
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList<DebugLogEntry>>(null);
 
   const debugActive = debugLevel !== DebugLevel.NONE;
 
@@ -95,16 +150,18 @@ export function Debugger() {
     });
   }, [debugLogs, filterText, selectedFilters]);
 
-  const getLevelColor = (levelChar: DebugLogEntry["levelChar"]) => {
-    switch (levelChar) {
-      case "E": return "#ff6b6b";
-      case "W": return "#FFBF00E0";
-      case "I": return "#43A5BE";
-      case "D": return "#4caf50";
-      case "V": return colorTheme.disabledButtonColor;
-      default: return colorTheme.textColor;
-    }
-  };
+  const renderLogItem = useCallback(
+    ({ item }: ListRenderItemInfo<DebugLogEntry>) => (
+      <DebugLogRow
+        entry={item}
+        textColor={colorTheme.textColor}
+        disabledButtonColor={colorTheme.disabledButtonColor}
+      />
+    ),
+    [colorTheme.textColor, colorTheme.disabledButtonColor],
+  );
+
+  const keyExtractor = useCallback((item: DebugLogEntry) => String(item.id), []);
 
   const exportLogs = useCallback(async () => {
     if (debugLogs.length === 0) return;
@@ -284,7 +341,7 @@ export function Debugger() {
         <SearchBarFilter
           useFilters
           filterTitleText="Filter by Log Level"
-          filterables={debugLogs}
+          filterables={EMPTY_FILTERABLES}
           searchFilterKey="raw"
           filters={FILTER_LEVELS}
           placeholderText="Filter by tag or message..."
@@ -368,8 +425,11 @@ export function Debugger() {
         <View style={{ width: "95%", backgroundColor: `${colorTheme.disabledButtonColor}80`, height: 1.6, borderRadius: 5 }} />
 
         {/* Log Stream */}
-        <ScrollView
-          ref={scrollViewRef}
+        <FlatList
+          ref={flatListRef}
+          data={filteredLogs}
+          keyExtractor={keyExtractor}
+          renderItem={renderLogItem}
           style={{ width: "95%", flex: 1 }}
           contentContainerStyle={{
             flexGrow: 1,
@@ -377,66 +437,41 @@ export function Debugger() {
             paddingVertical: 4,
             justifyContent: filteredLogs.length === 0 ? "center" : "flex-start",
           }}
+          initialNumToRender={30}
+          maxToRenderPerBatch={25}
+          windowSize={5}
+          removeClippedSubviews
           onContentSizeChange={() => {
             if (autoScroll && filteredLogs.length > 0) {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
+              flatListRef.current?.scrollToEnd({ animated: false });
             }
           }}
-        >
-          {
-            filteredLogs.length > 0 ?
-              filteredLogs.map((entry) => (
-                <Text
-                  key={entry.id}
-                  style={{
-                    color: colorTheme.textColor,
-                    fontFamily: "IBMPlexSans_400Regular",
-                    fontSize: 13,
-                    width: "100%",
-                  }}
-                >
-                  <Text style={{
-                    color: `${colorTheme.disabledButtonColor}B0`,
-                    fontFamily: "IBMPlexSans_400Regular",
-                  }}>
-                    {entry.timestamp}{"  "}
-                  </Text>
-                  <Text style={{
-                    color: getLevelColor(entry.levelChar),
-                    fontFamily: "IBMPlexSans_700Bold",
-                  }}>
-                    [{entry.levelChar}][{entry.tag}]{"   "}
-                  </Text>
-                  {entry.message}
-                </Text>
-              ))
-              : (
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontFamily: "IBMPlexSans_500Medium",
-                    color: colorTheme.headerTextColor,
-                    textAlign: "center",
-                  }}
-                >
-                  {debugLogs.length === 0 ? "No Logs Recorded" : "No Matching Logs"}{"\n"}
-                  <Text style={{
-                    fontSize: 14,
-                    fontFamily: "IBMPlexSans_400Regular",
-                    color: colorTheme.disabledButtonColor,
-                  }}>
-                    {
-                      debugLogs.length === 0 ?
-                        (isConnected ?
-                          (debugActive ? "Waiting for module events..." : "Enable Debug Session above to begin streaming.")
-                          : "Connect to module to start a debug session.")
-                        : "Try adjusting your search or level filters."
-                    }
-                  </Text>
-                </Text>
-              )
+          ListEmptyComponent={
+            <Text
+              style={{
+                fontSize: 18,
+                fontFamily: "IBMPlexSans_500Medium",
+                color: colorTheme.headerTextColor,
+                textAlign: "center",
+              }}
+            >
+              {debugLogs.length === 0 ? "No Logs Recorded" : "No Matching Logs"}{"\n"}
+              <Text style={{
+                fontSize: 14,
+                fontFamily: "IBMPlexSans_400Regular",
+                color: colorTheme.disabledButtonColor,
+              }}>
+                {
+                  debugLogs.length === 0 ?
+                    (isConnected ?
+                      (debugActive ? "Waiting for module events..." : "Enable Debug Session above to begin streaming.")
+                      : "Connect to module to start a debug session.")
+                    : "Try adjusting your search or level filters."
+                }
+              </Text>
+            </Text>
           }
-        </ScrollView>
+        />
       </View>
 
       <SettingsToolbar

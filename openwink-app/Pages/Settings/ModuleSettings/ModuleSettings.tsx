@@ -114,7 +114,6 @@ export function ModuleSettings() {
 
     AutoConnectStore.disable();
     CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
     CustomOEMButtonStore.removeAll();
     FirmwareStore.forgetFirmwareVersion();
     SleepyEyeStore.reset("both");

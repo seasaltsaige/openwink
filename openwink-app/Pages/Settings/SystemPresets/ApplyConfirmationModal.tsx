@@ -20,14 +20,14 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
 
   const { colorTheme, theme, refreshTheme } = useColorTheme();
 
-  const { updateProfile, disconnect, isConnected } = useBleConnection();
-  const { refreshConnection } = useBleConnection();
+  const { updateProfile, disconnect, isConnected, mac, refreshConnection } = useBleConnection();
   const { refreshMonitorStatus } = useBleMonitor();
 
   const [applyAsNew, setApplyAsNew] = useState(false);
   const [applyTooltipOpen, setApplyTooltipOpen] = useState(false);
 
   const applyPreset = async (type: ApplyType) => {
+    const preset = SettingsPresetsStore.getPreset(props.presetName);
     SettingsPresetsStore.applyPreset(props.presetName, type);
     setApplyAsNew(false);
 
@@ -35,12 +35,17 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
     props.close();
 
     try {
-      // If applying as new device, disconnect from current device to allow new device with the profile's pairing info
       if (isConnected) {
-        if (type === ApplyType.AS_NEW_DEVICE)
-          await disconnect(false);
+        const isSwitchingDevice =
+          type === ApplyType.AS_NEW_DEVICE &&
+          Boolean(preset?.deviceMAC) &&
+          preset?.deviceMAC !== mac;
 
-        await updateProfile();
+        if (isSwitchingDevice) {
+          await disconnect(false);
+        } else {
+          await updateProfile();
+        }
       }
 
       // Refresh related settings so they are displayed correctly in different pages.

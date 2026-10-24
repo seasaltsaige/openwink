@@ -176,6 +176,59 @@ static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos,
     xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 }
 
+static void both_swap() {
+    headlight_position_t pos = get_position();
+    move_type_t left_dir = (pos.left_pos == POSITION_UP) ? MOVE_DOWN : MOVE_UP;
+    move_type_t right_dir = (pos.right_pos == POSITION_UP) ? MOVE_DOWN : MOVE_UP;
+
+    xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
+    queue_side_move(LEFT_SIDE, left_dir, false);
+    queue_side_move(RIGHT_SIDE, right_dir, false);
+    xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+}
+
+static void run_left_right_sequence(uint8_t primary_side, uint8_t swap_pairs) {
+    headlight_position_t saved_pos = get_position();
+    uint8_t left_sleepy = is_left_sleepy();
+    uint8_t right_sleepy = is_right_sleepy();
+    uint8_t was_sleepy = (left_sleepy || right_sleepy);
+
+    if (was_sleepy) {
+        move_type_t left_finish = left_sleepy ? (saved_pos.last_left_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+        move_type_t right_finish = right_sleepy ? (saved_pos.last_right_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
+
+        xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
+        queue_side_move(LEFT_SIDE, left_finish, false);
+        queue_side_move(RIGHT_SIDE, right_finish, false);
+        xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
+
+    headlight_position_t curr_pos = get_position();
+    uint8_t started_matched = (curr_pos.left_pos == curr_pos.right_pos);
+    EventBits_t primary_bit = (primary_side == LEFT_SIDE) ? LEFT_COMPLETE_BIT : RIGHT_COMPLETE_BIT;
+    uint8_t primary_origin = (primary_side == LEFT_SIDE) ? curr_pos.left_pos : curr_pos.right_pos;
+
+    if (started_matched) {
+        move_type_t offset_dir = (primary_origin == POSITION_UP) ? MOVE_DOWN : MOVE_UP;
+        xEventGroupClearBits(output_event_group, primary_bit);
+        queue_side_move(primary_side, offset_dir, false);
+        xEventGroupWaitBits(output_event_group, primary_bit, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
+
+    uint8_t total_swaps = swap_pairs * 2;
+    for (uint8_t i = 0; i < total_swaps; i++)
+        both_swap();
+
+    if (started_matched) {
+        move_type_t return_dir = (primary_origin == POSITION_UP) ? MOVE_UP : MOVE_DOWN;
+        xEventGroupClearBits(output_event_group, primary_bit);
+        queue_side_move(primary_side, return_dir, false);
+        xEventGroupWaitBits(output_event_group, primary_bit, pdFALSE, pdTRUE, portMAX_DELAY);
+    }
+
+    restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+}
+
 void set_wave_delay(uint8_t delay) {
     if (delay > 100) {
         BLE_LOGE(TAG, "Wave delay over MAX allowed of %d. Received: %d", WAVE_DELAY_MAX, delay);
@@ -231,8 +284,6 @@ void handle_command_task(void* args) {
             }
 
             headlight_position_t curr_pos = get_position();
-            headlight_position_t saved_pos;
-            uint8_t was_sleepy = 0;
             command_types_t peek;
             BaseType_t peeked;
 
@@ -422,64 +473,16 @@ void handle_command_task(void* args) {
 
                 break;
             case COMMAND_LEFT_RIGHT:
-                sync_sides_before_sequence(LEFT_SIDE, &saved_pos, &was_sleepy);
-                curr_pos = get_position();
-
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                run_left_right_sequence(LEFT_SIDE, 1);
                 break;
             case COMMAND_LEFT_RIGHT_X2:
-                sync_sides_before_sequence(LEFT_SIDE, &saved_pos, &was_sleepy);
-                curr_pos = get_position();
-
-                for (uint8_t i = 0; i < 2; i++) {
-                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-                }
-
-                restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                run_left_right_sequence(LEFT_SIDE, 2);
                 break;
             case COMMAND_RIGHT_LEFT:
-                sync_sides_before_sequence(RIGHT_SIDE, &saved_pos, &was_sleepy);
-                curr_pos = get_position();
-
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                run_left_right_sequence(RIGHT_SIDE, 1);
                 break;
             case COMMAND_RIGHT_LEFT_X2:
-                sync_sides_before_sequence(RIGHT_SIDE, &saved_pos, &was_sleepy);
-                curr_pos = get_position();
-
-                for (uint8_t i = 0; i < 2; i++) {
-                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                    queue_side_move(RIGHT_SIDE, curr_pos.right_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_DOWN : MOVE_UP, false);
-                    queue_side_move(LEFT_SIDE, curr_pos.left_pos == POSITION_UP ? MOVE_UP : MOVE_DOWN, true);
-                    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-                }
-
-                restore_sleepy_after_sequence(&saved_pos, was_sleepy);
+                run_left_right_sequence(RIGHT_SIDE, 2);
                 break;
             case COMMAND_SLEEPY_EYE:
                 if (is_left_sleepy() || is_right_sleepy()) {

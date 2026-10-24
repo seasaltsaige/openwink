@@ -43,13 +43,12 @@ export abstract class AuxButtonStore {
 
   static getAuxButtonType(aux: AUX_ID): AUX_SWITCH_TYPE {
     const stored = Storage.getBoolean(`${AUX_TYPE_KEY}-${aux}`);
-    if (stored) return AUX_SWITCH_TYPE.MOMENTARY;
-    else return AUX_SWITCH_TYPE.LATCHING;
+    if (stored === false) return AUX_SWITCH_TYPE.LATCHING;
+    return AUX_SWITCH_TYPE.MOMENTARY;
   }
 
   static setAuxButtonType(aux: AUX_ID, type: AUX_SWITCH_TYPE): void {
-    if (type === AUX_SWITCH_TYPE.MOMENTARY) Storage.set(`${AUX_TYPE_KEY}-${aux}`, true);
-    else Storage.delete(`${AUX_TYPE_KEY}-${aux}`);
+    Storage.set(`${AUX_TYPE_KEY}-${aux}`, type === AUX_SWITCH_TYPE.MOMENTARY);
   }
 
   static getAuxButtonAction(aux: AUX_ID): ButtonBehaviors | CommandOutput {
@@ -112,8 +111,8 @@ export abstract class AuxButtonStore {
     this.deleteAux(AUX_ID.AUX2);
     this.setAuxButtonLoop(AUX_ID.AUX1, false);
     this.setAuxButtonLoop(AUX_ID.AUX2, false);
-    this.setAuxButtonType(AUX_ID.AUX1, AUX_SWITCH_TYPE.LATCHING);
-    this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.LATCHING);
+    this.setAuxButtonType(AUX_ID.AUX1, AUX_SWITCH_TYPE.MOMENTARY);
+    this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.MOMENTARY);
     this.disable();
   }
 }

@@ -5,10 +5,21 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
+#ifndef MBEDTLS_CONFIG_FILE
+#define MBEDTLS_CONFIG_FILE "mbedtls/esp_config.h"
+#endif
 #include <mbedtls/md.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/sha256.h>
+#include <stddef.h>
 #include <stdio.h>
+
+#if !defined(MBEDTLS_SHA256_ALT)
+#error "MBEDTLS_SHA256_ALT must be defined to match ESP-IDF libmbedcrypto ABI"
+#endif
+_Static_assert(sizeof(mbedtls_sha256_context) == 116, "mbedtls_sha256_context size mismatch with ESP-IDF SHA256_ALT");
+_Static_assert(offsetof(mbedtls_sha256_context, mode) == 108, "mbedtls_sha256_context mode offset mismatch");
+_Static_assert(offsetof(mbedtls_sha256_context, sha_state) == 112, "mbedtls_sha256_context sha_state offset mismatch");
 #include <string.h>
 
 #include "ble/ble_handler.h"
