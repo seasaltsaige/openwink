@@ -12,9 +12,13 @@
 #define RIGHT_STOPPED_BIT BIT1
 
 #define MOVE_TIME_LIMIT_MS 1000
-#define MOVE_TIME_MIN_MS 200
+#define MOVE_TIME_MIN_MS 450
+#define MOVE_STOP_BLANK_MS 250
 #define DEFAULT_MOVE_TIME_MS 625
 #define MOVE_TIME_DEADBAND_MS 10
+
+#define FEEDBACK_START_DEBOUNCE_COUNT 2
+#define FEEDBACK_STOP_DEBOUNCE_COUNT 4
 
 typedef struct feedback_stats {
     uint16_t left_move_time;
