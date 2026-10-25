@@ -10,6 +10,6 @@ export abstract class DeviceUUIDStore {
   }
 
   static forgetUUID() {
-    Storage.delete("device-uuid");  
+    Storage.delete("device-uuid");
   }
 }

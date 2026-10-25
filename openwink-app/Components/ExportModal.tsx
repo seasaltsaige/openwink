@@ -132,82 +132,97 @@ export function ExportModal({
       profileName: profile,
     };
 
-    SettingsPresetsStore.getPreset(profile);
+    const preset = SettingsPresetsStore.getPreset(profile);
 
     if (selectedSettings.appTheme) {
-      const appTheme = ThemeStore.getStoredTheme();
-      data.appTheme = appTheme;
+      data.appTheme = preset ? preset.colorTheme : ThemeStore.getStoredTheme();
     }
 
     if (selectedSettings.autoConnection) {
-      const autoConn = AutoConnectStore.get();
-      data.autoConnection = autoConn;
+      data.autoConnection = preset ? preset.autoConnect : AutoConnectStore.get();
     }
 
     if (selectedSettings.auxButtonConfig) {
-      const auxSettings = {
-        enabled: AuxButtonStore.getStatus(),
-        auxOne: {
-          switchType: AuxButtonStore.getAuxButtonType(AUX_ID.AUX1),
-          pressAction: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1),
-          actionLoop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1),
-        },
-        auxTwo: {
-          switchType: AuxButtonStore.getAuxButtonType(AUX_ID.AUX2),
-          pressAction: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2),
-          actionLoop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2),
+      const auxSettings = preset?.auxBtnConfig
+        ? {
+          enabled: preset.auxBtnConfig.enabled,
+          auxOne: {
+            switchType: preset.auxBtnConfig.one.type,
+            pressAction: preset.auxBtnConfig.one.action,
+            actionLoop: preset.auxBtnConfig.one.loop,
+          },
+          auxTwo: {
+            switchType: preset.auxBtnConfig.two.type,
+            pressAction: preset.auxBtnConfig.two.action,
+            actionLoop: preset.auxBtnConfig.two.loop,
+          },
         }
-      }
+        : {
+          enabled: AuxButtonStore.getStatus(),
+          auxOne: {
+            switchType: AuxButtonStore.getAuxButtonType(AUX_ID.AUX1),
+            pressAction: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX1),
+            actionLoop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX1),
+          },
+          auxTwo: {
+            switchType: AuxButtonStore.getAuxButtonType(AUX_ID.AUX2),
+            pressAction: AuxButtonStore.getAuxButtonAction(AUX_ID.AUX2),
+            actionLoop: AuxButtonStore.getAuxButtonLoop(AUX_ID.AUX2),
+          }
+        };
       data.auxButtonConfig = auxSettings;
     }
 
     if (selectedSettings.customCommands) {
-      const macros = CustomCommandStore.getAll();
-      data.customCommands = macros;
+      data.customCommands = preset?.customCommands ?? CustomCommandStore.getAll();
     }
 
     if (selectedSettings.oemButtonConfig) {
-      const btnSettings = {
-        enabled: CustomOEMButtonStore.isEnabled(),
-        headlightBypassEnabled: CustomOEMButtonStore.isBypassEnabled(),
-        pressInterval: CustomOEMButtonStore.getDelay(),
-        pressActions: CustomOEMButtonStore.getAll(),
-      }
+      const btnSettings = preset
+        ? {
+          enabled: preset.customOEMButtonEnabled,
+          headlightBypassEnabled: preset.customOEMBypassEnabled,
+          pressInterval: preset.customOEMButtonDelay,
+          pressActions: preset.customOEMButtons,
+        }
+        : {
+          enabled: CustomOEMButtonStore.isEnabled(),
+          headlightBypassEnabled: CustomOEMButtonStore.isBypassEnabled(),
+          pressInterval: CustomOEMButtonStore.getDelay(),
+          pressActions: CustomOEMButtonStore.getAll(),
+        };
       data.oemButtonConfig = btnSettings;
     }
 
     if (selectedSettings.orientation) {
-      const orientation = HeadlightOrientationStore.getStatus();
-      data.orientation = orientation;
+      data.orientation = preset ? preset.headlightOrientation : HeadlightOrientationStore.getStatus();
     }
 
     if (selectedSettings.pairing) {
       const pairingInfo = {
-        mac: DeviceMACStore.getStoredMAC(),
-        pairingKey: getDevicePasskey(),
-        firmwareVersion: "",
+        mac: preset?.deviceMAC ?? null,
+        pairingKey: preset?.deviceUUID ?? null,
+        firmwareVersion: preset?.firmwareVersion ?? "",
       }
       data.pairing = pairingInfo;
     }
 
     if (selectedSettings.sleepyEyeConfig) {
-      const sleepy = {
+      data.sleepyEyeConfig = preset?.sleepyEye ?? {
         left: SleepyEyeStore.get("left"),
         right: SleepyEyeStore.get("right"),
-      }
-      data.sleepyEyeConfig = sleepy;
+      };
     }
 
     if (selectedSettings.waveDelayConfig) {
-      const waveDelay = CustomWaveStore.getMultiplier();
-      data.waveDelayConfig = waveDelay;
+      data.waveDelayConfig = preset ? preset.customWaveMultiplier : CustomWaveStore.getMultiplier();
     }
 
     if (selectedSettings.quickLinkSettings)
-      data.quickLinkSettings = QuickLinksStore.getLinks();
+      data.quickLinkSettings = preset?.quickLinks ?? QuickLinksStore.getLinks();
 
     return data;
-  }, [selectedSettings]);
+  }, [selectedSettings, profile]);
 
 
   const exportSettings = async () => {

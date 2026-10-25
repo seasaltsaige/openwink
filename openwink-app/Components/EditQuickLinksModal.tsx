@@ -66,6 +66,17 @@ const ROUTES: RouteType[] = [
     visible: false
   },
   {
+    display: "Module Settings",
+    icon: "bug-outline",
+    title: "Module Debugger",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "Debugger",
+    },
+    visible: false
+  },
+  {
     display: "Settings",
     icon: "information-circle-outline",
     title: "System Information",
@@ -126,6 +137,7 @@ interface IEditQuickLinksModal {
   initialLinks: (QuickLink)[];
   defaultLinks: (QuickLink)[];
   onUpdateLinks: (updatedLinks: (QuickLink)[]) => void;
+  resetToDefault: () => void;
 }
 
 export function EditQuickLinksModal({
@@ -134,6 +146,7 @@ export function EditQuickLinksModal({
   initialLinks,
   onUpdateLinks,
   visible,
+  resetToDefault,
 }: IEditQuickLinksModal) {
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
   const mappedDefaultLinks = useMemo(() => defaultLinks.map(l => l.title), [defaultLinks]);
@@ -338,7 +351,7 @@ export function EditQuickLinksModal({
           >
             <Pressable
               hitSlop={10}
-              onPress={resetToStart}
+              onPress={resetToDefault}
             >
               {
                 ({ pressed }) =>

@@ -1,42 +1,37 @@
-import { DeviceMACStore, FirmwareStore } from "../../Storage";
-import { jkYSbsSAIDns, UPDATE_URL } from "../Constants";
-import { sleep } from "../Functions";
+import { FirmwareStore } from "../../Storage";
+import { OTA_ACK_WINDOW_SIZE, OTA_API_KEY, UPDATE_URL } from "../Constants";
 
-type FirmwareType = `${number}.${number}.${number}`;
+export type FirmwareType = `${number}.${number}.${number}`;
+
+export type AvailableUpdate = {
+  version: FirmwareType;
+  size: number;
+  app_version: FirmwareType;
+  description: string;
+};
+
 type FetchResponse = {
   message?: string;
   updateNeeded: boolean;
-
-  versions?: Array<{
-    version: FirmwareType;
-    size: number;
-    app_version: FirmwareType;
-    description: string;
-  }>
-}
+  versions?: Array<AvailableUpdate>;
+};
 
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
 
-  public static updateCount: number = 0;
-  // public static currentCount: number = 0;
-  public static updateSizesBytes: number[] = [];
-  public static updateDescriptions: string[] = [];
-  public static updateFirmwareVersions: FirmwareType[] = [];
-  public static updateAppVersions: FirmwareType[] = [];
-
+  public static updates: AvailableUpdate[] = [];
   public static restartQueued: boolean = false;
 
   private static updateInProgress: boolean = false;
 
+  public static get updateCount(): number {
+    return this.updates.length;
+  }
+
   public static reset(): void {
     this.updateInProgress = false;
-    this.updateCount = 0;
-    this.updateSizesBytes = [];
-    this.updateDescriptions = [];
-    this.updateFirmwareVersions = [];
-    this.updateAppVersions = [];
+    this.updates = [];
     this.restartQueued = false;
     this.setActiveVersion();
   }
@@ -56,7 +51,7 @@ export abstract class OTA {
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           },
           signal: controller.signal
         }
@@ -71,15 +66,19 @@ export abstract class OTA {
       // parse response into expected json format
       const json = await response.json() as FetchResponse;
 
-      if (!json.updateNeeded) return false;
+      if (!json.updateNeeded || !json.versions || json.versions.length === 0) {
+        this.updates = [];
+        return false;
+      }
 
-      this.updateAppVersions = json.versions?.map(v => v.app_version)!;
-      this.updateFirmwareVersions = json.versions?.map(v => v.version)!;
-      this.updateSizesBytes = json.versions?.map(v => v.size)!;
-      this.updateDescriptions = json.versions?.map(v => v.description)!;
-      this.updateCount = json.versions?.length!;
+      this.updates = json.versions.map(v => ({
+        version: v.version,
+        app_version: v.app_version,
+        description: v.description,
+        size: v.size,
+      }));
 
-      return json.updateNeeded;
+      return true;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -93,17 +92,18 @@ export abstract class OTA {
 
   public static async updateFirmware(
     updateVersion: string,
-    mtu: number,
-    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>) => Promise<boolean>,
-    sendOTASize: (otaSize: number) => Promise<void>,
+    chunkSize: number,
+    startOTAService: (otaSize: number) => Promise<boolean>,
+    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>, withResponse?: boolean) => Promise<boolean>,
     sendOTAComplete: () => Promise<void>,
   ) {
     try {
+      this.setLatestVersion(updateVersion as FirmwareType);
       const firmwareResponse = await fetch(`${UPDATE_URL}/firmware/${updateVersion}`,
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           }
         }
       );
@@ -114,35 +114,31 @@ export abstract class OTA {
       const uint8buffer = await this.blobToUint8Array(firmwareBlob);
       const blobChunks: Uint8Array[] = [];
 
-      for (let i = 0; i < uint8buffer.length; i += mtu) {
-        blobChunks.push(uint8buffer.slice(i, i + mtu));
+      for (let i = 0; i < uint8buffer.length; i += chunkSize) {
+        blobChunks.push(uint8buffer.slice(i, i + chunkSize));
       }
       const start = Date.now();
       console.log("[DEBUG] OTA START");
       this.updateInProgress = true;
 
-      await sendOTASize(firmwareBlob.size);
-      await sleep(25);
+      const started = await startOTAService(uint8buffer.length);
+      if (!started) {
+        this.updateInProgress = false;
+        return false;
+      }
 
-      // Check if update still valid before sending chunks
-      for (const chunk of blobChunks) {
-        // Before each chunk
+      // Stream chunks with windowed ACK every OTA_ACK_WINDOW_SIZE chunks (and on the final chunk)
+      for (let i = 0; i < blobChunks.length; i++) {
         if (!this.updateInProgress) {
           return false;
         }
-        await sendOTAChunk(chunk);
+        const ackChunk = ((i + 1) % OTA_ACK_WINDOW_SIZE === 0) || (i === blobChunks.length - 1);
+        const ok = await sendOTAChunk(blobChunks[i], ackChunk);
+        if (!ok) {
+          this.updateInProgress = false;
+          return false;
+        }
       }
-
-      // wtf lol
-      // pretty sure that w/ the signed key
-      // and using writeCharacteristicWithoutResponse
-      // the OTA update handler on the ESP checks the bin
-      // against the public key before the bin file is done
-      // transferring.
-      // using WithResponse is WAYYYY too slow, soo....
-      // just wait a bit i guess... 
-      // seems to work ??????
-      await sleep(750);
 
       // Check after chunks finish
       if (!this.updateInProgress) {
@@ -150,26 +146,20 @@ export abstract class OTA {
       }
       await sendOTAComplete();
 
-
-
       const end = Date.now();
       console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
 
-      // this.activeVersion = this.latestVersion;
-
       return true;
     } catch (err) {
+      this.updateInProgress = false;
       return false;
     }
 
   }
 
   public static nextUpdate() {
-    if (this.updateFirmwareVersions.length >= 1) {
-      this.updateSizesBytes.shift();
-      this.updateDescriptions.shift();
-      this.updateFirmwareVersions.shift();
-      this.updateAppVersions.shift();
+    if (this.updates.length >= 1) {
+      this.updates.shift();
     }
   }
 
@@ -181,6 +171,7 @@ export abstract class OTA {
 
   public static updateVersion(): void {
     this.activeVersion = this.latestVersion;
+    FirmwareStore.setFirmwareVersion(this.latestVersion);
   }
 
   // If an error occurs, the OTA class should
@@ -224,4 +215,4 @@ export abstract class OTA {
     return false;
   }
 
-}
+}

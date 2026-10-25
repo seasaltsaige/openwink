@@ -1,8 +1,52 @@
 import { useRef } from "react";
+import base64 from "react-native-base64";
 import Storage from "../Storage/Storage";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
+import { BindingType, buttonBehaviorMap, DELAY_PREFIX, MAX_CUSTOM_CMD_DELAY_MS, MAX_CUSTOM_CMD_SEQUENCE_LENGTH } from "./Constants";
+import { ButtonBehaviors, CommandInput, CommandOutput } from "./Types";
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+export const bytesToBase64 = (bytes: number[] | Uint8Array) => {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i] & 0xff);
+  }
+  return base64.encode(binary);
+}
+
+export const base64ToBytes = (encoded: string) => {
+  const decoded = base64.decode(encoded);
+  const bytes = new Uint8Array(decoded.length);
+  for (let i = 0; i < decoded.length; i++) {
+    bytes[i] = decoded.charCodeAt(i) & 0xff;
+  }
+  return bytes;
+}
+
+export const encodeCustomCommandSequence = (commandSequence: CommandInput[], looped: boolean) => {
+  const truncatedSequence = commandSequence.slice(0, MAX_CUSTOM_CMD_SEQUENCE_LENGTH);
+  const payload: number[] = [looped ? 1 : 0, truncatedSequence.length & 0xff];
+  for (const cmd of truncatedSequence) {
+    if (cmd.delay && cmd.delay > 0) {
+      const clampedDelay = Math.min(MAX_CUSTOM_CMD_DELAY_MS, Math.max(1, Math.round(cmd.delay)));
+      payload.push(DELAY_PREFIX, clampedDelay & 0xff, (clampedDelay >> 8) & 0xff);
+    } else if (cmd.transmitValue) {
+      payload.push(cmd.transmitValue & 0xff);
+    }
+  }
+  return payload;
+}
+
+export const encodeButtonBinding = (action: ButtonBehaviors | CommandOutput, looped: boolean) => {
+  if (typeof action === "string") {
+    return [BindingType.BUILTIN, buttonBehaviorMap[action] & 0xff];
+  }
+  return [
+    BindingType.CUSTOM_SEQUENCE,
+    ...encodeCustomCommandSequence(action.command ?? [], looped),
+  ];
+}
 export const generatePassword = (len: number) => {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{};':\",./<>?|\\";
   let retVal = "";
@@ -81,4 +125,4 @@ export const compareVersions = (a: string, b: string) => {
   }
 
   return 0;
-}
+}

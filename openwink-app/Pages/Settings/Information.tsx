@@ -95,18 +95,18 @@ export function Information() {
     { "Headlight Perspective": leftRightSwapped ? "Outside" : "Driver" },
     { "Custom Retractor Button": oemCustomButtonEnabled ? "Enabled" : "Disabled" },
     { "Headlight Bypass": headlightBypass ? "Enabled" : "Disabled" },
-    { "Wave Delay Interval": `${(750 * waveDelayMulti).toFixed(0)} ms` },
+    { "Wave Delay Interval": `${(((leftMoveTime + rightMoveTime) / 2) * waveDelayMulti).toFixed(0)} ms` },
     { "Press Interval": `${buttonDelay} ms` },
   ];
 
   const auxButtons = [
     { "Auxiliary Button Status": auxiliaryButtonsEnabled ? "Enabled" : "Disabled" },
     { "Auxiliary Button #1": "" },
-    { "Button Action": typeof aux1Action === "string" ? aux1Action : aux1Action.name },
+    { "Button Action": typeof aux1Action === "string" ? aux1Action : (aux1Action.name || "Deleted Command") },
     { "Button Type": aux1Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
     { "Macro Looping": typeof aux1Action === "string" ? "N/A" : (aux1Loop ? "Enabled" : "Disabled") },
     { "Auxiliary Button #2": "" },
-    { "Button Action": typeof aux2Action === "string" ? aux2Action : aux2Action.name },
+    { "Button Action": typeof aux2Action === "string" ? aux2Action : (aux2Action.name || "Deleted Command") },
     { "Button Type": aux2Type === AUX_SWITCH_TYPE.LATCHING ? "Latching" : "Momentary" },
     { "Macro Looping": typeof aux2Action === "string" ? "N/A" : (aux2Loop ? "Enabled" : "Disabled") },
   ]
@@ -266,7 +266,7 @@ export function Information() {
                       <Text style={theme.infoBoxInnerContentText}>
                         {
                           action.customCommand ?
-                            action.customCommand.name :
+                            (action.customCommand.name || "Deleted Command") :
                             action.behaviorHumanReadable
                         }
                       </Text>

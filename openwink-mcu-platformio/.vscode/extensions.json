@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "Jason2866.esp-decoder",
+        "pioarduino.pioarduino-ide",
+        "platformio.platformio-ide",
+        "xaver.clang-format"
+    ],
+    "unwantedRecommendations": [
+        "ms-vscode.cpptools-extension-pack",
+        "pioarduino.pioarduino-ide"
+    ]
+}

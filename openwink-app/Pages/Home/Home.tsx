@@ -5,7 +5,7 @@ import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, OnboardingStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, OnboardingStore, QuickLinksStore, SleepyEyeStore } from "../../Storage";
 
 import {
   EditQuickLinksModal,
@@ -26,6 +26,7 @@ import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
 import { Onboarding } from "../Onboarding/Onboarding";
 import { UpdatingStatus } from "../../helper/Types";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Home() {
 
@@ -55,6 +56,13 @@ export function Home() {
   } = useBleConnection();
 
   const {
+    setSleepyEyeValues,
+    setOEMButtonStatus,
+    updateButtonDelay,
+    updateWaveDelayMulti,
+  } = useBleCommand();
+
+  const {
     updateStatus,
     updateData,
     error,
@@ -77,6 +85,10 @@ export function Home() {
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
     setQuickLinks(() => newQuickLinks);
+  }
+  const resetQuickLinks = () => {
+    QuickLinksStore.reset();
+    setQuickLinks(() => QuickLinksStore.getLinks());
   }
 
   const checkAppUpdate = async () => {
@@ -135,6 +147,14 @@ export function Home() {
 
 
   useEffect(() => {
+    // setTimeout(() => {
+    //   setSleepyEyeValues(SleepyEyeStore.get("left"), SleepyEyeStore.get("right"));
+    //   setOEMButtonStatus(CustomOEMButtonStore.isEnabled() ? "enable" : "disable");
+    //   updateButtonDelay(CustomOEMButtonStore.getDelay());
+    //   updateWaveDelayMulti(CustomWaveStore.getMultiplier());
+    //   console.log("Updating state values...");
+    // }, 2500);
+
     (async () => {
       if (isConnected) await fetchModuleUpdate();
     })();
@@ -377,6 +397,12 @@ export function Home() {
                   </View>
                   <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
+              ) : updateStatus === UPDATE_STATUS.IDLE && isConnected ? (
+                <LongButton
+                  onPress={() => checkUpdateAvailable()}
+                  icons={{ names: [null, "repeat-outline"], size: [null, 20] }}
+                  text="Check for Module update"
+                />
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
                 <View style={theme.mainLongButtonPressableContainer}>
@@ -401,6 +427,7 @@ export function Home() {
         defaultLinks={QuickLinksStore.getDefaultLinks()}
         initialLinks={quickLinks}
         onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+        resetToDefault={() => resetQuickLinks()}
       />
 
       <ModuleUpdateModal

@@ -135,7 +135,7 @@ export abstract class SettingsPresetsStore {
     if (preset.colorTheme)
       ThemeStore.setTheme(preset.colorTheme)
 
-    if (preset.headlightOrientation)
+    if (preset.headlightOrientation === ORIENTATION.OUTSIDE)
       HeadlightOrientationStore.enable();
     else
       HeadlightOrientationStore.disable();
@@ -166,23 +166,34 @@ export abstract class SettingsPresetsStore {
     else
       CustomOEMButtonStore.disableBypass();
 
-    for (let i = 1; i <= 9; i++) {
-      const pressPreset = preset.customOEMButtons.find(v => v.presses === i);
-      if (!pressPreset) CustomOEMButtonStore.remove(i as Presses);
-      else CustomOEMButtonStore.set(pressPreset.presses, pressPreset.behaviorHumanReadable ? pressPreset.behaviorHumanReadable : pressPreset.customCommand!);
+    for (let i = 1; i <= 8; i++) {
+      const pressCount = i as Presses;
+      const pressPreset = preset.customOEMButtons.find(v => v.presses === pressCount);
+      if (!pressPreset) {
+        CustomOEMButtonStore.remove(pressCount);
+        CustomOEMButtonStore.setLooping(pressCount, false);
+      } else {
+        CustomOEMButtonStore.set(
+          pressPreset.presses,
+          pressPreset.behaviorHumanReadable
+            ? pressPreset.behaviorHumanReadable
+            : pressPreset.customCommand!,
+        );
+        CustomOEMButtonStore.setLooping(pressPreset.presses, Boolean(pressPreset.looping));
+      }
     }
 
     CustomOEMButtonStore.setDelay(preset.customOEMButtonDelay);
 
-    if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID !== null) {
+    if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID && preset.deviceMAC) {
       DeviceUUIDStore.set(preset.deviceUUID);
-      console.log("Updated Device UUID to " + DeviceUUIDStore.get());
+      DeviceMACStore.setMAC(preset.deviceMAC);
 
-      if (preset.deviceMAC)
-        DeviceMACStore.setMAC(preset.deviceMAC);
-
-      if (preset.firmwareVersion)
+      if (preset.firmwareVersion) {
         FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
+      } else {
+        FirmwareStore.forgetFirmwareVersion();
+      }
     }
 
 
@@ -280,11 +291,10 @@ export abstract class SettingsPresetsStore {
       customOEMBypassEnabled: presetData.customOEMBypassEnabled ?? CustomOEMButtonStore.isBypassEnabled(),
       customOEMButtons: presetData.customOEMButtons ?? CustomOEMButtonStore.getAll(),
       customOEMButtonDelay: presetData.customOEMButtonDelay ?? CustomOEMButtonStore.getDelay(),
+
       deviceUUID: (presetData.deviceUUID && presetData.deviceUUID !== "Not Paired") ? presetData.deviceUUID : null,
-
-      deviceMAC: presetData.deviceMAC ?? DeviceMACStore.getStoredMAC(),
-      firmwareVersion: presetData.firmwareVersion ?? FirmwareStore.getFirmwareVersion(),
-
+      deviceMAC: presetData.deviceMAC ?? null,
+      firmwareVersion: presetData.firmwareVersion ?? null,
 
       auxBtnConfig: {
         enabled: presetData.auxBtnConfig?.enabled ?? AuxButtonStore.getStatus(),

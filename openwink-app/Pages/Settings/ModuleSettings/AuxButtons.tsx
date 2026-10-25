@@ -37,6 +37,15 @@ export function AuxButtons() {
   const [type1, setType1] = useState(aux1Type);
   const [type2, setType2] = useState(aux2Type);
 
+  useEffect(() => {
+    setAux1(aux1Action);
+    setAux2(aux2Action);
+    setLoop1(aux1Loop);
+    setLoop2(aux2Loop);
+    setType1(aux1Type);
+    setType2(aux2Type);
+  }, [aux1Action, aux2Action, aux1Loop, aux2Loop, aux1Type, aux2Type]);
+
   const [auxModalOpen, setAuxModalOpen] = useState(false);
   const [auxToDisplay, setAuxToDisplay] = useState(AUX_ID.AUX1 as AUX_ID);
 
@@ -48,14 +57,14 @@ export function AuxButtons() {
   }, [aux1, aux2, loop1, loop2, type1, type2]);
 
   const resetAuxActions = async () => {
-    await setAuxButton(AUX_ID.AUX1, "Left Wink", false, AUX_SWITCH_TYPE.LATCHING);
-    await setAuxButton(AUX_ID.AUX2, "Right Wink", false, AUX_SWITCH_TYPE.LATCHING);
+    await setAuxButton(AUX_ID.AUX1, "Left Wink", false, AUX_SWITCH_TYPE.MOMENTARY);
+    await setAuxButton(AUX_ID.AUX2, "Right Wink", false, AUX_SWITCH_TYPE.MOMENTARY);
     setAux1("Left Wink");
     setAux2("Right Wink");
     setLoop1(false);
     setLoop2(false);
-    setType1(AUX_SWITCH_TYPE.LATCHING);
-    setType2(AUX_SWITCH_TYPE.LATCHING);
+    setType1(AUX_SWITCH_TYPE.MOMENTARY);
+    setType2(AUX_SWITCH_TYPE.MOMENTARY);
   }
 
 
@@ -266,7 +275,7 @@ export function AuxButtons() {
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        {typeof aux.action === "string" ? aux.action : aux.action.name}
+                        {typeof aux.action === "string" ? aux.action : (aux.action.name || "Deleted Command")}
                       </Text>
                       {
                         typeof aux.action === "object" ? (

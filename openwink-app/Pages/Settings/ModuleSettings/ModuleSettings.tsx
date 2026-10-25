@@ -53,6 +53,11 @@ const moduleSettingsData: Array<{
       pageName: "Customize Auxiliary Buttons",
       navigationName: "AuxButtons",
       pageSymbol: "flash-outline",
+    },
+    {
+      pageName: "Module Debugger",
+      navigationName: "Debugger",
+      pageSymbol: "bug-outline",
     }
   ]
 
@@ -75,6 +80,7 @@ export function ModuleSettings() {
   const {
     leftRightSwapped,
     setFirmwareVersion,
+    refreshMonitorStatus,
   } = useBleMonitor();
 
   const {
@@ -108,7 +114,6 @@ export function ModuleSettings() {
 
     AutoConnectStore.disable();
     CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
     CustomOEMButtonStore.removeAll();
     FirmwareStore.forgetFirmwareVersion();
     SleepyEyeStore.reset("both");
@@ -120,6 +125,7 @@ export function ModuleSettings() {
     DeviceMACStore.forgetMAC();
 
     AuxButtonStore.reset();
+    await refreshMonitorStatus();
     await reset();
 
     Toast.show({
@@ -137,15 +143,17 @@ export function ModuleSettings() {
 
   const putModuleToSleep = async () => {
     if (!isConnected) return;
-    await enterDeepSleep();
+    const ok = await enterDeepSleep();
 
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Sleep Successful",
-      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
-    });
+    if (ok) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        type: "success",
+        text1: "Sleep Successful",
+        text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+      });
+    }
 
     setConfirmationOpen(false);
   }
@@ -367,4 +375,4 @@ export function ModuleSettings() {
 
     </>
   )
-}
+}

@@ -64,8 +64,13 @@ void ServerCallbacks::onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo)
 void ServerCallbacks::onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) {
   BLE::setDeviceConnected(false);
   awakeTime_ms = 0;
-  // BLE::init("OpenWink");
-  // BLE::start();
+  auth_status = AuthState::UNCLAIMED;
+  authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+  // customButtonPressUpdateState = 0;
+  // indexToUpdate = 0;
+  // auxSide = 0;
+  // auxSetting = 0;
+  BLE::start();
 }
 
 void ServerCallbacks::onPhyUpdate(NimBLEConnInfo& connInfo, uint8_t txPhy, uint8_t rxPhy) {

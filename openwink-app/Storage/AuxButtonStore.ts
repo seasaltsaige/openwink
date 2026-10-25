@@ -43,13 +43,12 @@ export abstract class AuxButtonStore {
 
   static getAuxButtonType(aux: AUX_ID): AUX_SWITCH_TYPE {
     const stored = Storage.getBoolean(`${AUX_TYPE_KEY}-${aux}`);
-    if (stored) return AUX_SWITCH_TYPE.MOMENTARY;
-    else return AUX_SWITCH_TYPE.LATCHING;
+    if (stored === false) return AUX_SWITCH_TYPE.LATCHING;
+    return AUX_SWITCH_TYPE.MOMENTARY;
   }
 
   static setAuxButtonType(aux: AUX_ID, type: AUX_SWITCH_TYPE): void {
-    if (type === AUX_SWITCH_TYPE.MOMENTARY) Storage.set(`${AUX_TYPE_KEY}-${aux}`, true);
-    else Storage.delete(`${AUX_LOOP_KEY}-${aux}`);
+    Storage.set(`${AUX_TYPE_KEY}-${aux}`, type === AUX_SWITCH_TYPE.MOMENTARY);
   }
 
   static getAuxButtonAction(aux: AUX_ID): ButtonBehaviors | CommandOutput {
@@ -63,31 +62,37 @@ export abstract class AuxButtonStore {
         return "Right Wink";
     }
 
-    // Default action
-    if (stored.includes("_")) {
-
-      const [transmit, action] = stored.split("_");
-      return action as ButtonBehaviors;
+    // Default built-in action ("<number>_<action>")
+    if (/^\d+_/.test(stored)) {
+      const splitIdx = stored.indexOf("_");
+      const action = stored.slice(splitIdx + 1) as ButtonBehaviors;
+      if (action in buttonBehaviorMap) {
+        return action;
+      }
+    }
 
     // Custom command
-    } else {
-      const commandParts = stored.split("-");
-      const name = commandParts.splice(0, 1)[0];
-
-      const customCmd: CommandOutput = {
-        name,
-        command: [],
-      }
-
-      for (const cmdSection of commandParts) {
-        if (cmdSection.startsWith("d"))
-          customCmd.command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
-        else
-          customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
-      }
-
-      return customCmd;
+    const parts = stored.split("-");
+    let cmdStartIndex = parts.length;
+    while (cmdStartIndex > 1 && /^(d\d+(\.\d+)?|\d+)$/.test(parts[cmdStartIndex - 1])) {
+      cmdStartIndex--;
     }
+    const name = parts.slice(0, cmdStartIndex).join("-");
+    const commandParts = parts.slice(cmdStartIndex);
+
+    const customCmd: CommandOutput = {
+      name,
+      command: [],
+    }
+
+    for (const cmdSection of commandParts) {
+      if (cmdSection.startsWith("d"))
+        customCmd.command?.push({ delay: parseFloat(cmdSection.slice(1, cmdSection.length)) });
+      else
+        customCmd.command?.push({ transmitValue: parseInt(cmdSection) });
+    }
+
+    return customCmd;
   }
   
   static setAuxButtonAction(aux: AUX_ID, action: ButtonBehaviors | CommandOutput): void {
@@ -112,8 +117,8 @@ export abstract class AuxButtonStore {
     this.deleteAux(AUX_ID.AUX2);
     this.setAuxButtonLoop(AUX_ID.AUX1, false);
     this.setAuxButtonLoop(AUX_ID.AUX2, false);
-    this.setAuxButtonType(AUX_ID.AUX1, AUX_SWITCH_TYPE.LATCHING);
-    this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.LATCHING);
+    this.setAuxButtonType(AUX_ID.AUX1, AUX_SWITCH_TYPE.MOMENTARY);
+    this.setAuxButtonType(AUX_ID.AUX2, AUX_SWITCH_TYPE.MOMENTARY);
     this.disable();
   }
-}
+}

@@ -45,13 +45,8 @@ export function WaveDelaySettings() {
   }, []);
 
   useEffect(() => {
-    if (waveDelayMulti * 100 !== MIN)
-      setMin(parseFloat((waveDelayMulti * 100).toPrecision(2)));
-  }, []);
-
-  useEffect(() => {
-    setMin(waveDelayMulti * 100);
-  }, [waveDelayMulti])
+    setMin(Math.round(waveDelayMulti * 100));
+  }, [waveDelayMulti]);
 
   const leftWaveStatus = useSharedValue(100);
   const rightWaveStatus = useSharedValue(100);
@@ -78,7 +73,7 @@ export function WaveDelaySettings() {
         withTiming(100, { duration: rightMoveTime, easing: Easing.linear }),
       )
     );
-  }, [min]);
+  }, [min, leftMoveTime, rightMoveTime]);
 
   useAnimatedReaction(
     () => leftWaveStatus.value,
@@ -219,7 +214,7 @@ export function WaveDelaySettings() {
 
       <SettingsToolbar
         disabled={!isConnected}
-        reset={() => updateWaveDelayMulti(1.0)}
+        reset={() => updateWaveDelayMulti(0.5)}
         save={() => updateWaveDelayMulti(min / 100)}
         resetText="Reset Delay"
         saveText="Save Delay"

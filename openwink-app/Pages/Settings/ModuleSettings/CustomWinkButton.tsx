@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
 import RangeSlider from "react-native-sticky-range-slider";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -56,8 +56,12 @@ export function CustomWinkButton() {
 
   const [action, setAction] = useState({} as CustomButtonAction);
 
-  const [min, setMin] = useState(buttonDelay);
+  const [min, setMin] = useState(Math.min(MAX, buttonDelay));
   const [max, setMax] = useState(MAX);
+
+  useEffect(() => {
+    setMin(Math.min(MAX, buttonDelay));
+  }, [buttonDelay]);
 
   const { isConnected } = useBleConnection();
   // const isConnected = true;
@@ -84,8 +88,8 @@ export function CustomWinkButton() {
     const storedActions = CustomOEMButtonStore.getAll();
     if (storedActions !== null && storedActions.length > 0) {
       const acts = storedActions.sort((a, b) => a.presses - b.presses);
-      setActions(acts);
-      setStoredActions(acts);
+      setActions(acts.map((a) => ({ ...a })));
+      setStoredActions(acts.map((a) => ({ ...a })));
     } else {
       setActions([]);
       setStoredActions([]);
@@ -111,15 +115,13 @@ export function CustomWinkButton() {
   const saveValues = useCallback(async () => {
     await updateButtonDelay(min);
 
-    for (let i = 0; i < 9; i++) {
-      if (i >= actions.length) {
-        await updateOEMButtonPresets((i + 1) as Presses, null);
-      } else {
-        const btnAction = actions[i];
-        await updateOEMButtonPresets(btnAction.presses, btnAction);
-      }
+    for (let i = 0; i < actions.length && i < 8; i++) {
+      const btnAction = actions[i];
+      await updateOEMButtonPresets(btnAction.presses, btnAction);
+    }
 
-      await sleep(20);
+    for (let i = 7; i >= actions.length; i--) {
+      await updateOEMButtonPresets((i + 1) as Presses, null);
     }
 
     fetchActionsFromStorage();
@@ -130,7 +132,7 @@ export function CustomWinkButton() {
     setActions((old) => {
       const newActions = old.toSpliced(action.presses - 1, 1);
       for (let i = 0; i < newActions.length; i++)
-        newActions[i].presses = (i + 1) as Presses;
+        newActions[i] = { ...newActions[i], presses: (i + 1) as Presses };
 
       return newActions;
     });
@@ -195,8 +197,8 @@ export function CustomWinkButton() {
                 onClose={() => setBypassToolTipOpen(false)}
                 content={
                   <Text style={theme.tooltipContainerText}>
-                    Bypass mode allows Custom Button Actions to be used while headlight lights are turned switched on.{"\n"}
-                    Note: Single press actions will result in no movement
+                    Bypass mode allows Custom Button Actions to be used while headlight lights are switched on.{"\n"}
+                    Note: A single press while lights are switched on will raise the headlights.
                   </Text>
                 }
                 closeOnBackgroundInteraction
@@ -350,7 +352,7 @@ export function CustomWinkButton() {
                         }]}
                           numberOfLines={1}>
                           {
-                            action.customCommand ? action.customCommand.name : action.behaviorHumanReadable
+                            action.customCommand ? (action.customCommand.name || "Deleted Command") : action.behaviorHumanReadable
                           }
                         </Text>
                       </View>

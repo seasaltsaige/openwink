@@ -155,15 +155,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  useEffect(() => {
-    if (isLoading) return;
-    const iconName = ICON_NAME_BY_THEME[themeName];
+  const applyIconForTheme = useCallback((targetTheme: keyof typeof ColorTheme.themeNames) => {
+    const iconName = ICON_NAME_BY_THEME[targetTheme];
     try {
       setAppIcon(iconName as any);
     } catch (error) {
       console.warn("Failed to set app icon:", error);
     }
-  }, [themeName, isLoading]);
+  }, []);
 
   const refresh = useCallback(() => {
     const storedTheme = ThemeStore.getStoredTheme();
@@ -177,12 +176,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTheme = useCallback(async (theme: keyof typeof ColorTheme.themeNames) => {
     setThemeName(theme);
     ThemeStore.setTheme(theme);
-  }, []);
+    applyIconForTheme(theme);
+  }, [applyIconForTheme]);
 
   const reset = useCallback(async () => {
     update(defaultName);
     ThemeStore.reset();
-  }, []);
+    applyIconForTheme(defaultName);
+  }, [ update, applyIconForTheme ]);
 
   const value: ThemeContextType = useMemo(() => ({
     colorTheme,
@@ -883,4 +884,4 @@ function createThemeStyles(themeColors: ThemeColors) {
       fontSize: 14,
     }
   })
-}
+}

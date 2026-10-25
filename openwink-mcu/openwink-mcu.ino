@@ -1,19 +1,19 @@
-#include <string.h>
-#include <Arduino.h>
 #include "esp_mac.h"
+#include <Arduino.h>
+#include <string.h>
 
-#include "constants.h"
-#include "Storage.h"
 #include "AuxHandler.h"
-#include "MainFunctions.h"
 #include "BLE.h"
-#include "ButtonHandler.h"
 #include "BLECallbacks.h"
+#include "ButtonHandler.h"
 #include "CommandHandler.h"
+#include "MainFunctions.h"
+#include "Storage.h"
+#include "constants.h"
 
 using namespace std;
 
-void motionInMonitorTask(void* params);
+void motionInMonitorTask(void *params);
 
 void setup() {
   Serial.begin(115200);
@@ -35,7 +35,7 @@ void setup() {
   ButtonHandler::readOnWakeup();
 
   BLE::init("OpenWink");
-  
+
   ButtonHandler::readOnWakeup();
   Storage::begin("oem-store");
   Storage::getFromStorage();
@@ -59,7 +59,7 @@ void setup() {
   xTaskCreate(motionInMonitorTask, "MONITOR", 4096, NULL, 1, NULL);
 }
 
-void motionInMonitorTask(void* params) {
+void motionInMonitorTask(void *params) {
   for (;;) {
     ButtonHandler::loopLeftMonitor();
     ButtonHandler::loopRightMonitor();
@@ -69,14 +69,16 @@ void motionInMonitorTask(void* params) {
 
 void loop() {
 
-  if (auth_status != AuthState::UNCLAIMED && auth_status != AuthState::AUTHENTICATED && (millis() > (authTimer + AUTH_TIME_MS))) {
+  if (auth_status != AuthState::UNCLAIMED &&
+      auth_status != AuthState::AUTHENTICATED &&
+      (millis() > (authTimer + AUTH_TIME_MS))) {
     NimBLEDevice::getServer()->disconnect(authConnInfo);
     authConnInfo = BLE_HS_CONN_HANDLE_NONE;
+    auth_status = AuthState::UNCLAIMED;
   }
 
   if (otaUpdateRestartQueued && millis() > (updateRestartTimer + 3000))
     ESP.restart();
-  
 
   if (queuedCommand != -1) {
     // handle sent command
@@ -89,6 +91,6 @@ void loop() {
 
   if (AuxHandler::getAuxStatus())
     AuxHandler::loopAuxHandler();
-  
+
   ButtonHandler::updateButtonSleep();
 }

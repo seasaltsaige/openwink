@@ -55,10 +55,10 @@ export function SystemProfiles() {
     if (jsonData.appTheme)
       presetObject.colorTheme = jsonData.appTheme;
 
-    if (jsonData.autoConnection)
+    if (jsonData.autoConnection !== undefined)
       presetObject.autoConnect = jsonData.autoConnection;
 
-    if (jsonData.orientation)
+    if (jsonData.orientation !== undefined)
       presetObject.headlightOrientation = jsonData.orientation;
 
 
@@ -73,7 +73,7 @@ export function SystemProfiles() {
 
 
 
-    if (jsonData.waveDelayConfig)
+    if (jsonData.waveDelayConfig !== undefined)
       presetObject.customWaveMultiplier = jsonData.waveDelayConfig;
 
 

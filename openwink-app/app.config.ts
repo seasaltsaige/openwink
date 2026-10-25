@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "1.3.1",
+  version: "2.0.0",
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
@@ -47,7 +47,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "react-native-ble-plx",
     "expo-font",
-    "expo-build-properties",
     [
       "expo-build-properties",
       {

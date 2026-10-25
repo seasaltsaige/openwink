@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { ATT_HEADER_SIZE } from "../helper/Constants";
 import { sleep } from "../helper/Functions";
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
@@ -38,10 +39,8 @@ type UpdateManagerReturnType = {
   checkUpdateAvailable: () => Promise<boolean>;
 };
 
-const OTA_HEADER_SIZE = 5;
-
 export const useUpdateManager = (): UpdateManagerReturnType => {
-  const { sendOTAChunk, sendOTAComplete, sendOTASize, startOTAService } =
+  const { sendOTAChunk, sendOTAComplete, startOTAService } =
     useOtaUpdate();
 
   const { isConnected, device } = useBleConnection();
@@ -71,10 +70,12 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_INIT ||
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_SIGN ||
         updatingStatus === UpdatingStatus.ERROR_CHUNK_WRITE
-      )
+      ) {
         // set the current status to available update, as an error happened
         // while installing
         setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+      }
     }
   }, [updatingStatus, updateStatus, isConnected]);
 
@@ -84,20 +85,23 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
       setError(ERROR_TYPE.ERR_NONE);
 
-      await startOTAService();
-      await sleep(50);
+      const chunkSize = Math.max(20, (device?.mtu ?? 185) - ATT_HEADER_SIZE);
 
-      await OTA.updateFirmware(
+      const success = await OTA.updateFirmware(
         version,
-        device?.mtu! - OTA_HEADER_SIZE,
+        chunkSize,
+        startOTAService,
         sendOTAChunk,
-        sendOTASize,
         sendOTAComplete,
       );
+
+      if (!success) {
+        setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+      }
     },
-    // Not 100% on this, but since its just the devices MTU being accessed,
-    // this is all that should be needed? no?
-    [isConnected, device?.mtu],
+    [isConnected, device?.mtu, startOTAService, sendOTAChunk, sendOTAComplete],
   );
 
   const checkUpdateAvailable = useCallback(async () => {
@@ -120,17 +124,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         return false;
       }
 
-      const updateInfo: UpdateData[] = [];
-      for (let i = 0; i < OTA.updateFirmwareVersions.length; i++) {
-        updateInfo.push({
-          version: OTA.updateFirmwareVersions[i],
-          app_version: OTA.updateAppVersions[i],
-          description: OTA.updateDescriptions[i],
-          size: OTA.updateSizesBytes[i],
-        })
-      }
-
-      setUpdateData(updateInfo);
+      setUpdateData([...OTA.updates]);
       setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
       return true;

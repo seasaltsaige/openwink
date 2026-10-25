@@ -5,11 +5,12 @@ import { useFocusEffect, useRoute } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultCommandValueEnglish } from "../../../helper/Constants";
-import { CustomCommandStore } from "../../../Storage";
+import { AUX_ID, AuxButtonStore, CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { HeaderWithBackButton, SearchBarFilter, CustomCommand } from "../../../Components";
 import { ModifyType } from "./ModifyView";
 import { CommandOutput } from "../../../helper/Types";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 interface IMainViewProps {
   setModifyType: (type: ModifyType) => void;
@@ -20,6 +21,7 @@ const FILTERS = ["Delay", ...DefaultCommandValueEnglish] as const;
 
 export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) {
   const { theme, colorTheme } = useColorTheme();
+  const { setAux1Action, setAux2Action } = useBleMonitor();
   const route = useRoute();
   //@ts-ignore
   const { back } = route.params;
@@ -31,6 +33,40 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
     setCustomCommands(storedCommands);
     setFilteredCommands(storedCommands);
   }
+
+  const handleDeleteCommand = (deletedName: string) => {
+    CustomCommandStore.deleteCommand(deletedName);
+
+    // Remove deleted command's name from any OEM button bindings while preserving its sequence
+    const allCustomButtons = CustomOEMButtonStore.getAllBy((press) => press.customCommand !== undefined);
+    for (const btnAction of allCustomButtons) {
+      if (btnAction.customCommand?.name === deletedName) {
+        CustomOEMButtonStore.set(btnAction.presses, {
+          name: "",
+          command: btnAction.customCommand.command,
+        });
+      }
+    }
+
+    // Remove deleted command's name from any Aux button bindings while preserving its sequence
+    for (const auxId of [AUX_ID.AUX1, AUX_ID.AUX2]) {
+      const auxAction = AuxButtonStore.getAuxButtonAction(auxId);
+      if (typeof auxAction === "object" && auxAction.name === deletedName) {
+        const unnamedCmd: CommandOutput = {
+          name: "",
+          command: auxAction.command,
+        };
+        AuxButtonStore.setAuxButtonAction(auxId, unnamedCmd);
+        if (auxId === AUX_ID.AUX1) {
+          setAux1Action(unnamedCmd);
+        } else {
+          setAux2Action(unnamedCmd);
+        }
+      }
+    }
+
+    getCommandsFromStorage();
+  };
 
   useFocusEffect(useCallback(() => {
     getCommandsFromStorage();
@@ -131,7 +167,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
                   <CustomCommand
                     command={command}
                     onEdit={() => { setModifyType(ModifyType.EDIT); setEditCommandName(command.name); }}
-                    onDelete={() => { CustomCommandStore.deleteCommand(command.name); getCommandsFromStorage(); }}
+                    onDelete={() => handleDeleteCommand(command.name)}
                     key={command.name}
                   />
                 ))

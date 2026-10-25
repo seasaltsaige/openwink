@@ -19,7 +19,7 @@ extern int OUT_PIN_RIGHT_UP;
 
 // Green wire in wiring harness, indicating busy when high
 extern int OEM_HEADLIGHT_STATUS_RIGHT;
-extern int OEM_HEADLIGHT_STATUS_LEFT; 
+extern int OEM_HEADLIGHT_STATUS_LEFT;
 
 #define FIRMWARE_VERSION "0.14.2"
 

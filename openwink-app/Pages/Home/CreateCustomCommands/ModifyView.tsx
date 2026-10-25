@@ -4,8 +4,9 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from "@react-navigation/native";
 import DragList, { DragListRenderItemInfo } from 'react-native-draglist';
+import Toast from "react-native-toast-message";
 
 
 import { useColorTheme } from "../../../hooks/useColorTheme";
@@ -17,12 +18,12 @@ import {
   ModalBlurBackground,
   UnsavedChangesModal
 } from "../../../Components";
-import { CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
-import { DefaultCommandValue, DefaultCommandValueEnglish } from "../../../helper/Constants";
+import { AUX_ID, AuxButtonStore, CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
+import { DefaultCommandValue, DefaultCommandValueEnglish, MAX_CUSTOM_CMD_SEQUENCE_LENGTH } from "../../../helper/Constants";
 import { CommandInput, CommandOutput } from "../../../helper/Types";
-import { useThrottle } from "../../../helper/Functions";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
+import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 
 
 export enum ModifyType {
@@ -46,7 +47,8 @@ type CommandChangeData =
 
 export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyViewProps) {
   const { colorTheme, theme } = useColorTheme();
-  const { updateOEMButtonPresets } = useBleCommand();
+  const { updateOEMButtonPresets, setAuxButton } = useBleCommand();
+  const { setAux1Action, setAux2Action } = useBleMonitor();
   const { isConnected } = useBleConnection();
   const route = useRoute();
   //@ts-ignore
@@ -70,59 +72,83 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
   }, []));
 
   const discardChanges = () => {
-    setCommand({} as CommandOutput);
+    setCommand({ name: "", command: [] });
+    setCommandName("");
     setUndoLog([]);
     onDiscard();
   }
 
   const saveCommand = useCallback(async () => {
     const untitledKeys = CustomCommandStore.getKeys((key) => key.toLowerCase().includes("untitled")).map(k => k.split(" ")[1]);
-    const parsed = untitledKeys.length > 0 ? untitledKeys.map(k => parseInt(k)) : [0];
-    const keyCounter = Math.max(...parsed) + 1;
+    const parsed = untitledKeys.length > 0 ? untitledKeys.map(k => parseInt(k)).filter(n => !isNaN(n)) : [0];
+    const keyCounter = (parsed.length > 0 ? Math.max(...parsed) : 0) + 1;
 
+    const resolvedName = cmdName.length < 1 ? `Untitled ${keyCounter}` : cmdName;
+    const finalCommand: CommandOutput = {
+      name: resolvedName,
+      command: command.command ?? [],
+    };
+
+    if ((commandName.length < 1 || commandName !== finalCommand.name) && CustomCommandStore.get(finalCommand.name) !== null) {
+      Toast.show({
+        type: "error",
+        text1: "Duplicate Command Name",
+        text2: `A command named "${finalCommand.name}" already exists.`,
+        visibilityTime: 3000,
+      });
+      return;
+    }
 
     // If this view was opened with a pre-existing command name (editing)
     if (commandName.length >= 1)
-      CustomCommandStore.editCommand(commandName, command.name, command.command!);
-    // Otherwise, if the new command doesn't have a name
-    else if (command.name.length < 1)
-      CustomCommandStore.saveCommand(`Untitled ${keyCounter}`, command.command!);
-    // Otherwise, if the new command DOES have a name
+      CustomCommandStore.editCommand(commandName, finalCommand.name, finalCommand.command!);
     else
-      CustomCommandStore.saveCommand(command.name, command.command!);
-    // If command name has been changed, or updating command regularly
+      CustomCommandStore.saveCommand(finalCommand.name, finalCommand.command!);
 
     setUndoLog([]);
     onSave();
 
+    const targetName = commandName.length >= 1 ? commandName : finalCommand.name;
+
     // UPDATE POTENTIAL CUSTOM BUTTON ACTION
     const allCustomButtons = CustomOEMButtonStore.getAllBy((press) => press.customCommand !== undefined);
-    // All custom command names which map to a custom button action
-    const names = allCustomButtons.map(v => v.customCommand !== undefined ? ({ name: v.customCommand.name, presses: v.presses }) : null).filter(v => v !== null);
+    const matchingOEMButtons = allCustomButtons.filter(
+      (v) => v.customCommand?.name === targetName
+    );
 
-    // Filter by current command name in ModifyView : if editing, get by old name (what will be in the custom button panel)
-    const filteredNames = names.filter(n => commandName.length >= 1 ? n.name === commandName : n.name === command.name);
-
-    if (filteredNames.length === 0) return;
-
-    // Loop through button actions that need updating in some capacity
-    for (const btnAction of filteredNames) {
-      if (command.name.length < 1) {
-        // Update with "Untitled X" from above
-        CustomOEMButtonStore.set(btnAction.presses, { name: `Untitled ${keyCounter}`, command: command.command });
-      } else {
-        // Normal update
-        CustomOEMButtonStore.set(btnAction.presses, command);
-      }
+    for (const btnAction of matchingOEMButtons) {
+      CustomOEMButtonStore.set(btnAction.presses, finalCommand);
 
       // After set, if connected, send to device for update
       if (isConnected) {
         const looping = CustomOEMButtonStore.getLooping(btnAction.presses);
-        await updateOEMButtonPresets(btnAction.presses, { looping, presses: btnAction.presses, customCommand: command });
+        await updateOEMButtonPresets(btnAction.presses, {
+          looping,
+          presses: btnAction.presses,
+          customCommand: finalCommand,
+        });
       }
-
     }
-  }, [commandName, command]);
+
+    // UPDATE POTENTIAL AUX BUTTON ACTION
+    for (const auxId of [AUX_ID.AUX1, AUX_ID.AUX2]) {
+      const auxAction = AuxButtonStore.getAuxButtonAction(auxId);
+      if (typeof auxAction === "object" && auxAction.name === targetName) {
+        AuxButtonStore.setAuxButtonAction(auxId, finalCommand);
+        if (auxId === AUX_ID.AUX1) {
+          setAux1Action(finalCommand);
+        } else {
+          setAux2Action(finalCommand);
+        }
+
+        if (isConnected) {
+          const loop = AuxButtonStore.getAuxButtonLoop(auxId);
+          const switchType = AuxButtonStore.getAuxButtonType(auxId);
+          await setAuxButton(auxId, finalCommand, loop, switchType);
+        }
+      }
+    }
+  }, [commandName, command, cmdName, isConnected, updateOEMButtonPresets, setAuxButton, setAux1Action, setAux2Action, onSave]);
 
   const renderDragItem = useCallback(
     ({ isActive, item, index, onDragEnd, onDragStart, separators }: DragListRenderItemInfo<CommandInput>) => {
@@ -158,7 +184,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
               paddingVertical: 3,
             }}>
               {
-                command.command!.length > 1 ?
+                (command.command?.length ?? 0) > 1 ?
 
                   <Pressable
                     onPressIn={onDragStart}
@@ -214,45 +240,44 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
     setUndoLog((old) => [...old, command]);
 
     setCommand((oldCommand) => {
+      const currentSeq = oldCommand.command ?? [];
 
       if ("name" in changeData)
         return { ...oldCommand, name: changeData.name };
 
-      if ("addCommand" in changeData)
-        return { ...oldCommand, command: [...oldCommand.command!, changeData.addCommand] };
+      if ("addCommand" in changeData) {
+        if (currentSeq.length >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH)
+          return oldCommand;
+        return { ...oldCommand, command: [...currentSeq, changeData.addCommand] };
+      }
 
       if ("removeCommand" in changeData && changeData.removeCommand >= 0)
-        return { ...oldCommand, command: oldCommand.command!.toSpliced(changeData.removeCommand, 1) };
+        return { ...oldCommand, command: currentSeq.toSpliced(changeData.removeCommand, 1) };
 
       if ("moveCommand" in changeData) {
-        const cmdArr = [...oldCommand.command!];
+        const cmdArr = [...currentSeq];
         const c = cmdArr.splice(changeData.moveCommand.from, 1)[0];
         cmdArr.splice(changeData.moveCommand.to, 0, c);
         return { ...oldCommand, command: cmdArr };
       }
 
       if ("editCommand" in changeData) {
-        const modified = oldCommand.command!.toSpliced(changeData.editCommand.index, 1);
+        const modified = currentSeq.toSpliced(changeData.editCommand.index, 1);
         modified.splice(changeData.editCommand.index, 0, changeData.editCommand.command);
         return { ...oldCommand, command: modified };
       }
 
+      return oldCommand;
     });
   };
 
-  const throttledTextChange = useThrottle((commandText: string) => {
-    return handleCommandChange({ name: commandText })
-  }, 450);
-
   const undo = () => {
-    const lastCommandState = undoLog.at(-1)!;
+    const lastCommandState = undoLog.at(-1);
+    if (!lastCommandState) return;
 
-    setUndoLog((old) => {
-      old.splice(old.length - 1, 1);
-      return old;
-    });
+    setUndoLog((old) => old.slice(0, -1));
     setCommandName(lastCommandState.name);
-    setCommand(() => lastCommandState);
+    setCommand(lastCommandState);
   }
 
   // Command length needs to be longer than 1 comamnd, otherwise it doesnt make sense to create
@@ -261,21 +286,21 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
   const listRef = useRef<FlatList<CommandInput> | null>(null);
   useEffect(() => {
-    listRef.current!.scrollToEnd({ animated: false });
-    listRef.current!.scrollToOffset({ offset: (48 + 15) * command.command!.length })
+    const len = command.command?.length ?? 0;
+    listRef.current?.scrollToEnd({ animated: false });
+    listRef.current?.scrollToOffset({ offset: (48 + 15) * len });
   }, [command.command?.length]);
 
   const [unsavedChangesModalOpen, setUnsavedChangesModalOpen] = useState(false);
 
-  const navigation = useNavigation();
   const backWithSaveChanges = () => {
     // If changes have been made in any capacity
-    if (canUndo) {
+    if (canUndo || cmdName !== command.name) {
       setUnsavedChangesModalOpen(true);
       // Spawn confirmation modal
       return;
     } else
-      navigation.goBack();
+      discardChanges();
   }
 
 
@@ -321,10 +346,14 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
             fontFamily: "IBMPlexSans_400Regular",
             textAlign: "center",
           }}
-          onEndEditing={() => { handleCommandChange({ name: cmdName }) }}
+          onEndEditing={() => {
+            if (cmdName !== command.name) {
+              handleCommandChange({ name: cmdName });
+            }
+          }}
           value={cmdName}
           maxLength={16}
-          onChangeText={(text) => { handleCommandChange({ name: text }); setCommandName(text); }}
+          onChangeText={(text) => { setCommandName(text); }}
           placeholder="Enter command name..."
           placeholderTextColor={colorTheme.disabledButtonColor}
         />
@@ -357,6 +386,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
           ref={listRef}
           ListFooterComponent={
             <Pressable
+              disabled={(command.command?.length ?? 0) >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH}
               onPress={() => { setAddComponentInitialValue(null); setAddComponentVisible(true); }}
               style={({ pressed }) => ({
                 display: "flex",
@@ -369,7 +399,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                 paddingLeft: 20,
                 height: 48,
                 borderStyle: "dashed",
-                borderColor: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                borderColor: (command.command?.length ?? 0) >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                 borderWidth: 1.75,
                 borderRadius: 10,
               })}
@@ -381,19 +411,19 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
                   <>
                     <Text
                       style={{
-                        color: pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
+                        color: (command.command?.length ?? 0) >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor,
                         fontSize: 18,
                         fontFamily: "IBMPlexSans_500Medium"
                       }}
                     >
                       Add Component
                     </Text>
-                    <IonIcons name="add" color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
+                    <IonIcons name="add" color={(command.command?.length ?? 0) >= MAX_CUSTOM_CMD_SEQUENCE_LENGTH ? colorTheme.disabledButtonColor : pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={28} />
                   </>
               }
             </Pressable>
           }
-          data={command.command!}
+          data={command.command ?? []}
           keyExtractor={(item, index) => `${item.delay}-${item.transmitValue}-${index}`}
           renderItem={renderDragItem}
           onReordered={(from, to) => { handleCommandChange({ moveCommand: { from, to } }); }}
@@ -510,7 +540,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
       />
 
       <ComponentModal
-        onRequestClose={() => setAddComponentVisible(false)}
+        onRequestClose={() => { setAddComponentInitialValue(null); setAddComponentVisible(false); }}
         initialValue={addComponentInitialValue}
         visible={addComponentVisible}
         onSelect={({ action, delay }) => {
@@ -535,11 +565,11 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
       <UnsavedChangesModal
         cancel={() => setUnsavedChangesModalOpen(false)}
-        discardChanges={() => { setUnsavedChangesModalOpen(false); navigation.goBack(); }}
+        discardChanges={() => { setUnsavedChangesModalOpen(false); discardChanges(); }}
         saveChanges={() => { saveCommand(); setUnsavedChangesModalOpen(false); }}
         visible={unsavedChangesModalOpen}
       />
 
     </SafeAreaView>
   )
-}
+}

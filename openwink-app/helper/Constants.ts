@@ -8,11 +8,7 @@ export const BLE = {
       UUID: "a144c6b0-5e1a-4460-bb92-3674b2f51520",
       CHARS: {
         DEFAULT_COMMAND: "034a383c-d3e4-4501-b7a5-1c950db4f3c7",
-        BUSY_STATUS: "8d2b7b9f-c6a3-4f56-9f4f-2dc7d7873c18",
-        LEFT_STATUS: "c4907f4a-fb0c-440c-bbf1-4836b0636478",
-        RIGHT_STATUS: "784dd553-d837-4027-9143-280cb035163a",
-        SLEEPY_EYE: "a8237fed-e0a4-4ecd-9881-9b5dbb3f5902",
-        SYNC_HEADLIGHTS: "eceed349-998f-46a2-9835-4f2db7552381",
+        HEADLIGHT_STATUS: "8d2b7b9f-c6a3-4f56-9f4f-2dc7d7873c18",
         CUSTOM_COMMAND: "1313c33f-e793-422c-8c04-c82be9fe8a02",
       },
     },
@@ -28,17 +24,11 @@ export const BLE = {
     SETTINGS: {
       UUID: "cb5f7a1f-59f2-418e-b9d1-d6fc5c85a749",
       CHARS: {
-        SLEEP: "0104b643-56b0-4dd8-85c7-6bd00f9c732e",
         CUSTOM_BUTTON: "795a9433-cf23-4550-80b5-70a0c9413cac",
-        HEADLIGHT_MOVE_DELAY: "859290b7-32f5-4afd-80fd-832b95bc5a4b",
-        MOTOR_FEEDBACK: "5cdfa4ac-31f5-439b-af8d-ec09a808ce9d",
-        SLEEPY_SETTINGS: "bf133860-e47e-43e3-b1ed-cd87a1d9cb63",
-        UNPAIR: "c67c4fd1-21ce-4a75-bd16-629f990e575d",
-        RESET: "a55946b8-1978-4522-8a29-27d17e21b092",
+        GENERAL_SETTINGS: "bf133860-e47e-43e3-b1ed-cd87a1d9cb63",
         AUTH: "f61146f2-791d-4ef7-95aa-b565097f69c2",
-        HEADLIGHT_BYPASS: "ada2537e-0399-4d2a-9eab-0c7cb60d3500",
-        SWAP_ORIENTATION: "3ddd922d-14ca-4785-9cd0-39a530e8b14d",
         AUX_BUTTONS: "bf3d4b2c-0620-4b34-9474-37aa6cef28b9",
+        DEBUG: "5015946c-7bfb-4b78-b748-2eeb96712164",
       },
     },
   },
@@ -60,46 +50,140 @@ export function getBLEDescriptors<
 
 export const SCAN_TIME_SECONDS = 30 * 1000;
 
-// If you are a user working on your own build of the app
-// you will need to update the local IP to your own runtimes IP.
-// use ipconfig or ifconfig to view your local IP addr.
-export const UPDATE_URL = __DEV__
-  ? "http://172.20.9.16:3000/.netlify/functions/api/update"
-  : "https://update-server.netlify.app/.netlify/functions/api/update";
+export const DELAY_PREFIX = 0xDE;
+export const CANCEL_COMMAND_PAYLOAD = 0xCA;
+export const BINDING_DELETE_FLAG = 0xDD;
+export const MAX_CUSTOM_CMD_SEQUENCE_LENGTH = 60;
+export const MAX_CUSTOM_CMD_DELAY_MS = 65535;
 
-export const jkYSbsSAIDns = "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
+export enum BindingType {
+  NONE = 0,
+  BUILTIN = 1,
+  CUSTOM_SEQUENCE = 2,
+  SETTING = 3,
+}
+
+export enum SettingFlag {
+  CUSTOM_BUTTON_STATUS = 0xBE,
+  CUSTOM_BUTTON_DELAY = 0xAA,
+  AUX_STATUS = 0xBB,
+  WAVE_DELAY = 0xEE,
+  SLEEPY_EYE = 0x99,
+  HEADLIGHT_BYPASS = 0x88,
+  ORIENTATION = 0xCC,
+  LONG_TERM_SLEEP = 0x77,
+  UNPAIR = 0x66,
+  RESET = 0xFF,
+}
+
+export enum OTAControlCommand {
+  START = 0x01,
+  DONE = 0x02,
+  HALT = 0x03,
+}
+
+export const ATT_HEADER_SIZE = 3;
+export const OTA_ACK_WINDOW_SIZE = 20;
+
+export enum DebugLevel {
+  NONE = 0,
+  ERROR = 1,
+  WARN = 2,
+  INFO = 3,
+  DEBUG = 4,
+  VERBOSE = 5,
+}
+
+export const DebugLevelLabels: Record<DebugLevel, string> = {
+  [DebugLevel.NONE]: "Off",
+  [DebugLevel.ERROR]: "Error",
+  [DebugLevel.WARN]: "Warn",
+  [DebugLevel.INFO]: "Info",
+  [DebugLevel.DEBUG]: "Debug",
+  [DebugLevel.VERBOSE]: "Verbose",
+};
+
+// If you are a user working on your own build of the app
+// you can set EXPO_PUBLIC_UPDATE_URL in .env.local or update the local IP below.
+// use ipconfig or ifconfig to view your local IP addr.
+export const UPDATE_URL =
+  process.env.EXPO_PUBLIC_UPDATE_URL ??
+  (__DEV__
+    ? "http://172.20.9.16:3000/.netlify/functions/api/update"
+    : "https://update-server.netlify.app/.netlify/functions/api/update");
+
+export const OTA_API_KEY =
+  process.env.EXPO_PUBLIC_OTA_API_KEY ??
+  "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
+export const jkYSbsSAIDns = OTA_API_KEY;
+
+export enum ButtonStatus {
+  DOWN = 0,
+  UP = 1,
+}
+
+export enum DefaultCommandValue {
+  BOTH_UP = 1,
+  BOTH_DOWN,
+  BOTH_BLINK,
+  BOTH_BLINK_X2,
+  LEFT_UP,
+  LEFT_DOWN,
+  LEFT_WINK,
+  LEFT_WINK_X2,
+  RIGHT_UP,
+  RIGHT_DOWN,
+  RIGHT_WINK,
+  RIGHT_WINK_X2,
+  LEFT_WAVE,
+  RIGHT_WAVE,
+  LEFT_RIGHT,
+  LEFT_RIGHT_X2,
+  RIGHT_LEFT,
+  RIGHT_LEFT_X2,
+  SLEEPY_EYE,
+}
+
+export const DefaultCommandValueEnglish = [
+  "Both Up", "Both Down", "Both Blink", "Both Blink x2",
+  "Left Up", "Left Down", "Left Wink", "Left Wink x2",
+  "Right Up", "Right Down", "Right Wink", "Right Wink x2",
+  "Left Wave", "Right Wave",
+  "Left-Right", "Left-Right x2", "Right-Left", "Right-Left x2",
+  "Sleepy Eye",
+] as const;
 
 export const DEFAULT_COMMAND_DATA = [
   [
     {
       name: "Left Up",
-      value: 4,
+      value: DefaultCommandValue.LEFT_UP,
     },
     {
       name: "Left Down",
-      value: 5,
+      value: DefaultCommandValue.LEFT_DOWN,
     },
 
   ],
   [
     {
       name: "Both Up",
-      value: 1
+      value: DefaultCommandValue.BOTH_UP,
     },
     {
       name: "Both Down",
-      value: 2,
+      value: DefaultCommandValue.BOTH_DOWN,
     },
 
   ],
   [
     {
       name: "Right Up",
-      value: 7,
+      value: DefaultCommandValue.RIGHT_UP,
     },
     {
       name: "Right Down",
-      value: 8,
+      value: DefaultCommandValue.RIGHT_DOWN,
     },
 
   ]
@@ -107,20 +191,20 @@ export const DEFAULT_COMMAND_DATA = [
 
 export const DEFAULT_WINK_DATA = [{
   name: "Left Wink",
-  value: 6,
+  value: DefaultCommandValue.LEFT_WINK,
 },
 {
   name: "Both Blink",
-  value: 3,
+  value: DefaultCommandValue.BOTH_BLINK,
 },
 {
   name: "Right Wink",
-  value: 9,
+  value: DefaultCommandValue.RIGHT_WINK,
 }];
 
 export const MACRO_DATA = [
-  [{ name: "Left Wave", command: 10 }, { name: "Left-Right", command: 12 }, { name: "Left-Right x2", command: 13 }],
-  [{ name: "Right Wave", command: 11 }, { name: "Right-Left", command: 14 }, { name: "Right-Left x2", command: 15 }],
+  [{ name: "Left Wave", command: DefaultCommandValue.LEFT_WAVE }, { name: "Left-Right", command: DefaultCommandValue.LEFT_RIGHT }, { name: "Left-Right x2", command: DefaultCommandValue.LEFT_RIGHT_X2 }],
+  [{ name: "Right Wave", command: DefaultCommandValue.RIGHT_WAVE }, { name: "Right-Left", command: DefaultCommandValue.RIGHT_LEFT }, { name: "Right-Left x2", command: DefaultCommandValue.RIGHT_LEFT_X2 }],
 ];
 
 export const SETTINGS_DATA: Array<{
@@ -155,87 +239,59 @@ export const SETTINGS_DATA: Array<{
     },
   ]
 
+export enum BehaviorEnum {
+  DEFAULT = 0,
+  BOTH_BLINK = DefaultCommandValue.BOTH_BLINK,
+  BOTH_BLINK_X2 = DefaultCommandValue.BOTH_BLINK_X2,
+  LEFT_WINK = DefaultCommandValue.LEFT_WINK,
+  LEFT_WINK_X2 = DefaultCommandValue.LEFT_WINK_X2,
+  RIGHT_WINK = DefaultCommandValue.RIGHT_WINK,
+  RIGHT_WINK_X2 = DefaultCommandValue.RIGHT_WINK_X2,
+  LEFT_WAVE = DefaultCommandValue.LEFT_WAVE,
+  RIGHT_WAVE = DefaultCommandValue.RIGHT_WAVE,
+  LEFT_RIGHT = DefaultCommandValue.LEFT_RIGHT,
+  LEFT_RIGHT_X2 = DefaultCommandValue.LEFT_RIGHT_X2,
+  RIGHT_LEFT = DefaultCommandValue.RIGHT_LEFT,
+  RIGHT_LEFT_X2 = DefaultCommandValue.RIGHT_LEFT_X2,
+  SLEEPY_EYE = DefaultCommandValue.SLEEPY_EYE,
+}
+
 // Maps english to actual value
 export const buttonBehaviorMap = {
-  "Default Behavior": 1,
-  "Left Wink": 2,
-  "Left Wink x2": 3,
-  "Left-Right": 11,
-  "Left-Right x2": 13,
-  "Right Wink": 4,
-  "Right Wink x2": 5,
-  "Right-Left": 14,
-  "Right-Left x2": 15,
-  "Both Blink": 6,
-  "Both Blink x2": 7,
-  "Left Wave": 8,
-  "Right Wave": 9,
-  "Sleepy Eye": 10,
+  "Default Behavior": BehaviorEnum.DEFAULT,
+  "Left Wink": BehaviorEnum.LEFT_WINK,
+  "Left Wink x2": BehaviorEnum.LEFT_WINK_X2,
+  "Left-Right": BehaviorEnum.LEFT_RIGHT,
+  "Left-Right x2": BehaviorEnum.LEFT_RIGHT_X2,
+  "Right Wink": BehaviorEnum.RIGHT_WINK,
+  "Right Wink x2": BehaviorEnum.RIGHT_WINK_X2,
+  "Right-Left": BehaviorEnum.RIGHT_LEFT,
+  "Right-Left x2": BehaviorEnum.RIGHT_LEFT_X2,
+  "Both Blink": BehaviorEnum.BOTH_BLINK,
+  "Both Blink x2": BehaviorEnum.BOTH_BLINK_X2,
+  "Left Wave": BehaviorEnum.LEFT_WAVE,
+  "Right Wave": BehaviorEnum.RIGHT_WAVE,
+  "Sleepy Eye": BehaviorEnum.SLEEPY_EYE,
 } as const;
 
 export const buttonBehaviorMapReversed = {
-  1: "Default Behavior",
-  2: "Left Wink",
-  3: "Left Wink x2",
-  11: "Left-Right",
-  13: "Left-Right x2",
-  4: "Right Wink",
-  5: "Right Wink x2",
-  14: "Right-Left",
-  15: "Right-Left x2",
-  6: "Both Blink",
-  7: "Both Blink x2",
-  8: "Left Wave",
-  9: "Right Wave",
-  10: "Sleepy Eye",
+  [BehaviorEnum.DEFAULT]: "Default Behavior",
+  [BehaviorEnum.LEFT_WINK]: "Left Wink",
+  [BehaviorEnum.LEFT_WINK_X2]: "Left Wink x2",
+  [BehaviorEnum.LEFT_RIGHT]: "Left-Right",
+  [BehaviorEnum.LEFT_RIGHT_X2]: "Left-Right x2",
+  [BehaviorEnum.RIGHT_WINK]: "Right Wink",
+  [BehaviorEnum.RIGHT_WINK_X2]: "Right Wink x2",
+  [BehaviorEnum.RIGHT_LEFT]: "Right-Left",
+  [BehaviorEnum.RIGHT_LEFT_X2]: "Right-Left x2",
+  [BehaviorEnum.BOTH_BLINK]: "Both Blink",
+  [BehaviorEnum.BOTH_BLINK_X2]: "Both Blink x2",
+  [BehaviorEnum.LEFT_WAVE]: "Left Wave",
+  [BehaviorEnum.RIGHT_WAVE]: "Right Wave",
+  [BehaviorEnum.SLEEPY_EYE]: "Sleepy Eye",
 } as const;
 
-export enum ButtonStatus {
-  DOWN = 0,
-  UP = 1,
-}
-
-export enum DefaultCommandValue {
-  BOTH_UP = 1,
-  BOTH_DOWN,
-  BOTH_BLINK,
-  LEFT_UP,
-  LEFT_DOWN,
-  LEFT_WINK,
-  RIGHT_UP,
-  RIGHT_DOWN,
-  RIGHT_WINK,
-  LEFT_WAVE,
-  RIGHT_WAVE,
-  LEFT_RIGHT,
-  LEFT_RIGHT_X2,
-  RIGHT_LEFT,
-  RIGHT_LEFT_X2,
-}
-
-export const DefaultCommandValueEnglish = ["Both Up", "Both Down", "Both Blink",
-  "Left Up", "Left Down", "Left Wink",
-  "Right Up", "Right Down", "Right Wink",
-  "Left Wave", "Right Wave", "Left-Right",
-  "Left-Right x2", "Right-Left", "Right-Left x2"] as const;
-
 export const countToEnglish = ["Single Press", "Double Press", "Triple Press", "Quadruple Press", "Quintuple Press", "Sextuple Press", "Septuple Press", "Octuple Press", "Nonuple Press"];
-export enum BehaviorEnum {
-  DEFAULT = 1,
-  LEFT_WINK,
-  LEFT_WINK_X2,
-  RIGHT_WINK,
-  RIGHT_WINK_X2,
-  BOTH_BLINK,
-  BOTH_BLINK_X2,
-  LEFT_WAVE,
-  RIGHT_WAVE,
-  SLEEPY_EYE,
-  LEFT_RIGHT,
-  LEFT_RIGHT_X2 = 13,
-  RIGHT_LEFT,
-  RIGHT_LEFT_X2,
-}
 
 type HexNumber = `#${string}`;
 
@@ -243,6 +299,7 @@ export interface ThemeColors {
   primary: HexNumber;
   backgroundPrimaryColor: HexNumber;
   backgroundSecondaryColor: HexNumber;
+  debugViewColor: HexNumber;
   dropdownColor: HexNumber;
   buttonColor: HexNumber;
   disabledButtonColor: HexNumber;
@@ -283,6 +340,7 @@ export namespace ColorTheme {
     primary: "#ffffff",
     backgroundPrimaryColor: "#f1f1f1",
     backgroundSecondaryColor: "#ffffff",
+    debugViewColor: "#e4e4e7",
     bottomTabsBackground: "#ffffff",
     bottomTabsTextColor: "#141414",
     bottomTabsPill: "#f5ebdf",
@@ -300,6 +358,7 @@ export namespace ColorTheme {
     primary: "#550000",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
+    debugViewColor: "#0c0c0e",
     bottomTabsBackground: "#1c1c1c",
     bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#efe6e6",
@@ -317,6 +376,7 @@ export namespace ColorTheme {
     primary: "#c8102e",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
+    debugViewColor: "#0c0c0e",
     bottomTabsBackground: "#1c1c1c",
     bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#efe6e6",
@@ -335,6 +395,7 @@ export namespace ColorTheme {
     primary: "#ffcc00",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
+    debugViewColor: "#0c0c0e",
     bottomTabsBackground: "#1c1c1c",
     bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#b0b0b069",
@@ -352,6 +413,7 @@ export namespace ColorTheme {
     primary: "#0033a0",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
+    debugViewColor: "#0c0c0e",
     bottomTabsBackground: "#1c1c1c",
     bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#efe6e6",
@@ -369,6 +431,7 @@ export namespace ColorTheme {
     primary: "#004d26",
     backgroundPrimaryColor: "#141414",
     backgroundSecondaryColor: "#262629",
+    debugViewColor: "#0c0c0e",
     bottomTabsBackground: "#1c1c1c",
     bottomTabsTextColor: "#ffffff",
     bottomTabsPill: "#efe6e6",

@@ -48,7 +48,7 @@ export function StandardCommands() {
     deviceConnected && !headlightsBusy;
 
   const canResetHeadlightPositions =
-    deviceConnected && !headlightsBusy && !isSleepyEyeActive;
+    deviceConnected && !headlightsBusy && isSleepyEyeActive;
 
   const getButtonBackgroundColor = (pressed: boolean) => {
     if (!canSendMainCommands) {
