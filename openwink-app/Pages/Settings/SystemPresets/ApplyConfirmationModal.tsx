@@ -9,6 +9,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
+import { getDevicePasskey } from "../../../helper/Functions";
 
 interface IApplyConfirmationModal {
   visible: boolean;
@@ -28,6 +29,7 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
 
   const applyPreset = async (type: ApplyType) => {
     const preset = SettingsPresetsStore.getPreset(props.presetName);
+    const previousPasskey = getDevicePasskey();
     SettingsPresetsStore.applyPreset(props.presetName, type);
     setApplyAsNew(false);
 
@@ -38,8 +40,9 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
       if (isConnected) {
         const isSwitchingDevice =
           type === ApplyType.AS_NEW_DEVICE &&
-          Boolean(preset?.deviceMAC) &&
-          preset?.deviceMAC !== mac;
+          Boolean(preset?.deviceUUID) &&
+          (preset?.deviceUUID !== previousPasskey ||
+            (Boolean(preset?.deviceMAC) && preset?.deviceMAC !== mac));
 
         if (isSwitchingDevice) {
           await disconnect(false);
