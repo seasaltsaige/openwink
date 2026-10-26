@@ -185,9 +185,9 @@ export abstract class SettingsPresetsStore {
 
     CustomOEMButtonStore.setDelay(preset.customOEMButtonDelay);
 
-    if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID && preset.deviceMAC) {
+    if (type === ApplyType.AS_NEW_DEVICE && preset.deviceUUID) {
       DeviceUUIDStore.set(preset.deviceUUID);
-      DeviceMACStore.setMAC(preset.deviceMAC);
+      DeviceMACStore.forgetMAC();
 
       if (preset.firmwareVersion) {
         FirmwareStore.setFirmwareVersion(preset.firmwareVersion);
