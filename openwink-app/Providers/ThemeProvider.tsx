@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, TextStyle, ViewStyle } from "react-native";
+import { EdgeInsets, useSafeAreaInsets } from "react-native-safe-area-context";
 import { setAppIcon } from "@howincodes/expo-dynamic-app-icon";
 
 import { ColorTheme, ThemeColors } from "../helper/Constants";
@@ -137,10 +138,14 @@ export const ThemeContext = createContext<ThemeContextType | null>(null);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeName, setThemeName] = useState<keyof typeof ColorTheme.themeNames>(defaultName);
   const [isLoading, setIsLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
   const colorTheme = useMemo<ThemeColors>(() => ColorTheme[themeName], [themeName]);
 
-  const theme = useMemo<StyleSheet.NamedStyles<StyleSheetInterface>>(() => createThemeStyles(colorTheme), [colorTheme]);
+  const theme = useMemo<StyleSheet.NamedStyles<StyleSheetInterface>>(
+    () => createThemeStyles(colorTheme, insets),
+    [colorTheme, insets.top, insets.bottom, insets.left, insets.right],
+  );
 
   useEffect(() => {
     try {
@@ -210,12 +215,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   </ThemeContext.Provider>
 }
 
-function createThemeStyles(themeColors: ThemeColors) {
+function createThemeStyles(themeColors: ThemeColors, insets: EdgeInsets) {
   return StyleSheet.create<StyleSheetInterface>({
     tabContainer: {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -226,6 +235,10 @@ function createThemeStyles(themeColors: ThemeColors) {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15 + insets.bottom,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -318,6 +331,10 @@ function createThemeStyles(themeColors: ThemeColors) {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15 + insets.bottom,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -713,7 +730,8 @@ function createThemeStyles(themeColors: ThemeColors) {
     bottomTabsBackground: {
       flexDirection: "row",
       backgroundColor: themeColors.bottomTabsBackground,
-      height: 55,
+      height: 55 + insets.bottom,
+      paddingBottom: insets.bottom,
       alignItems: "center",
       justifyContent: "space-around",
     },
