@@ -1,4 +1,4 @@
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 
 import { useColorTheme } from "../../hooks/useColorTheme";
@@ -58,7 +58,7 @@ export function StandardCommands() {
   };
 
   return (
-    <SafeAreaView style={theme.tabContainer}>
+    <View style={theme.container}>
       <HeaderWithBackButton
         backText={back}
         headerText="Commands"
@@ -248,6 +248,6 @@ export function StandardCommands() {
           </View>
         </ScrollView>
       </View>
-    </SafeAreaView >
+    </View>
   );
 }

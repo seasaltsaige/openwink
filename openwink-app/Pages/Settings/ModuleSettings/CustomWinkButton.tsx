@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import RangeSlider from "react-native-sticky-range-slider";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -140,7 +140,7 @@ export function CustomWinkButton() {
 
   return (
     <>
-      <SafeAreaView style={[theme.container, { rowGap: 10 }]}>
+      <View style={[theme.container, { rowGap: 10 }]}>
         <HeaderWithBackButton
           backText={backHumanReadable}
           pressAction={() => {
@@ -472,7 +472,7 @@ export function CustomWinkButton() {
           disabled={!isConnected || !hasUnsavedChanges}
         />
 
-      </SafeAreaView>
+      </View>
 
       <CustomButtonActionModal
         visible={modalVisible}

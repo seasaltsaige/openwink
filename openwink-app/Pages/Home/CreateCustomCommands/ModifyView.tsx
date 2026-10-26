@@ -1,5 +1,6 @@
 
-import { FlatList, Modal, Pressable, SafeAreaView, Text, TextInput, View } from "react-native";
+import { FlatList, Modal, Pressable, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -47,6 +48,7 @@ type CommandChangeData =
 
 export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyViewProps) {
   const { colorTheme, theme } = useColorTheme();
+  const insets = useSafeAreaInsets();
   const { updateOEMButtonPresets, setAuxButton } = useBleCommand();
   const { setAux1Action, setAux2Action } = useBleMonitor();
   const { isConnected } = useBleConnection();
@@ -305,7 +307,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
 
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
       {/* MAIN Modify VIEW */}
 
       <HeaderWithBackButton
@@ -438,6 +440,7 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         bottom: 0,
         height: "auto",
         padding: 10,
+        paddingBottom: 10 + insets.bottom,
         backgroundColor: colorTheme.bottomTabsBackground,
         borderTopLeftRadius: 10,
         borderTopRightRadius: 10,
@@ -570,6 +573,6 @@ export function ModifyView({ type, commandName, onDiscard, onSave }: IModifyView
         visible={unsavedChangesModalOpen}
       />
 
-    </SafeAreaView>
+    </View>
   )
 }

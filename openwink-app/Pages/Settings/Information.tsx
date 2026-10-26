@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { Pressable as Press } from "react-native";
 import { Pressable } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import * as Application from "expo-application";
@@ -136,7 +135,7 @@ export function Information() {
   return (
     <>
 
-      <SafeAreaView style={theme.container}>
+      <View style={theme.container}>
         <HeaderWithBackButton
           backText={back}
           headerText="System Info"
@@ -381,7 +380,7 @@ export function Information() {
 
 
 
-      </SafeAreaView>
+      </View>
 
 
 

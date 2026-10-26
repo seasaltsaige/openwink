@@ -1,4 +1,3 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmationModal, HeaderWithBackButton, ExportModal, SearchBarFilter, TooltipHeader, ExportSettingOptions } from "../../../Components";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -170,7 +169,7 @@ export function SystemProfiles() {
 
   return (
     <>
-      <SafeAreaView style={theme.container}>
+      <View style={theme.container}>
         <HeaderWithBackButton
           backText={back}
           headerText="Profiles"
@@ -354,7 +353,7 @@ export function SystemProfiles() {
 
         </ScrollView >
 
-      </SafeAreaView>
+      </View>
 
       <CreatePresetModal
         close={() => { setConfirmationModalOpen(false); setProfileNameForEdit(undefined); fetchProfiles(); }}

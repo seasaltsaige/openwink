@@ -1,7 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useRoute } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { ColorTheme } from "../../helper/Constants";
@@ -22,7 +21,7 @@ export function AppTheme() {
   const { back } = route.params;
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
       <HeaderWithBackButton
         backText={back}
         headerText="App Theme"
@@ -77,6 +76,6 @@ export function AppTheme() {
           </Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </View>
   )
 }

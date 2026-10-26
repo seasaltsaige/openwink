@@ -4,7 +4,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@expo/vector-icons/Octicons";
 import Toast from "react-native-toast-message";
-import { SafeAreaView } from "react-native-safe-area-context";
 import ToggleSwitch from "toggle-switch-react-native";
 
 import {
@@ -201,7 +200,7 @@ export function ModuleSettings() {
 
   return (
     <>
-      <SafeAreaView style={theme.moduleSettingsContainer}>
+      <View style={theme.moduleSettingsContainer}>
         <HeaderWithBackButton
           backText={back}
           headerText="Module Settings"
@@ -354,7 +353,7 @@ export function ModuleSettings() {
           }
 
         </View>
-      </SafeAreaView>
+      </View>
 
 
       <ConfirmationModal

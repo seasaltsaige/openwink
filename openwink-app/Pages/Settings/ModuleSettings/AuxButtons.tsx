@@ -1,4 +1,3 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { AuxSettingsModal, HeaderWithBackButton, SettingsToolbar, UnsavedChangesModal } from "../../../Components";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -123,7 +122,7 @@ export function AuxButtons() {
 
   return (
     <>
-      <SafeAreaView style={[theme.container, { rowGap: 20 }]}>
+      <View style={[theme.container, { rowGap: 20 }]}>
         <HeaderWithBackButton
           backText={backHumanReadable}
           headerText="Auxiliary Buttons"
@@ -403,7 +402,7 @@ export function AuxButtons() {
           saveText="Save Settings"
         />
 
-      </SafeAreaView>
+      </View>
 
       <AuxSettingsModal
         visible={auxModalOpen}

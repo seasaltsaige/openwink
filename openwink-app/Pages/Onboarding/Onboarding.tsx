@@ -1,4 +1,5 @@
 import { Modal, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { Component, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -24,6 +25,7 @@ export function Onboarding({
   completeOnboarding
 }: IOnboarding) {
   const { colorTheme } = useColorTheme();
+  const insets = useSafeAreaInsets();
 
   function screenReducer(state: PageUpdateState, action: { type: PageUpdateType, payload?: number }) {
     if (action.type === PageUpdateType.NEXT_PAGE) {
@@ -57,7 +59,8 @@ export function Onboarding({
         flex: 1,
         backgroundColor: colorTheme.backgroundPrimaryColor,
         paddingHorizontal: 15,
-        paddingVertical: 20,
+        paddingTop: 20 + insets.top,
+        paddingBottom: 20 + insets.bottom,
       }}>
 
 

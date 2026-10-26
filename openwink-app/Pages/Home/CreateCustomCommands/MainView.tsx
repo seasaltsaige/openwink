@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DefaultCommandValueEnglish } from "../../../helper/Constants";
 import { AUX_ID, AuxButtonStore, CustomCommandStore, CustomOEMButtonStore } from "../../../Storage";
@@ -73,7 +72,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
   }, []));
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
 
       <HeaderWithBackButton
         backText={back}
@@ -178,7 +177,7 @@ export function MainView({ setModifyType, setEditCommandName }: IMainViewProps) 
           </ScrollView>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   )
 
 }

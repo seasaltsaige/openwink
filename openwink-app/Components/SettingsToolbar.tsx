@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorTheme } from "../hooks/useColorTheme";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
@@ -18,6 +19,7 @@ export function SettingsToolbar({
   saveText,
 }: ISettingsToolbar) {
   const { colorTheme, theme } = useColorTheme();
+  const insets = useSafeAreaInsets();
   return (
     <View
       style={{
@@ -28,7 +30,8 @@ export function SettingsToolbar({
         columnGap: 25,
         justifyContent: "center",
         width: "110%",
-        height: 60,
+        height: 60 + insets.bottom,
+        paddingBottom: insets.bottom,
         flexDirection: "row",
         backgroundColor: colorTheme.backgroundSecondaryColor,
       }}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
+import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native"
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -162,7 +162,7 @@ export function Home() {
 
   return (
     <>
-      <SafeAreaView style={theme.tabContainer}>
+      <View style={theme.tabContainer}>
 
         <MainHeader text="Home" />
 
@@ -419,7 +419,7 @@ export function Home() {
 
         </ScrollView>
 
-      </SafeAreaView>
+      </View>
 
       <EditQuickLinksModal
         close={() => setQuickLinksModalVisible(false)}

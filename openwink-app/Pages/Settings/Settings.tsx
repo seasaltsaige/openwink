@@ -1,4 +1,4 @@
-import { SafeAreaView, View } from "react-native"
+import { View } from "react-native"
 import { useNavigation, useRoute } from "@react-navigation/native";
 
 import { useColorTheme } from "../../hooks/useColorTheme";
@@ -13,7 +13,7 @@ export function Settings() {
   const route = useRoute();
 
   return (
-    <SafeAreaView style={theme.tabContainer}>
+    <View style={theme.tabContainer}>
       <MainHeader text="Settings" />
 
       <View style={theme.homeScreenButtonsContainer}>
@@ -37,6 +37,6 @@ export function Settings() {
 
       {/* <AboutFooter /> */}
 
-    </SafeAreaView>
+    </View>
   );
 }

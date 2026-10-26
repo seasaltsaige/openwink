@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import RangeSlider from "react-native-sticky-range-slider";
@@ -90,7 +89,7 @@ export function WaveDelaySettings() {
 
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
       <HeaderWithBackButton
         backText={backHumanReadable}
         headerText="Wave Settings"
@@ -220,7 +219,7 @@ export function WaveDelaySettings() {
         saveText="Save Delay"
       />
 
-    </SafeAreaView>
+    </View>
   )
 
 }

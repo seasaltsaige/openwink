@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { Text, View, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import VerticalSlider from "rn-vertical-slider-matyno";
@@ -95,7 +94,7 @@ export function SleepyEyeSettings() {
     transform: [{ translateY: -offset.value }],
   }));
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
 
       <HeaderWithBackButton
         backText={backHumanReadable}
@@ -865,7 +864,7 @@ export function SleepyEyeSettings() {
         saveText="Save Value"
       />
 
-    </SafeAreaView>
+    </View>
   )
 
 }

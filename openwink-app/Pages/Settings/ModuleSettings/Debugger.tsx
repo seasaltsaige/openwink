@@ -1,6 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import ToggleSwitch from "toggle-switch-react-native";
@@ -202,7 +201,7 @@ export function Debugger() {
   }, [debugLogs]);
 
   return (
-    <SafeAreaView style={[theme.container, {
+    <View style={[theme.container, {
       rowGap: 15
     }]}>
       <HeaderWithBackButton
@@ -488,6 +487,6 @@ export function Debugger() {
         resetText="Clear Logs"
         saveText="Export Logs"
       />
-    </SafeAreaView>
+    </View>
   );
 }
