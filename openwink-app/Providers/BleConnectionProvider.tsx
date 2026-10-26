@@ -337,11 +337,6 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
 
-        const storedMac = DeviceMACStore.getStoredMAC();
-        if (!storedMac || storedMac !== connection.id) {
-          DeviceUUIDStore.forgetUUID();
-        }
-
         if (getDevicePasskey() !== "Not Paired") {
           await connection.writeCharacteristicWithResponseForService(
             ...getBLEDescriptors("SETTINGS", "AUTH"),
