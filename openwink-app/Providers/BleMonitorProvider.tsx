@@ -19,7 +19,7 @@ import {
   FirmwareStore,
   SleepyEyeStore,
 } from "../Storage";
-import { base64ToBytes, bytesToBase64, encodeButtonBinding, sleep, toProperCase } from "../helper/Functions";
+import { base64ToBytes, bytesToBase64, encodeButtonBinding, getDevicePasskey, sleep, toProperCase } from "../helper/Functions";
 import {
   HeadlightOrientationStore,
   ORIENTATION,
@@ -604,6 +604,16 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const passkeyUpdate = base64.decode(char.value);
           if (passkeyUpdate.length === 0) return;
+
+          const storedMac = DeviceMACStore.getStoredMAC();
+          if (!storedMac && getDevicePasskey() !== "Not Paired") {
+            console.warn(
+              "[BLE] Connected to unpaired module while waiting for paired module match; disconnecting.",
+            );
+            device.cancelConnection().catch(() => {});
+            return;
+          }
+
           DeviceUUIDStore.set(passkeyUpdate);
           DeviceMACStore.setMAC(device.id);
           device
