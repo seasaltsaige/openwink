@@ -27,7 +27,14 @@ export function InfoBox({ title, data }: InfoBoxProps) {
                 {key}
               </Text>
 
-              <Text style={theme.infoBoxInnerContentText}>
+              <Text
+                style={[
+                  theme.infoBoxInnerContentText,
+                  { flexShrink: 1, maxWidth: "60%", textAlign: "right" },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="middle"
+              >
                 {rows[idx][key]}
               </Text>
             </View>
