@@ -22,7 +22,8 @@
     "submit:ios": "eas submit --platform ios",
     "update:dev": "eas update --branch development",
     "update:preview": "eas update --branch preview",
-    "update:prod": "eas update --branch production"
+    "update:prod": "eas update --branch production",
+    "ota:publish": "node scripts/publish-app-ota.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
@@ -67,7 +68,8 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-walkthrough-tooltip": "^1.6.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "expo-updates": "~0.27.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
