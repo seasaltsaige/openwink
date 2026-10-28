@@ -1,6 +1,12 @@
 [build]
+  publish = "dist"
   functions = "functions"
   node_bundler = "esbuild"
 
 [functions]
   included_files = ["files/**"]
+
+[[headers]]
+  for = "/app-updates/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
