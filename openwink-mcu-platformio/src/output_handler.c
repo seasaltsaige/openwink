@@ -27,6 +27,96 @@ RTC_DATA_ATTR headlight_position_t positions = {
 RTC_DATA_ATTR static uint8_t left_sleepy_target = 50;
 RTC_DATA_ATTR static uint8_t right_sleepy_target = 50;
 
+/**
+ * Non-linear partial-move timing lookup tables (in permille, 0..1000 of calibrated move_time_ms),
+ * indexed in 5% increments of target open position (0% = fully down, 100% = fully up).
+ *
+ * Derived from four-bar / slider-crank headlight linkage kinematics:
+ *   tau(p) = tau_min + (tau_max - tau_min) * arccos(1 - 2*p) / pi
+ * with directional deadband and coasting offsets:
+ *   - UP (0% -> p%):     tau_min = 0.130, tau_max = 0.780
+ *   - DOWN (100% -> p%): tau_min = 0.150, tau_max = 0.730
+ *
+ * Endpoints at index 0 (0%) and index 20 (100%) represent the physical lift/drop
+ * threshold anchors for interpolating 1%..4% and 96%..99%.
+ */
+static const uint16_t sleepy_up_time_permille[SLEEPY_LUT_SIZE] = {
+    130, //   0% (lift start threshold)
+    223, //   5%
+    263, //  10%
+    295, //  15%
+    322, //  20%
+    347, //  25%
+    370, //  30%
+    392, //  35%
+    413, //  40%
+    434, //  45%
+    455, //  50%
+    476, //  55%
+    497, //  60%
+    518, //  65%
+    540, //  70%
+    563, //  75%
+    588, //  80%
+    615, //  85%
+    647, //  90%
+    687, //  95%
+    780  // 100% (lift coast threshold)
+};
+
+static const uint16_t sleepy_down_time_permille[SLEEPY_LUT_SIZE] = {
+    846, //   0% (drop coast threshold: 100% travel down from top)
+    753, //   5% (95% travel down)
+    713, //  10% (90% travel down)
+    681, //  15% (85% travel down)
+    654, //  20% (80% travel down)
+    629, //  25% (75% travel down)
+    606, //  30% (70% travel down)
+    584, //  35% (65% travel down)
+    563, //  40% (60% travel down)
+    542, //  45% (55% travel down)
+    521, //  50% (50% travel down)
+    500, //  55% (45% travel down)
+    479, //  60% (40% travel down)
+    458, //  65% (35% travel down)
+    436, //  70% (30% travel down)
+    413, //  75% (25% travel down)
+    388, //  80% (20% travel down)
+    361, //  85% (15% travel down)
+    329, //  90% (10% travel down)
+    289, //  95% ( 5% travel down)
+    196  // 100% (drop start threshold: 0% travel down from top)
+};
+
+static uint16_t get_avg_move_time_ms() {
+    return (uint16_t)(((uint32_t)get_left_move_time_ms() + (uint32_t)get_right_move_time_ms() + 1) / 2);
+}
+
+static uint16_t get_partial_time_permille(uint8_t target_pos, move_type_t move_dir) {
+    if (target_pos == POSITION_DOWN)
+        return (move_dir == MOVE_UP) ? 0 : 1000;
+    if (target_pos >= POSITION_UP)
+        return (move_dir == MOVE_UP) ? 1000 : 0;
+
+    const uint16_t* lut = (move_dir == MOVE_UP) ? sleepy_up_time_permille : sleepy_down_time_permille;
+    uint8_t idx = target_pos / SLEEPY_LUT_STEP_PCT;
+    uint8_t rem = target_pos % SLEEPY_LUT_STEP_PCT;
+
+    if (rem == 0)
+        return lut[idx];
+
+    int32_t v0 = (int32_t)lut[idx];
+    int32_t v1 = (int32_t)lut[idx + 1];
+    int32_t diff = v1 - v0;
+    int32_t interp = v0 + (diff * (int32_t)rem + (diff >= 0 ? 2 : -2)) / SLEEPY_LUT_STEP_PCT;
+    return (uint16_t)interp;
+}
+
+static uint32_t compute_partial_move_delay_ms(uint16_t move_time_ms, uint8_t target_pos, move_type_t move_dir) {
+    uint16_t permille = get_partial_time_permille(target_pos, move_dir);
+    return ((uint32_t)move_time_ms * permille + 500) / 1000;
+}
+
 uint8_t is_left_sleepy() {
     return (positions.left_pos != POSITION_DOWN && positions.left_pos != POSITION_UP);
 }
@@ -175,11 +265,11 @@ void handle_output_task(void* args) {
 
             if (move_res != MOVE_NOP) {
                 if (move.target == MOVE_PARTIAL) {
-                    uint8_t travel_pct = (move_res == MOVE_UP) ? move.target_pos : (100 - move.target_pos);
-                    uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
-                    uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
+                    uint16_t move_time_ms = get_avg_move_time_ms();
+                    uint16_t permille = get_partial_time_permille(move.target_pos, move_res);
+                    uint32_t delay_ms = compute_partial_move_delay_ms(move_time_ms, move.target_pos, move_res);
 
-                    BLE_LOGD(TAG, "%s PARTIAL %s: %u%% -> %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, move.target_pos, (unsigned long)delay_ms);
+                    BLE_LOGD(TAG, "%s PARTIAL %s: %u%% -> %u%% (%u.%u%% of %ums, %lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, move.target_pos, permille / 10, permille % 10, move_time_ms, (unsigned long)delay_ms);
 
                     xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
 
@@ -196,17 +286,35 @@ void handle_output_task(void* args) {
                     if (is_moving)
                         xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(50));
                 } else if (side_sleepy) {
-                    uint8_t travel_pct = (move_res == MOVE_UP) ? (100 - curr_pos) : curr_pos;
-                    uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
-                    uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
+                    move_type_t last_dir = (motor->side_bit == LEFT_SIDE) ? positions.last_left_move_dir : positions.last_right_move_dir;
+                    uint16_t move_time_ms = get_avg_move_time_ms();
+                    uint16_t used_permille = get_partial_time_permille(curr_pos, last_dir);
+                    uint16_t rem_permille = (move_res == last_dir) ? ((used_permille < 1000) ? (1000 - used_permille) : 0) : used_permille;
+                    uint32_t est_rem_ms = ((uint32_t)move_time_ms * rem_permille + 500) / 1000;
+                    uint32_t cutoff_ms = est_rem_ms + SLEEPY_EXIT_MARGIN_MS;
+                    if (cutoff_ms > MOVE_TIME_LIMIT_MS)
+                        cutoff_ms = MOVE_TIME_LIMIT_MS;
 
-                    BLE_LOGD(TAG, "%s SLEEPY_EXIT %s: from %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, (unsigned long)delay_ms);
+                    BLE_LOGD(TAG, "%s SLEEPY_EXIT %s: from %u%% (est=%lums, cutoff=%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, (unsigned long)est_rem_ms, (unsigned long)cutoff_ms);
 
-                    xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
+                    // Wait until the physical cam limit switch stops the motor (motor->stopped_bit),
+                    // with a hard safety cutoff if the headlight was already resting on the limit switch.
+                    EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(cutoff_ms));
+
+                    // If the motor is still actively drawing current at cutoff_ms (e.g. cold/uncalibrated motor),
+                    // extend the wait up to MOVE_TIME_LIMIT_MS so power is never cut before the limit switch opens.
+                    uint8_t is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
+                    if ((completed_bits & motor->stopped_bit) == 0 && is_moving && cutoff_ms < MOVE_TIME_LIMIT_MS) {
+                        uint32_t extra_ms = MOVE_TIME_LIMIT_MS - cutoff_ms;
+                        completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(extra_ms));
+                    }
+
+                    if ((completed_bits & motor->stopped_bit) == 0)
+                        BLE_LOGW(TAG, "%s SLEEPY_EXIT %s hard cutoff reached (from %u%%)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos);
 
                     set_side_off(motor);
 
-                    uint8_t is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
+                    is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
                     if (is_moving)
                         xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(50));
 
