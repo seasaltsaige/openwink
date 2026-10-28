@@ -12,7 +12,7 @@ app.use(express.json());
 
 const router = Router();
 
-
+const BOUNDARY = "openwink-manifest-boundary";
 const SEMVER_REGEX = /^\d+\.\d+\.\d+$/;
 
 const compareFirmwareVersions = (a: string, b: string) => {
@@ -131,6 +131,136 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 
+function sanitizeSegment(input: string): string {
+  return input.replace(/[^a-zA-Z0-9._-]/g, "");
+}
+
+router.get("/app/info", auth, (req, res) => {
+  const runtimeVersion = sanitizeSegment(
+    (req.query.runtimeVersion as string) ||
+    (req.headers["expo-runtime-version"] as string) ||
+    ""
+  );
+  if (!runtimeVersion) {
+    return res.status(400).json({ error: "Missing runtimeVersion" });
+  }
+
+  const appUpdatesRoot = path.join(__dirname, "../files", "app-updates");
+  const latestPath = path.join(appUpdatesRoot, "latest.json");
+
+  // If a newer native store build (runtimeVersion) exists, preempt OTA with requiresStoreUpdate: true
+  if (fs.existsSync(latestPath) && SEMVER_REGEX.test(runtimeVersion)) {
+    const latestInfo = JSON.parse(fs.readFileSync(latestPath, "utf-8"));
+    if (
+      latestInfo.runtimeVersion &&
+      SEMVER_REGEX.test(latestInfo.runtimeVersion) &&
+      compareFirmwareVersions(latestInfo.runtimeVersion, runtimeVersion) > 0
+    ) {
+      return res.status(200).json({
+        ...latestInfo,
+        requiresStoreUpdate: true,
+      });
+    }
+  }
+
+  const infoPath = path.join(appUpdatesRoot, runtimeVersion, "info.json");
+  if (!fs.existsSync(infoPath)) {
+    return res.status(404).json({ error: "No update info for runtimeVersion" });
+  }
+
+  const info = JSON.parse(fs.readFileSync(infoPath, "utf-8"));
+  return res.status(200).json({
+    ...info,
+    requiresStoreUpdate: false,
+  });
+});
+
+router.get("/app/manifest", auth, (req, res) => {
+  const platform = (req.headers["expo-platform"] as string) || (req.query.platform as string);
+  const runtimeVersion = sanitizeSegment(
+    (req.headers["expo-runtime-version"] as string) ||
+    (req.query.runtimeVersion as string) ||
+    ""
+  );
+  const currentUpdateId = req.headers["expo-current-update-id"] as string | undefined;
+  const protocolVersion = (req.headers["expo-protocol-version"] as string) || "1";
+
+  if (platform !== "ios" && platform !== "android") {
+    return res.status(400).json({ error: "Invalid or missing expo-platform header" });
+  }
+  if (!runtimeVersion) {
+    return res.status(400).json({ error: "Missing expo-runtime-version header" });
+  }
+
+  const baseDir = path.join(__dirname, "../files", "app-updates", runtimeVersion);
+  const manifestPath = path.join(baseDir, `manifest-${platform}.json`);
+  const sigPath = path.join(baseDir, `manifest-${platform}.sig`);
+
+  res.setHeader("expo-protocol-version", protocolVersion);
+  res.setHeader("expo-sfv-version", "0");
+  res.setHeader("cache-control", "private, max-age=0");
+
+  const sendNoUpdateAvailable = () => {
+    if (protocolVersion === "0") {
+      return res.status(204).end();
+    }
+    const directive = JSON.stringify({ type: "noUpdateAvailable" });
+    const body = [
+      `--${BOUNDARY}`,
+      `Content-Disposition: form-data; name="directive"`,
+      `Content-Type: application/json; charset=utf-8`,
+      ``,
+      directive,
+      `--${BOUNDARY}--`,
+      ``,
+    ].join("\r\n");
+    res.setHeader("content-type", `multipart/mixed; boundary=${BOUNDARY}`);
+    return res.status(200).send(body);
+  };
+
+  if (!fs.existsSync(manifestPath)) {
+    return sendNoUpdateAvailable();
+  }
+
+  const manifestRaw = fs.readFileSync(manifestPath, "utf-8");
+  const manifestObj = JSON.parse(manifestRaw);
+
+  if (currentUpdateId && currentUpdateId === manifestObj.id) {
+    return sendNoUpdateAvailable();
+  }
+
+  const sigHeader = fs.existsSync(sigPath)
+    ? fs.readFileSync(sigPath, "utf-8").trim()
+    : null;
+
+  const partHeaders = [
+    `--${BOUNDARY}`,
+    `Content-Disposition: form-data; name="manifest"`,
+    `Content-Type: application/json; charset=utf-8`,
+  ];
+  if (sigHeader) {
+    partHeaders.push(`expo-signature: ${sigHeader}`);
+  }
+
+  const body = [...partHeaders, ``, manifestRaw, `--${BOUNDARY}--`, ``].join("\r\n");
+  res.setHeader("content-type", `multipart/mixed; boundary=${BOUNDARY}`);
+  return res.status(200).send(body);
+});
+
+router.get("/firmware/:version", auth, async (req, res) => {
+  const versionToInstall = req.params.version as string;
+
+  if (!versionToInstall || !SEMVER_REGEX.test(versionToInstall)) {
+    return res.status(400).json({ error: "Invalid or missing target firmware version." });
+  }
+
+  const pathToUpdateBin = path.join(__dirname, `../files/firmware/update-${versionToInstall}.bin`);
+  if (fs.existsSync(pathToUpdateBin)) {
+    res.status(200).contentType("application/octet-stream").sendFile(pathToUpdateBin);
+  } else
+    res.status(500).json({ error: `Update BIN v${versionToInstall} not found` });
+});
+
 router.get("/:version", auth, async (req, res) => {
   const version = req.params.version;
 
@@ -157,21 +287,6 @@ router.get("/:version", auth, async (req, res) => {
 
   } else res.status(500).json({ error: "Update JSON file not found." });
 });
-
-router.get("/firmware/:version", auth, async (req, res) => {
-  const versionToInstall = req.params.version as string;
-
-  if (!versionToInstall || !SEMVER_REGEX.test(versionToInstall)) {
-    return res.status(400).json({ error: "Invalid or missing target firmware version." });
-  }
-
-  const pathToUpdateBin = path.join(__dirname, `../files/firmware/update-${versionToInstall}.bin`);
-  if (fs.existsSync(pathToUpdateBin)) {
-    res.status(200).contentType("application/octet-stream").sendFile(pathToUpdateBin);
-  } else
-    res.status(500).json({ error: `Update BIN v${versionToInstall} not found` });
-});
-
 
 app.use("/.netlify/functions/api/update", router);
 
