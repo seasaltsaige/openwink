@@ -10,17 +10,6 @@ export type AvailableUpdate = {
   description: string;
 };
 
-export type AppUpdateInfo = {
-  version: FirmwareType;
-  runtimeVersion: string;
-  minFirmwareVersion?: FirmwareType | null;
-  requiresStoreUpdate?: boolean;
-  iosStoreUrl?: string;
-  androidStoreUrl?: string;
-  description: string;
-  createdAt: string;
-};
-
 type FetchResponse = {
   message?: string;
   updateNeeded: boolean;
@@ -95,44 +84,6 @@ export abstract class OTA {
 
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Update check timed out. Please check your internet connection and try again.');
-      }
-
-      throw error;
-    }
-  }
-
-  public static async fetchAppUpdateInfo(runtimeVersion: string): Promise<AppUpdateInfo | null> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    try {
-      const response = await fetch(
-        `${UPDATE_URL}/app/info?runtimeVersion=${encodeURIComponent(runtimeVersion)}`,
-        {
-          method: "GET",
-          headers: {
-            authorization: OTA_API_KEY,
-          },
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (response.status === 404) {
-        return null;
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch app update info: ${response.status} ${response.statusText}`);
-      }
-
-      return (await response.json()) as AppUpdateInfo;
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("App update check timed out. Please check your internet connection and try again.");
       }
 
       throw error;
