@@ -201,21 +201,7 @@ router.get("/app/manifest", auth, (req, res) => {
   res.setHeader("cache-control", "private, max-age=0");
 
   const sendNoUpdateAvailable = () => {
-    if (protocolVersion === "0") {
-      return res.status(204).end();
-    }
-    const directive = JSON.stringify({ type: "noUpdateAvailable" });
-    const body = [
-      `--${BOUNDARY}`,
-      `Content-Disposition: form-data; name="directive"`,
-      `Content-Type: application/json; charset=utf-8`,
-      ``,
-      directive,
-      `--${BOUNDARY}--`,
-      ``,
-    ].join("\r\n");
-    res.setHeader("content-type", `multipart/mixed; boundary=${BOUNDARY}`);
-    return res.status(200).send(body);
+    return res.status(204).end();
   };
 
   if (!fs.existsSync(manifestPath)) {
