@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ATT_HEADER_SIZE } from "../helper/Constants";
 import { sleep } from "../helper/Functions";
+import { AppOTA, AppUpdateInfo } from "../helper/Handlers/App";
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
@@ -143,5 +144,75 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
     updateData,
     checkUpdateAvailable,
     startUpdate,
+  };
+};
+
+export type AppUpdateManagerReturnType = {
+  appUpdateStatus: UPDATE_STATUS;
+  appUpdateData: AppUpdateInfo | null;
+  appUpdateError: ERROR_TYPE;
+  startAppUpdate: () => Promise<boolean>;
+  checkAppUpdateAvailable: () => Promise<boolean>;
+};
+
+export const useAppUpdateManager = (): AppUpdateManagerReturnType => {
+  const [appUpdateStatus, setAppUpdateStatus] = useState(UPDATE_STATUS.IDLE);
+  const [appUpdateError, setAppUpdateError] = useState(ERROR_TYPE.ERR_NONE);
+  const [appUpdateData, setAppUpdateData] = useState<AppUpdateInfo | null>(null);
+
+  const checkAppUpdateAvailable = useCallback(async () => {
+    try {
+      setAppUpdateStatus(UPDATE_STATUS.FETCHING);
+      setAppUpdateError(ERROR_TYPE.ERR_NONE);
+
+      await sleep(Math.floor(Math.random() * 1100) + 500);
+
+      const available = await AppOTA.fetchUpdateAvailable();
+      if (!available || !AppOTA.latestUpdateInfo) {
+        setAppUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+        return false;
+      }
+
+      setAppUpdateData({ ...AppOTA.latestUpdateInfo });
+      setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+      return true;
+    } catch (err) {
+      setAppUpdateError(ERROR_TYPE.ERR_TIMEOUT);
+      setAppUpdateStatus(UPDATE_STATUS.IDLE);
+
+      setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+      return false;
+    }
+  }, []);
+
+  const startAppUpdate = useCallback(async () => {
+    setAppUpdateStatus(UPDATE_STATUS.INSTALLING);
+    setAppUpdateError(ERROR_TYPE.ERR_NONE);
+
+    try {
+      const success = await AppOTA.installUpdate();
+      if (!success) {
+        setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setAppUpdateError(ERROR_TYPE.ERR_UPDATE_FAILED);
+        setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+        return false;
+      }
+
+      setAppUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+      return true;
+    } catch (err) {
+      setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+      setAppUpdateError(ERROR_TYPE.ERR_UPDATE_FAILED);
+      setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+      return false;
+    }
+  }, []);
+
+  return {
+    appUpdateStatus,
+    appUpdateData,
+    appUpdateError,
+    checkAppUpdateAvailable,
+    startAppUpdate,
   };
 };

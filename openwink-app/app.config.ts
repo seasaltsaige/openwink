@@ -1,6 +1,9 @@
 import { ConfigContext, ExpoConfig } from '@expo/config';
 import dotenv from 'dotenv';
 
+const UPDATE_SERVER_BASE = "https://update-server.netlify.app";
+const OTA_API_KEY = process.env.EXPO_PUBLIC_OTA_API_KEY ?? "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
+
 require('ts-node/register/transpile-only');
 
 dotenv.config();
@@ -12,6 +15,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
   version: "2.0.0",
+  runtimeVersion: "2.0.0",
+  updates: {
+    enabled: true,
+    checkAutomatically: "NEVER",
+    url: `${UPDATE_SERVER_BASE}/.netlify/functions/api/update/app/manifest`,
+    fallbackToCacheTimeout: 0,
+    requestHeaders: {
+      authorization: OTA_API_KEY,
+    },
+    codeSigningCertificate: "./certs/certificate.pem",
+    codeSigningMetadata: {
+      keyid: "openwink",
+      alg: "rsa-v1_5-sha256",
+    },
+  },
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
