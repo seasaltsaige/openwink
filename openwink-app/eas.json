@@ -10,6 +10,9 @@
 
     "preview": {
       "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleRelease -PreactNativeArchitectures=arm64-v8a"
+      },
       "env": {
         "APP_VARIANT": "preview"
       }

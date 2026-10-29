@@ -69,7 +69,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-build-properties",
       {
         android: {
-          kotlinVersion: "1.9.25"
+          kotlinVersion: "1.9.25",
+          useLegacyPackaging: variant !== "production"
         },
         ios: {
           deploymentTarget: "15.1"
