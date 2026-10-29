@@ -14,8 +14,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "2.0.0",
-  runtimeVersion: "2.0.0",
+  version: "2.1.0",
+  runtimeVersion: "2.1.0",
   updates: {
     enabled: true,
     checkAutomatically: "NEVER",
