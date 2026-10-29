@@ -75,13 +75,28 @@ export function WaveDelaySettings() {
   }, [min, leftMoveTime, rightMoveTime]);
 
   useAnimatedReaction(
-    () => leftWaveStatus.value,
-    (value) => runOnJS(setLeftWave)(value),
+    () => Math.round(leftWaveStatus.value),
+    (value, previous) => {
+      if (value !== previous) {
+        runOnJS(setLeftWave)(value);
+      }
+    },
   );
   useAnimatedReaction(
-    () => rightWaveStatus.value,
-    (value) => runOnJS(setRightWave)(value),
+    () => Math.round(rightWaveStatus.value),
+    (value, previous) => {
+      if (value !== previous) {
+        runOnJS(setRightWave)(value);
+      }
+    },
   );
+
+  useEffect(() => {
+    return () => {
+      cancelAnimation(leftWaveStatus);
+      cancelAnimation(rightWaveStatus);
+    };
+  }, [leftWaveStatus, rightWaveStatus]);
 
   useEffect(() => {
     if (rightWave === 100) setAnimationRunning(false);

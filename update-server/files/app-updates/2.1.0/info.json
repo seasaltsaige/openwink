@@ -1,0 +1,9 @@
+{
+  "version": "2.1.1",
+  "runtimeVersion": "2.1.0",
+  "minFirmwareVersion": null,
+  "description": "Attempt to fix crashing issue during onboarding on some devices",
+  "iosStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
+  "androidStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
+  "createdAt": "2026-10-29T02:21:55.355Z"
+}

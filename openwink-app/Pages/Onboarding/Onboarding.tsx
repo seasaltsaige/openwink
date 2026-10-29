@@ -29,24 +29,27 @@ export function Onboarding({
 
   function screenReducer(state: PageUpdateState, action: { type: PageUpdateType, payload?: number }) {
     if (action.type === PageUpdateType.NEXT_PAGE) {
-      if (state.index === ONBOARDING_SCREENS.length - 1)
+      if (state.index >= ONBOARDING_SCREENS.length - 1)
         return { index: ONBOARDING_SCREENS.length - 1 };
       else
         return { index: state.index + 1 };
     } else if (action.type === PageUpdateType.PREV_PAGE) {
-      if (state.index === 0)
+      if (state.index <= 0)
         return { index: 0 };
       else
         return { index: state.index - 1 };
     } else {
-      return { index: action.payload || 0 };
+      const targetIndex = action.payload ?? 0;
+      return { index: Math.max(0, Math.min(ONBOARDING_SCREENS.length - 1, targetIndex)) };
     }
   }
 
   const [state, dispatchPageUpdate] = useReducer(screenReducer, { index: 0 });
 
 
-  const CurrentScreen = ONBOARDING_SCREENS[state.index];
+  const CurrentScreen = ONBOARDING_SCREENS[state.index] ?? ONBOARDING_SCREENS[0];
+
+  if (!visible) return null;
 
   return (
     <Modal

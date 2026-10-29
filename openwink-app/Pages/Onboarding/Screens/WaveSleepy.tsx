@@ -12,15 +12,9 @@ import LinearGradient from "react-native-linear-gradient";
 export function WaveSleepy() {
   const { colorTheme, theme } = useColorTheme();
 
-  const { waveDelayMulti, leftMoveTime, rightMoveTime } = useBleMonitor();
+  const { leftMoveTime, rightMoveTime } = useBleMonitor();
 
-  const [min, setMin] = useState(25);
-
-  useEffect(() => {
-    setMin(waveDelayMulti * 100);
-  }, [waveDelayMulti]);
-
-
+  const isMounted = useSharedValue(true);
   const leftWaveStatus = useSharedValue(100);
   const rightWaveStatus = useSharedValue(100);
 
@@ -179,7 +173,6 @@ export function WaveSleepy() {
     );
 
   }, [
-    min,
     leftMoveTime,
     rightMoveTime,
     leftWaveStatus,
@@ -187,23 +180,33 @@ export function WaveSleepy() {
   ]);
 
   useAnimatedReaction(
-    () => leftWaveStatus.value,
-    (value) => runOnJS(setLeftWave)(value),
+    () => Math.round(leftWaveStatus.value),
+    (value, previous) => {
+      if (isMounted.value && value !== previous) {
+        runOnJS(setLeftWave)(value);
+      }
+    },
   );
   useAnimatedReaction(
-    () => rightWaveStatus.value,
-    (value) => runOnJS(setRightWave)(value),
+    () => Math.round(rightWaveStatus.value),
+    (value, previous) => {
+      if (isMounted.value && value !== previous) {
+        runOnJS(setRightWave)(value);
+      }
+    },
   );
 
 
   useEffect(() => {
+    isMounted.value = true;
     animateWave();
 
     return () => {
+      isMounted.value = false;
       cancelAnimation(leftWaveStatus);
       cancelAnimation(rightWaveStatus);
     };
-  }, [animateWave, leftWaveStatus, rightWaveStatus]);
+  }, [animateWave, isMounted, leftWaveStatus, rightWaveStatus]);
 
   return (
     <View style={{
