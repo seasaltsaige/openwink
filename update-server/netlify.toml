@@ -3,6 +3,9 @@
   functions = "functions"
   node_bundler = "esbuild"
 
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "API_AUTH"
+
 [functions]
   included_files = ["files/**"]
 
