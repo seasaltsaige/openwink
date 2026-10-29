@@ -11,7 +11,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "APP_VARIANT": "preview"
+        "APP_VARIANT": "preview",
+        "EXPO_PUBLIC_UPDATE_SERVER_BASE": "https://ota-test--update-server.netlify.app"
       }
     },
 

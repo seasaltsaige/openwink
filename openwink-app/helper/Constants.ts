@@ -106,11 +106,15 @@ export const DebugLevelLabels: Record<DebugLevel, string> = {
 // If you are a user working on your own build of the app
 // you can set EXPO_PUBLIC_UPDATE_URL in .env.local or update the local IP below.
 // use ipconfig or ifconfig to view your local IP addr.
+export const UPDATE_SERVER_BASE =
+  process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE ??
+  "https://update-server.netlify.app";
+
 export const UPDATE_URL =
   process.env.EXPO_PUBLIC_UPDATE_URL ??
-  (__DEV__
+  (__DEV__ && !process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE
     ? "http://172.20.9.16:3000/.netlify/functions/api/update"
-    : "https://update-server.netlify.app/.netlify/functions/api/update");
+    : `${UPDATE_SERVER_BASE}/.netlify/functions/api/update`);
 
 export const OTA_API_KEY =
   process.env.EXPO_PUBLIC_OTA_API_KEY ??
