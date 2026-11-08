@@ -1,51 +1,84 @@
-import { DeviceMACStore, FirmwareStore } from "../../Storage";
-import { jkYSbsSAIDns, UPDATE_URL } from "../Constants";
-import { sleep } from "../Functions";
+import { FirmwareStore } from "../../Storage";
+import { OTA_ACK_WINDOW_SIZE, OTA_API_KEY, UPDATE_URL } from "../Constants";
 
-type FirmwareType = `${number}.${number}.${number}`;
+export type FirmwareType = `${number}.${number}.${number}`;
+
+export type AvailableUpdate = {
+  version: FirmwareType;
+  size: number;
+  app_version: FirmwareType;
+  description: string;
+};
+
+type FetchResponse = {
+  message?: string;
+  updateNeeded: boolean;
+  versions?: Array<AvailableUpdate>;
+};
 
 export abstract class OTA {
   public static activeVersion: FirmwareType = "1.0.0";
   public static latestVersion: FirmwareType = "1.0.0";
-  public static updateDescription: string = "";
-  private static updateSizeBytes: number = 0;
+
+  public static updates: AvailableUpdate[] = [];
+  public static restartQueued: boolean = false;
+
   private static updateInProgress: boolean = false;
 
+  public static get updateCount(): number {
+    return this.updates.length;
+  }
+
+  public static reset(): void {
+    this.updateInProgress = false;
+    this.updates = [];
+    this.restartQueued = false;
+    this.setActiveVersion();
+  }
+
   public static async fetchUpdateAvailable(): Promise<boolean> {
+
     this.setActiveVersion();
     this.setLatestVersion(this.activeVersion);
-    this.updateDescription = "";
-    this.updateSizeBytes = 0;
-    // Fetch latest software version from API using device MAC address as access code
+    // Fetch latest software version from API
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
-      const response = await fetch(UPDATE_URL,
+
+      // fetch update information based on current firmware version on device
+      const response = await fetch(`${UPDATE_URL}/${this.latestVersion}`,
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           },
-          signal: controller.signal,
+          signal: controller.signal
         }
       );
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch update information: ${response.status} ${response.statusText}`);
       }
 
-      const json = await response.json();
-      const version = json["version"] as FirmwareType;
-      const description = json["description"] as string;
-      const size = json["size"] as number;
-      this.updateDescription = description;
-      this.setLatestVersion(version);
-      this.setActiveVersion();
-      this.updateSizeBytes = size;
+      // parse response into expected json format
+      const json = await response.json() as FetchResponse;
 
-      return this.shouldUpdate();
+      if (!json.updateNeeded || !json.versions || json.versions.length === 0) {
+        this.updates = [];
+        return false;
+      }
+
+      this.updates = json.versions.map(v => ({
+        version: v.version,
+        app_version: v.app_version,
+        description: v.description,
+        size: v.size,
+      }));
+
+      return true;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -58,17 +91,19 @@ export abstract class OTA {
   }
 
   public static async updateFirmware(
-    mtu: number,
-    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>) => Promise<boolean>,
-    sendOTASize: (otaSize: number) => Promise<void>,
+    updateVersion: string,
+    chunkSize: number,
+    startOTAService: (otaSize: number) => Promise<boolean>,
+    sendOTAChunk: (chunk: Uint8Array<ArrayBufferLike>, withResponse?: boolean) => Promise<boolean>,
     sendOTAComplete: () => Promise<void>,
   ) {
     try {
-      const firmwareResponse = await fetch(`${UPDATE_URL}/firmware`,
+      this.setLatestVersion(updateVersion as FirmwareType);
+      const firmwareResponse = await fetch(`${UPDATE_URL}/firmware/${updateVersion}`,
         {
           method: "GET",
           headers: {
-            authorization: jkYSbsSAIDns,
+            authorization: OTA_API_KEY,
           }
         }
       );
@@ -79,74 +114,73 @@ export abstract class OTA {
       const uint8buffer = await this.blobToUint8Array(firmwareBlob);
       const blobChunks: Uint8Array[] = [];
 
-      for (let i = 0; i < uint8buffer.length; i += mtu) {
-        blobChunks.push(uint8buffer.slice(i, i + mtu));
+      for (let i = 0; i < uint8buffer.length; i += chunkSize) {
+        blobChunks.push(uint8buffer.slice(i, i + chunkSize));
       }
       const start = Date.now();
       console.log("[DEBUG] OTA START");
       this.updateInProgress = true;
 
-      await sendOTASize(firmwareBlob.size);
-      await sleep(25);
-
-      // Check if update still valid before sending chunks
-      for (const chunk of blobChunks) {
-        // Before each chunk
-        if (!this.updateInProgress) {
-          console.log("Update cancelled while sending chunks.");
-          return false;
-        }
-        await sendOTAChunk(chunk);
+      const started = await startOTAService(uint8buffer.length);
+      if (!started) {
+        this.updateInProgress = false;
+        return false;
       }
 
-      // wtf lol
-      // pretty sure that w/ the signed key
-      // and using writeCharacteristicWithoutResponse
-      // the OTA update handler on the ESP checks the bin
-      // against the public key before the bin file is done
-      // transferring.
-      // using WithResponse is WAYYYY too slow, soo....
-      // just wait a bit i guess... 
-      // seems to work ??????
-      await sleep(750);
+      // Stream chunks with windowed ACK every OTA_ACK_WINDOW_SIZE chunks (and on the final chunk)
+      for (let i = 0; i < blobChunks.length; i++) {
+        if (!this.updateInProgress) {
+          return false;
+        }
+        const ackChunk = ((i + 1) % OTA_ACK_WINDOW_SIZE === 0) || (i === blobChunks.length - 1);
+        const ok = await sendOTAChunk(blobChunks[i], ackChunk);
+        if (!ok) {
+          this.updateInProgress = false;
+          return false;
+        }
+      }
 
       // Check after chunks finish
       if (!this.updateInProgress) {
-        console.log("Cancelled after chunks");
         return false;
       }
       await sendOTAComplete();
 
-
-
       const end = Date.now();
       console.log(`[DEBUG] OTA END: ${(end - start) / 1000} seconds`);
 
-      // this.activeVersion = this.latestVersion;
-
       return true;
     } catch (err) {
-      console.log(err);
+      this.updateInProgress = false;
       return false;
     }
 
   }
 
-
-  public static getUpdateSize(): number {
-    return this.updateSizeBytes;
+  public static nextUpdate() {
+    if (this.updates.length >= 1) {
+      this.updates.shift();
+    }
   }
+
+
+  // public static getUpdateSize(): number {
+  //   return this.updateSizeBytes;
+  // }
 
 
   public static updateVersion(): void {
     this.activeVersion = this.latestVersion;
+    FirmwareStore.setFirmwareVersion(this.latestVersion);
   }
 
   // If an error occurs, the OTA class should
   // halt the in progress update.
   public static cancelUpdate(): void {
-    console.log("OTA Update Cancel called");
     this.updateInProgress = false;
+  }
+  public static getUpdateInProgress(): boolean {
+    return this.updateInProgress;
   }
 
   // React Native does not implement Blob#arrayBuffer for some reason... don't ask me

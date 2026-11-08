@@ -1,4 +1,5 @@
 import { Modal, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { Component, useReducer, useState } from "react";
 import IonIcons from "@expo/vector-icons/Ionicons";
@@ -24,27 +25,31 @@ export function Onboarding({
   completeOnboarding
 }: IOnboarding) {
   const { colorTheme } = useColorTheme();
+  const insets = useSafeAreaInsets();
 
   function screenReducer(state: PageUpdateState, action: { type: PageUpdateType, payload?: number }) {
     if (action.type === PageUpdateType.NEXT_PAGE) {
-      if (state.index === ONBOARDING_SCREENS.length - 1)
+      if (state.index >= ONBOARDING_SCREENS.length - 1)
         return { index: ONBOARDING_SCREENS.length - 1 };
       else
         return { index: state.index + 1 };
     } else if (action.type === PageUpdateType.PREV_PAGE) {
-      if (state.index === 0)
+      if (state.index <= 0)
         return { index: 0 };
       else
         return { index: state.index - 1 };
     } else {
-      return { index: action.payload || 0 };
+      const targetIndex = action.payload ?? 0;
+      return { index: Math.max(0, Math.min(ONBOARDING_SCREENS.length - 1, targetIndex)) };
     }
   }
 
   const [state, dispatchPageUpdate] = useReducer(screenReducer, { index: 0 });
 
 
-  const CurrentScreen = ONBOARDING_SCREENS[state.index];
+  const CurrentScreen = ONBOARDING_SCREENS[state.index] ?? ONBOARDING_SCREENS[0];
+
+  if (!visible) return null;
 
   return (
     <Modal
@@ -57,7 +62,8 @@ export function Onboarding({
         flex: 1,
         backgroundColor: colorTheme.backgroundPrimaryColor,
         paddingHorizontal: 15,
-        paddingVertical: 20,
+        paddingTop: 20 + insets.top,
+        paddingBottom: 20 + insets.bottom,
       }}>
 
 

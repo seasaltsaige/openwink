@@ -33,7 +33,7 @@ export abstract class CustomButtonFrequencyStore {
     }
     if (all.length === 0) return FrequencyDefaults;
     
-    all.sort((a, b) => a.uses - b.uses);
+    all.sort((a, b) => b.uses - a.uses);
     const top = all.slice(0, 5);
 
     if (top.length === 5) return top;

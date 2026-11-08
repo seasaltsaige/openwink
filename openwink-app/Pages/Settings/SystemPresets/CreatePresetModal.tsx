@@ -39,10 +39,12 @@ export const CreatePresetModal = (props: ICreatePresetModalInterface) => {
   }
 
   useEffect(() => {
-    if (props.startPresetName) {
+    if (props.startPresetName !== undefined) {
       setPresetName(props.startPresetName);
+    } else {
+      setPresetName("");
     }
-  }, [props.startPresetName])
+  }, [props.startPresetName]);
 
 
   return (

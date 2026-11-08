@@ -1,0 +1,24 @@
+{
+  "files.associations": {
+    "nimbledevice.h": "c",
+    "vector": "cpp",
+    "string": "cpp"
+  },
+  "editor.defaultFormatter": "xaver.clang-format",
+  "editor.wrappingIndent": "none",
+  "editor.wordWrapColumn": 400,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  // Add 'path/to/clang-format.exe' to PATH env variable
+  "C_Cpp.clang_format_path": "",
+  // C_Cpp.clang
+  "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, BreakBeforeBraces: Attach }",
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "C_Cpp.clang_format_style": "file",
+
+  
+  "editor.wordWrap": "off",
+  
+}

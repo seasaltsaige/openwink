@@ -3,6 +3,7 @@ import { buttonBehaviorMap } from "../helper/Constants";
 import Storage from "./Storage";
 
 const CUSTOM_ENABLED_KEY = "oem-button-custom-enabled";
+const CUSTOM_SEEDED_KEY = "oem-button-seeded";
 const BUTTON_KEY = "oem-button-values";
 const BUTTON_DELAY_KEY = "oem-button-delay";
 const BYPASS_KEY = "headlight-bypass";
@@ -11,10 +12,23 @@ const LOOPING_KEY = "oem-button-loop";
 const DEFAULT_DELAY = 500;
 
 export abstract class CustomOEMButtonStore {
+  private static ensureDefaultsSeeded() {
+    if (Storage.getBoolean(CUSTOM_SEEDED_KEY)) return;
+    Storage.set(CUSTOM_SEEDED_KEY, true);
+
+    const existingKeys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
+    if (existingKeys.length === 0) {
+      this.set(1, "Left Wink");
+      this.set(2, "Right Wink");
+      this.set(3, "Both Blink");
+      this.set(4, "Sleepy Eye");
+    }
+  }
+
   static isEnabled() {
     const status = Storage.getBoolean(CUSTOM_ENABLED_KEY);
-    if (status) return true;
-    else return false;
+    if (status === undefined) return true;
+    return status;
   }
 
   static enable() {
@@ -22,7 +36,7 @@ export abstract class CustomOEMButtonStore {
   }
 
   static disable() {
-    Storage.delete(CUSTOM_ENABLED_KEY);
+    Storage.set(CUSTOM_ENABLED_KEY, false);
   }
 
 
@@ -62,16 +76,40 @@ export abstract class CustomOEMButtonStore {
   }
 
   static remove(presses: Presses): void {
-    Storage.delete(`${BUTTON_KEY}-${presses}`);
+    for (let i = presses; i < 8; i++) {
+      const nextVal = Storage.getString(`${BUTTON_KEY}-${i + 1}`);
+      if (nextVal !== undefined) {
+        Storage.set(`${BUTTON_KEY}-${i}`, nextVal);
+      } else {
+        Storage.delete(`${BUTTON_KEY}-${i}`);
+      }
+
+      const nextLoop = Storage.getBoolean(`${LOOPING_KEY}-${i + 1}`);
+      if (nextLoop) {
+        Storage.set(`${LOOPING_KEY}-${i}`, true);
+      } else {
+        Storage.delete(`${LOOPING_KEY}-${i}`);
+      }
+    }
+    Storage.delete(`${BUTTON_KEY}-8`);
+    Storage.delete(`${LOOPING_KEY}-8`);
   }
 
   static removeAll() {
-    const keys = Storage.getAllKeys().filter(v => v.startsWith(BUTTON_KEY));
+    const keys = Storage.getAllKeys().filter(
+      v => v.startsWith(BUTTON_KEY) || v.startsWith(LOOPING_KEY)
+    );
     for (const key of keys)
       Storage.delete(key);
+    Storage.delete(BUTTON_DELAY_KEY);
+    Storage.delete(BYPASS_KEY);
+    Storage.delete(CUSTOM_ENABLED_KEY);
+    Storage.delete(CUSTOM_SEEDED_KEY);
+    this.ensureDefaultsSeeded();
   }
 
   static getAll() {
+    this.ensureDefaultsSeeded();
 
     const allCustomizations: CustomButtonAction[] = [];
     const keys = Storage.getAllKeys().filter((key) => key.startsWith(BUTTON_KEY));
@@ -82,24 +120,30 @@ export abstract class CustomOEMButtonStore {
 
       const numberOfPresses = parseInt(key.split("-")[3]) as Presses;
 
-      // if contains _ ==> normal
+      // if starts with "<number>_" ==> built-in behavior
       // if contains - ==> custom cmd --> Parse string into CommandOutput
+      if (/^\d+_/.test(storedValue)) {
+        const splitIdx = storedValue.indexOf("_");
+        const strBehavior = storedValue.slice(splitIdx + 1) as ButtonBehaviors;
+        if (strBehavior in buttonBehaviorMap) {
+          allCustomizations.push({
+            behaviorHumanReadable: strBehavior,
+            behavior: buttonBehaviorMap[strBehavior],
+            looping: false,
+            presses: numberOfPresses,
+          });
+          continue;
+        }
+      }
 
-      // get behavior
-      if (storedValue.includes("_")) {
-        const [__, strBehavior] = storedValue.split("_").map((v, i) => i === 0 ? parseInt(v) : v) as [Presses, ButtonBehaviors];
-        allCustomizations.push({
-          behaviorHumanReadable: strBehavior,
-          behavior: buttonBehaviorMap[strBehavior],
-          looping: false,
-          presses: numberOfPresses,
-        });
-
-        // parse cmd
-      } else if (storedValue.includes("-")) {
-
-        const commandParts = storedValue.split("-");
-        const name = commandParts.splice(0, 1)[0];
+      if (storedValue.includes("-")) {
+        const parts = storedValue.split("-");
+        let cmdStartIndex = parts.length;
+        while (cmdStartIndex > 1 && /^(d\d+(\.\d+)?|\d+)$/.test(parts[cmdStartIndex - 1])) {
+          cmdStartIndex--;
+        }
+        const name = parts.slice(0, cmdStartIndex).join("-");
+        const commandParts = parts.slice(cmdStartIndex);
 
         const customCmd: CommandOutput = {
           name,

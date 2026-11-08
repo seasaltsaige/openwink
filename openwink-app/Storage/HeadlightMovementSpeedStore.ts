@@ -19,4 +19,9 @@ export abstract class HeadlightMovementSpeedStore {
     const value = Storage.getNumber(this.makeKey(side));
     return value || 625;
   }
+
+  static reset() {
+    Storage.delete(this.makeKey(SIDE.LEFT));
+    Storage.delete(this.makeKey(SIDE.RIGHT));
+  }
 }

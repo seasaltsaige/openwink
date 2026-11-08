@@ -4,11 +4,11 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@expo/vector-icons/Octicons";
 import Toast from "react-native-toast-message";
-import { SafeAreaView } from "react-native-safe-area-context";
 import ToggleSwitch from "toggle-switch-react-native";
 
 import {
   AutoConnectStore,
+  AuxButtonStore,
   CustomButtonFrequencyStore,
   CustomCommandStore,
   CustomOEMButtonStore,
@@ -48,6 +48,16 @@ const moduleSettingsData: Array<{
       navigationName: "CustomWinkButton",
       pageSymbol: "speedometer-outline",
     },
+    {
+      pageName: "Customize Auxiliary Buttons",
+      navigationName: "AuxButtons",
+      pageSymbol: "flash-outline",
+    },
+    {
+      pageName: "Module Debugger",
+      navigationName: "Debugger",
+      pageSymbol: "bug-outline",
+    }
   ]
 
 export function ModuleSettings() {
@@ -69,6 +79,7 @@ export function ModuleSettings() {
   const {
     leftRightSwapped,
     setFirmwareVersion,
+    refreshMonitorStatus,
   } = useBleMonitor();
 
   const {
@@ -102,7 +113,6 @@ export function ModuleSettings() {
 
     AutoConnectStore.disable();
     CustomCommandStore.deleteAll();
-    CustomOEMButtonStore.disable();
     CustomOEMButtonStore.removeAll();
     FirmwareStore.forgetFirmwareVersion();
     SleepyEyeStore.reset("both");
@@ -113,6 +123,8 @@ export function ModuleSettings() {
     OnboardingStore.reset();
     DeviceMACStore.forgetMAC();
 
+    AuxButtonStore.reset();
+    await refreshMonitorStatus();
     await reset();
 
     Toast.show({
@@ -130,15 +142,17 @@ export function ModuleSettings() {
 
   const putModuleToSleep = async () => {
     if (!isConnected) return;
-    await enterDeepSleep();
+    const ok = await enterDeepSleep();
 
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Sleep Successful",
-      text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
-    });
+    if (ok) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        type: "success",
+        text1: "Sleep Successful",
+        text2: "OpenWink Module successfully put into deep sleep. To wake the module, press the retractor button."
+      });
+    }
 
     setConfirmationOpen(false);
   }
@@ -186,10 +200,10 @@ export function ModuleSettings() {
 
   return (
     <>
-      <SafeAreaView style={theme.moduleSettingsContainer}>
+      <View style={theme.moduleSettingsContainer}>
         <HeaderWithBackButton
           backText={back}
-          headerText="Module"
+          headerText="Module Settings"
           deviceStatus
         />
 
@@ -339,7 +353,7 @@ export function ModuleSettings() {
           }
 
         </View>
-      </SafeAreaView>
+      </View>
 
 
       <ConfirmationModal
@@ -360,4 +374,4 @@ export function ModuleSettings() {
 
     </>
   )
-}
+}

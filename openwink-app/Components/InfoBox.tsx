@@ -3,11 +3,12 @@ import { useColorTheme } from "../hooks/useColorTheme";
 
 interface InfoBoxProps {
   title: string;
-  data: Record<string, string | number>;
+  data: Array<Record<string, any>> | Record<string, any>;
 }
 
 export function InfoBox({ title, data }: InfoBoxProps) {
   const { theme } = useColorTheme();
+  const rows = Array.isArray(data) ? data : [data];
 
   return (
     <View style={theme.infoBoxOuter}>
@@ -16,19 +17,28 @@ export function InfoBox({ title, data }: InfoBoxProps) {
       </Text>
 
       <View style={theme.infoBoxInner}>
-        {Object.keys(data).map((key) => (
-          <View
-            style={theme.infoBoxInnerContentView}
-            key={key}
-          >
-            <Text style={[theme.infoBoxInnerContentText, { opacity: 0.6 }]}>
-              {key}
-            </Text>
+        {rows.map((obj, idx) => (
+          Object.keys(obj).map(key => (
+            <View
+              style={theme.infoBoxInnerContentView}
+              key={key}
+            >
+              <Text style={[theme.infoBoxInnerContentText, { opacity: rows[idx][key] ? 0.6 : 0.9 }]}>
+                {key}
+              </Text>
 
-            <Text style={theme.infoBoxInnerContentText}>
-              {data[key]}
-            </Text>
-          </View>
+              <Text
+                style={[
+                  theme.infoBoxInnerContentText,
+                  { flexShrink: 1, maxWidth: "60%", textAlign: "right" },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="middle"
+              >
+                {rows[idx][key]}
+              </Text>
+            </View>
+          ))
         ))}
       </View>
     </View>

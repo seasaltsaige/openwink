@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, TextStyle, ViewStyle } from "react-native";
+import { EdgeInsets, useSafeAreaInsets } from "react-native-safe-area-context";
 import { setAppIcon } from "@howincodes/expo-dynamic-app-icon";
 
 import { ColorTheme, ThemeColors } from "../helper/Constants";
@@ -137,10 +138,14 @@ export const ThemeContext = createContext<ThemeContextType | null>(null);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [themeName, setThemeName] = useState<keyof typeof ColorTheme.themeNames>(defaultName);
   const [isLoading, setIsLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
   const colorTheme = useMemo<ThemeColors>(() => ColorTheme[themeName], [themeName]);
 
-  const theme = useMemo<StyleSheet.NamedStyles<StyleSheetInterface>>(() => createThemeStyles(colorTheme), [colorTheme]);
+  const theme = useMemo<StyleSheet.NamedStyles<StyleSheetInterface>>(
+    () => createThemeStyles(colorTheme, insets),
+    [colorTheme, insets.top, insets.bottom, insets.left, insets.right],
+  );
 
   useEffect(() => {
     try {
@@ -155,15 +160,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
-  useEffect(() => {
-    if (isLoading) return;
-    const iconName = ICON_NAME_BY_THEME[themeName];
+  const applyIconForTheme = useCallback((targetTheme: keyof typeof ColorTheme.themeNames) => {
+    const iconName = ICON_NAME_BY_THEME[targetTheme];
     try {
       setAppIcon(iconName as any);
     } catch (error) {
       console.warn("Failed to set app icon:", error);
     }
-  }, [themeName, isLoading]);
+  }, []);
 
   const refresh = useCallback(() => {
     const storedTheme = ThemeStore.getStoredTheme();
@@ -177,12 +181,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setTheme = useCallback(async (theme: keyof typeof ColorTheme.themeNames) => {
     setThemeName(theme);
     ThemeStore.setTheme(theme);
-  }, []);
+    applyIconForTheme(theme);
+  }, [applyIconForTheme]);
 
   const reset = useCallback(async () => {
     update(defaultName);
     ThemeStore.reset();
-  }, []);
+    applyIconForTheme(defaultName);
+  }, [ update, applyIconForTheme ]);
 
   const value: ThemeContextType = useMemo(() => ({
     colorTheme,
@@ -209,12 +215,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   </ThemeContext.Provider>
 }
 
-function createThemeStyles(themeColors: ThemeColors) {
+function createThemeStyles(themeColors: ThemeColors, insets: EdgeInsets) {
   return StyleSheet.create<StyleSheetInterface>({
     tabContainer: {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -225,6 +235,10 @@ function createThemeStyles(themeColors: ThemeColors) {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15 + insets.bottom,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -239,9 +253,6 @@ function createThemeStyles(themeColors: ThemeColors) {
       rowGap: 15,
     },
     infoBoxOuter: {
-      display: "flex",
-      flexDirection: "column",
-      width: "100%",
       alignItems: "center",
       justifyContent: "flex-start",
       rowGap: 5
@@ -320,6 +331,10 @@ function createThemeStyles(themeColors: ThemeColors) {
       backgroundColor: themeColors.backgroundPrimaryColor,
       height: "100%",
       padding: 15,
+      paddingTop: 15 + insets.top,
+      paddingBottom: 15 + insets.bottom,
+      paddingLeft: 15 + insets.left,
+      paddingRight: 15 + insets.right,
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -436,7 +451,7 @@ function createThemeStyles(themeColors: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
       columnGap: 10,
-      height: "100%"
+      // height: "100%"
     },
     backButtonContainerText: {
       color: themeColors.headerTextColor,
@@ -715,7 +730,8 @@ function createThemeStyles(themeColors: ThemeColors) {
     bottomTabsBackground: {
       flexDirection: "row",
       backgroundColor: themeColors.bottomTabsBackground,
-      height: 55,
+      height: 55 + insets.bottom,
+      paddingBottom: insets.bottom,
       alignItems: "center",
       justifyContent: "space-around",
     },
@@ -886,4 +902,4 @@ function createThemeStyles(themeColors: ThemeColors) {
       fontSize: 14,
     }
   })
-}
+}

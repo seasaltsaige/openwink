@@ -3,7 +3,6 @@ import { Pressable, Text, View } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import BottomSheet from "@gorhom/bottom-sheet";
 import IonIcons from "@expo/vector-icons/Ionicons";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { RouteProp, useFocusEffect, useRoute } from "@react-navigation/native";
 
 import {
@@ -112,7 +111,7 @@ export function CustomCommands() {
   };
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
       <HeaderWithBackButton
         backText={back}
         headerText="Run Custom"
@@ -304,6 +303,6 @@ export function CustomCommands() {
           setDisplayedCommand(null);
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 }

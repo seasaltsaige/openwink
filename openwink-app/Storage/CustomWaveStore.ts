@@ -9,9 +9,9 @@ export abstract class CustomWaveStore {
 
   static getMultiplier() {
     const stored = Storage.getNumber(key);
-    if (stored)
+    if (stored !== undefined)
       return stored;
-    else return 1;
+    else return 0.5;
   }
 
   static reset() {

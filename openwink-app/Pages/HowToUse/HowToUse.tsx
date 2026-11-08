@@ -1,4 +1,4 @@
-import { SafeAreaView, View } from "react-native"
+import { View } from "react-native"
 
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { MainHeader } from "../../Components";
@@ -21,7 +21,7 @@ export function HowToUse() {
   const [selectedPage, setSelectedPage] = useState<typeof pages[number]>("App Usage");
 
   return (
-    <SafeAreaView style={theme.tabContainer}>
+    <View style={theme.tabContainer}>
       <MainHeader text="Help" />
 
       <InfoPageHeader
@@ -55,6 +55,6 @@ export function HowToUse() {
       </View>
 
 
-    </SafeAreaView>
+    </View>
   );
 }

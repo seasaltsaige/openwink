@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { Text, View, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useFocusEffect, useRoute } from "@react-navigation/native";
 import VerticalSlider from "rn-vertical-slider-matyno";
@@ -64,6 +63,11 @@ export function SleepyEyeSettings() {
     }
   }, { left: leftSleepyEye, right: rightSleepyEye });
 
+  useEffect(() => {
+    dispatchHeadlightPosition({ side: "left", percentage: leftSleepyEye });
+    dispatchHeadlightPosition({ side: "right", percentage: rightSleepyEye });
+  }, [leftSleepyEye, rightSleepyEye]);
+
   const offset = useSharedValue(0);
 
   useFocusEffect(
@@ -89,13 +93,12 @@ export function SleepyEyeSettings() {
   const down = useAnimatedStyle(() => ({
     transform: [{ translateY: -offset.value }],
   }));
-  // TODO: Tap arrows adjust wrong side (due to swap)
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
 
       <HeaderWithBackButton
         backText={backHumanReadable}
-        headerText="Sleepy"
+        headerText="Sleepy Settings"
         deviceStatus
       />
 
@@ -176,8 +179,8 @@ export function SleepyEyeSettings() {
           >
             <VerticalSlider
               value={leftRightSwapped ? headlightPosition["left"] : headlightPosition["right"]}
-              max={100}
-              min={0}
+              max={99}
+              min={1}
               step={coarseAdjust ? 15 : 1}
               ballIndicatorColor="orange"
               height={155}
@@ -344,8 +347,8 @@ export function SleepyEyeSettings() {
                     dispatchHeadlightPosition({
                       side: leftRightSwapped ? "left" : "right",
                       percentage: (
-                        (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1) > 100)
-                        ? 100
+                        (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1) > 99)
+                        ? 99
                         : (leftRightSwapped ? headlightPosition.left : headlightPosition.right) + (coarseAdjust ? 15 : 1),
                     })
                   }
@@ -385,8 +388,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "left" : "right",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1) < 0)
-                      ? 0
+                      (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1) < 1)
+                      ? 1
                       : (leftRightSwapped ? headlightPosition.left : headlightPosition.right) - (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -537,8 +540,8 @@ export function SleepyEyeSettings() {
           >
             <VerticalSlider
               value={leftRightSwapped ? headlightPosition["right"] : headlightPosition["left"]}
-              max={100}
-              min={0}
+              max={99}
+              min={1}
               step={coarseAdjust ? 15 : 1}
               ballIndicatorColor="orange"
               height={155}
@@ -580,8 +583,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "right" : "left",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1) > 100)
-                      ? 100
+                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1) > 99)
+                      ? 99
                       : (leftRightSwapped ? headlightPosition.right : headlightPosition.left) + (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -621,8 +624,8 @@ export function SleepyEyeSettings() {
                   dispatchHeadlightPosition({
                     side: leftRightSwapped ? "right" : "left",
                     percentage: (
-                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1) < 0)
-                      ? 0
+                      (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1) < 1)
+                      ? 1
                       : (leftRightSwapped ? headlightPosition.right : headlightPosition.left) - (coarseAdjust ? 15 : 1),
                   })
                 }
@@ -807,40 +810,43 @@ export function SleepyEyeSettings() {
       }}>
 
         {
-          (["left_preset", "right_preset"] as const).map((preset) => (
-            <View key={preset} style={{ display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "flex-start", rowGap: 10, width: "43%" }}>
-              <Text style={{
-                fontFamily: "IBMPlexSans_500Medium",
-                fontSize: 18,
-                color: colorTheme.headerTextColor,
-                textAlign: "center",
-              }}>
-                {preset === "left_preset" ? "Left Headlight" : "Right Headlight"}
-              </Text>
+          (["left_preset", "right_preset"] as const).map((preset) => {
+            const targetSide = preset === "left_preset" ? (leftRightSwapped ? "left" : "right") : (leftRightSwapped ? "right" : "left");
+            return (
+              <View key={preset} style={{ display: "flex", flexDirection: "column", alignContent: "center", justifyContent: "flex-start", rowGap: 10, width: "43%" }}>
+                <Text style={{
+                  fontFamily: "IBMPlexSans_500Medium",
+                  fontSize: 18,
+                  color: colorTheme.headerTextColor,
+                  textAlign: "center",
+                }}>
+                  {preset === "left_preset" ? "Left Headlight" : "Right Headlight"}
+                </Text>
 
-              {
-                [{ type: "High", value: 75 }, { type: "Middle", value: 50 }, { type: "Low", value: 25 }].map(quickButton => (
-                  <Pressable
-                    style={({ pressed }) => [
-                      disabledStatus ?
-                        theme.rangeSliderButtonsDisabled :
-                        (pressed || (headlightPosition[(preset === "left_preset" ? "left" : "right")] === quickButton.value)) ?
-                          theme.rangeSliderButtonsPressed :
-                          theme.rangeSliderButtons,
-                      { alignContent: "center", justifyContent: "center" }
-                    ]}
-                    disabled={disabledStatus || tutorialWalkthroughIndex !== -1}
-                    key={quickButton.type}
-                    onPress={() => { dispatchHeadlightPosition({ side: preset === "left_preset" ? "left" : "right", percentage: quickButton.value }); setSleepyEyeValues(preset === "left_preset" ? quickButton.value : headlightPosition.left, preset === "right_preset" ? quickButton.value : headlightPosition.right) }}
-                  >
-                    <Text style={theme.rangeSliderButtonsText}>
-                      {quickButton.type}
-                    </Text>
-                  </Pressable>
-                ))
-              }
-            </View>
-          ))
+                {
+                  [{ type: "High", value: 75 }, { type: "Middle", value: 50 }, { type: "Low", value: 25 }].map(quickButton => (
+                    <Pressable
+                      style={({ pressed }) => [
+                        disabledStatus ?
+                          theme.rangeSliderButtonsDisabled :
+                          (pressed || (headlightPosition[targetSide] === quickButton.value)) ?
+                            theme.rangeSliderButtonsPressed :
+                            theme.rangeSliderButtons,
+                        { alignContent: "center", justifyContent: "center" }
+                      ]}
+                      disabled={disabledStatus || tutorialWalkthroughIndex !== -1}
+                      key={quickButton.type}
+                      onPress={() => { dispatchHeadlightPosition({ side: targetSide, percentage: quickButton.value }); }}
+                    >
+                      <Text style={theme.rangeSliderButtonsText}>
+                        {quickButton.type}
+                      </Text>
+                    </Pressable>
+                  ))
+                }
+              </View>
+            );
+          })
         }
 
       </View>
@@ -858,7 +864,7 @@ export function SleepyEyeSettings() {
         saveText="Save Value"
       />
 
-    </SafeAreaView>
+    </View>
   )
 
-}
+}

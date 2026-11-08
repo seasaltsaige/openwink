@@ -1,4 +1,14 @@
-import { BehaviorEnum, buttonBehaviorMap, DefaultCommandValue } from "../helper/Constants";
+import { BehaviorEnum, buttonBehaviorMap, DebugLevel, DefaultCommandValue } from "../helper/Constants";
+
+export interface DebugLogEntry {
+  id: number;
+  timestamp: string;
+  level: DebugLevel;
+  levelChar: "E" | "W" | "I" | "D" | "V" | "?";
+  tag: string;
+  message: string;
+  raw: string;
+}
 
 export const buttonBehaviorList = ["Default Behavior", "Left Wink", "Left Wink x2", "Left-Right", "Left-Right x2", "Right Wink", "Right Wink x2", "Right-Left", "Right-Left x2", "Both Blink", "Both Blink x2", "Left Wave", "Right Wave", "Sleepy Eye"] as const;
 export type ButtonBehaviors = typeof buttonBehaviorList[number];
@@ -40,4 +50,4 @@ export const ErrorTypes = {
   ota_invalid_size: "E1113",
   ota_verification_sign: "E1114",
   ota_chunk_write: "E1115",
-}
+}

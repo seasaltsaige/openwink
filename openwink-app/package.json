@@ -1,6 +1,6 @@
 {
   "name": "openwink-app",
-  "version": "1.0.4",
+  "version": "2.1.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start --dev-client",
@@ -22,7 +22,8 @@
     "submit:ios": "eas submit --platform ios",
     "update:dev": "eas update --branch development",
     "update:preview": "eas update --branch preview",
-    "update:prod": "eas update --branch production"
+    "update:prod": "eas update --branch production",
+    "ota:publish": "node scripts/publish-app-ota.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/ibm-plex-sans": "^0.4.0",
@@ -41,7 +42,10 @@
     "expo-build-properties": "~0.13.3",
     "expo-dev-client": "~5.0.5",
     "expo-device": "~7.0.1",
+    "expo-document-picker": "~13.0.3",
+    "expo-file-system": "~18.0.12",
     "expo-font": "~13.0.4",
+    "expo-sharing": "~13.0.1",
     "expo-splash-screen": "~0.29.24",
     "expo-status-bar": "~2.0.0",
     "react": "18.3.1",
@@ -53,6 +57,7 @@
     "react-native-draglist": "^3.9.9",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "~2.20.2",
+    "react-native-haptic-feedback": "^3.0.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-mmkv": "^3.3.0",
     "react-native-reanimated": "~3.16.1",
@@ -63,7 +68,8 @@
     "react-native-toast-message": "^2.3.3",
     "react-native-walkthrough-tooltip": "^1.6.0",
     "rn-vertical-slider-matyno": "^1.0.1",
-    "toggle-switch-react-native": "^3.3.0"
+    "toggle-switch-react-native": "^3.3.0",
+    "expo-updates": "~0.27.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

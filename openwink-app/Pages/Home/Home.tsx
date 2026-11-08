@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View, ActivityIndicator } from "react-native"
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, ScrollView, Text, View, ActivityIndicator } from "react-native"
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 
-import { AutoConnectStore, OnboardingStore, QuickLinksStore } from "../../Storage";
+import { AutoConnectStore, CustomOEMButtonStore, CustomWaveStore, OnboardingStore, QuickLinksStore, SleepyEyeStore } from "../../Storage";
 
 import {
   EditQuickLinksModal,
   LongButton,
   QuickLink,
   ModuleUpdateModal,
+  AppUpdateModal,
   MainHeader
 } from "../../Components";
 import { useColorTheme } from "../../hooks/useColorTheme";
@@ -19,6 +20,7 @@ import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
 import {
   useUpdateManager,
+  useAppUpdateManager,
   ERROR_TYPE,
   UPDATE_STATUS,
 } from "../../hooks/useUpdateManager";
@@ -26,6 +28,7 @@ import { useBleMonitor } from "../../Providers/BleMonitorProvider";
 import { OTA } from "../../helper/Handlers/OTA";
 import { Onboarding } from "../Onboarding/Onboarding";
 import { UpdatingStatus } from "../../helper/Types";
+import { useBleCommand } from "../../Providers/BleCommandProvider";
 
 export function Home() {
 
@@ -33,8 +36,7 @@ export function Home() {
   const route = useRoute();
   const { colorTheme, theme } = useColorTheme();
 
-  const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
-  const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+  const [appUpdateVisible, setAppUpdateVisible] = useState(false);
   const [moduleUpdateVisible, setModuleUpdateVisible] = useState(false);
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
@@ -55,6 +57,13 @@ export function Home() {
   } = useBleConnection();
 
   const {
+    setSleepyEyeValues,
+    setOEMButtonStatus,
+    updateButtonDelay,
+    updateWaveDelayMulti,
+  } = useBleCommand();
+
+  const {
     updateStatus,
     updateData,
     error,
@@ -62,47 +71,84 @@ export function Home() {
     startUpdate,
   } = useUpdateManager();
 
-  const closeModuleUpdate = () => {
+  const {
+    appUpdateStatus,
+    appUpdateData,
+    appUpdateError,
+    checkAppUpdateAvailable,
+    startAppUpdate,
+  } = useAppUpdateManager();
+
+  const closeAppUpdate = (showToast: boolean) => {
+    setAppUpdateVisible(false);
+    if (showToast)
+      Toast.show({
+        type: "success",
+        text1: "Update Dismissed",
+        text2: "App update dismissed. Consider updating soon.",
+        autoHide: true,
+        visibilityTime: 5000,
+      });
+  }
+
+  const closeModuleUpdate = (showToast: boolean) => {
     setModuleUpdateVisible(false);
-    Toast.show({
-      type: "success",
-      text1: "Update Dismissed",
-      text2: "Firmware update dismissed. Consider updating soon.",
-      autoHide: true,
-      visibilityTime: 5000,
-    });
+    if (showToast)
+      Toast.show({
+        type: "success",
+        text1: "Update Dismissed",
+        text2: "Firmware update dismissed. Consider updating soon.",
+        autoHide: true,
+        visibilityTime: 5000,
+      });
   }
 
   const updateQuickLinks = (newQuickLinks: QuickLink[]) => {
     QuickLinksStore.setLinks(newQuickLinks);
     setQuickLinks(() => newQuickLinks);
   }
-
-  const checkAppUpdate = async () => {
-    // fetch request to get app update info
-
+  const resetQuickLinks = () => {
+    QuickLinksStore.reset();
+    setQuickLinks(() => QuickLinksStore.getLinks());
   }
 
-  const installAppUpdate = async () => {
-    // Open app store...
-  }
-
-  const fetchModuleUpdate = async () => {
-    if (!device) return;
-    const available = await checkUpdateAvailable();
+  const checkAppUpdate = useCallback(async () => {
+    const available = await checkAppUpdateAvailable();
     if (available) {
       Toast.show({
-        // Custom toast with install buttons
-        text2: "Firmware Update Available",
+        text2: "App Update Available",
         type: "update",
         props: {
-          downloadAction: () => { setModuleUpdateVisible(true); },
+          downloadAction: () => { setAppUpdateVisible(true); },
         },
         swipeable: false,
         autoHide: false,
       });
     }
-  }
+  }, [checkAppUpdateAvailable]);
+
+  const installAppUpdate = async () => setAppUpdateVisible(true);
+
+  const fetchModuleUpdate = useCallback(
+    async () => {
+      if (!isConnected) return console.log("No device connected");
+      if (OTA.getUpdateInProgress()) return console.log("Update already in progress");
+
+      const available = await checkUpdateAvailable();
+      if (available) {
+        Toast.show({
+          // Custom toast with install buttons
+          text2: "Firmware Update Available",
+          type: "update",
+          props: {
+            downloadAction: () => { setModuleUpdateVisible(true); },
+          },
+          swipeable: false,
+          autoHide: false,
+        });
+      }
+    }, [isConnected]
+  )
 
   const installModuleUpdate = async () => setModuleUpdateVisible(true);
 
@@ -128,27 +174,24 @@ export function Home() {
     })();
   }, []);
 
+
   useEffect(() => {
+    // setTimeout(() => {
+    //   setSleepyEyeValues(SleepyEyeStore.get("left"), SleepyEyeStore.get("right"));
+    //   setOEMButtonStatus(CustomOEMButtonStore.isEnabled() ? "enable" : "disable");
+    //   updateButtonDelay(CustomOEMButtonStore.getDelay());
+    //   updateWaveDelayMulti(CustomWaveStore.getMultiplier());
+    //   console.log("Updating state values...");
+    // }, 2500);
+
     (async () => {
-      if (isConnected)
-        await fetchModuleUpdate();
+      if (isConnected) await fetchModuleUpdate();
     })();
-  }, [device]);
-
-
-  useEffect(() => {
-
-    if (
-      updatingStatus !== UpdatingStatus.UPDATING
-    ) setModuleUpdateVisible(false);
-
-  }, [updatingStatus]);
-
-
+  }, [isConnected]);
 
   return (
     <>
-      <SafeAreaView style={theme.tabContainer}>
+      <View style={theme.tabContainer}>
 
         <MainHeader text="Home" />
 
@@ -188,6 +231,8 @@ export function Home() {
               )
             )
           }
+
+
 
           {/* COMMANDS */}
           <View style={theme.homeScreenButtonsContainer}>
@@ -289,32 +334,63 @@ export function Home() {
             </Text>
 
             {
-              // TODO: update to 'if update available for app'
-              appUpdateAvailable ? (
+              appUpdateError !== ERROR_TYPE.ERR_NONE ? (
+                appUpdateError === ERROR_TYPE.ERR_TIMEOUT ? (
+                  <LongButton
+                    text="Failed to check for App updates"
+                    onPress={() => checkAppUpdate()}
+                    icons={{ names: [null, "alert-circle-outline"], size: [null, 18] }}
+                  />
+                ) : (
+                  <View style={theme.mainLongButtonPressableContainer}>
+                    <View style={theme.mainLongButtonPressableView}>
+                      <Text style={theme.mainLongButtonPressableText}>
+                        Failed to Install App Update
+                      </Text>
+                    </View>
+
+                    <IonIcons style={theme.mainLongButtonPressableIcon} size={20} name="alert-circle-outline" color='#ff6b6b' />
+                  </View>
+                )
+              ) : appUpdateStatus === UPDATE_STATUS.AVAILABLE ? (
                 <LongButton
-                  onPress={() => {
-                    // Open app store
-                  }}
+                  onPress={() => installAppUpdate()}
                   icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
                   text="Install App Update"
                 />
-              ) : (
+              ) : appUpdateStatus === UPDATE_STATUS.UP_TO_DATE ? (
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
-                      {
-                        fetchingAppUpdateInfo ?
-                          "Checking for app update" :
-                          "App is up to date"}
+                      App is up to date
                     </Text>
                   </View>
-                  {
-                    fetchingAppUpdateInfo ?
-                      <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :
-                      <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
-                  }
-
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 </View>
+              ) : appUpdateStatus === UPDATE_STATUS.INSTALLING ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Installing App Update
+                    </Text>
+                  </View>
+                  <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
+                </View>
+              ) : appUpdateStatus === UPDATE_STATUS.FETCHING ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Checking for App Update
+                    </Text>
+                  </View>
+                  <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
+                </View>
+              ) : (
+                <LongButton
+                  onPress={() => checkAppUpdate()}
+                  icons={{ names: [null, "repeat-outline"], size: [null, 20] }}
+                  text="Check for App update"
+                />
               )
             }
 
@@ -381,20 +457,29 @@ export function Home() {
                   </View>
                   <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
                 </View>
+              ) : updateStatus === UPDATE_STATUS.IDLE && isConnected ? (
+                <LongButton
+                  onPress={() => checkUpdateAvailable()}
+                  icons={{ names: [null, "repeat-outline"], size: [null, 20] }}
+                  text="Check for Module update"
+                />
               ) : (
                 // UNKNOWN STATE: SHOULD NOT REACH
-                <LongButton
-                  onPress={() => installModuleUpdate()}
-                  icons={{ names: [null, "alarm-outline"], size: [null, 18] }}
-                  text="Unknown Update State: Report Here"
-                />
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Unknown Status
+                    </Text>
+                  </View>
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="cloud-offline-outline" color={colorTheme.textColor} />
+                </View>
               )
             }
           </View>
 
         </ScrollView>
 
-      </SafeAreaView>
+      </View>
 
       <EditQuickLinksModal
         close={() => setQuickLinksModalVisible(false)}
@@ -402,15 +487,24 @@ export function Home() {
         defaultLinks={QuickLinksStore.getDefaultLinks()}
         initialLinks={quickLinks}
         onUpdateLinks={(updatedLinks) => updateQuickLinks(updatedLinks)}
+        resetToDefault={() => resetQuickLinks()}
       />
 
       <ModuleUpdateModal
         visible={moduleUpdateVisible}
-        binSizeBytes={updateData?.size!}
-        description={updateData?.description!}
-        version={updateData?.version!}
-        startUpdate={startUpdate}
+        updateInfo={updateData}
+        onRequestAppUpdate={appUpdateStatus === UPDATE_STATUS.AVAILABLE ? () => setAppUpdateVisible(true) : undefined}
         close={closeModuleUpdate}
+      />
+
+      <AppUpdateModal
+        visible={appUpdateVisible}
+        updateInfo={appUpdateData}
+        updateStatus={appUpdateStatus}
+        error={appUpdateError}
+        startUpdate={startAppUpdate}
+        onRequestModuleUpdate={updateStatus === UPDATE_STATUS.AVAILABLE ? () => setModuleUpdateVisible(true) : undefined}
+        close={closeAppUpdate}
       />
 
       <Onboarding

@@ -77,8 +77,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
     // Don't run on close
     if (!props.visible) return;
 
-    const looped = CustomOEMButtonStore.getLooping(props.action.presses);
-    setMacroLoop(looped);
+    setMacroLoop(Boolean(props.action.looping));
 
     if (props.action.behaviorHumanReadable !== "Default Behavior")
       if (props.action.customCommand)
@@ -139,7 +138,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
     CustomButtonFrequencyStore.increment(selectedAction);
     props.close();
-  }, [selectedAction, macroLoop]);
+  }, [selectedAction, macroLoop, props.action.presses, props.update, props.close]);
 
   return (
     <Modal

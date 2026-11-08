@@ -1,15 +1,35 @@
 import { ConfigContext, ExpoConfig } from '@expo/config';
 import dotenv from 'dotenv';
 
+const UPDATE_SERVER_BASE = "https://update-server.netlify.app";
+const OTA_API_KEY = process.env.EXPO_PUBLIC_OTA_API_KEY ?? "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
+
 require('ts-node/register/transpile-only');
 
 dotenv.config();
 
+const variant = process.env.APP_VARIANT ?? 'production';
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "OpenWink",
+  name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "1.0.4",
+  version: "2.1.1",
+  runtimeVersion: "2.1.0",
+  updates: {
+    enabled: true,
+    checkAutomatically: "NEVER",
+    url: `${UPDATE_SERVER_BASE}/.netlify/functions/api/update/app/manifest`,
+    fallbackToCacheTimeout: 0,
+    requestHeaders: {
+      authorization: OTA_API_KEY,
+    },
+    codeSigningCertificate: "./certs/certificate.pem",
+    codeSigningMetadata: {
+      keyid: "openwink",
+      alg: "rsa-v1_5-sha256",
+    },
+  },
   orientation: "portrait",
   icon: "./assets/icon_british_racing_green.png",
   userInterfaceStyle: "automatic",
@@ -21,7 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.seasaltsaige.openwink",
+    bundleIdentifier: variant === "development" ? "com.seasaltsaige.openwink.dev" : "com.seasaltsaige.openwink",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false
     }
@@ -37,7 +57,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "android.permission.BLUETOOTH_CONNECT",
       "android.permission.ACCESS_FINE_LOCATION"
     ],
-    package: "com.seasaltsaige.openwink"
+    package: variant === "development" ? "com.seasaltsaige.openwink.dev" : "com.seasaltsaige.openwink"
   },
   web: {
     favicon: "./assets/favicon.png"
@@ -45,12 +65,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "react-native-ble-plx",
     "expo-font",
-    "expo-build-properties",
     [
       "expo-build-properties",
       {
         android: {
-          kotlinVersion: "1.9.25"
+          kotlinVersion: "1.9.25",
+          useLegacyPackaging: variant !== "production"
         },
         ios: {
           deploymentTarget: "15.1"
@@ -86,7 +106,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           android: "./assets/icon_british_racing_green_android.png"
         }
       }
-    ]
+    ],
+    [
+      "expo-dev-client",
+      {
+        "launchMode": "most-recent",
+      }
+    ],
   ],
   owner: process.env.EXPO_OWNER,
   extra: {

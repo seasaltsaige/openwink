@@ -22,6 +22,61 @@ type RouteType = QuickLink & { display: string; visible: boolean; };
 
 const ROUTES: RouteType[] = [
   {
+    display: "Module Settings",
+    icon: "radio-outline",
+    title: "Wave Delay Settings",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "WaveDelaySettings",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "eye-outline",
+    title: "Sleepy Eye Settings",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "SleepyEyeSettings",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "speedometer-outline",
+    title: "Customize Button Actions",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "CustomWinkButton",
+    },
+    visible: false,
+  },
+  {
+    display: "Module Settings",
+    icon: "flash-outline",
+    title: "Customize Auxiliary Buttons",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "AuxButtons",
+    },
+    visible: false
+  },
+  {
+    display: "Module Settings",
+    icon: "bug-outline",
+    title: "Module Debugger",
+    navigation: {
+      back: "Home",
+      backHumanReadable: "Home",
+      page: "Debugger",
+    },
+    visible: false
+  },
+  {
     display: "Settings",
     icon: "information-circle-outline",
     title: "System Information",
@@ -64,40 +119,7 @@ const ROUTES: RouteType[] = [
       page: "SettingsProfiles",
     },
     visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "radio-outline",
-    title: "Wave Delay Settings",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "WaveDelaySettings",
-    },
-    visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "eye-outline",
-    title: "Sleepy Eye Settings",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "SleepyEyeSettings",
-    },
-    visible: false,
-  },
-  {
-    display: "Module Settings",
-    icon: "speedometer-outline",
-    title: "Customize Button Actions",
-    navigation: {
-      back: "Home",
-      backHumanReadable: "Home",
-      page: "CustomWinkButton",
-    },
-    visible: false,
-  },
+  }
 ];
 type Action =
   | {
@@ -115,6 +137,7 @@ interface IEditQuickLinksModal {
   initialLinks: (QuickLink)[];
   defaultLinks: (QuickLink)[];
   onUpdateLinks: (updatedLinks: (QuickLink)[]) => void;
+  resetToDefault: () => void;
 }
 
 export function EditQuickLinksModal({
@@ -123,6 +146,7 @@ export function EditQuickLinksModal({
   initialLinks,
   onUpdateLinks,
   visible,
+  resetToDefault,
 }: IEditQuickLinksModal) {
   const mappedInitialLinks = useMemo(() => initialLinks.map(l => l.title), [initialLinks]);
   const mappedDefaultLinks = useMemo(() => defaultLinks.map(l => l.title), [defaultLinks]);
@@ -199,7 +223,7 @@ export function EditQuickLinksModal({
           padding: 13,
           paddingHorizontal: 13,
           borderRadius: 10,
-          backgroundColor: colorTheme.backgroundSecondaryColor,
+          backgroundColor: colorTheme.backgroundPrimaryColor,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
@@ -282,7 +306,7 @@ export function EditQuickLinksModal({
             paddingVertical: 15,
             paddingHorizontal: 20,
             rowGap: 15,
-            backgroundColor: colorTheme.backgroundPrimaryColor,
+            backgroundColor: colorTheme.backgroundSecondaryColor,
             width: "90%",
             borderRadius: 15,
             boxShadow: "0 3 5px rgba(0, 0, 0, 0.2)"
@@ -327,7 +351,7 @@ export function EditQuickLinksModal({
           >
             <Pressable
               hitSlop={10}
-              onPress={resetToStart}
+              onPress={resetToDefault}
             >
               {
                 ({ pressed }) =>
@@ -355,6 +379,7 @@ export function EditQuickLinksModal({
               onFilteredItemsUpdate={(filteredRoutes) => {
                 setFilteredLinks(filteredRoutes);
               }}
+              backgroundColor={colorTheme.backgroundPrimaryColor}
             />
           </View>
 

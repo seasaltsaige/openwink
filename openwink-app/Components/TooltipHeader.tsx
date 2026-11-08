@@ -13,6 +13,7 @@ interface ITooltipHeaderProps {
     tooltipOpen: boolean;
     setTooltipOpen: React.Dispatch<React.SetStateAction<boolean>>;
   }
+  iconStyle?: TextStyle
 }
 
 export function TooltipHeader({
@@ -20,7 +21,8 @@ export function TooltipHeader({
   tooltipTitle,
   useModal = true,
   parentControl,
-  titleStyle
+  titleStyle,
+  iconStyle,
 }: ITooltipHeaderProps) {
   const { theme, colorTheme } = useColorTheme();
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -36,7 +38,7 @@ export function TooltipHeader({
       useReactNativeModal={useModal}
     >
 
-      <View style={theme.tooltipContainerView}>
+      <View style={[theme.tooltipContainerView, { justifyContent: "center" }]}>
         <Text style={[theme.tooltipText, titleStyle]}>
           {tooltipTitle}
         </Text>
@@ -47,7 +49,7 @@ export function TooltipHeader({
         >
           {
             ({ pressed }) => (
-              <IonIcons style={theme.tooltipIcon} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
+              <IonIcons style={[{ marginTop: 6 }, iconStyle]} color={pressed ? colorTheme.buttonColor : colorTheme.headerTextColor} size={24} name="help-circle-outline" />
             )
           }
         </Pressable>

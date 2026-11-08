@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { ATT_HEADER_SIZE } from "../helper/Constants";
 import { sleep } from "../helper/Functions";
+import { AppOTA, AppUpdateInfo } from "../helper/Handlers/App";
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { useOtaUpdate } from "../Providers/OTAUpdateProvider";
@@ -23,24 +25,23 @@ export enum ERROR_TYPE {
   ERR_DISCONNECT,
 }
 
-type UpdateData = {
+export type UpdateData = {
   version: string;
+  app_version: string;
   description: string;
   size: number;
 };
 
 type UpdateManagerReturnType = {
   updateStatus: UPDATE_STATUS;
-  updateData: UpdateData | null;
+  updateData: UpdateData[] | null;
   error: ERROR_TYPE;
-  startUpdate: () => Promise<void>;
+  startUpdate: (version: string) => Promise<void>;
   checkUpdateAvailable: () => Promise<boolean>;
 };
 
-const OTA_HEADER_SIZE = 5;
-
 export const useUpdateManager = (): UpdateManagerReturnType => {
-  const { sendOTAChunk, sendOTAComplete, sendOTASize, startOTAService } =
+  const { sendOTAChunk, sendOTAComplete, startOTAService } =
     useOtaUpdate();
 
   const { isConnected, device } = useBleConnection();
@@ -48,7 +49,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
 
   const [updateStatus, setUpdateStatus] = useState(UPDATE_STATUS.IDLE);
   const [error, setError] = useState(ERROR_TYPE.ERR_NONE);
-  const [updateData, setUpdateData] = useState(null as UpdateData | null);
+  const [updateData, setUpdateData] = useState(null as UpdateData[] | null);
 
   useEffect(() => {
     if (!isConnected) return setUpdateStatus(UPDATE_STATUS.IDLE);
@@ -57,8 +58,10 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
     if (updatingStatus === UpdatingStatus.UPDATING)
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
     // if new status is "Success", set current status to up to date
-    else if (updatingStatus === UpdatingStatus.SUCCESS)
+    else if (updatingStatus === UpdatingStatus.SUCCESS) {
       setUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+      OTA.restartQueued = true;
+    }
     // if previous status is "Installing"
     else if (updateStatus === UPDATE_STATUS.INSTALLING) {
       // and new status is some error
@@ -68,32 +71,38 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_INIT ||
         updatingStatus === UpdatingStatus.ERROR_VERIFICATION_SIGN ||
         updatingStatus === UpdatingStatus.ERROR_CHUNK_WRITE
-      )
+      ) {
         // set the current status to available update, as an error happened
         // while installing
         setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+      }
     }
   }, [updatingStatus, updateStatus, isConnected]);
 
   const startUpdate = useCallback(
-    async () => {
+    async (version: string) => {
       if (!isConnected) return;
       setUpdateStatus(UPDATE_STATUS.INSTALLING);
       setError(ERROR_TYPE.ERR_NONE);
 
-      await startOTAService();
-      await sleep(50);
+      const chunkSize = Math.max(20, (device?.mtu ?? 185) - ATT_HEADER_SIZE);
 
-      await OTA.updateFirmware(
-        device?.mtu! - OTA_HEADER_SIZE,
+      const success = await OTA.updateFirmware(
+        version,
+        chunkSize,
+        startOTAService,
         sendOTAChunk,
-        sendOTASize,
         sendOTAComplete,
       );
+
+      if (!success) {
+        setUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setError(ERROR_TYPE.ERR_UPDATE_FAILED);
+        setTimeout(() => setError(ERROR_TYPE.ERR_NONE), 7500);
+      }
     },
-    // Not 100% on this, but since its just the devices MTU being accessed,
-    // this is all that should be needed? no?
-    [isConnected, device?.mtu],
+    [isConnected, device?.mtu, startOTAService, sendOTAChunk, sendOTAComplete],
   );
 
   const checkUpdateAvailable = useCallback(async () => {
@@ -116,13 +125,7 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
         return false;
       }
 
-      const updateInfo: UpdateData = {
-        description: OTA.updateDescription,
-        size: OTA.getUpdateSize(),
-        version: OTA.latestVersion,
-      };
-
-      setUpdateData(() => updateInfo);
+      setUpdateData([...OTA.updates]);
       setUpdateStatus(UPDATE_STATUS.AVAILABLE);
 
       return true;
@@ -141,5 +144,75 @@ export const useUpdateManager = (): UpdateManagerReturnType => {
     updateData,
     checkUpdateAvailable,
     startUpdate,
+  };
+};
+
+export type AppUpdateManagerReturnType = {
+  appUpdateStatus: UPDATE_STATUS;
+  appUpdateData: AppUpdateInfo | null;
+  appUpdateError: ERROR_TYPE;
+  startAppUpdate: () => Promise<boolean>;
+  checkAppUpdateAvailable: () => Promise<boolean>;
+};
+
+export const useAppUpdateManager = (): AppUpdateManagerReturnType => {
+  const [appUpdateStatus, setAppUpdateStatus] = useState(UPDATE_STATUS.IDLE);
+  const [appUpdateError, setAppUpdateError] = useState(ERROR_TYPE.ERR_NONE);
+  const [appUpdateData, setAppUpdateData] = useState<AppUpdateInfo | null>(null);
+
+  const checkAppUpdateAvailable = useCallback(async () => {
+    try {
+      setAppUpdateStatus(UPDATE_STATUS.FETCHING);
+      setAppUpdateError(ERROR_TYPE.ERR_NONE);
+
+      await sleep(Math.floor(Math.random() * 1100) + 500);
+
+      const available = await AppOTA.fetchUpdateAvailable();
+      if (!available || !AppOTA.latestUpdateInfo) {
+        setAppUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+        return false;
+      }
+
+      setAppUpdateData({ ...AppOTA.latestUpdateInfo });
+      setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+      return true;
+    } catch (err) {
+      setAppUpdateError(ERROR_TYPE.ERR_TIMEOUT);
+      setAppUpdateStatus(UPDATE_STATUS.IDLE);
+
+      setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+      return false;
+    }
+  }, []);
+
+  const startAppUpdate = useCallback(async () => {
+    setAppUpdateStatus(UPDATE_STATUS.INSTALLING);
+    setAppUpdateError(ERROR_TYPE.ERR_NONE);
+
+    try {
+      const success = await AppOTA.installUpdate();
+      if (!success) {
+        setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+        setAppUpdateError(ERROR_TYPE.ERR_UPDATE_FAILED);
+        setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+        return false;
+      }
+
+      setAppUpdateStatus(UPDATE_STATUS.UP_TO_DATE);
+      return true;
+    } catch (err) {
+      setAppUpdateStatus(UPDATE_STATUS.AVAILABLE);
+      setAppUpdateError(ERROR_TYPE.ERR_UPDATE_FAILED);
+      setTimeout(() => setAppUpdateError(ERROR_TYPE.ERR_NONE), 7500);
+      return false;
+    }
+  }, []);
+
+  return {
+    appUpdateStatus,
+    appUpdateData,
+    appUpdateError,
+    checkAppUpdateAvailable,
+    startAppUpdate,
   };
 };

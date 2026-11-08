@@ -48,12 +48,12 @@ export default function App() {
   // background via the dynamic-splash-theme plugin, so we just hide it once
   // fonts are ready.
   const handleOverlayLayout = useCallback(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    SplashScreen.hideAsync().catch(() => { });
   }, []);
 
   useEffect(() => {
     if (!isIOS && loaded) {
-      SplashScreen.hideAsync().catch(() => {});
+      SplashScreen.hideAsync().catch(() => { });
     }
   }, [loaded]);
 

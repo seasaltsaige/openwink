@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import IonIcons from "@expo/vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import RangeSlider from "react-native-sticky-range-slider";
@@ -45,13 +44,8 @@ export function WaveDelaySettings() {
   }, []);
 
   useEffect(() => {
-    if (waveDelayMulti * 100 !== MIN)
-      setMin(parseFloat((waveDelayMulti * 100).toPrecision(2)));
-  }, []);
-
-  useEffect(() => {
-    setMin(waveDelayMulti * 100);
-  }, [waveDelayMulti])
+    setMin(Math.round(waveDelayMulti * 100));
+  }, [waveDelayMulti]);
 
   const leftWaveStatus = useSharedValue(100);
   const rightWaveStatus = useSharedValue(100);
@@ -78,16 +72,31 @@ export function WaveDelaySettings() {
         withTiming(100, { duration: rightMoveTime, easing: Easing.linear }),
       )
     );
-  }, [min]);
+  }, [min, leftMoveTime, rightMoveTime]);
 
   useAnimatedReaction(
-    () => leftWaveStatus.value,
-    (value) => runOnJS(setLeftWave)(value),
+    () => Math.round(leftWaveStatus.value),
+    (value, previous) => {
+      if (value !== previous) {
+        runOnJS(setLeftWave)(value);
+      }
+    },
   );
   useAnimatedReaction(
-    () => rightWaveStatus.value,
-    (value) => runOnJS(setRightWave)(value),
+    () => Math.round(rightWaveStatus.value),
+    (value, previous) => {
+      if (value !== previous) {
+        runOnJS(setRightWave)(value);
+      }
+    },
   );
+
+  useEffect(() => {
+    return () => {
+      cancelAnimation(leftWaveStatus);
+      cancelAnimation(rightWaveStatus);
+    };
+  }, [leftWaveStatus, rightWaveStatus]);
 
   useEffect(() => {
     if (rightWave === 100) setAnimationRunning(false);
@@ -95,10 +104,10 @@ export function WaveDelaySettings() {
 
 
   return (
-    <SafeAreaView style={theme.container}>
+    <View style={theme.container}>
       <HeaderWithBackButton
         backText={backHumanReadable}
-        headerText="Waves"
+        headerText="Wave Settings"
         deviceStatus
       />
 
@@ -219,13 +228,13 @@ export function WaveDelaySettings() {
 
       <SettingsToolbar
         disabled={!isConnected}
-        reset={() => updateWaveDelayMulti(1.0)}
+        reset={() => updateWaveDelayMulti(0.5)}
         save={() => updateWaveDelayMulti(min / 100)}
         resetText="Reset Delay"
         saveText="Save Delay"
       />
 
-    </SafeAreaView>
+    </View>
   )
 
 }

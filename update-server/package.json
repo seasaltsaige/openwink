@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "netlify functions:serve --port 3000",
-    "build": "netlify functions:build"
+    "build": "netlify functions:build",
+    "deploy:test": "netlify deploy --alias ota-test"
   },
   "keywords": [],
   "author": "",
