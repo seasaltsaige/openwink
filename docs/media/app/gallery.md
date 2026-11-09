@@ -5,7 +5,7 @@ A collection of the current state of the compiled application.
 
 - [Home Screen](#home-screen)
   - [Quick Links](#quick-links)
-  - [Firmware Update](#)
+  - [Firmware Update](#firmware-update-panel)
   - [Default Commands](#default-commands)
   - [Custom Commands](#custom-command-view)
 - [Help](#help)
