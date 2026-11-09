@@ -1,8 +1,8 @@
 <div align="center">
 
-# Open Wink Module Update Server
+# Open Wink Update Server
 
-This directory contains the update server for the OpenWink Module. The server provides firmware update metadata and hosts the firmware binary used by the controller app when staging OTA updates for the module.
+This directory contains the update server for OpenWink. It serves module firmware, signed app update manifests, and the app bundles and assets used for OTA updates.
 
 The update server is hosted on Netlify using serverless functions. The app checks the hosted update metadata, compares the available firmware version against the connected module's current version, and downloads the update binary when an update is available.
 
@@ -50,10 +50,10 @@ Start the local server.
 ### New Version
 When updating the firmware binary served by the update server, you must also update the description and version in `./files/update.json`. The controller app uses this metadata to compare the connected module's current firmware version against the available update version.
 
-- Compile the new firmware into a `.bin` file. See [FLASHING.md](../docs/build/FLASHING.md) for more information.
+- Build the [ESP-IDF firmware](../openwink-mcu-platformio/README.md) for the production N4 board.
 
-- Update the version and description in `./files/update.json`.
+- Add an entry to `./files/update.json` with the version, description, `required_firmware_version`, and `required_app_version`. Keep older entries needed by the update chain. The server treats the last entry as the latest release.
 
-- Rename the compiled binary to `update.bin`, and replace the current binary file.
+- The OTA binary must be signed. The firmware project's [signing script](../openwink-mcu-platformio/scripts/sign_binary.ps1) writes it to `files/firmware/update-<version>.bin`. Do not substitute the combined initial flashing image.
 
-- Restart the server to serve the updated firmware binary.
+- Deploy the updated metadata and binaries together. For local testing, restart the local server after changing the files.

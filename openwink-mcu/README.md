@@ -1,10 +1,10 @@
 <div align="center">
 
-# Open Wink Module
+# Open Wink Module (Legacy Arduino Firmware)
 
-This directory contains the firmware for the OpenWink receiver module. The module installs between the NA Miata/MX-5 headlight connectors and provides BLE control, headlight command execution, OEM retractor button actions, auxiliary button inputs, persistent settings, movement timing, and module status reporting.
+This directory contains the older Arduino firmware for the OpenWink receiver module. It is kept here for reference.
 
-Please keep in mind, this directory is highly volatile. See [issue #14](https://github.com/seasaltsaige/openwink/issues/14) for more information.
+For new builds, use the [ESP-IDF firmware](../openwink-mcu-platformio/README.md).
 
 [![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)](https://cplusplus.com/)
 [![Espressif](https://img.shields.io/badge/espressif-E7352C.svg?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
@@ -12,6 +12,7 @@ Please keep in mind, this directory is highly volatile. See [issue #14](https://
 </div>
 
 ## Getting Started
+
 ### Arduino IDE
 Download and install the latest version of the [Arduino IDE](https://www.arduino.cc/en/software/).
 
@@ -30,7 +31,7 @@ Download and install the latest version of the [Arduino IDE](https://www.arduino
 
 This firmware is responsible for the low-level behavior of the OpenWink module. It receives commands from the controller app over Bluetooth Low Energy, controls the headlight outputs, monitors button inputs, stores module settings, and reports module/headlight state back to the app.
 
-Current module capabilities include:
+This version's module capabilities include:
 
 - **BLE Communication**: Advertises and communicates with the OpenWink controller app using Bluetooth Low Energy.
 - **Pairing Security**: Generates and uses a pairing key so only the paired app/device can reconnect to the module.

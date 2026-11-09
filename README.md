@@ -23,7 +23,7 @@ Join the Discord!<br>
 </div>
 
 > [!NOTE]
-> OpenWink is under active development. The prebuilt app is currently available only on Android; downloadable on the [release page](https://github.com/seasaltsaige/openwink/releases). Preassembled modules will be available for purchase through Flyin' Miata in the future.
+> OpenWink is under active development. Android builds are available on the [release page](https://github.com/seasaltsaige/openwink/releases), or you can compile the app yourself. iOS currently requires compiling your own build. The app is not on Google Play or the App Store yet. Preassembled modules will be available for purchase through Flyin' Miata in the future.
 
 ## Why choose OpenWink?
 
@@ -42,13 +42,15 @@ Some features have only been confirmed to work on certain years. Help out by doc
 ## Where to start?
 
 ### Build your own Module
-See the [build guide](./docs/BUILD.md), [firmware flashing guide](./docs/FLASHING.md), and the separate [hardware repository](https://github.com/pyroxenes/openwink-hardware-module).
+The [hardware repository](https://github.com/pyroxenes/openwink-hardware-module) covers the board design. The [assembly](./docs/BUILD.md) and [flashing](./docs/FLASHING.md) guides are still being written. Production modules use the ESP32-S3 N4; the N32/R16 board is used for development only.
 
 ### Install OpenWink
-Start with the [installation guide](./docs/INSTALLATION.md) for compatibility information, required parts, wiring, setup, and safety notes.
+Start with [Getting Started](./docs/GETTING_STARTED.md) for app installation and your first connection. If your module is not installed yet, see the [installation guide](./docs/INSTALLATION.md).
 
 ### Make a Contribution
 Read the [contribution guide](./.github/CONTRIBUTING.md), browse the [open issues](https://github.com/seasaltsaige/openwink/issues), or review the [project board](https://github.com/users/seasaltsaige/projects/1).
+
+The current firmware uses ESP-IDF and lives in [openwink-mcu-platformio](./openwink-mcu-platformio/README.md). The older Arduino firmware in [openwink-mcu](./openwink-mcu/README.md) is kept for reference. App development instructions are in the [app README](./openwink-app/README.md).
 
 ### Beta Testing
 Join the [discord server](https://discord.gg/jaP67bgZBM) and ask about Beta Testing! We may send you a module to help find bugs and battle test new features as they release!
@@ -62,22 +64,22 @@ OpenWink consists of three major components:
 
 1. **[Wink Module:](https://github.com/pyroxenes/openwink-hardware-module)** An ESP32-S3 based controller board connected to the Miata’s headlight motor circuitry which monitors and sends out control signals to command headlight positions.
 2. **Controller App:** A React Native based application that communicates with the module over [Bluetooth LE](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy), allowing for longer range connection and control, with more reliable connectivity.
-3. **Update Server:** Hosts and distributes firmware update information and binaries for over the air (OTA) updates, allowing for fixes and updates without module removal.
+3. **Update Server:** Hosts module firmware and app updates. The app downloads firmware and sends it to the module over Bluetooth, allowing for fixes and updates without module removal.
 
-For a complete list of controls, settings, diagnostics, and customization options, see the [feature list](./docs/FEATURES.md).
+For more about the app's controls and settings, see the [app README](./openwink-app/README.md#about-the-app) or the Help tab in the app. A separate [feature list](./docs/FEATURES.md) is still being written.
 
 <div style="display: flex; align-items: center; gap: 10px;">
   <h2 style="margin: 0;">Support the Project</h2>
   <a href="https://buymeacoffee.com/seasaltsaige">
     <img
-      src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/seasaltsaige"
+      src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black"
       alt="Buy me a coffee"
     />
   </a>
 </div>
 
 
-If you would like, you can support the open source initiative for the project by [donating](https://buymeacoffee.com/seasaltsaige) to keep the it alive.
+If you would like, you can support the open source initiative for the project by [donating](https://buymeacoffee.com/seasaltsaige) to keep it alive.
 
 
 ## Acknowledgements
@@ -98,4 +100,4 @@ If you would like, you can support the open source initiative for the project by
   </a>
 </div>
 
-The [OpenWink Wink Mod](https://github.com/seasaltsaige/openwink) is free and open-source collection of software and hardware licensed under the [GPL-3.0 License](./LICENSE). 
+The [OpenWink Wink Mod](https://github.com/seasaltsaige/openwink) is free and open-source collection of software and hardware licensed under the [GPL-3.0 License](./LICENSE).

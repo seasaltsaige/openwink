@@ -41,10 +41,20 @@ This React Native project is managed with Expo and EAS, allowing for faster iter
 
 ## Getting Started
 
-For broader project build instructions, pre-built application installation, and custom build artifact information, see the main [Build Guide](../docs/build/BUILD.md).
+Android builds are available on the [release page](https://github.com/seasaltsaige/openwink/releases). You can also build the app yourself using the instructions below, which is currently required for iOS. See [Getting Started](../docs/GETTING_STARTED.md) for installation and pairing.
+
+Use the Node.js version in [.nvmrc](./.nvmrc), currently `20.19.5`.
+
+Development builds look for a local update server by default. If you want to check for published updates instead, add this to `openwink-app/.env.local` before starting the development server:
+
+```dotenv
+EXPO_PUBLIC_UPDATE_URL=https://update-server.netlify.app/.netlify/functions/api/update
+```
+
+This changes the app's update metadata and firmware download requests. Installing app OTA updates requires a release build.
 
 ### Creating a development artifact
-Due to the fact that this project utilizes native components, such as WiFi and BLE, Expo Go can not be used, and a development build must be created.
+The app uses native Bluetooth components, so it needs a development build and cannot run in Expo Go. Use a physical phone to test the module connection.
 
 Clone this repository and ensure you are in the correct directory.
 
@@ -56,24 +66,23 @@ Clone this repository and ensure you are in the correct directory.
 Ensure that you have all the relevant packages installed.
 
 ```bash
-> npm install -g expo # Install expo globally
-> npx expo install # Install relevant project packages
+> npm ci
 > npm install -g eas-cli # Install global EAS CLI build tools
 ```
 
-Check to ensure that your `eas.json` file contains a `development` build key.
+The `development` profile is already defined in [eas.json](./eas.json):
 
 ```json
-    //...
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "ios": {
-        "simulator": true
-      }
-    },
-    //...
+{
+  "developmentClient": true,
+  "distribution": "internal",
+  "env": {
+    "APP_VARIANT": "development"
+  }
+}
 ```
+
+For a local iOS build without a paid Apple Developer account, skip the EAS account setup below and use the [Xcode instructions](#creating-a-development-build-for-ios-without-a-developer-account).
 
 Make sure you have an [expo.dev](https://expo.dev/) account, and you log into it using the [eas-cli](https://github.com/expo/eas-cli?tab=readme-ov-file#eas-accountlogin).
 
@@ -98,11 +107,13 @@ Initialize the project.
 > eas init
 ```
 
-Start your build.
+Start your Android build.
 
 ```bash
-> eas build:dev --profile development --platform [ios|android]
+> eas build --profile development --platform android
 ```
+
+For iOS, use `--platform ios`. EAS builds for a physical iPhone require a paid Apple Developer account and device registration; see [Expo's internal distribution instructions](https://docs.expo.dev/build/internal-distribution/).
 
 Once the build finishes, you will receive a QR code to install the build artifact on your device. Once you do so, you will need to start the development server on your laptop/desktop. Ensure you are connected to the same network on both devices, otherwise you will be unable to connect to the development server.
 
@@ -113,9 +124,9 @@ Once the build finishes, you will receive a QR code to install the build artifac
 Happy Coding!
 
 ### Creating a development build for iOS without a developer account
-If you don't have an Apple Developer account, you can still build and test the app on your iOS device using your personal Apple ID. This method requires manual configuration in Xcode but allows you to develop without the $99/year developer program.
+You can build locally on a Mac with Xcode using your personal Apple ID. A paid Apple Developer account is not required for this route. See [Expo's local development build instructions](https://docs.expo.dev/develop/development-builds/introduction/?buildenv=build-locally) for signing requirements.
 
-**Prerequisites**: Ensure you have completed the initial setup steps from [Creating a development artifact](#creating-a-development-artifact), including installing dependencies and configuring your project.
+Clone the repository and install the app dependencies as described above. You can skip `eas login`, `eas init`, and the EAS build command for a local build.
 
 Generate the native iOS project files using Expo's prebuild command.
 
@@ -123,35 +134,24 @@ Generate the native iOS project files using Expo's prebuild command.
 > npx expo prebuild --platform ios
 ```
 
-Navigate to the iOS directory and install CocoaPods dependencies.
+Install CocoaPods dependencies if the prebuild step did not finish installing them.
 
 ```bash
-> cd ios
 > npx pod-install
 ```
 
-**Important**: Always use `npx pod-install` instead of `pod install` directly, as this prevents conflicting pod definitions.
-
-Return to the project root and open the Xcode workspace.
-
-```bash
-> cd ..
-> open ios/openwinkapp.xcworkspace
-```
+Open the generated `.xcworkspace` file inside `ios/` in Xcode.
 
 **Configure Signing in Xcode**:
-1. In Xcode's project navigator, select **openwinkapp**.
+
+1. In Xcode's project navigator, select the OpenWink app target.
 2. Navigate to the **Signing & Capabilities** tab.
 3. Under **Team**, select your personal Apple ID team.
-4. Remove the **WiFi** and **Hotspot** capabilities, as these require a paid Apple Developer account.
+4. Use a bundle identifier you can sign with your account, and let Xcode manage signing automatically.
 
-Build and install the app on your connected iOS device.
+Connect your iPhone, select it as the run destination, and use **Product → Run** to build and install the app. Follow any device trust or Developer Mode prompts.
 
-```bash
-# In Xcode, press Cmd+B or select Product > Build
-```
-
-Once the build completes and installs on your device, start the Expo development server.
+From `openwink-app`, start the Expo development server.
 
 ```bash
 > npx expo start --dev-client
@@ -162,29 +162,21 @@ Your device should now connect to the development server. Ensure both your compu
 Happy Coding!
 
 ### Creating a preview artifact
-A preview artifact acts similar to the distribution build used when deployed to the corresponding app store. The preview build does not contain development tools, and serves as a functional build of the app that can be used offline.
-
-For more detailed preview, custom build, and pre-built artifact information, see the main [Build Guide](../docs/build/BUILD.md).
+A preview build runs without the development server. Use this if you want to install your own Android build and take it out to the car without keeping Metro running.
 
 I will assume that you have all the prerequisites mentioned in [Creating a development artifact](#creating-a-development-artifact) completed, and all related packages installed.
 
-Check to ensure that your `eas.json` file contains a `preview` build key.
-
-```json
-    //...
-    "preview": {
-      "distribution": "internal"
-    },
-    //...
-```
+The `preview` profile is already defined in [eas.json](./eas.json). The Android configuration builds an APK for `arm64-v8a` devices.
 
 Start your build.
 
 ```bash
-> eas build --profile preview --platform [ios|android]
+> eas build --profile preview --platform android
 ```
 
 Once the build finishes, you will receive a QR code to install the build artifact on your device.
+
+For an iOS preview build, use `--platform ios` with the signing and device registration requirements described above.
 
 Happy Winking!
 
@@ -196,7 +188,7 @@ The app is designed to act as the main control center for the OpenWink module. I
 Current app capabilities include:
 
 - **BLE Module Connection**: Scan for, connect to, and communicate with the Wink Module using Bluetooth Low Energy.
-- **Pairing and Reconnection**: Store the module-generated pairing key locally to allow only the paired device to reconnect.
+- **Pairing and Reconnection**: Store the module-generated pairing key locally for future connections. Profiles can optionally include this key when exported for use on another phone.
 - **Auto Connect**: Optionally reconnect to the saved Wink Module automatically.
 - **Default Commands**: Run common headlight actions such as left/right/both up, down, wink, blink, and wave.
 - **Manual Control**: Independently raise or lower the left headlight, right headlight, or both headlights.
@@ -216,28 +208,8 @@ Current app capabilities include:
 - **Application Themes**: Customize the app appearance with Miata-inspired themes.
 - **System Profiles**: Manage app/module configuration profiles for different use cases.
 
-### File Structure
-
-```bash
-openwink-app
-├── assets/        # Static images, icons, splash assets, and app media
-├── Components/    # Shared reusable UI components
-├── Pages/         # Main app screens and route-level views
-├── Plugins/       # Native/plugin related project code
-├── Providers/     # Context providers for BLE, commands, updates, and theming
-├── Storage/       # Local storage helpers for app and module settings
-├── helper/        # Shared helper functions, constants, handlers, and types
-├── hooks/         # Custom React hooks used throughout the app
-├── .env.template  # Template environment variable file. Rename to '.env' to use
-├── App.tsx        # Root app component
-├── Navigation.tsx # Main navigation configuration
-├── app.config.ts  # Expo app configuration
-├── eas.json       # EAS build profiles
-└── package.json   # Project scripts and dependencies
-```
-
 ## Contributing
-Contributions are always welcome and encouraged! If you have an idea for the app that you would like to see, or perhaps a bug report, feel free to open an issue and get it reviewed! Please refer to the [Contribution Guidelines](../docs/CONTRIBUTING.md) and the [Code of Conduct](../docs/CODE_OF_CONDUCT.md) first.
+Contributions are always welcome and encouraged! If you have an idea for the app that you would like to see, or perhaps a bug report, feel free to open an issue and get it reviewed! Please refer to the [Contribution Guidelines](../.github/CONTRIBUTING.md) and the [Code of Conduct](../.github/CODE_OF_CONDUCT.md) first.
 
 ### Vulnerabilities
 Please report any vulnerabilities directly to us [here](https://discord.gg/jaP67bgZBM) or at our email [miatawinktech@gmail.com](mailto:miatawinktech@gmail.com). Due to the nature of vulnerabilities, we ask that you do not post issues about them; avoiding bringing them to public attention.
