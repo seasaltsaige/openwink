@@ -20,6 +20,9 @@
 #define POSITION_UNKNOWN ((uint8_t)255)
 
 #define MAX_WAIT_TIME_MS pdMS_TO_TICKS(1000)
+#define SLEEPY_EXIT_MARGIN_MS 250
+#define SLEEPY_LUT_STEP_PCT 5
+#define SLEEPY_LUT_SIZE 21
 
 
 #define LEFT_SIDE BIT0
@@ -68,6 +71,7 @@ typedef struct output_args {
     gpio_num_t up_pin;
     gpio_num_t down_pin;
     EventBits_t stopped_bit;
+    EventBits_t started_bit;
     EventBits_t move_complete_bit;
     uint8_t side_bit;
 } output_args_t;

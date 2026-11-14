@@ -1,6 +1,7 @@
 #include <FreeRTOSConfig.h>
 #include <driver/gpio.h>
 #include <esp_sleep.h>
+#include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
 
 #include "ble/ble_handler.h"
@@ -26,6 +27,92 @@ RTC_DATA_ATTR headlight_position_t positions = {
 
 RTC_DATA_ATTR static uint8_t left_sleepy_target = 50;
 RTC_DATA_ATTR static uint8_t right_sleepy_target = 50;
+
+/**
+ * Non-linear partial-move timing lookup tables (in permille, 0..1000 of calibrated move_time_ms),
+ * indexed in 5% increments of target open position (0% = fully down, 100% = fully up).
+ *
+ * Derived from four-bar / slider-crank headlight linkage kinematics:
+ *   tau(p) = tau_min + (tau_max - tau_min) * arccos(1 - 2*p) / pi
+ * with directional deadband and coasting offsets:
+ *   - UP (0% -> p%):     tau_min = 0.130, tau_max = 0.780
+ *   - DOWN (100% -> p%): tau_min = 0.150, tau_max = 0.730
+ *
+ * Endpoints at index 0 (0%) and index 20 (100%) represent the physical lift/drop
+ * threshold anchors for interpolating 1%..4% and 96%..99%.
+ */
+static const uint16_t sleepy_up_time_permille[SLEEPY_LUT_SIZE] = {
+    215, //   0% (lift start anchor: bottom dead-center + gravity threshold)
+    308, //   5%
+    348, //  10%
+    380, //  15%
+    407, //  20%
+    432, //  25%
+    455, //  30%
+    477, //  35%
+    498, //  40%
+    519, //  45%
+    540, //  50%
+    561, //  55%
+    582, //  60%
+    603, //  65%
+    625, //  70%
+    648, //  75%
+    673, //  80%
+    700, //  85%
+    732, //  90%
+    772, //  95%
+    865  // 100% (lift coast anchor against gravity)
+};
+
+static const uint16_t sleepy_down_time_permille[SLEEPY_LUT_SIZE] = {
+    845, //   0% (drop coast anchor: 100% travel down from top)
+    752, //   5% (95% travel down)
+    712, //  10% (90% travel down)
+    680, //  15% (85% travel down)
+    653, //  20% (80% travel down)
+    628, //  25% (75% travel down)
+    605, //  30% (70% travel down)
+    583, //  35% (65% travel down)
+    562, //  40% (60% travel down)
+    541, //  45% (55% travel down)
+    520, //  50% (50% travel down)
+    499, //  55% (45% travel down)
+    478, //  60% (40% travel down)
+    457, //  65% (35% travel down)
+    435, //  70% (30% travel down)
+    412, //  75% (25% travel down)
+    387, //  80% (20% travel down)
+    360, //  85% (15% travel down)
+    328, //  90% (10% travel down)
+    288, //  95% ( 5% travel down)
+    195  // 100% (drop start anchor: 0% travel down from top)
+};
+
+static uint16_t get_partial_time_permille(uint8_t target_pos, move_type_t move_dir) {
+    if (target_pos == POSITION_DOWN)
+        return (move_dir == MOVE_UP) ? 0 : 1000;
+    if (target_pos >= POSITION_UP)
+        return (move_dir == MOVE_UP) ? 1000 : 0;
+
+    const uint16_t* lut = (move_dir == MOVE_UP) ? sleepy_up_time_permille : sleepy_down_time_permille;
+    uint8_t idx = target_pos / SLEEPY_LUT_STEP_PCT;
+    uint8_t rem = target_pos % SLEEPY_LUT_STEP_PCT;
+
+    if (rem == 0)
+        return lut[idx];
+
+    int32_t v0 = (int32_t)lut[idx];
+    int32_t v1 = (int32_t)lut[idx + 1];
+    int32_t diff = v1 - v0;
+    int32_t interp = v0 + (diff * (int32_t)rem + (diff >= 0 ? 2 : -2)) / SLEEPY_LUT_STEP_PCT;
+    return (uint16_t)interp;
+}
+
+static uint32_t compute_partial_move_delay_ms(uint16_t move_time_ms, uint8_t target_pos, move_type_t move_dir) {
+    uint16_t permille = get_partial_time_permille(target_pos, move_dir);
+    return ((uint32_t)move_time_ms * permille + 500) / 1000;
+}
 
 uint8_t is_left_sleepy() {
     return (positions.left_pos != POSITION_DOWN && positions.left_pos != POSITION_UP);
@@ -165,24 +252,33 @@ void handle_output_task(void* args) {
     for (;;) {
         movement_target_t move;
         if (xQueueReceive(motor->queue, &move, portMAX_DELAY)) {
-            // clear stopped bits
-            xEventGroupClearBits(movement_event, motor->stopped_bit);
+            // clear stopped and started bits
+            xEventGroupClearBits(movement_event, motor->stopped_bit | motor->started_bit);
 
             uint8_t curr_pos = (motor->side_bit == LEFT_SIDE) ? positions.left_pos : positions.right_pos;
             uint8_t side_sleepy = (motor->side_bit == LEFT_SIDE) ? is_left_sleepy() : is_right_sleepy();
 
+            move_type_t intended_dir = MOVE_NOP;
+            if (move.target == MOVE_UP && curr_pos != POSITION_UP)
+                intended_dir = MOVE_UP;
+            else if (move.target == MOVE_DOWN && curr_pos != POSITION_DOWN)
+                intended_dir = MOVE_DOWN;
+            else if (move.target == MOVE_PARTIAL && move.target_pos > POSITION_DOWN && move.target_pos < POSITION_UP) {
+                if (curr_pos == POSITION_DOWN)
+                    intended_dir = MOVE_UP;
+                else if (curr_pos == POSITION_UP)
+                    intended_dir = MOVE_DOWN;
+            }
+
+            uint8_t blank_startup = (intended_dir != MOVE_NOP && move.target != MOVE_PARTIAL && !side_sleepy) ? 1 : 0;
+            uint8_t allow_cal = (blank_startup && !get_sleepy_sequence_ignore()) ? 1 : 0;
+            set_side_move_context(motor->side_bit, intended_dir, allow_cal, blank_startup);
+
+            int64_t gpio_on_us = esp_timer_get_time();
             move_type_t move_res = start_side_move(motor, &move);
 
             if (move_res != MOVE_NOP) {
                 if (move.target == MOVE_PARTIAL) {
-                    uint8_t travel_pct = (move_res == MOVE_UP) ? move.target_pos : (100 - move.target_pos);
-                    uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
-                    uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
-
-                    BLE_LOGD(TAG, "%s PARTIAL %s: %u%% -> %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, move.target_pos, (unsigned long)delay_ms);
-
-                    xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
-
                     if (motor->side_bit == LEFT_SIDE) {
                         positions.left_pos = move.target_pos;
                         positions.last_left_move_dir = move_res;
@@ -190,23 +286,66 @@ void handle_output_task(void* args) {
                         positions.right_pos = move.target_pos;
                         positions.last_right_move_dir = move_res;
                     }
+
+                    uint16_t move_time_ms = get_side_move_time_ms(motor->side_bit, move_res);
+                    uint16_t permille = get_partial_time_permille(move.target_pos, move_res);
+                    uint32_t delay_ms = compute_partial_move_delay_ms(move_time_ms, move.target_pos, move_res);
+
+                    BLE_LOGD(
+                        TAG,
+                        "%s PARTIAL %s: %u%% -> %u%% (%u.%u%% of %ums = %lums)",
+                        side_to_str(motor->side_bit),
+                        move_type_to_str(move_res),
+                        curr_pos,
+                        move.target_pos,
+                        permille / 10,
+                        permille % 10,
+                        move_time_ms,
+                        (unsigned long)delay_ms
+                    );
+
+                    int64_t elapsed_us = esp_timer_get_time() - gpio_on_us;
+                    uint32_t elapsed_ms = (elapsed_us > 0) ? (uint32_t)((elapsed_us + 500) / 1000) : 0;
+                    uint32_t rem_delay_ms = (delay_ms > elapsed_ms) ? (delay_ms - elapsed_ms) : 0;
+
+                    if (rem_delay_ms > 0)
+                        vTaskDelay(pdMS_TO_TICKS(rem_delay_ms));
+
                     set_side_off(motor);
 
                     uint8_t is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
-                    if (is_moving)
-                        xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(50));
+                    if (is_moving || (xEventGroupGetBits(movement_event) & motor->started_bit) != 0)
+                        xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(150));
                 } else if (side_sleepy) {
-                    uint8_t travel_pct = (move_res == MOVE_UP) ? (100 - curr_pos) : curr_pos;
-                    uint16_t move_time_ms = (motor->side_bit == LEFT_SIDE) ? get_left_move_time_ms() : get_right_move_time_ms();
-                    uint32_t delay_ms = ((uint32_t)move_time_ms * travel_pct) / 100;
+                    move_type_t last_dir = (motor->side_bit == LEFT_SIDE) ? positions.last_left_move_dir : positions.last_right_move_dir;
+                    uint16_t move_time_ms = get_side_move_time_ms(motor->side_bit, move_res);
+                    uint16_t used_permille = get_partial_time_permille(curr_pos, last_dir);
+                    uint16_t rem_permille = (move_res == last_dir) ? ((used_permille < 1000) ? (1000 - used_permille) : 0) : used_permille;
+                    uint32_t est_rem_ms = ((uint32_t)move_time_ms * rem_permille + 500) / 1000;
+                    uint32_t cutoff_ms = est_rem_ms + SLEEPY_EXIT_MARGIN_MS;
+                    if (cutoff_ms > MOVE_TIME_LIMIT_MS)
+                        cutoff_ms = MOVE_TIME_LIMIT_MS;
 
-                    BLE_LOGD(TAG, "%s SLEEPY_EXIT %s: from %u%% (%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, (unsigned long)delay_ms);
+                    BLE_LOGD(TAG, "%s SLEEPY_EXIT %s: from %u%% (est=%lums, cutoff=%lums)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos, (unsigned long)est_rem_ms, (unsigned long)cutoff_ms);
 
-                    xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(delay_ms));
+                    // Wait until the physical cam limit switch stops the motor (motor->stopped_bit),
+                    // with a hard safety cutoff if the headlight was already resting on the limit switch.
+                    EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(cutoff_ms));
+
+                    // If the motor is still actively drawing current at cutoff_ms (e.g. cold/uncalibrated motor),
+                    // extend the wait up to MOVE_TIME_LIMIT_MS so power is never cut before the limit switch opens.
+                    uint8_t is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
+                    if ((completed_bits & motor->stopped_bit) == 0 && is_moving && cutoff_ms < MOVE_TIME_LIMIT_MS) {
+                        uint32_t extra_ms = MOVE_TIME_LIMIT_MS - cutoff_ms;
+                        completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(extra_ms));
+                    }
+
+                    if ((completed_bits & motor->stopped_bit) == 0)
+                        BLE_LOGW(TAG, "%s SLEEPY_EXIT %s hard cutoff reached (from %u%%)", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos);
 
                     set_side_off(motor);
 
-                    uint8_t is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
+                    is_moving = (motor->side_bit == LEFT_SIDE) ? movement_stats.left_moving : movement_stats.right_moving;
                     if (is_moving)
                         xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, pdMS_TO_TICKS(50));
 
@@ -215,8 +354,10 @@ void handle_output_task(void* args) {
                     BLE_LOGD(TAG, "%s FULL %s from %u%%", side_to_str(motor->side_bit), move_type_to_str(move_res), curr_pos);
 
                     EventBits_t completed_bits = xEventGroupWaitBits(movement_event, motor->stopped_bit, pdFALSE, pdTRUE, MAX_WAIT_TIME_MS);
-                    if ((completed_bits & motor->stopped_bit) == 0)
+                    if ((completed_bits & motor->stopped_bit) == 0) {
+                        set_side_move_context(motor->side_bit, move_res, 0, 0);
                         BLE_LOGE(TAG, "%s %s timed out (%ums)!", side_to_str(motor->side_bit), move_type_to_str(move_res), MOVE_TIME_LIMIT_MS);
+                    }
                     // if ((completed_bits & motor->stopped_bit) == 0)
                     // {
                     //     // timeout event

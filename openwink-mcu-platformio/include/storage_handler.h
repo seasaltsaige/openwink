@@ -46,6 +46,14 @@ void set_nvs_left_move_time(uint16_t time_ms);
 void get_nvs_left_move_time(uint16_t* time_ms);
 void set_nvs_right_move_time(uint16_t time_ms);
 void get_nvs_right_move_time(uint16_t* time_ms);
+void set_nvs_left_up_move_time(uint16_t time_ms);
+void get_nvs_left_up_move_time(uint16_t* time_ms);
+void set_nvs_left_down_move_time(uint16_t time_ms);
+void get_nvs_left_down_move_time(uint16_t* time_ms);
+void set_nvs_right_up_move_time(uint16_t time_ms);
+void get_nvs_right_up_move_time(uint16_t* time_ms);
+void set_nvs_right_down_move_time(uint16_t time_ms);
+void get_nvs_right_down_move_time(uint16_t* time_ms);
 
 // input headlight ON bypass
 void set_nvs_input_bypass_status(uint8_t status);

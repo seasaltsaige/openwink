@@ -1,12 +1,12 @@
 import { ConfigContext, ExpoConfig } from '@expo/config';
 import dotenv from 'dotenv';
 
-const UPDATE_SERVER_BASE = "https://update-server.netlify.app";
-const OTA_API_KEY = process.env.EXPO_PUBLIC_OTA_API_KEY ?? "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
-
 require('ts-node/register/transpile-only');
 
-dotenv.config();
+dotenv.config({ path: ['.env.local', '.env'] });
+
+const UPDATE_SERVER_BASE = process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE ?? "https://update-server.netlify.app";
+const OTA_API_KEY = process.env.EXPO_PUBLIC_OTA_API_KEY ?? "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
 
 const variant = process.env.APP_VARIANT ?? 'production';
 

@@ -90,7 +90,7 @@ export abstract class AppOTA {
       const manifestMeta = (
         updateCheck.manifest as Record<string, any> | undefined
       )?.metadata;
-      this.latestUpdateInfo = info ?? {
+      const resolvedInfo: AppUpdateInfo = info ?? {
         version: (manifestMeta?.appVersion ?? runtimeVersion) as FirmwareType,
         runtimeVersion,
         minFirmwareVersion: manifestMeta?.minFirmwareVersion ?? null,
@@ -98,6 +98,13 @@ export abstract class AppOTA {
         description: "Bug fixes and improvements.",
         createdAt: new Date().toISOString(),
       };
+
+      if (compareVersions(resolvedInfo.version, getRunningAppVersion()) <= 0) {
+        this.latestUpdateInfo = null;
+        return false;
+      }
+
+      this.latestUpdateInfo = resolvedInfo;
       return true;
     } else {
       // In development mode, check /app/info against current version for UI testing

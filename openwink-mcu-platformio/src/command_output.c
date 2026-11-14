@@ -94,6 +94,8 @@ static void exit_sleepy_to_origin() {
 
     BLE_LOGI(TAG, "Exiting sleepy eye (L=%s->%s, R=%s->%s)", move_type_to_str(left_finish), move_type_to_str(left_reverse), move_type_to_str(right_finish), move_type_to_str(right_reverse));
 
+    set_sleepy_sequence_ignore(1);
+
     // finish current movement (up/down)
     xEventGroupClearBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT);
     queue_side_move(LEFT_SIDE, left_finish, false);
@@ -105,6 +107,8 @@ static void exit_sleepy_to_origin() {
     queue_side_move(LEFT_SIDE, left_reverse, false);
     queue_side_move(RIGHT_SIDE, right_reverse, false);
     xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+
+    set_sleepy_sequence_ignore(0);
 }
 
 static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_t* saved_pos, uint8_t* was_sleepy) {
@@ -121,6 +125,7 @@ static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_
     BLE_LOGD(TAG, "Pre-sync (%s primary) -> target %u%% (sleepy=%u)", side_to_str(primary_side), target_pos, *was_sleepy);
 
     if (*was_sleepy) {
+        set_sleepy_sequence_ignore(1);
         move_type_t left_finish = left_sleepy ? (saved_pos->last_left_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
         move_type_t right_finish = right_sleepy ? (saved_pos->last_right_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
 
@@ -137,6 +142,9 @@ static void sync_sides_before_sequence(uint8_t primary_side, headlight_position_
         queue_side_move(RIGHT_SIDE, sync_dir, false);
         xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
     }
+
+    if (*was_sleepy)
+        set_sleepy_sequence_ignore(0);
 }
 
 static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos, uint8_t was_sleepy) {
@@ -144,6 +152,8 @@ static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos,
         return;
 
     BLE_LOGD(TAG, "Restore sleepy -> L=%u%% R=%u%%", saved_pos->left_pos, saved_pos->right_pos);
+
+    set_sleepy_sequence_ignore(1);
 
     uint8_t left_was_sleepy = (saved_pos->left_pos != POSITION_DOWN && saved_pos->left_pos != POSITION_UP);
     uint8_t right_was_sleepy = (saved_pos->right_pos != POSITION_DOWN && saved_pos->right_pos != POSITION_UP);
@@ -174,6 +184,8 @@ static void restore_sleepy_after_sequence(const headlight_position_t* saved_pos,
         queue_side_move(RIGHT_SIDE, MOVE_NOP, false);
 
     xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+
+    set_sleepy_sequence_ignore(0);
 }
 
 static void both_swap() {
@@ -194,6 +206,7 @@ static void run_left_right_sequence(uint8_t primary_side, uint8_t swap_pairs) {
     uint8_t was_sleepy = (left_sleepy || right_sleepy);
 
     if (was_sleepy) {
+        set_sleepy_sequence_ignore(1);
         move_type_t left_finish = left_sleepy ? (saved_pos.last_left_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
         move_type_t right_finish = right_sleepy ? (saved_pos.last_right_move_dir == MOVE_UP ? MOVE_UP : MOVE_DOWN) : MOVE_NOP;
 
@@ -201,6 +214,7 @@ static void run_left_right_sequence(uint8_t primary_side, uint8_t swap_pairs) {
         queue_side_move(LEFT_SIDE, left_finish, false);
         queue_side_move(RIGHT_SIDE, right_finish, false);
         xEventGroupWaitBits(output_event_group, LEFT_COMPLETE_BIT | RIGHT_COMPLETE_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+        set_sleepy_sequence_ignore(0);
     }
 
     headlight_position_t curr_pos = get_position();
@@ -286,6 +300,9 @@ void handle_command_task(void* args) {
             headlight_position_t curr_pos = get_position();
             command_types_t peek;
             BaseType_t peeked;
+            uint8_t is_multi_seq = (received >= COMMAND_LEFT_WAVE && received <= COMMAND_RIGHT_LEFT_X2);
+            if (!is_multi_seq && (is_left_sleepy() || is_right_sleepy() || received == COMMAND_SLEEPY_EYE))
+                set_sleepy_sequence_ignore(1);
 
             BLE_LOGI(TAG, "Exec %s (L=%u%% R=%u%%)", command_to_str(received), curr_pos.left_pos, curr_pos.right_pos);
 
@@ -504,6 +521,7 @@ void handle_command_task(void* args) {
             default: break;
             }
 
+            set_sleepy_sequence_ignore(0);
             curr_pos = get_position();
             BLE_LOGD(TAG, "Done %s (L=%u%% R=%u%%)", command_to_str(received), curr_pos.left_pos, curr_pos.right_pos);
 
