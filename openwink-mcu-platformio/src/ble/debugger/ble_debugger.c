@@ -191,7 +191,7 @@ void set_debug_level(ble_debug_level_t level) {
         uint8_t sleep_r = 50;
         get_sleepy_eye_values(&sleep_l, &sleep_r);
         BLE_LOGD(TAG, "State: L=%u%% R=%u%% | Sleepy cfg: L=%u%% R=%u%%", pos.left_pos, pos.right_pos, sleep_l, sleep_r);
-        BLE_LOGD(TAG, "Cal: L=%ums R=%ums | Btn: en=%u delay=%ums", get_left_move_time_ms(), get_right_move_time_ms(), get_custom_button_status(), get_custom_button_delay());
+        BLE_LOGD(TAG, "Cal: L(U=%ums D=%ums) R(U=%ums D=%ums) | Btn: en=%u delay=%ums", get_side_move_time_ms(LEFT_SIDE, MOVE_UP), get_side_move_time_ms(LEFT_SIDE, MOVE_DOWN), get_side_move_time_ms(RIGHT_SIDE, MOVE_UP), get_side_move_time_ms(RIGHT_SIDE, MOVE_DOWN), get_custom_button_status(), get_custom_button_delay());
     }
 }
 

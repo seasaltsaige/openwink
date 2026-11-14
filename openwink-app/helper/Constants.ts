@@ -112,7 +112,7 @@ export const UPDATE_SERVER_BASE =
 
 export const UPDATE_URL =
   process.env.EXPO_PUBLIC_UPDATE_URL ??
-  (__DEV__ && !process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE
+  (__DEV__
     ? "http://172.20.9.16:3000/.netlify/functions/api/update"
     : `${UPDATE_SERVER_BASE}/.netlify/functions/api/update`);
 

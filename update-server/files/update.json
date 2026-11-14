@@ -65,6 +65,18 @@
       "description": "TESTING HEADLIGHT STUFF PT 2 (top-down LUT + averaged move time)",
       "required_app_version": "1.3.1",
       "required_firmware_version": "1.0.0"
+    },
+    {
+      "version": "1.0.4",
+      "description": "More headlight testing...",
+      "required_app_version": "1.3.1",
+      "required_firmware_version": "1.0.0"
+    },
+    {
+      "version": "1.0.5",
+      "description": "More headlight testing..............",
+      "required_app_version": "1.3.1",
+      "required_firmware_version": "1.0.0"
     }
   ]
 }

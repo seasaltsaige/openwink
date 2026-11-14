@@ -71,6 +71,7 @@ typedef struct output_args {
     gpio_num_t up_pin;
     gpio_num_t down_pin;
     EventBits_t stopped_bit;
+    EventBits_t started_bit;
     EventBits_t move_complete_bit;
     uint8_t side_bit;
 } output_args_t;

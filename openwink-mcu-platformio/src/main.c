@@ -56,6 +56,7 @@ void app_main() {
         .queue = left_output_queue,
         .side_bit = LEFT_SIDE,
         .stopped_bit = LEFT_STOPPED_BIT,
+        .started_bit = LEFT_STARTED_BIT,
         .move_complete_bit = LEFT_COMPLETE_BIT,
     };
 
@@ -65,6 +66,7 @@ void app_main() {
         .queue = right_output_queue,
         .side_bit = RIGHT_SIDE,
         .stopped_bit = RIGHT_STOPPED_BIT,
+        .started_bit = RIGHT_STARTED_BIT,
         .move_complete_bit = RIGHT_COMPLETE_BIT,
     };
 

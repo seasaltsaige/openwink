@@ -28,6 +28,10 @@ static const char* left_sleepy_key = "sleep_l";
 static const char* right_sleepy_key = "sleep_r";
 static const char* left_time_key = "time_l";
 static const char* right_time_key = "time_r";
+static const char* left_up_time_key = "time_l_u";
+static const char* left_down_time_key = "time_l_d";
+static const char* right_up_time_key = "time_r_u";
+static const char* right_down_time_key = "time_r_d";
 static const char* binding_keys[NUM_BINDINGS] = {
     "bind_0",
     "bind_1",
@@ -214,6 +218,30 @@ void set_nvs_right_move_time(uint16_t time_ms) {
 void get_nvs_right_move_time(uint16_t* time_ms) {
     read_u16(right_time_key, time_ms);
 }
+void set_nvs_left_up_move_time(uint16_t time_ms) {
+    write_u16(left_up_time_key, time_ms);
+}
+void get_nvs_left_up_move_time(uint16_t* time_ms) {
+    read_u16(left_up_time_key, time_ms);
+}
+void set_nvs_left_down_move_time(uint16_t time_ms) {
+    write_u16(left_down_time_key, time_ms);
+}
+void get_nvs_left_down_move_time(uint16_t* time_ms) {
+    read_u16(left_down_time_key, time_ms);
+}
+void set_nvs_right_up_move_time(uint16_t time_ms) {
+    write_u16(right_up_time_key, time_ms);
+}
+void get_nvs_right_up_move_time(uint16_t* time_ms) {
+    read_u16(right_up_time_key, time_ms);
+}
+void set_nvs_right_down_move_time(uint16_t time_ms) {
+    write_u16(right_down_time_key, time_ms);
+}
+void get_nvs_right_down_move_time(uint16_t* time_ms) {
+    read_u16(right_down_time_key, time_ms);
+}
 
 void set_nvs_binding(const button_binding_t* binding, uint8_t pos) {
     if (binding == NULL || pos >= NUM_BINDINGS)
@@ -361,6 +389,10 @@ void seed_nvs_defaults() {
     nvs_set_u8(storage_handle, right_sleepy_key, 50);
     nvs_set_u16(storage_handle, left_time_key, 625);
     nvs_set_u16(storage_handle, right_time_key, 625);
+    nvs_set_u16(storage_handle, left_up_time_key, 625);
+    nvs_set_u16(storage_handle, left_down_time_key, 625);
+    nvs_set_u16(storage_handle, right_up_time_key, 625);
+    nvs_set_u16(storage_handle, right_down_time_key, 625);
     nvs_set_u8(storage_handle, aux_status_key, AUX_DISABLED);
     nvs_set_u8(storage_handle, input_bypass_key, 0);
     nvs_set_u8(storage_handle, wave_delay_key, 50);
