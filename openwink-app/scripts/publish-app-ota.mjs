@@ -194,7 +194,7 @@ const infoPayload = {
   iosStoreUrl: process.env.IOS_STORE_URL ||
       'https://github.com/seasaltsaige/openwink/releases/',
   androidStoreUrl: process.env.ANDROID_STORE_URL ||
-      'https://github.com/seasaltsaige/openwink/releases/',
+      'https://play.google.com/store/apps/details?id=com.seasaltsaige.openwink',
   createdAt,
 };
 
