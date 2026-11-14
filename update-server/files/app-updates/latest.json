@@ -1,9 +1,9 @@
 {
-  "version": "2.1.1",
+  "version": "2.1.2",
   "runtimeVersion": "2.1.0",
   "minFirmwareVersion": null,
-  "description": "Attempt to fix crashing issue during onboarding on some devices",
+  "description": "Add Terms of Use page and update app permissions",
   "iosStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
   "androidStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
-  "createdAt": "2026-10-29T02:21:55.355Z"
+  "createdAt": "2026-11-14T20:08:47.482Z"
 }

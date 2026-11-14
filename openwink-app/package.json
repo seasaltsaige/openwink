@@ -3,9 +3,9 @@
   "version": "2.1.0",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start --dev-client",
-    "android": "expo start --dev-client --android",
-    "ios": "expo start --dev-client --ios",
+    "start": "expo start --dev-client --private-key-path ./keys/private-key.pem",
+    "android": "expo start --dev-client --android --private-key-path ./keys/private-key.pem",
+    "ios": "expo start --dev-client --ios --private-key-path ./keys/private-key.pem",
     "run:android": "expo run:android",
     "run:ios": "expo run:ios",
     "prebuild": "expo prebuild --clean",

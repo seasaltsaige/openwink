@@ -14,7 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG || "openwink",
-  version: "2.1.1",
+  version: "2.1.2",
   runtimeVersion: "2.1.0",
   updates: {
     enabled: true,
@@ -51,19 +51,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/icon_british_racing_green_android.png",
       backgroundColor: "#004d26"
     },
-    permissions: [
-      "android.permission.BLUETOOTH",
-      "android.permission.BLUETOOTH_ADMIN",
-      "android.permission.BLUETOOTH_CONNECT",
-      "android.permission.ACCESS_FINE_LOCATION"
-    ],
     package: variant === "development" ? "com.seasaltsaige.openwink.dev" : "com.seasaltsaige.openwink"
   },
   web: {
     favicon: "./assets/favicon.png"
   },
   plugins: [
-    "react-native-ble-plx",
+    [
+      "react-native-ble-plx",
+      {
+        isBackgroundEnabled: false,
+        neverForLocation: true,
+        bluetoothAlwaysPermission:
+          "OpenWink uses Bluetooth to discover, connect to, and control your vehicle's OpenWink headlight module.",
+      }
+    ],
     "expo-font",
     [
       "expo-build-properties",
@@ -107,12 +109,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         }
       }
     ],
-    [
-      "expo-dev-client",
-      {
-        "launchMode": "most-recent",
-      }
-    ],
+    ...(variant === "development"
+      ? [
+        [
+          "expo-dev-client",
+          {
+            launchMode: "most-recent",
+          },
+        ] as [string, any],
+      ]
+      : []),
   ],
   owner: process.env.EXPO_OWNER,
   extra: {

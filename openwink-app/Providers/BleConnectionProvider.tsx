@@ -194,19 +194,9 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       );
 
-      const fineLocationPermission = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: "Location Permission",
-          message: "Bluetooth scanning requires location access.",
-          buttonPositive: "OK",
-        },
-      );
-
       return (
-        bluetoothScanPermission === "granted" &&
-        bluetoothConnectPermission === "granted" &&
-        fineLocationPermission === "granted"
+        bluetoothScanPermission === PermissionsAndroid.RESULTS.GRANTED &&
+        bluetoothConnectPermission === PermissionsAndroid.RESULTS.GRANTED
       );
     } catch (error) {
       console.error("Error requesting Android 31+ permissions:", error);
