@@ -6,25 +6,12 @@ import { cancelAnimation, Easing, runOnJS, useAnimatedReaction, useSharedValue, 
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import LinearGradient from "react-native-linear-gradient";
 
-const MIN = 50;
-
 export function Landing() {
   const { colorTheme, theme } = useColorTheme();
 
-  const { waveDelayMulti, leftMoveTime, rightMoveTime } = useBleMonitor();
+  const { leftMoveTime, rightMoveTime } = useBleMonitor();
 
-  const [min, setMin] = useState(MIN);
-
-
-  useEffect(() => {
-    if (waveDelayMulti * 100 !== MIN)
-      setMin(parseFloat((waveDelayMulti * 100).toPrecision(2)));
-  }, []);
-
-  useEffect(() => {
-    setMin(waveDelayMulti * 100);
-  }, [waveDelayMulti])
-
+  const isMounted = useSharedValue(true);
   const leftWaveStatus = useSharedValue(100);
   const rightWaveStatus = useSharedValue(100);
 
@@ -32,9 +19,11 @@ export function Landing() {
   const [rw, setRightWave] = useState(100);
 
   const animateWave = useCallback(() => {
-
     cancelAnimation(leftWaveStatus);
     cancelAnimation(rightWaveStatus);
+
+    leftWaveStatus.value = 100;
+    rightWaveStatus.value = 100;
 
     const LOOP_PAUSE = 250;
 
@@ -83,24 +72,34 @@ export function Landing() {
       -1,
       false,
     );
-  }, [min]);
+  }, [leftMoveTime, rightMoveTime, leftWaveStatus, rightWaveStatus]);
 
   useAnimatedReaction(
-    () => leftWaveStatus.value,
-    (value) => runOnJS(setLeftWave)(value),
+    () => Math.round(leftWaveStatus.value),
+    (value, previous) => {
+      if (isMounted.value && value !== previous) {
+        runOnJS(setLeftWave)(value);
+      }
+    },
   );
   useAnimatedReaction(
-    () => rightWaveStatus.value,
-    (value) => runOnJS(setRightWave)(value),
+    () => Math.round(rightWaveStatus.value),
+    (value, previous) => {
+      if (isMounted.value && value !== previous) {
+        runOnJS(setRightWave)(value);
+      }
+    },
   );
 
   useEffect(() => {
+    isMounted.value = true;
     animateWave();
     return () => {
+      isMounted.value = false;
       cancelAnimation(leftWaveStatus);
       cancelAnimation(rightWaveStatus);
-    }
-  }, []);
+    };
+  }, [animateWave, isMounted, leftWaveStatus, rightWaveStatus]);
 
 
   return (

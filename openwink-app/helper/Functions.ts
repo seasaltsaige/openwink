@@ -1,4 +1,6 @@
 import { useRef } from "react";
+import * as Application from "expo-application";
+import * as Updates from "expo-updates";
 import base64 from "react-native-base64";
 import Storage from "../Storage/Storage";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
@@ -113,6 +115,16 @@ export const getDevicePasskey = () => {
   if (!uuidValue) uuidValue = "Not Paired";
   return uuidValue;
 }
+
+export const getRunningAppVersion = (): string => {
+  const manifest = Updates.manifest as Record<string, any> | null;
+  return (
+    manifest?.metadata?.appVersion ??
+    manifest?.extra?.expoClient?.version ??
+    Application.nativeApplicationVersion ??
+    "2.0.0"
+  );
+};
 
 
 export const compareVersions = (a: string, b: string) => {

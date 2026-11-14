@@ -7,7 +7,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import * as Application from "expo-application";
 import BottomSheet from "@gorhom/bottom-sheet";
 
-import { getDevicePasskey } from "../../helper/Functions";
+import { getDevicePasskey, getRunningAppVersion } from "../../helper/Functions";
 import { CommandSequenceBottomSheet, ConfirmationModal, HeaderWithBackButton, InfoBox } from "../../Components";
 import {
   ColorTheme,
@@ -75,7 +75,7 @@ export function Information() {
   const [showPairingKey, setShowPairingKey] = useState(false);
 
   const appInfo = {
-    "Application Version": `v${Application.nativeApplicationVersion}`,
+    "Application Version": `v${getRunningAppVersion()}`,
     "Application Theme": ColorTheme.themeNames[themeName],
   };
 

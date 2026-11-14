@@ -12,6 +12,7 @@ import {
   LongButton,
   QuickLink,
   ModuleUpdateModal,
+  AppUpdateModal,
   MainHeader
 } from "../../Components";
 import { useColorTheme } from "../../hooks/useColorTheme";
@@ -19,6 +20,7 @@ import { useBleConnection } from "../../Providers/BleConnectionProvider";
 
 import {
   useUpdateManager,
+  useAppUpdateManager,
   ERROR_TYPE,
   UPDATE_STATUS,
 } from "../../hooks/useUpdateManager";
@@ -34,8 +36,7 @@ export function Home() {
   const route = useRoute();
   const { colorTheme, theme } = useColorTheme();
 
-  const [appUpdateAvailable, setAppUpdateAvailable] = useState(false as null | boolean);
-  const [fetchingAppUpdateInfo, setFetchingAppUpdateInfo] = useState(false);
+  const [appUpdateVisible, setAppUpdateVisible] = useState(false);
   const [moduleUpdateVisible, setModuleUpdateVisible] = useState(false);
 
   const [quickLinksModalVisible, setQuickLinksModalVisible] = useState(false);
@@ -70,6 +71,26 @@ export function Home() {
     startUpdate,
   } = useUpdateManager();
 
+  const {
+    appUpdateStatus,
+    appUpdateData,
+    appUpdateError,
+    checkAppUpdateAvailable,
+    startAppUpdate,
+  } = useAppUpdateManager();
+
+  const closeAppUpdate = (showToast: boolean) => {
+    setAppUpdateVisible(false);
+    if (showToast)
+      Toast.show({
+        type: "success",
+        text1: "Update Dismissed",
+        text2: "App update dismissed. Consider updating soon.",
+        autoHide: true,
+        visibilityTime: 5000,
+      });
+  }
+
   const closeModuleUpdate = (showToast: boolean) => {
     setModuleUpdateVisible(false);
     if (showToast)
@@ -91,14 +112,22 @@ export function Home() {
     setQuickLinks(() => QuickLinksStore.getLinks());
   }
 
-  const checkAppUpdate = async () => {
-    // fetch request to get app update info
+  const checkAppUpdate = useCallback(async () => {
+    const available = await checkAppUpdateAvailable();
+    if (available) {
+      Toast.show({
+        text2: "App Update Available",
+        type: "update",
+        props: {
+          downloadAction: () => { setAppUpdateVisible(true); },
+        },
+        swipeable: false,
+        autoHide: false,
+      });
+    }
+  }, [checkAppUpdateAvailable]);
 
-  }
-
-  const installAppUpdate = async () => {
-    // Open app store...
-  }
+  const installAppUpdate = async () => setAppUpdateVisible(true);
 
   const fetchModuleUpdate = useCallback(
     async () => {
@@ -305,32 +334,63 @@ export function Home() {
             </Text>
 
             {
-              // TODO: update to 'if update available for app'
-              appUpdateAvailable ? (
+              appUpdateError !== ERROR_TYPE.ERR_NONE ? (
+                appUpdateError === ERROR_TYPE.ERR_TIMEOUT ? (
+                  <LongButton
+                    text="Failed to check for App updates"
+                    onPress={() => checkAppUpdate()}
+                    icons={{ names: [null, "alert-circle-outline"], size: [null, 18] }}
+                  />
+                ) : (
+                  <View style={theme.mainLongButtonPressableContainer}>
+                    <View style={theme.mainLongButtonPressableView}>
+                      <Text style={theme.mainLongButtonPressableText}>
+                        Failed to Install App Update
+                      </Text>
+                    </View>
+
+                    <IonIcons style={theme.mainLongButtonPressableIcon} size={20} name="alert-circle-outline" color='#ff6b6b' />
+                  </View>
+                )
+              ) : appUpdateStatus === UPDATE_STATUS.AVAILABLE ? (
                 <LongButton
-                  onPress={() => {
-                    // Open app store
-                  }}
+                  onPress={() => installAppUpdate()}
                   icons={{ names: [null, "cloud-download-outline"], size: [null, 18] }}
                   text="Install App Update"
                 />
-              ) : (
+              ) : appUpdateStatus === UPDATE_STATUS.UP_TO_DATE ? (
                 <View style={theme.mainLongButtonPressableContainer}>
                   <View style={theme.mainLongButtonPressableView}>
                     <Text style={theme.mainLongButtonPressableText}>
-                      {
-                        fetchingAppUpdateInfo ?
-                          "Checking for app update" :
-                          "App is up to date"}
+                      App is up to date
                     </Text>
                   </View>
-                  {
-                    fetchingAppUpdateInfo ?
-                      <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} /> :
-                      <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
-                  }
-
+                  <IonIcons style={theme.mainLongButtonPressableIcon} size={18} name="checkmark-done-outline" color={colorTheme.textColor} />
                 </View>
+              ) : appUpdateStatus === UPDATE_STATUS.INSTALLING ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Installing App Update
+                    </Text>
+                  </View>
+                  <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
+                </View>
+              ) : appUpdateStatus === UPDATE_STATUS.FETCHING ? (
+                <View style={theme.mainLongButtonPressableContainer}>
+                  <View style={theme.mainLongButtonPressableView}>
+                    <Text style={theme.mainLongButtonPressableText}>
+                      Checking for App Update
+                    </Text>
+                  </View>
+                  <ActivityIndicator style={theme.mainLongButtonPressableIcon} size={"small"} color={colorTheme.buttonColor} />
+                </View>
+              ) : (
+                <LongButton
+                  onPress={() => checkAppUpdate()}
+                  icons={{ names: [null, "repeat-outline"], size: [null, 20] }}
+                  text="Check for App update"
+                />
               )
             }
 
@@ -433,11 +493,18 @@ export function Home() {
       <ModuleUpdateModal
         visible={moduleUpdateVisible}
         updateInfo={updateData}
-        // binSizeBytes={updateData?.size!}
-        // description={updateData?.description!}
-        // version={updateData?.version!}
-        // startUpdate={startUpdate}
+        onRequestAppUpdate={appUpdateStatus === UPDATE_STATUS.AVAILABLE ? () => setAppUpdateVisible(true) : undefined}
         close={closeModuleUpdate}
+      />
+
+      <AppUpdateModal
+        visible={appUpdateVisible}
+        updateInfo={appUpdateData}
+        updateStatus={appUpdateStatus}
+        error={appUpdateError}
+        startUpdate={startAppUpdate}
+        onRequestModuleUpdate={updateStatus === UPDATE_STATUS.AVAILABLE ? () => setModuleUpdateVisible(true) : undefined}
+        close={closeAppUpdate}
       />
 
       <Onboarding

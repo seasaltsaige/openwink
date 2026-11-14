@@ -120,7 +120,10 @@ export const Headlight = ({
   scale = 1,
 }) => {
   // Clamp percent between 0 and 100
-  const clampedPercent = Math.max(0, Math.min(100, percent));
+  const clampedPercent = Math.max(0, Math.min(100, Number.isFinite(percent) ? percent : 0));
+  const isUpperHalf = clampedPercent >= 50;
+  const percentForTop = Math.max(0, Math.min(100, (clampedPercent - 50) * 2));
+  const percentForCover = Math.max(0, Math.min(100, clampedPercent * 2));
 
   // const scaledScale = scale / 0.30;
 
@@ -174,25 +177,20 @@ export const Headlight = ({
         </ClipPath>
       </Defs>
       {/* Upper headlight body */}
-      {clampedPercent >= 50
-        && (() => {
-          const percentForTop = (clampedPercent - 50) * 2;
-          return (
-            <Polygon
-              points={`
-                ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop)}
-                ${topRightX(percentForTop)},${topRightY(percentForTop) + 5}
-                ${HEADLIGHT_COORDS.rightMid.x},${HEADLIGHT_COORDS.rightMid.y}
-                ${HEADLIGHT_COORDS.rightBottom.x},${HEADLIGHT_COORDS.rightBottom.y}
-                ${HEADLIGHT_COORDS.innerBottom.x},${HEADLIGHT_COORDS.innerBottom.y}
-                ${HEADLIGHT_COORDS.leftTop.x},${HEADLIGHT_COORDS.leftMid.y}
-              `}
-              fill="#000000"
-              stroke="#000000"
-              strokeWidth="2"
-            />
-          );
-        })()}
+      <Polygon
+        opacity={isUpperHalf ? 1 : 0}
+        points={`
+          ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop)}
+          ${topRightX(percentForTop)},${topRightY(percentForTop) + 5}
+          ${HEADLIGHT_COORDS.rightMid.x},${HEADLIGHT_COORDS.rightMid.y}
+          ${HEADLIGHT_COORDS.rightBottom.x},${HEADLIGHT_COORDS.rightBottom.y}
+          ${HEADLIGHT_COORDS.innerBottom.x},${HEADLIGHT_COORDS.innerBottom.y}
+          ${HEADLIGHT_COORDS.leftTop.x},${HEADLIGHT_COORDS.leftMid.y}
+        `}
+        fill="#000000"
+        stroke="#000000"
+        strokeWidth="2"
+      />
 
       {/* Lower headlight body */}
       <Polygon
@@ -220,43 +218,33 @@ export const Headlight = ({
       />
 
       {/* Top panel line */}
-      {clampedPercent >= 50
-        && (() => {
-          const percentForTop = (clampedPercent - 50) * 2;
-          return (
-            <Polygon
-              points={`
-              ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop) - 6}
-              ${topRightX(percentForTop)},${topRightY(percentForTop) - 1}
-              ${topRightX(percentForTop)},${topRightY(percentForTop) + 5}
-              ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop)}
-            `}
-              fill={themeColor}
-              stroke="#000000"
-              strokeWidth="2"
-            />
-          );
-        })()}
+      <Polygon
+        opacity={isUpperHalf ? 1 : 0}
+        points={`
+          ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop) - 6}
+          ${topRightX(percentForTop)},${topRightY(percentForTop) - 1}
+          ${topRightX(percentForTop)},${topRightY(percentForTop) + 5}
+          ${HEADLIGHT_COORDS.leftTop.x},${topLeftY(percentForTop)}
+        `}
+        fill={themeColor}
+        stroke="#000000"
+        strokeWidth="2"
+      />
 
       {/* Headlight cover */}
-      {clampedPercent < 50
-        && (() => {
-          const percentForCover = clampedPercent * 2; // 0-50% maps to 0-100%
-          return (
-            <Polygon
-              points={`
-                ${HEADLIGHT_COORDS.leftTop.x},${position(HEADLIGHT_COORDS.leftMid.y, HEADLIGHT_COORDS.leftMid.y, percentForCover)}
-                ${HEADLIGHT_COORDS.rightTopClosed.x},${position(HEADLIGHT_COORDS.rightTopClosed.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
-                ${HEADLIGHT_COORDS.rightBottom.x},${position(HEADLIGHT_COORDS.rightBottom.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
-                ${HEADLIGHT_COORDS.innerBottom.x},${position(HEADLIGHT_COORDS.innerBottom.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
-                ${HEADLIGHT_COORDS.leftBottom.x},${position(HEADLIGHT_COORDS.leftBottom.y, HEADLIGHT_COORDS.leftMid.y, percentForCover)}
-              `}
-              fill={themeColor}
-              stroke="#000000"
-              strokeWidth="2"
-            />
-          );
-        })()}
+      <Polygon
+        opacity={isUpperHalf ? 0 : 1}
+        points={`
+          ${HEADLIGHT_COORDS.leftTop.x},${position(HEADLIGHT_COORDS.leftMid.y, HEADLIGHT_COORDS.leftMid.y, percentForCover)}
+          ${HEADLIGHT_COORDS.rightTopClosed.x},${position(HEADLIGHT_COORDS.rightTopClosed.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
+          ${HEADLIGHT_COORDS.rightBottom.x},${position(HEADLIGHT_COORDS.rightBottom.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
+          ${HEADLIGHT_COORDS.innerBottom.x},${position(HEADLIGHT_COORDS.innerBottom.y, HEADLIGHT_COORDS.rightTopClosed.y, percentForCover)}
+          ${HEADLIGHT_COORDS.leftBottom.x},${position(HEADLIGHT_COORDS.leftBottom.y, HEADLIGHT_COORDS.leftMid.y, percentForCover)}
+        `}
+        fill={themeColor}
+        stroke="#000000"
+        strokeWidth="2"
+      />
     </Svg>
   );
 };

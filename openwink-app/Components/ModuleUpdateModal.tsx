@@ -8,8 +8,7 @@ import { ERROR_TYPE, UPDATE_STATUS, UpdateData, useUpdateManager } from "../hook
 import { OTA } from "../helper/Handlers/OTA";
 import { useBleConnection } from "../Providers/BleConnectionProvider";
 import { AutoConnectStore } from "../Storage";
-import { getVersion } from "react-native-device-info";
-import { compareVersions, sleep } from "../helper/Functions";
+import { compareVersions, getRunningAppVersion, sleep } from "../helper/Functions";
 import { useFocusEffect } from "@react-navigation/native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import Toast from "react-native-toast-message";
@@ -24,12 +23,14 @@ enum ModalState {
 interface IModuleUpdateModal {
   visible: boolean;
   updateInfo: UpdateData[] | null,
+  onRequestAppUpdate?: () => void;
   close: (showToast: boolean) => void;
 }
 
 export function ModuleUpdateModal({
   visible,
   updateInfo,
+  onRequestAppUpdate,
   close,
 }: IModuleUpdateModal) {
 
@@ -64,7 +65,7 @@ export function ModuleUpdateModal({
       // app is out of date for the firmware update
       setDisplayIndex(index);
 
-      if (compareVersions(updateData![index].app_version, getVersion()) > 0)
+      if (compareVersions(updateData![index].app_version, getRunningAppVersion()) > 0)
         return setModalState(ModalState.ERROR_APP_VERSION);
 
       setModalState(ModalState.UPDATE);
@@ -411,6 +412,11 @@ export function ModuleUpdateModal({
                       boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
                     })}
                     onPress={async () => {
+                      if (onRequestAppUpdate) {
+                        close(false);
+                        onRequestAppUpdate();
+                        return;
+                      }
                       // Eventually should open corresponding app store page
                       // iOS/Android check
                       await Linking.openURL(`https://github.com/seasaltsaige/openwink/releases/`);
