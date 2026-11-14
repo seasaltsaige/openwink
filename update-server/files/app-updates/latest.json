@@ -1,9 +1,9 @@
 {
-  "version": "2.1.2",
+  "version": "2.1.3",
   "runtimeVersion": "2.1.0",
   "minFirmwareVersion": null,
   "description": "Add Terms of Use page and update app permissions",
   "iosStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
   "androidStoreUrl": "https://play.google.com/store/apps/details?id=com.seasaltsaige.openwink",
-  "createdAt": "2026-11-14T20:16:16.284Z"
+  "createdAt": "2026-11-14T20:20:43.157Z"
 }

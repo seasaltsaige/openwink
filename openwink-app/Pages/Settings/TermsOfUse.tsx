@@ -47,7 +47,6 @@ export function TermsOfUse() {
         headerText="Terms of Use"
       />
       <View style={{
-        paddingBottom: 50,
         width: "100%",
         flex: 1,
       }}>
