@@ -110,6 +110,8 @@ export const UPDATE_SERVER_BASE =
   process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE ??
   "https://update-server.netlify.app";
 
+export const PRIVACY_POLICY_URL = `${UPDATE_SERVER_BASE}/privacy`;
+
 export const UPDATE_URL =
   process.env.EXPO_PUBLIC_UPDATE_URL ??
   (__DEV__

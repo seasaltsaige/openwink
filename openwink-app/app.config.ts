@@ -13,9 +13,9 @@ const variant = process.env.APP_VARIANT ?? 'production';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
-  slug: process.env.EXPO_SLUG || "openwink",
-  version: "2.1.3",
-  runtimeVersion: "2.1.0",
+  slug: process.env.EXPO_SLUG ?? "openwink",
+  version: "2.2.0",
+  runtimeVersion: "2.2.0",
   updates: {
     enabled: true,
     checkAutomatically: "NEVER",
@@ -120,10 +120,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       ]
       : []),
   ],
-  owner: process.env.EXPO_OWNER,
+  owner: process.env.EXPO_OWNER ?? "seasaltsaige",
   extra: {
     eas: {
-      projectId: process.env.EXPO_PROJECT_ID
+      projectId: process.env.EXPO_PROJECT_ID ?? "6f04b4b4-4888-49c9-8dd1-51111d08e58b"
     }
   }
 });

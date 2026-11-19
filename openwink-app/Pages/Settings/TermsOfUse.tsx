@@ -1,10 +1,11 @@
-import { ScrollView, Text, View } from "react-native";
+import { Linking, ScrollView, Text, View } from "react-native";
 import { useRoute } from "@react-navigation/native";
 
 import { useColorTheme } from "../../hooks/useColorTheme";
 import { HeaderWithBackButton } from "../../Components";
+import { PRIVACY_POLICY_URL } from "../../helper/Constants";
 
-const TERMS_SECTIONS: { title: string; body: string }[] = [
+const TERMS_SECTIONS: { title: string; body: string; showPrivacyLink?: boolean }[] = [
   {
     title: "1. Acceptance & Changes to Terms",
     body:
@@ -24,6 +25,7 @@ const TERMS_SECTIONS: { title: string; body: string }[] = [
     title: "4. Privacy & Device Permissions",
     body:
       "OpenWink uses Bluetooth Low Energy (BLE) exclusively to discover, connect to, and communicate locally with your OpenWink hardware module. Network access is used solely to check for and download official application and module firmware updates. OpenWink does not collect, store, transmit, or sell personal information, analytics, or location data.",
+    showPrivacyLink: true,
   },
   {
     title: "5. Disclaimer of Warranty & Liability",
@@ -34,7 +36,8 @@ const TERMS_SECTIONS: { title: string; body: string }[] = [
 
 export function TermsOfUse() {
 
-  const { theme, colorTheme } = useColorTheme();
+  const { theme, colorTheme, themeName } = useColorTheme();
+  const linkColor = themeName === "crystalWhite" ? "#1d4ed8" : "#99c3ff";
 
   const route = useRoute();
   //@ts-ignore
@@ -74,6 +77,21 @@ export function TermsOfUse() {
                   }}
                 >
                   {section.body}
+                  {section.showPrivacyLink ? (
+                    <>
+                      {" See the "}
+                      <Text
+                        onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+                        style={{
+                          color: linkColor,
+                          textDecorationLine: "underline",
+                        }}
+                      >
+                        Privacy Policy
+                      </Text>
+                      {" for more info."}
+                    </>
+                  ) : null}
                 </Text>
               </View>
             </View>

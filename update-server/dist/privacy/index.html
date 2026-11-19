@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenWink Privacy Policy</title>
+  <style>
+    body {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 0 20px 60px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height: 1.6;
+      color: #222;
+      background: #fff;
+    }
+    h1 {
+      font-size: 1.7rem;
+      margin-bottom: 4px;
+    }
+    .updated {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 0;
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 1.15rem;
+      margin-top: 26px;
+      margin-bottom: 8px;
+    }
+    p, ul {
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    a {
+      color: #0b57d0;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        color: #e4e4e7;
+        background: #161618;
+      }
+      .updated {
+        color: #a1a1aa;
+      }
+      a {
+        color: #8ab4f8;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>OpenWink Privacy Policy</h1>
+  <p class="updated">Last updated: November 18, 2026</p>
+
+  <p>
+    This policy explains how the OpenWink mobile app (<code>com.seasaltsaige.openwink</code>) handles data and device permissions.
+  </p>
+
+  <p>
+    In short: OpenWink does not collect, store on external servers, share, or sell personal information, analytics, or location data. The app has no user accounts, ads, or third-party tracking SDKs.
+  </p>
+
+  <h2>Bluetooth</h2>
+  <p>
+    OpenWink uses Bluetooth Low Energy (BLE) to scan for, connect to, control, and update your OpenWink headlight module. All Bluetooth communication stays directly between your phone and your module. Module identifiers (such as MAC addresses or UUIDs) and pairing keys never leave your device.
+  </p>
+
+  <h2>Location Permission on Older Android Versions</h2>
+  <p>
+    OpenWink does not track, record, or use your physical location, and never accesses GPS.
+  </p>
+  <p>
+    On Android 12 and newer, and on iOS, OpenWink does not request location permission (Android builds use the <code>neverForLocation</code> Bluetooth permission flag). On Android 11 and earlier, Android itself requires location permission before an app is allowed to scan for nearby BLE devices. On those older devices, that permission is used only so the OS permits Bluetooth scanning for your module.
+  </p>
+
+  <h2>Local Storage and Files</h2>
+  <p>
+    App settings, custom command sequences, button bindings, presets, theme choices, and your paired module key are stored locally on your phone (and on your module).
+  </p>
+  <p>
+    If you import or export presets or share diagnostic logs, the app uses your phone's built-in file picker or share sheet and only touches the specific file you select or export.
+  </p>
+
+  <h2>App and Firmware Updates</h2>
+  <p>
+    When checking for or downloading app and module firmware updates, the app makes HTTPS requests to the OpenWink update server hosted on <a href="https://www.netlify.com/privacy/">Netlify</a>. Those requests only include version and platform details needed to check compatibility and download the update binary. Like any standard web request, Netlify receives basic network request data (such as IP address) to deliver the response, and we do not log or tie update checks to individual users.
+  </p>
+
+  <h2>Deleting Your Data</h2>
+  <p>
+    Since nothing personal is stored on our servers, all data is under your local control. Uninstalling the app or clearing its storage in your phone settings deletes all local app data. Performing a factory reset on the OpenWink module clears its saved settings and pairing key.
+  </p>
+
+  <h2>Children's Privacy</h2>
+  <p>
+    OpenWink is a vehicle utility meant for drivers and vehicle owners, not children under 13, and does not knowingly collect personal information from children.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    If this policy changes in the future, the updated version and date will be posted on this page.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions can be sent to <a href="mailto:miatawinktech@gmail.com">miatawinktech@gmail.com</a> or opened on <a href="https://github.com/seasaltsaige/openwink">GitHub</a>.
+  </p>
+</body>
+</html>
