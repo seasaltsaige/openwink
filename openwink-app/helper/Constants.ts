@@ -82,6 +82,19 @@ export enum OTAControlCommand {
   HALT = 0x03,
 }
 
+export enum AuthPacket {
+  HELLO = 0x00,
+  NEED_KEY = 0x01,
+  OFFER_KEY = 0x02,
+  OK = 0x03,
+  KEY_DATA = 0x01,
+  ABORT = 0xFF,
+  FAIL = 0xFF,
+}
+
+export const AUTH_KEY_LENGTH = 20;
+export const AUTH_HANDSHAKE_TIMEOUT_MS = 6000;
+
 export const ATT_HEADER_SIZE = 3;
 export const OTA_ACK_WINDOW_SIZE = 20;
 

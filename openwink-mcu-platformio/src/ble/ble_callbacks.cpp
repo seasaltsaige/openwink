@@ -219,8 +219,9 @@ void GeneralSettingsCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, Ni
 }
 
 void AuthCallbacks::onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) {
-    // writes should only do something if specifically waiting for it
-    if (get_auth_state() != AUTH_WAIT_TOK && get_auth_state() != AUTH_WAIT_ECHO)
+    // writes should only do something while handshake is in progress
+    auth_state_t state = get_auth_state();
+    if (state != AUTH_WAIT_TOK && state != AUTH_SEND_TOK && state != AUTH_WAIT_ECHO)
         return;
 
     NimBLEAttValue val = pCharacteristic->getValue();

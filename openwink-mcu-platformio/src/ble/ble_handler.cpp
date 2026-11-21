@@ -180,8 +180,8 @@ extern "C" void ble_disconnect() {
     set_device_status(DISCONNECTED);
 }
 
-extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
-    if (!ble_initialized || openwink_status == DISCONNECTED)
+extern "C" void ble_notify_passkey(const uint8_t* key, size_t size) {
+    if (!ble_initialized || openwink_status == DISCONNECTED || key == NULL || size == 0)
         return;
 
     NimBLEServer* pServer = NimBLEDevice::getServer();
@@ -197,7 +197,7 @@ extern "C" void ble_notify_passkey(uint8_t* key, size_t size) {
         return;
 
     passkey->setValue(key, size);
-    passkey->notify();
+    passkey->notify(key, size);
 }
 
 extern "C" void ble_notify_debug(const uint8_t* data, size_t size) {

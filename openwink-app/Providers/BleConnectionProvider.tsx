@@ -15,9 +15,17 @@ import {
 } from "react-native-ble-plx";
 import { PermissionsAndroid, Platform } from "react-native";
 import * as ExpoDevice from "expo-device";
-import base64 from "react-native-base64";
 import Toast from "react-native-toast-message";
-import { BLE, CANCEL_COMMAND_PAYLOAD, getBLEDescriptors, SCAN_TIME_SECONDS, SettingFlag } from "../helper/Constants";
+import {
+  AUTH_HANDSHAKE_TIMEOUT_MS,
+  AUTH_KEY_LENGTH,
+  AuthPacket,
+  BLE,
+  CANCEL_COMMAND_PAYLOAD,
+  getBLEDescriptors,
+  SCAN_TIME_SECONDS,
+  SettingFlag,
+} from "../helper/Constants";
 import {
   AutoConnectStore,
   AuxButtonStore,
@@ -29,11 +37,100 @@ import {
   HeadlightOrientationStore,
   SleepyEyeStore,
 } from "../Storage";
-import { bytesToBase64, getDevicePasskey, sleep } from "../helper/Functions";
+import {
+  base64ToBytes,
+  bytesToBase64,
+  compareVersions,
+  getDevicePasskey,
+  sleep,
+} from "../helper/Functions";
 import { useBleMonitor } from "./BleMonitorProvider";
-import DeviceInfo from "react-native-device-info";
 import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
 import { OTA } from "../helper/Handlers/OTA";
+
+type AuthFailureReason =
+  | "MODULE_ALREADY_PAIRED"
+  | "MODULE_WAS_RESET"
+  | "UNPAIRED_MODULE_FOUND"
+  | "INVALID_PASSKEY"
+  | "HANDSHAKE_TIMEOUT"
+  | "DISCONNECTED_DURING_AUTH";
+
+class AuthHandshakeError extends Error {
+  reason: AuthFailureReason;
+  suppressAutoReconnect: boolean;
+
+  constructor(reason: AuthFailureReason, suppressAutoReconnect: boolean = true) {
+    super(`Auth handshake failed: ${reason}`);
+    this.name = "AuthHandshakeError";
+    this.reason = reason;
+    this.suppressAutoReconnect = suppressAutoReconnect;
+  }
+}
+
+const getConnectionFailureToast = (
+  error: unknown,
+): {
+  type: "error" | "info";
+  text1: string;
+  text2: string;
+  visibilityTime: number;
+} => {
+  if (error instanceof AuthHandshakeError) {
+    switch (error.reason) {
+      case "MODULE_ALREADY_PAIRED":
+        return {
+          type: "error",
+          text1: "Module Already Paired",
+          text2:
+            "This module is already paired, but your phone has no key for it. Press the retractor button 20x to reset the module, then reconnect.",
+          visibilityTime: 7000,
+        };
+      case "MODULE_WAS_RESET":
+        return {
+          type: "error",
+          text1: "Module Was Reset",
+          text2:
+            "Your module has no pairing key (likely factory reset). Use Forget Module in Settings to clear your phone's old key, then reconnect.",
+          visibilityTime: 7000,
+        };
+      case "UNPAIRED_MODULE_FOUND":
+        return {
+          type: "info",
+          text1: "Unpaired Module Ignored",
+          text2:
+            "Found an unpaired module, but your app already has a saved pairing key. Use Forget Module in Settings if you want to pair with it.",
+          visibilityTime: 7000,
+        };
+      case "INVALID_PASSKEY":
+        return {
+          type: "error",
+          text1: "Pairing Key Mismatch",
+          text2:
+            "Your saved pairing key was rejected. Use Forget Module in Settings and press the retractor button 20x to reset and re-pair.",
+          visibilityTime: 7000,
+        };
+      case "HANDSHAKE_TIMEOUT":
+        return {
+          type: "error",
+          text1: "Pairing Handshake Timed Out",
+          text2:
+            "Module did not finish pairing in time. Make sure the module is awake and nearby, then try again.",
+          visibilityTime: 6000,
+        };
+      case "DISCONNECTED_DURING_AUTH":
+        break;
+    }
+  }
+
+  return {
+    type: "error",
+    text1: "Connection Failed",
+    text2:
+      "Lost connection during setup. Make sure the module is awake and in range, then try again.",
+    visibilityTime: 5000,
+  };
+};
 
 export type BleConnectionContextType = {
   device: Device | null;
@@ -48,7 +145,7 @@ export type BleConnectionContextType = {
   connectToDevice: (deviceId: string) => Promise<void>;
   disconnect: (showToast?: boolean) => Promise<void>;
   setAutoConnect: (enabled: boolean) => void;
-  unpair: () => Promise<void>;
+  unpair: () => Promise<boolean>;
   updateProfile: () => Promise<void>;
   refreshConnection: () => Promise<void>;
 };
@@ -293,54 +390,323 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     bindDeviceMonitors(activeDevice);
   }, [isConnected, startMonitoring, bindDeviceMonitors]);
 
+  const authenticateDevice = useCallback(
+    (
+      connection: Device,
+      expectedMac: string | null,
+      supportsExplicitHandshake: boolean,
+      registerDisconnectAbort: (abortFn: (() => void) | null) => void,
+    ): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        let settled = false;
+        let respondedToChallenge = false;
+        let sentLegacyStoredKey = false;
+        let pendingClaimedKey: string | null = null;
+        let authSubscription: { remove: () => void } | null = null;
+        let legacyTimerId: ReturnType<typeof setTimeout> | null = null;
+
+        const cleanup = () => {
+          clearTimeout(timeoutId);
+          if (legacyTimerId) {
+            clearTimeout(legacyTimerId);
+            legacyTimerId = null;
+          }
+          registerDisconnectAbort(null);
+          if (authSubscription) {
+            try {
+              authSubscription.remove();
+            } catch {
+              // Ignore subscription cleanup errors if already disconnected
+            }
+            authSubscription = null;
+          }
+        };
+
+        const settleResolve = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve();
+        };
+
+        const settleReject = (err: Error) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(err);
+        };
+
+        const sendAbortAndReject = async (reason: AuthFailureReason) => {
+          if (settled) return;
+          if (supportsExplicitHandshake) {
+            await connection
+              .writeCharacteristicWithResponseForService(
+                ...getBLEDescriptors("SETTINGS", "AUTH"),
+                bytesToBase64([AuthPacket.ABORT]),
+              )
+              .catch(() => { });
+          }
+          settleReject(new AuthHandshakeError(reason, true));
+        };
+
+        const timeoutId = setTimeout(() => {
+          settleReject(new AuthHandshakeError("HANDSHAKE_TIMEOUT", false));
+        }, AUTH_HANDSHAKE_TIMEOUT_MS);
+
+        registerDisconnectAbort(() => {
+          if (!supportsExplicitHandshake && sentLegacyStoredKey) {
+            settleReject(new AuthHandshakeError("INVALID_PASSKEY", true));
+            return;
+          }
+          settleReject(new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false));
+        });
+
+        authSubscription = connection.monitorCharacteristicForService(
+          ...getBLEDescriptors("SETTINGS", "AUTH"),
+          (err, char) => {
+            if (settled) return;
+
+            if (err) {
+              console.error("Error monitoring AUTH characteristic:", err);
+              if (!supportsExplicitHandshake && sentLegacyStoredKey) {
+                settleReject(new AuthHandshakeError("INVALID_PASSKEY", true));
+              } else {
+                settleReject(
+                  new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+                );
+              }
+              return;
+            }
+
+            if (!char?.value) return;
+
+            try {
+              const bytes = base64ToBytes(char.value);
+              if (bytes.length === 0) return;
+
+              // Legacy (<1.0.6) firmware fallback: only notifies raw 20-byte token when unpaired
+              if (!supportsExplicitHandshake) {
+                if (bytes.length !== AUTH_KEY_LENGTH) return;
+
+                const storedKey = getDevicePasskey();
+                if (storedKey !== "Not Paired") {
+                  const reason: AuthFailureReason =
+                    expectedMac !== null && expectedMac === connection.id
+                      ? "MODULE_WAS_RESET"
+                      : "UNPAIRED_MODULE_FOUND";
+                  settleReject(new AuthHandshakeError(reason, true));
+                  return;
+                }
+
+                if (respondedToChallenge) return;
+                respondedToChallenge = true;
+                if (legacyTimerId) {
+                  clearTimeout(legacyTimerId);
+                  legacyTimerId = null;
+                }
+
+                const offeredBytes = Array.from(bytes);
+                const offeredKey = String.fromCharCode(...offeredBytes);
+
+                connection
+                  .writeCharacteristicWithResponseForService(
+                    ...getBLEDescriptors("SETTINGS", "AUTH"),
+                    bytesToBase64(offeredBytes),
+                  )
+                  .then(async () => {
+                    await sleep(300);
+                    if (settled) return;
+                    const alive = await connection.isConnected().catch(() => false);
+                    if (!alive) {
+                      settleReject(
+                        new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+                      );
+                      return;
+                    }
+                    DeviceUUIDStore.set(offeredKey);
+                    settleResolve();
+                  })
+                  .catch((writeErr) => {
+                    console.error("Error echoing legacy passkey:", writeErr);
+                    settleReject(
+                      new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+                    );
+                  });
+                return;
+              }
+
+              const opcode = bytes[0];
+
+              if (opcode === AuthPacket.NEED_KEY) {
+                const storedKey = getDevicePasskey();
+                if (storedKey === "Not Paired") {
+                  void sendAbortAndReject("MODULE_ALREADY_PAIRED");
+                  return;
+                }
+                if (storedKey.length !== AUTH_KEY_LENGTH) {
+                  void sendAbortAndReject("INVALID_PASSKEY");
+                  return;
+                }
+                if (respondedToChallenge) return;
+                respondedToChallenge = true;
+
+                const keyBytes = Array.from(
+                  storedKey,
+                  (c) => c.charCodeAt(0) & 0xff,
+                );
+                connection
+                  .writeCharacteristicWithResponseForService(
+                    ...getBLEDescriptors("SETTINGS", "AUTH"),
+                    bytesToBase64([AuthPacket.KEY_DATA, ...keyBytes]),
+                  )
+                  .catch((writeErr) => {
+                    console.error("Error writing stored passkey:", writeErr);
+                    settleReject(
+                      new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+                    );
+                  });
+              } else if (opcode === AuthPacket.OFFER_KEY) {
+                if (bytes.length !== 1 + AUTH_KEY_LENGTH) {
+                  void sendAbortAndReject("INVALID_PASSKEY");
+                  return;
+                }
+
+                const storedKey = getDevicePasskey();
+                if (storedKey !== "Not Paired") {
+                  const reason: AuthFailureReason =
+                    expectedMac !== null && expectedMac === connection.id
+                      ? "MODULE_WAS_RESET"
+                      : "UNPAIRED_MODULE_FOUND";
+                  void sendAbortAndReject(reason);
+                  return;
+                }
+
+                if (respondedToChallenge) return;
+                respondedToChallenge = true;
+
+                const offeredBytes = Array.from(
+                  bytes.slice(1, 1 + AUTH_KEY_LENGTH),
+                );
+                pendingClaimedKey = String.fromCharCode(...offeredBytes);
+
+                connection
+                  .writeCharacteristicWithResponseForService(
+                    ...getBLEDescriptors("SETTINGS", "AUTH"),
+                    bytesToBase64([AuthPacket.KEY_DATA, ...offeredBytes]),
+                  )
+                  .catch((writeErr) => {
+                    console.error("Error echoing claimed passkey:", writeErr);
+                    settleReject(
+                      new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+                    );
+                  });
+              } else if (opcode === AuthPacket.OK) {
+                if (pendingClaimedKey !== null) {
+                  DeviceUUIDStore.set(pendingClaimedKey);
+                }
+                settleResolve();
+              } else if (opcode === AuthPacket.FAIL) {
+                settleReject(new AuthHandshakeError("INVALID_PASSKEY", true));
+              }
+            } catch (decodeErr) {
+              console.error("Error handling AUTH notification:", decodeErr);
+              settleReject(
+                new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+              );
+            }
+          },
+        );
+
+        if (settled) {
+          if (authSubscription) {
+            try {
+              authSubscription.remove();
+            } catch {
+              // Ignore cleanup errors
+            }
+            authSubscription = null;
+          }
+          return;
+        }
+
+        if (supportsExplicitHandshake) {
+          // Opt into v2 explicit handshake on >=1.0.6 firmware
+          connection
+            .writeCharacteristicWithResponseForService(
+              ...getBLEDescriptors("SETTINGS", "AUTH"),
+              bytesToBase64([AuthPacket.HELLO]),
+            )
+            .catch((helloErr) => {
+              console.error("Error sending AUTH HELLO:", helloErr);
+              settleReject(
+                new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false),
+              );
+            });
+        } else {
+          // Legacy (<1.0.6) firmware flow
+          const storedKey = getDevicePasskey();
+          if (storedKey === "Not Paired") {
+            // If no 20B token arrives within 1200ms, legacy module is already paired
+            legacyTimerId = setTimeout(() => {
+              if (!respondedToChallenge) {
+                settleReject(
+                  new AuthHandshakeError("MODULE_ALREADY_PAIRED", true),
+                );
+              }
+            }, 1200);
+          } else if (storedKey.length !== AUTH_KEY_LENGTH) {
+            settleReject(new AuthHandshakeError("INVALID_PASSKEY", true));
+          } else {
+            // Give legacy unpaired module 250ms to emit its 20B token before writing stored key
+            legacyTimerId = setTimeout(() => {
+              if (settled || respondedToChallenge) return;
+              respondedToChallenge = true;
+              sentLegacyStoredKey = true;
+
+              const keyBytes = Array.from(
+                storedKey,
+                (c) => c.charCodeAt(0) & 0xff,
+              );
+              connection
+                .writeCharacteristicWithResponseForService(
+                  ...getBLEDescriptors("SETTINGS", "AUTH"),
+                  bytesToBase64(keyBytes),
+                )
+                .then(async () => {
+                  await sleep(300);
+                  if (settled) return;
+                  const alive = await connection.isConnected().catch(() => false);
+                  if (!alive) {
+                    settleReject(
+                      new AuthHandshakeError("INVALID_PASSKEY", true),
+                    );
+                    return;
+                  }
+                  settleResolve();
+                })
+                .catch(() => {
+                  settleReject(new AuthHandshakeError("INVALID_PASSKEY", true));
+                });
+            }, 250);
+          }
+        }
+      });
+    },
+    [],
+  );
+
   const setupConnection = useCallback(
     async (connection: Device) => {
       try {
         await bindDeviceMonitors(connection);
 
-
-        // Setup disconnect handler
-        connection.onDisconnected(async (err, disconnectedDevice) => {
-          if (err) {
-            console.error("Disconnect error:", err);
-          }
-
-          console.log("Device disconnected:", disconnectedDevice?.id);
-
-          // Cleanup
-          stopMonitoring();
-          updateDevice(null);
-          setConnected(false);
-
-          if (intentionalDisconnectRef.current && !OTA.restartQueued) {
-            intentionalDisconnectRef.current = false;
-            return;
-          }
-          intentionalDisconnectRef.current = false;
-
-          // Auto-reconnect if enabled
-          if (autoConnectRef.current || OTA.restartQueued) {
-            OTA.restartQueued = false;
-            await sleep(1500);
-            await scanForModuleRef.current();
-          }
-        });
-
-
-        if (getDevicePasskey() !== "Not Paired") {
-          await connection.writeCharacteristicWithResponseForService(
-            ...getBLEDescriptors("SETTINGS", "AUTH"),
-            base64.encode(getDevicePasskey()),
+        try {
+          await writeInitialSettings(connection);
+        } catch (error) {
+          console.warn(
+            "[BLE] Non-critical write failed during initial settings:",
+            error,
           );
-
-          try {
-            await writeInitialSettings(connection);
-          } catch (error) {
-            console.warn(
-              "[BLE] Non-critical write failed during initial settings:",
-              error,
-            );
-          }
         }
 
         await readInitialValues(connection);
@@ -349,16 +715,10 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         throw error;
       }
     },
-    [
-      bindDeviceMonitors,
-      stopMonitoring,
-      updateDevice,
-      writeInitialSettings,
-      readInitialValues,
-    ],
+    [bindDeviceMonitors, writeInitialSettings, readInitialValues],
   );
 
-  // Connect to a specific device with retry logic
+  // Connect to a specific device with verified pairing handshake
   const connectToDevice = useCallback(
     async (deviceId: string) => {
       if (isConnecting || isConnectedRef.current) {
@@ -369,21 +729,112 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsConnecting(true);
       intentionalDisconnectRef.current = false;
 
+      const targetMac = DeviceMACStore.getStoredMAC();
+      let connectedDevice: Device | null = null;
+      let disconnectSubscription: { remove: () => void } | null = null;
+      let setupCompleted = false;
+      let disconnectedDuringSetup = false;
+      let disconnectAbortFn: (() => void) | null = null;
+
       try {
         console.log(`Connecting to device ${deviceId}`);
 
         const connection = await manager.connectToDevice(deviceId);
+        connectedDevice = connection;
+
+        disconnectSubscription = connection.onDisconnected(
+          async (err, disconnectedDevice) => {
+            if (err) {
+              console.error("Disconnect error:", err);
+            }
+
+            console.log("Device disconnected:", disconnectedDevice?.id);
+
+            if (!setupCompleted) {
+              disconnectedDuringSetup = true;
+              disconnectAbortFn?.();
+              return;
+            }
+
+            // Cleanup post-connection state
+            stopMonitoring();
+            updateDevice(null);
+            setConnected(false);
+
+            if (intentionalDisconnectRef.current && !OTA.restartQueued) {
+              intentionalDisconnectRef.current = false;
+              return;
+            }
+            intentionalDisconnectRef.current = false;
+
+            // Auto-reconnect if enabled
+            if (autoConnectRef.current || OTA.restartQueued) {
+              OTA.restartQueued = false;
+              await sleep(1500);
+              await scanForModuleRef.current();
+            }
+          },
+        );
+
         await connection.discoverAllServicesAndCharacteristics();
 
         // Negotiate MTU to maximum size if android device.
         const negotiatedMTUConnection = await connection.requestMTU(517);
+        connectedDevice = negotiatedMTUConnection;
+
+        // Pre-read unauthenticated FIRMWARE_VERSION so <1.0.6 modules use legacy fallback
+        let remoteFirmwareVersion: string | null = null;
+        try {
+          const fwChar =
+            await negotiatedMTUConnection.readCharacteristicForService(
+              ...getBLEDescriptors("OTA", "FIRMWARE_VERSION"),
+            );
+          if (fwChar?.value) {
+            const fwBytes = base64ToBytes(fwChar.value);
+            if (fwBytes.length >= 3) {
+              remoteFirmwareVersion = `${fwBytes[0]}.${fwBytes[1]}.${fwBytes[2]}`;
+            }
+          }
+        } catch (fwErr) {
+          console.warn(
+            "[BLE] Could not pre-read FIRMWARE_VERSION before auth:",
+            fwErr,
+          );
+        }
+
+        const supportsExplicitHandshake =
+          remoteFirmwareVersion === null ||
+          compareVersions(remoteFirmwareVersion, "1.0.6") >= 0;
+
+        // Complete explicit pairing/auth handshake BEFORE claiming connected or syncing settings
+        await authenticateDevice(
+          negotiatedMTUConnection,
+          targetMac,
+          supportsExplicitHandshake,
+          (abortFn) => {
+            disconnectAbortFn = abortFn;
+          },
+        );
+
+        if (disconnectedDuringSetup) {
+          throw new AuthHandshakeError("DISCONNECTED_DURING_AUTH", false);
+        }
+
         updateDevice(negotiatedMTUConnection);
 
-        // Setup monitoring and handlers
+        // Setup runtime monitoring, sync initial settings, and read initial values
         await setupConnection(negotiatedMTUConnection);
 
+        const stillConnected =
+          !disconnectedDuringSetup &&
+          (await negotiatedMTUConnection.isConnected().catch(() => false));
+        if (!stillConnected) {
+          throw new Error("Device disconnected before connection setup completed");
+        }
 
-        // Store MAC and update state after connection establishes
+        setupCompleted = true;
+
+        // Store MAC and update state ONLY after handshake and setup succeed
         DeviceMACStore.setMAC(connection.id);
         setMac(connection.id);
         setIsConnecting(false);
@@ -396,25 +847,43 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
           visibilityTime: 3000,
         });
       } catch (error) {
+        disconnectAbortFn = null;
+        if (disconnectSubscription) {
+          try {
+            disconnectSubscription.remove();
+          } catch {
+            // Ignore listener cleanup errors
+          }
+        }
         stopMonitoring();
+        if (connectedDevice) {
+          await connectedDevice.cancelConnection().catch(() => { });
+        }
         setConnected(false);
         updateDevice(null);
         setIsConnecting(false);
 
-        Toast.show({
-          type: "error",
-          text1: "Connection Failed",
-          text2: "Could not connect to module. Please try again.",
-          visibilityTime: 5000,
-        });
+        const toast = getConnectionFailureToast(error);
+        Toast.show(toast);
 
-        // If auto-connect is enabled, start scanning again
-        if (autoConnectRef.current) {
+        const suppressAutoReconnect =
+          error instanceof AuthHandshakeError && error.suppressAutoReconnect;
+
+        // If auto-connect is enabled and failure was not a deterministic auth mismatch, retry scan
+        if (autoConnectRef.current && !suppressAutoReconnect) {
+          await sleep(1500);
           await scanForModuleRef.current();
         }
       }
     },
-    [isConnecting, manager, setupConnection, stopMonitoring, updateDevice],
+    [
+      isConnecting,
+      manager,
+      authenticateDevice,
+      setupConnection,
+      stopMonitoring,
+      updateDevice,
+    ],
   );
 
   // Check if a scanned device advertises all required OpenWink services
@@ -639,8 +1108,8 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     AutoConnectStore.set(enabled);
   }, [manager]);
 
-  // Unpair from module (forgets device MAC)
-  const unpair = useCallback(async () => {
+  // Unpair from module (forgets device MAC and returns true if MCU acknowledged unpair)
+  const unpair = useCallback(async (): Promise<boolean> => {
     intentionalDisconnectRef.current = true;
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
@@ -657,21 +1126,33 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
     console.log("MAC Erased");
 
+    let unpairedOnMcu = false;
     if (device !== null) {
       try {
-        await device.writeCharacteristicWithResponseForService(
-          ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
-          bytesToBase64([SettingFlag.UNPAIR]),
-        );
+        const connected = await device.isConnected().catch(() => false);
+        if (connected) {
+          await device.writeCharacteristicWithResponseForService(
+            ...getBLEDescriptors("SETTINGS", "GENERAL_SETTINGS"),
+            bytesToBase64([SettingFlag.UNPAIR]),
+          );
+          unpairedOnMcu = true;
 
-        await device.cancelConnection().catch((err) => {
-          console.log("Disconnect after unpair:", err);
-        });
+          stopMonitoring();
+          await device.cancelConnection().catch((err) => {
+            console.log("Disconnect after unpair:", err);
+          });
+        }
       } catch (err) {
         console.log("Error sending unpair to mcu: ", err);
+      } finally {
+        updateDevice(null);
+        setIsConnecting(false);
+        setConnected(false);
       }
     }
-  }, [device, manager]);
+
+    return unpairedOnMcu;
+  }, [device, manager, stopMonitoring, updateDevice]);
 
   const updateProfile = useCallback(async () => {
     if (!device) return;

@@ -158,15 +158,26 @@ export function ModuleSettings() {
   }
 
   const forgetModulePairing = async () => {
-    await unpair();
+    const unpairedOnModule = await unpair();
 
-    Toast.show({
-      autoHide: true,
-      visibilityTime: 8000,
-      type: "success",
-      text1: "Unpair Successful",
-      text2: "OpenWink Module successfully unpaired. To repair, reconnect to module."
-    });
+    if (unpairedOnModule) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        type: "success",
+        text1: "Unpair Successful",
+        text2: "OpenWink Module successfully unpaired. Reconnect anytime to pair again.",
+      });
+    } else {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 8000,
+        type: "info",
+        text1: "Removed From Phone Only",
+        text2:
+          "Module was not connected and still holds its pairing key. Press the retractor button 20x to reset the module before re-pairing.",
+      });
+    }
 
     setConfirmationOpen(false);
   }

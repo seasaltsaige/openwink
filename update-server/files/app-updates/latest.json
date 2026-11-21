@@ -1,9 +1,9 @@
 {
-  "version": "2.1.3",
+  "version": "2.1.4",
   "runtimeVersion": "2.1.0",
-  "minFirmwareVersion": null,
-  "description": "Add Terms of Use page and update app permissions",
+  "minFirmwareVersion": "1.0.6",
+  "description": "Improves Bluetooth pairing verification and adds detailed connection error hints.",
   "iosStoreUrl": "https://github.com/seasaltsaige/openwink/releases/",
   "androidStoreUrl": "https://play.google.com/store/apps/details?id=com.seasaltsaige.openwink",
-  "createdAt": "2026-11-14T20:20:43.157Z"
+  "createdAt": "2026-11-21T21:40:34.880Z"
 }

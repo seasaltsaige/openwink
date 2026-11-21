@@ -1,6 +1,6 @@
 {
   "name": "openwink-app",
-  "version": "2.2.0",
+  "version": "2.1.4",
   "main": "index.ts",
   "scripts": {
     "start": "expo start --dev-client --private-key-path ./keys/private-key.pem",

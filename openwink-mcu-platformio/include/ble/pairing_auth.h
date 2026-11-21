@@ -7,9 +7,31 @@
 #include <freertos/task.h>
 
 #define AUTH_INIT_TIMEOUT_MS 5000
-#define AUTH_ECHO_TIMEOUT_MS 2000
+#define AUTH_ECHO_TIMEOUT_MS 5000
+#define AUTH_LEGACY_OFFER_DELAY_MS 300
 
 #define AUTH_KEY_LEN (uint8_t)20
+
+// Handshake packet opcodes on PASSKEY_UUID
+// App -> MCU writes:
+//   [AUTH_PKT_HELLO] (1B, opts into explicit v2 handshake)
+//   [AUTH_PKT_KEY_DATA, <20B token>] (21B)
+//   [AUTH_PKT_ABORT] (1B)
+//   (Legacy <v2 apps write raw <20B token> without sending AUTH_PKT_HELLO)
+// MCU -> App notifications (when v2 opted in via AUTH_PKT_HELLO):
+//   [AUTH_PKT_NEED_KEY] (1B)
+//   [AUTH_PKT_OFFER_KEY, <20B token>] (21B)
+//   [AUTH_PKT_OK] (1B)
+//   [AUTH_PKT_FAIL] (1B)
+#define AUTH_PKT_HELLO (uint8_t)0x00
+#define AUTH_PKT_NEED_KEY (uint8_t)0x01
+#define AUTH_PKT_OFFER_KEY (uint8_t)0x02
+#define AUTH_PKT_OK (uint8_t)0x03
+#define AUTH_PKT_FAIL (uint8_t)0xFF
+
+#define AUTH_PKT_KEY_DATA (uint8_t)0x01
+#define AUTH_PKT_ABORT (uint8_t)0xFF
+#define AUTH_KEY_PKT_LEN (1 + AUTH_KEY_LEN)
 
 typedef enum PAIRING_STATE : uint8_t {
     AUTH_UNPAIRED,

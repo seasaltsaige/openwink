@@ -83,7 +83,7 @@ void ble_disconnect();
 void set_device_status(openwink_status_t status);
 openwink_status_t get_device_status();
 
-void ble_notify_passkey(uint8_t* key, size_t size);
+void ble_notify_passkey(const uint8_t* key, size_t size);
 void ble_notify_debug(const uint8_t* data, size_t size);
 void ble_notify_general_settings(const uint8_t* data, size_t size);
 void ble_notify_headlight_status();

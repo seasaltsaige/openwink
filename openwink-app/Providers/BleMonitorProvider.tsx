@@ -15,11 +15,10 @@ import {
   AuxButtonStore,
   CustomOEMButtonStore,
   CustomWaveStore,
-  DeviceMACStore,
   FirmwareStore,
   SleepyEyeStore,
 } from "../Storage";
-import { base64ToBytes, bytesToBase64, encodeButtonBinding, getDevicePasskey, sleep, toProperCase } from "../helper/Functions";
+import { base64ToBytes, bytesToBase64, encodeButtonBinding } from "../helper/Functions";
 import {
   HeadlightOrientationStore,
   ORIENTATION,
@@ -28,7 +27,6 @@ import {
   HeadlightMovementSpeedStore,
   SIDE,
 } from "../Storage/HeadlightMovementSpeedStore";
-import { DeviceUUIDStore } from "../Storage/DeviceUUIDStore";
 import { ButtonBehaviors, CommandOutput, DebugLogEntry, ErrorTypes, Presses, UpdatingStatus } from "../helper/Types";
 import Toast from "react-native-toast-message";
 import { OTA } from "../helper/Handlers/OTA";
@@ -590,59 +588,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
     return next;
   }, []);
 
-  // Monitor PASSKEY_UUID characteristic (connection status)
-  const monitorPasskey = useCallback((device: Device) => {
-    const subscription = device.monitorCharacteristicForService(
-      ...getBLEDescriptors("SETTINGS", "AUTH"),
-      (err, char) => {
-        if (err) {
-          console.error("Error monitoring PASSKEY_UUID characteristic:", err);
-          return;
-        }
-        if (!char?.value) return;
-
-        try {
-          const passkeyUpdate = base64.decode(char.value);
-          if (passkeyUpdate.length === 0) return;
-
-          const storedMac = DeviceMACStore.getStoredMAC();
-          if (!storedMac && getDevicePasskey() !== "Not Paired") {
-            console.warn(
-              "[BLE] Connected to unpaired module while waiting for paired module match; disconnecting.",
-            );
-            device.cancelConnection().catch(() => {});
-            return;
-          }
-
-          DeviceUUIDStore.set(passkeyUpdate);
-          DeviceMACStore.setMAC(device.id);
-          device
-            .writeCharacteristicWithResponseForService(
-              ...getBLEDescriptors("SETTINGS", "AUTH"),
-              char.value,
-            )
-            .then(async () => {
-              try {
-                await writeInitialSettings(device);
-              } catch (error) {
-                console.warn(
-                  "[BLE] Non-critical write failed during initial settings:",
-                  error,
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Error echoing passkey to PASSKEY_UUID:", error);
-            });
-        } catch (error) {
-          console.error("Error decoding PASSKEY_UUID value:", error);
-        }
-      },
-    );
-
-    return subscription.remove;
-  }, [writeInitialSettings]);
-
   // Monitor DEBUG characteristic (live debug log chunks)
   const monitorDebug = useCallback((device: Device) => {
     const subscription = device.monitorCharacteristicForService(
@@ -774,7 +719,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
         subscriptionsRef.current = [
           monitorHeadlightStatus(device),
           monitorGeneralSettings(device, onReset),
-          monitorPasskey(device),
           monitorDebug(device),
           monitorUpdateProgress(device),
           monitorUpdateStatus(device),
@@ -789,7 +733,6 @@ export const BleMonitorProvider: React.FC<{ children: React.ReactNode }> = ({
       monitorGeneralSettings,
       monitorUpdateProgress,
       monitorUpdateStatus,
-      monitorPasskey,
       monitorDebug,
     ],
   );
