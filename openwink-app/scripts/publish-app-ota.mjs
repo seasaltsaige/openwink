@@ -9,8 +9,10 @@ import {fileURLToPath} from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_ROOT = path.resolve(__dirname, '..');
 
-dotenv.config(
-    {path: [path.join(APP_ROOT, '.env.local'), path.join(APP_ROOT, '.env')]});
+dotenv.config({
+  path: [path.join(APP_ROOT, '.env.local'), path.join(APP_ROOT, '.env')],
+  quiet: true,
+});
 
 const UPDATE_SERVER_ROOT = path.resolve(APP_ROOT, '../update-server');
 const EXPORT_DIR = path.join(APP_ROOT, 'dist-ota');

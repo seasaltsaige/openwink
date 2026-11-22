@@ -1,3 +1,4 @@
+import React from "react";
 import { Landing } from "./Landing";
 import { DefaultCommands } from "./DefaultCommands";
 import { CreateCustomCommands } from "./CreateCustomCommands";
@@ -8,7 +9,7 @@ import { Updates } from "./Updates";
 import { ConnectionSecurity } from "./ConnectionSecurity";
 import { NextSteps } from "./NextSteps";
 
-type ScreensType = () => JSX.Element;
+type ScreensType = () => React.JSX.Element;
 
 export const ONBOARDING_SCREENS: ScreensType[] = [ 
   Landing,

@@ -1,12 +1,13 @@
 import { useCallback, RefObject } from "react";
 import { Text, View } from "react-native";
 import BottomSheet, {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView
 } from "@gorhom/bottom-sheet";
 import { ScrollView } from "react-native-gesture-handler";
 import Octicons from "@expo/vector-icons/Octicons";
+
+import { SafeBottomSheetBackdrop } from "./SafeBottomSheetBackdrop";
 
 import { useColorTheme } from "../hooks/useColorTheme";
 import { DefaultCommandValue, DefaultCommandValueEnglish } from "../helper/Constants";
@@ -38,7 +39,7 @@ const COMMAND_TYPE_COLORS: {
 }
 
 interface ICommandSequenceBottomSheet {
-  bottomSheetRef: RefObject<BottomSheet>;
+  bottomSheetRef: RefObject<BottomSheet | null>;
   command: CommandOutput,
   close: () => void;
 }
@@ -51,11 +52,7 @@ export function CommandSequenceBottomSheet({
   const { colorTheme } = useColorTheme();
 
   const renderBackdrop = useCallback((props: BottomSheetBackdropProps) => {
-    return <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-    />
+    return <SafeBottomSheetBackdrop {...props} />;
   }, []);
 
   return (

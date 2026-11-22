@@ -238,7 +238,7 @@ export const BleConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [manager]);
 
-  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoConnectRef = useRef(autoConnectEnabled);
   const intentionalDisconnectRef = useRef(false);
 

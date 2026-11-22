@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import IonIcons from "@expo/vector-icons/Ionicons";
 
@@ -6,7 +6,7 @@ import { useColorTheme } from "../hooks/useColorTheme";
 
 interface IAccordionDropdownProps {
   headerText: string;
-  dropdown: JSX.Element;
+  dropdown: React.JSX.Element;
 }
 
 export function AccordionDropdown({

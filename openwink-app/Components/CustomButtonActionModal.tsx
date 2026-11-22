@@ -352,6 +352,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
 
 
           <View style={{
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -363,6 +364,7 @@ export function CustomButtonActionModal(props: CustomButtonActionModalProps) {
               style={({ pressed }) => ({
                 backgroundColor: !canSave ? colorTheme.disabledButtonColor : pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
                 width: "60%",
+                paddingHorizontal: 18,
                 paddingVertical: 6,
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"

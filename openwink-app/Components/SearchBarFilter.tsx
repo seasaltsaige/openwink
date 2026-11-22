@@ -6,9 +6,10 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import Octicons from "@react-native-vector-icons/octicons";
 import ToggleSwitch from "toggle-switch-react-native";
 import BottomSheet, {
-  BottomSheetBackdrop,
   BottomSheetBackdropProps, BottomSheetView
 } from "@gorhom/bottom-sheet";
+
+import { SafeBottomSheetBackdrop } from "./SafeBottomSheetBackdrop";
 
 import { useColorTheme } from "../hooks/useColorTheme";
 
@@ -138,11 +139,7 @@ export function SearchBarFilter<
 
 
   const renderBackdrop = useCallback((props: BottomSheetBackdropProps) => {
-    return <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-    />
+    return <SafeBottomSheetBackdrop {...props} />;
   }, []);
 
   return (
@@ -272,7 +269,7 @@ export function SearchBarFilter<
                     rowGap: 10,
                     alignItems: "center",
                     justifyContent: "space-between",
-                    // width: "100%",
+                    width: "100%",
                   }}>
                   {
                     filters.map(filter => (

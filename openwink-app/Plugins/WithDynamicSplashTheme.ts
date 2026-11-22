@@ -160,7 +160,22 @@ const withSplashStyles: ConfigPlugin = (config) =>
 // matching Impl and are disabled until the library enables one at runtime.
 const withManifestRewrites: ConfigPlugin = (config) =>
   withAndroidManifest(config, (cfg) => {
-    const app = cfg.modResults.manifest.application?.[0];
+    const manifest = cfg.modResults.manifest;
+    manifest["uses-feature"] = manifest["uses-feature"] ?? [];
+    if (
+      !manifest["uses-feature"].some(
+        (f) => f.$["android:name"] === "android.hardware.screen.portrait",
+      )
+    ) {
+      manifest["uses-feature"].push({
+        $: {
+          "android:name": "android.hardware.screen.portrait",
+          "android:required": "false",
+        },
+      });
+    }
+
+    const app = manifest.application?.[0];
     if (!app) return cfg;
 
     const defaultVariant = variants.find((v) => v.key === defaultKey)!;

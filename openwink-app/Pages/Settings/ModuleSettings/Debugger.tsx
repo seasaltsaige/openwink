@@ -5,7 +5,7 @@ import IonIcons from "@expo/vector-icons/Ionicons";
 import ToggleSwitch from "toggle-switch-react-native";
 import Tooltip from "react-native-walkthrough-tooltip";
 import Toast from "react-native-toast-message";
-import * as FileSystem from "expo-file-system";
+import { File, Paths } from "expo-file-system";
 import * as FileSharing from "expo-sharing";
 
 import { HeaderWithBackButton, SearchBarFilter, SettingsToolbar, TooltipHeader } from "../../../Components";
@@ -181,13 +181,10 @@ export function Debugger() {
         .join("\n");
 
       const fileName = `openwink_debug_${new Date().toISOString().replace(/[:.]/g, "-")}.log`;
-      const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+      const file = new File(Paths.cache, fileName);
+      file.write(content);
 
-      await FileSystem.writeAsStringAsync(filePath, content, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-
-      await FileSharing.shareAsync(filePath, {
+      await FileSharing.shareAsync(file.uri, {
         mimeType: "text/plain",
       });
     } catch (error) {

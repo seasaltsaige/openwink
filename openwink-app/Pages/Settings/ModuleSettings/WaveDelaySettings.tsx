@@ -9,7 +9,8 @@ import { useColorTheme } from "../../../hooks/useColorTheme";
 import { useBleCommand } from "../../../Providers/BleCommandProvider";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import { useBleConnection } from "../../../Providers/BleConnectionProvider";
-import { cancelAnimation, Easing, runOnJS, useAnimatedReaction, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
+import { cancelAnimation, Easing, useAnimatedReaction, useSharedValue, withDelay, withSequence, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 const MIN = 0;
 const MAX = 100;
@@ -78,7 +79,7 @@ export function WaveDelaySettings() {
     () => Math.round(leftWaveStatus.value),
     (value, previous) => {
       if (value !== previous) {
-        runOnJS(setLeftWave)(value);
+        scheduleOnRN(setLeftWave, value);
       }
     },
   );
@@ -86,7 +87,7 @@ export function WaveDelaySettings() {
     () => Math.round(rightWaveStatus.value),
     (value, previous) => {
       if (value !== previous) {
-        runOnJS(setRightWave)(value);
+        scheduleOnRN(setRightWave, value);
       }
     },
   );

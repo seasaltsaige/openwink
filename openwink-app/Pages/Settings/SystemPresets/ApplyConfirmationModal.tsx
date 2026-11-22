@@ -152,6 +152,7 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
 
 
           <View style={{
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -163,6 +164,7 @@ export const ApplyConfirmationModal = (props: IApplyConfirmationModal) => {
               style={({ pressed }) => ({
                 backgroundColor: pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
                 width: "60%",
+                paddingHorizontal: 18,
                 paddingVertical: 6,
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"

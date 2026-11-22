@@ -9,7 +9,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { CreatePresetModal } from "./CreatePresetModal";
 import { ApplyConfirmationModal } from "./ApplyConfirmationModal";
 import * as DocumentPicker from "expo-document-picker";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system";
 import RNHapticFeedback from "react-native-haptic-feedback";
 import Toast from "react-native-toast-message";
 
@@ -134,9 +134,17 @@ export function SystemProfiles() {
         text2: "Profile import was cancelled, no action taken."
       });
 
-    const fileData = await FileSystem.readAsStringAsync(pickerResult.assets[0].uri, { encoding: FileSystem.EncodingType.UTF8 });
-
-    const jsonData: Partial<Record<(keyof ExportSettingOptions) | "profileName", any>> = JSON.parse(fileData);
+    let jsonData: Partial<Record<(keyof ExportSettingOptions) | "profileName", any>>;
+    try {
+      const fileData = await new File(pickerResult.assets[0].uri).text();
+      jsonData = JSON.parse(fileData);
+    } catch {
+      return Toast.show({
+        type: "error",
+        text1: "Incorrect File Format",
+        text2: "The provided file could not be read as a valid settings profile.",
+      });
+    }
 
     if (!jsonData.profileName) {
       return Toast.show({

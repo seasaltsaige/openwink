@@ -115,6 +115,7 @@ export const CreatePresetModal = (props: ICreatePresetModalInterface) => {
 
 
           <View style={{
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -127,6 +128,7 @@ export const CreatePresetModal = (props: ICreatePresetModalInterface) => {
               style={({ pressed }) => ({
                 backgroundColor: presetName.length < 3 ? colorTheme.disabledButtonColor : pressed ? colorTheme.backgroundPrimaryColor : colorTheme.buttonColor,
                 width: "60%",
+                paddingHorizontal: 18,
                 paddingVertical: 6,
                 borderRadius: 20,
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"

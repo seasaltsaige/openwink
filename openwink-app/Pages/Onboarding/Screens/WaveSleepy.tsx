@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
-import { cancelAnimation, Easing, runOnJS, useAnimatedReaction, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import { cancelAnimation, Easing, useAnimatedReaction, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useCallback, useEffect, useState } from "react";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import { MiataHeadlights } from "../../../Components";
@@ -183,7 +184,7 @@ export function WaveSleepy() {
     () => Math.round(leftWaveStatus.value),
     (value, previous) => {
       if (isMounted.value && value !== previous) {
-        runOnJS(setLeftWave)(value);
+        scheduleOnRN(setLeftWave, value);
       }
     },
   );
@@ -191,7 +192,7 @@ export function WaveSleepy() {
     () => Math.round(rightWaveStatus.value),
     (value, previous) => {
       if (isMounted.value && value !== previous) {
-        runOnJS(setRightWave)(value);
+        scheduleOnRN(setRightWave, value);
       }
     },
   );

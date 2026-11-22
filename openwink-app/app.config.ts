@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 require('ts-node/register/transpile-only');
 
-dotenv.config({ path: ['.env.local', '.env'] });
+dotenv.config({ path: ['.env.local', '.env'], quiet: true });
 
 const UPDATE_SERVER_BASE = process.env.EXPO_PUBLIC_UPDATE_SERVER_BASE ?? "https://update-server.netlify.app";
 const OTA_API_KEY = process.env.EXPO_PUBLIC_OTA_API_KEY ?? "Cb8VHA})liX~azNU&+;KV{22:`16'S{@g;d<$Cu@H0`0k/Qh>]";
@@ -14,8 +14,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: variant === "development" ? "OpenWink Development" : "OpenWink",
   slug: process.env.EXPO_SLUG ?? "openwink",
-  version: "2.1.4",
-  runtimeVersion: "2.1.0",
+  version: "2.2.0",
+  runtimeVersion: "2.2.0",
   updates: {
     enabled: true,
     checkAutomatically: "NEVER",
@@ -71,7 +71,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-build-properties",
       {
         android: {
-          kotlinVersion: "1.9.25",
+          compileSdkVersion: 36,
+          targetSdkVersion: 36,
+          enableMinifyInReleaseBuilds: true,
+          enableShrinkResourcesInReleaseBuilds: true,
           useLegacyPackaging: variant !== "production"
         },
         ios: {

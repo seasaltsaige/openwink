@@ -2,7 +2,8 @@ import { Image, Text, View } from "react-native";
 import { useColorTheme } from "../../../hooks/useColorTheme";
 import { MiataHeadlights } from "../../../Components";
 import { useCallback, useEffect, useState } from "react";
-import { cancelAnimation, Easing, runOnJS, useAnimatedReaction, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import { cancelAnimation, Easing, useAnimatedReaction, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { useBleMonitor } from "../../../Providers/BleMonitorProvider";
 import LinearGradient from "react-native-linear-gradient";
 
@@ -78,7 +79,7 @@ export function Landing() {
     () => Math.round(leftWaveStatus.value),
     (value, previous) => {
       if (isMounted.value && value !== previous) {
-        runOnJS(setLeftWave)(value);
+        scheduleOnRN(setLeftWave, value);
       }
     },
   );
@@ -86,7 +87,7 @@ export function Landing() {
     () => Math.round(rightWaveStatus.value),
     (value, previous) => {
       if (isMounted.value && value !== previous) {
-        runOnJS(setRightWave)(value);
+        scheduleOnRN(setRightWave, value);
       }
     },
   );

@@ -8,7 +8,7 @@ import { TooltipHeader } from "./TooltipHeader";
 import { useFocusEffect } from "@react-navigation/native";
 import { AutoConnectStore, AUX_ID, AuxButtonStore, CustomCommandStore, CustomOEMButtonStore, CustomWaveStore, DeviceMACStore, HeadlightOrientationStore, QuickLinksStore, SleepyEyeStore, ThemeStore } from "../Storage";
 import { getDevicePasskey } from "../helper/Functions";
-import * as FileSystem from "expo-file-system"
+import { File, Paths } from "expo-file-system";
 import * as FileSharing from "expo-sharing";
 import * as DocumentPicker from "expo-document-picker";
 import Toast from "react-native-toast-message";
@@ -231,17 +231,24 @@ export function ExportModal({
 
     const fileShareAvailable = await FileSharing.isAvailableAsync();
     if (fileShareAvailable) {
-      const filePath = `${FileSystem.cacheDirectory}${settingsData.profileName.trim().replace(/[?%*|:"<>\\/]/g, '').replace(/\s+/g, '_')}.json`;
+      try {
+        const fileName = `${settingsData.profileName.trim().replace(/[?%*|:"<>\\/]/g, '').replace(/\s+/g, '_')}.json`;
+        const file = new File(Paths.cache, fileName);
+        file.write(stringified);
 
-      await FileSystem.writeAsStringAsync(filePath, stringified, {
-        encoding: FileSystem.EncodingType.UTF8
-      });
+        await FileSharing.shareAsync(file.uri, {
+          mimeType: "application/json",
+        });
 
-      await FileSharing.shareAsync(filePath, {
-        mimeType: "application/json",
-      });
-
-      close();
+        close();
+      } catch (error) {
+        console.error("Error exporting profile:", error);
+        Toast.show({
+          type: "error",
+          text1: "Unable to Export",
+          text2: "Something went wrong while trying to export your profile information.",
+        });
+      }
     } else {
       Toast.show({
         type: "error",
@@ -381,12 +388,10 @@ export function ExportModal({
 
 
           <View style={{
-            // width: "100%",
-            // flexDirection: "row",
+            width: "100%",
             alignItems: "center",
             justifyContent: "center",
             rowGap: 10,
-            // justifyContent: "space-evenly"
           }}>
 
 

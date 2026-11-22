@@ -3,12 +3,12 @@ import { StyleSheet } from "react-native";
 import Animated, {
   Easing,
   interpolateColor,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withTiming,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 
 import { ColorTheme } from "../helper/Constants";
 
@@ -78,7 +78,7 @@ export function ThemedSplash({ themeName, contentReady = true, onLayout, onHidde
         0,
         { duration: FADE_OUT_MS, easing: Easing.in(Easing.cubic) },
         (finished) => {
-          if (finished && onHidden) runOnJS(onHidden)();
+          if (finished && onHidden) scheduleOnRN(onHidden);
         },
       ),
     );
